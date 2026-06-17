@@ -111,8 +111,7 @@ router.post('/create', (req, res) => {
     time,
     duration:       counselor.sessionDuration || 60,
     type:           type || 'online',
-    status:         'confirmed',        // Admin สร้างเอง → ยืนยันทันที
-    fee:            counselor.fee,
+    status:         'confirmed',
     note:           note || '',
     createdAt:      new Date().toISOString().split('T')[0],
   }

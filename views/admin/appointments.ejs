@@ -1,11 +1,10 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="th">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title><%= title %> — MindWell Admin</title>
-  <link rel="stylesheet" href="/css/output.css">
-  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  <%- include('../partials/head') %>
   <style>
     .tbl { width:100%; border-collapse:collapse; }
     .tbl thead { background:#f8fafc; }
@@ -126,7 +125,6 @@
               <th>วันที่ / เวลา</th>
               <th>รูปแบบ</th>
               <th>ระยะเวลา</th>
-              <th>ค่าบริการ</th>
               <th>สถานะ</th>
               <th>การจัดการ</th>
             </tr>
@@ -168,7 +166,6 @@
                 <% } %>
               </td>
               <td style="font-size:12px; color:#64748b;"><%= a.duration %> นาที</td>
-              <td style="font-weight:600; font-size:13px; color:#05967e;">฿<%= a.fee.toLocaleString() %></td>
               <td>
                 <span style="padding:3px 10px; background:<%= statusColor.bg %>; color:<%= statusColor.color %>; border-radius:99px; font-size:11px; font-weight:500;">
                   <%= statusLabel %>
@@ -256,7 +253,7 @@
           <% counselors.forEach(c => { %>
           <label class="counselor-card" id="card_<%= c.id %>">
             <input type="radio" name="counselorId" value="<%= c.id %>"
-                   data-fee="<%= c.fee %>" data-duration="<%= c.sessionDuration %>" data-name="<%= c.name %>"
+                   data-duration="<%= c.sessionDuration %>" data-name="<%= c.name %>"
                    style="accent-color:#05967e;" onchange="onCounselorChange(this)" required>
             <div style="width:38px; height:38px; border-radius:10px; background:linear-gradient(135deg,#2dd4b4,#0ea5e9); display:flex; align-items:center; justify-content:center; color:#fff; font-weight:700; font-size:13px; flex-shrink:0;">
               <%= c.avatar %>
@@ -271,8 +268,7 @@
               </div>
             </div>
             <div style="text-align:right; flex-shrink:0;">
-              <div style="font-size:13px; font-weight:700; color:#05967e;">฿<%= c.fee.toLocaleString() %></div>
-              <div style="font-size:10px; color:#94a3b8;"><%= c.sessionDuration %> นาที</div>
+              <div style="font-size:12px; color:#94a3b8;"><%= c.sessionDuration %> นาที/ครั้ง</div>
             </div>
           </label>
           <% }) %>
@@ -353,19 +349,15 @@
                       placeholder="เช่น ครั้งแรก, ติดตามอาการ ฯลฯ"></textarea>
           </div>
 
-          <div id="feeSummary" style="display:none; padding:14px; background:#ecfdf9; border:1px solid #a0f3e1; border-radius:12px;">
+          <div id="apptSummary" style="display:none; padding:14px; background:#ecfdf9; border:1px solid #a0f3e1; border-radius:12px;">
             <div style="font-size:11px; font-weight:600; color:#64748b; margin-bottom:10px; text-transform:uppercase; letter-spacing:.05em;">สรุปการนัดหมาย</div>
             <div style="display:flex; justify-content:space-between; font-size:13px; margin-bottom:6px;">
               <span style="color:#64748b;">นักให้คำปรึกษา</span>
               <span id="summCounselor" style="font-weight:500; color:#1e293b;"></span>
             </div>
-            <div style="display:flex; justify-content:space-between; font-size:13px; margin-bottom:8px;">
+            <div style="display:flex; justify-content:space-between; font-size:13px;">
               <span style="color:#64748b;">วันเวลา</span>
               <span id="summDateTime" style="font-weight:500; color:#1e293b;"></span>
-            </div>
-            <div style="display:flex; justify-content:space-between; font-size:14px; padding-top:8px; border-top:1px solid #a0f3e1;">
-              <span style="font-weight:600; color:#334155;">ค่าบริการ</span>
-              <span id="summFee" style="font-weight:700; color:#05967e; font-size:16px;"></span>
             </div>
           </div>
         </div>
@@ -400,7 +392,7 @@
   document.addEventListener('keydown', e => { if(e.key==='Escape') closePanel() })
 
   function onCounselorChange(radio) {
-    selectedCounselor = { id:radio.value, fee:parseInt(radio.dataset.fee), duration:parseInt(radio.dataset.duration), name:radio.dataset.name }
+    selectedCounselor = { id:radio.value, duration:parseInt(radio.dataset.duration), name:radio.dataset.name }
     document.querySelectorAll('.counselor-card').forEach(el => {
       const r = el.querySelector('input')
       el.classList.toggle('selected', r && r.value===radio.value)
@@ -415,7 +407,7 @@
     ).join('')
     document.getElementById('availableDays').style.display = 'block'
     resetSlots()
-    document.getElementById('feeSummary').style.display = 'none'
+    document.getElementById('apptSummary').style.display = 'none'
   }
 
   async function loadSlots() {
@@ -464,8 +456,7 @@
     const dateStr = new Date(date).toLocaleDateString('th-TH', { weekday:'short', day:'numeric', month:'short', year:'numeric' })
     document.getElementById('summCounselor').textContent = selectedCounselor.name
     document.getElementById('summDateTime').textContent  = `${dateStr} ${selectedTime} น.`
-    document.getElementById('summFee').textContent       = `฿${selectedCounselor.fee.toLocaleString()}`
-    document.getElementById('feeSummary').style.display  = 'block'
+    document.getElementById('apptSummary').style.display  = 'block'
   }
 
   function submitForm() {

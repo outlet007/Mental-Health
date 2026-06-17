@@ -28,7 +28,7 @@ router.get('/', (req, res) => {
 
 // ── CREATE ────────────────────────────────────────────────────────────────────
 router.post('/create', (req, res) => {
-  const { name, title, email, phone, bio, specialties, languages, fee, sessionDuration, isApproved } = req.body
+  const { name, title, email, phone, bio, specialties, languages, sessionDuration, isApproved } = req.body
   const data = readData()
 
   if (data.some(c => c.email === email)) return res.redirect('/admin/counselors?error=duplicate_email')
@@ -43,7 +43,6 @@ router.post('/create', (req, res) => {
     bio:             (bio || '').trim(),
     specialties:     parseArr(specialties),
     languages:       parseArr(languages),
-    fee:             parseInt(fee) || 0,
     sessionDuration: parseInt(sessionDuration) || 60,
     rating:          0,
     reviewCount:     0,
@@ -58,7 +57,7 @@ router.post('/create', (req, res) => {
 
 // ── EDIT ──────────────────────────────────────────────────────────────────────
 router.post('/:id/edit', (req, res) => {
-  const { name, title, email, phone, bio, specialties, languages, fee, sessionDuration } = req.body
+  const { name, title, email, phone, bio, specialties, languages, sessionDuration } = req.body
   const data = readData()
   const idx  = data.findIndex(c => c.id === req.params.id)
   if (idx === -1) return res.redirect('/admin/counselors')
@@ -72,7 +71,6 @@ router.post('/:id/edit', (req, res) => {
     bio:             (bio || '').trim(),
     specialties:     parseArr(specialties),
     languages:       parseArr(languages),
-    fee:             parseInt(fee) || data[idx].fee,
     sessionDuration: parseInt(sessionDuration) || data[idx].sessionDuration,
     avatar:          initials(name),
   }

@@ -1,11 +1,10 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="th">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>MindWell — ระบบจองนัดหมายการให้คำปรึกษาทางจิตใจ</title>
-  <link rel="stylesheet" href="/css/output.css">
-  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  <%- include('./partials/head') %>
 </head>
 <body class="bg-white">
 
@@ -164,11 +163,7 @@
             <span class="badge-blue text-[11px]"><%= sp %></span>
             <% }) %>
           </div>
-          <div class="flex items-center justify-between pt-4 border-t border-slate-50">
-            <div>
-              <span class="text-xl font-bold text-brand-700">฿<%= c.fee.toLocaleString() %></span>
-              <span class="text-xs text-slate-400"> / ครั้ง</span>
-            </div>
+          <div class="flex items-center justify-end pt-4 border-t border-slate-50">
             <a href="#book" class="btn-primary text-xs px-4 py-2">จองนัด</a>
           </div>
         </div>

@@ -26,9 +26,6 @@ router.get('/', (req, res) => {
       return a.date === today
     }).length,
     pendingAppointments: appointments.filter(a => a.status === 'pending').length,
-    revenue: appointments
-      .filter(a => a.status === 'completed')
-      .reduce((sum, a) => sum + a.fee, 0),
   }
 
   const recentAppointments = appointments

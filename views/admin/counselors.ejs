@@ -1,11 +1,10 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="th">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title><%= title %> — MindWell Admin</title>
-  <link rel="stylesheet" href="/css/output.css">
-  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  <%- include('../partials/head') %>
   <style>
     .tbl { width:100%; border-collapse:collapse; }
     .tbl thead { background:#f8fafc; }
@@ -104,7 +103,6 @@
             <tr>
               <th>นักให้คำปรึกษา</th>
               <th>ความเชี่ยวชาญ</th>
-              <th>ค่าบริการ</th>
               <th>เวลา/ครั้ง</th>
               <th>เรตติ้ง</th>
               <th>สถานะ</th>
@@ -135,7 +133,6 @@
                 </div>
                 <div style="font-size:11px; color:#94a3b8; margin-top:3px;"><%= (c.languages||[]).join(', ') %></div>
               </td>
-              <td style="font-weight:600; color:#05967e;">฿<%= c.fee.toLocaleString() %></td>
               <td style="color:#64748b;"><%= c.sessionDuration %> นาที</td>
               <td>
                 <% if (c.rating > 0) { %>
@@ -267,21 +264,15 @@
       </div>
 
       <div style="padding:20px; border-bottom:1px solid #f8fafc;">
-        <div style="font-size:11px; font-weight:600; color:#94a3b8; text-transform:uppercase; letter-spacing:.05em; margin-bottom:14px;">ค่าบริการ</div>
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
-          <div>
-            <label class="lbl">ค่าบริการ (บาท/ครั้ง) *</label>
-            <input type="number" name="fee" id="f_fee" class="inp" required min="0" placeholder="1000">
-          </div>
-          <div>
-            <label class="lbl">ระยะเวลาต่อครั้ง</label>
-            <select name="sessionDuration" id="f_sessionDuration" class="inp">
-              <option value="30">30 นาที</option>
-              <option value="45">45 นาที</option>
-              <option value="60" selected>60 นาที</option>
-              <option value="90">90 นาที</option>
-            </select>
-          </div>
+        <div style="font-size:11px; font-weight:600; color:#94a3b8; text-transform:uppercase; letter-spacing:.05em; margin-bottom:14px;">ระยะเวลาต่อครั้ง</div>
+        <div>
+          <label class="lbl">ระยะเวลา</label>
+          <select name="sessionDuration" id="f_sessionDuration" class="inp">
+            <option value="30">30 นาที</option>
+            <option value="45">45 นาที</option>
+            <option value="60" selected>60 นาที</option>
+            <option value="90">90 นาที</option>
+          </select>
         </div>
       </div>
 
@@ -342,7 +333,6 @@
       document.getElementById('f_bio').value             = data.bio||''
       document.getElementById('f_specialties').value     = (data.specialties||[]).join(', ')
       document.getElementById('f_languages').value       = (data.languages||[]).join(', ')
-      document.getElementById('f_fee').value             = data.fee||''
       document.getElementById('f_sessionDuration').value = String(data.sessionDuration||60)
     }
     lucide.createIcons()

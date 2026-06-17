@@ -1,4 +1,4 @@
-<%
+﻿<%
   const layout = `
 <!DOCTYPE html>
 <html lang="th">
@@ -6,6 +6,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${title} — MindWell Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/output.css">
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"><\/script>
 </head>
@@ -17,8 +20,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title><%= title %> — MindWell Admin</title>
-  <link rel="stylesheet" href="/css/output.css">
-  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  <%- include('../partials/head') %>
 </head>
 <body class="bg-slate-50">
 
@@ -67,16 +69,6 @@
           <p class="text-2xl font-bold text-slate-800"><%= stats.totalAppointments %></p>
           <p class="text-xs text-slate-500">นัดหมายทั้งหมด</p>
           <p class="text-xs text-amber-600 font-medium mt-0.5">รอยืนยัน <%= stats.pendingAppointments %> รายการ</p>
-        </div>
-      </div>
-      <div class="stat-card">
-        <div class="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center flex-shrink-0">
-          <i data-lucide="banknote" class="w-5 h-5 text-emerald-600"></i>
-        </div>
-        <div>
-          <p class="text-2xl font-bold text-slate-800">฿<%= stats.revenue.toLocaleString() %></p>
-          <p class="text-xs text-slate-500">รายได้รวม</p>
-          <p class="text-xs text-slate-400 mt-0.5">จากการให้คำปรึกษา</p>
         </div>
       </div>
     </div>
