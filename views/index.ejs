@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MindWell — ระบบจองนัดหมายการให้คำปรึกษาทางจิตใจ</title>
+  <link rel="stylesheet" href="/css/output.css">
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+</head>
+<body class="bg-white">
+
+  <!-- Navbar -->
+  <nav class="fixed top-0 inset-x-0 z-50 bg-white/80 backdrop-blur border-b border-slate-100">
+    <div class="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
+      <div class="flex items-center gap-2.5">
+        <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-brand-500 to-ocean-500 flex items-center justify-center">
+          <i data-lucide="heart-handshake" class="w-4.5 h-4.5 text-white"></i>
+        </div>
+        <span class="font-bold text-slate-800 text-lg">MindWell</span>
+      </div>
+      <div class="hidden md:flex items-center gap-1">
+        <a href="#how" class="btn-ghost text-sm">วิธีการใช้งาน</a>
+        <a href="#counselors" class="btn-ghost text-sm">นักให้คำปรึกษา</a>
+        <a href="#faq" class="btn-ghost text-sm">คำถามที่พบบ่อย</a>
+      </div>
+      <div class="flex items-center gap-2">
+        <a href="#book" class="btn-primary text-sm">จองนัดหมาย</a>
+        <a href="/admin" class="btn-ghost text-sm">
+          <i data-lucide="shield" class="w-4 h-4"></i>
+          Admin
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero -->
+  <section class="pt-32 pb-24 bg-gradient-to-br from-brand-50 via-ocean-50 to-white">
+    <div class="max-w-6xl mx-auto px-6 grid md:grid-cols-2 gap-16 items-center">
+      <div>
+        <span class="inline-flex items-center gap-2 px-3 py-1 bg-brand-100 text-brand-700 text-sm font-medium rounded-full mb-6">
+          <i data-lucide="shield-check" class="w-3.5 h-3.5"></i>
+          ปลอดภัย · เป็นส่วนตัว · เชื่อถือได้
+        </span>
+        <h1 class="text-4xl md:text-5xl font-bold text-slate-800 leading-tight mb-6">
+          ดูแลใจของคุณ<br>
+          <span class="text-transparent bg-clip-text bg-gradient-to-r from-brand-600 to-ocean-500">อย่างที่ควรได้รับ</span>
+        </h1>
+        <p class="text-slate-500 text-lg leading-relaxed mb-8">
+          เชื่อมต่อกับนักจิตวิทยาและนักให้คำปรึกษาที่ผ่านการรับรอง จองนัดหมายได้ง่ายๆ ทั้งแบบออนไลน์และพบตัว
+        </p>
+        <div class="flex flex-wrap gap-3">
+          <a href="#book" class="btn-primary px-7 py-3 text-base">
+            <i data-lucide="calendar-plus" class="w-5 h-5"></i>
+            จองนัดหมายฟรี
+          </a>
+          <a href="#counselors" class="btn-secondary px-7 py-3 text-base">
+            <i data-lucide="users" class="w-5 h-5"></i>
+            ดูนักให้คำปรึกษา
+          </a>
+        </div>
+        <!-- Trust -->
+        <div class="mt-10 flex flex-wrap gap-6 text-sm text-slate-500">
+          <div class="flex items-center gap-1.5">
+            <i data-lucide="users" class="w-4 h-4 text-brand-500"></i>
+            <span>นักให้คำปรึกษา 20+ คน</span>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <i data-lucide="star" class="w-4 h-4 text-amber-400"></i>
+            <span>รีวิวเฉลี่ย 4.8/5</span>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <i data-lucide="lock" class="w-4 h-4 text-ocean-500"></i>
+            <span>ข้อมูลเป็นความลับ</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Hero visual -->
+      <div class="hidden md:block">
+        <div class="relative">
+          <div class="w-80 h-80 mx-auto rounded-3xl bg-gradient-to-br from-brand-400 to-ocean-500 flex items-center justify-center shadow-xl">
+            <i data-lucide="heart-handshake" class="w-40 h-40 text-white/80"></i>
+          </div>
+          <!-- Floating cards -->
+          <div class="absolute -top-4 -left-6 card shadow-lg max-w-[200px]">
+            <div class="flex items-center gap-2 mb-1">
+              <i data-lucide="check-circle" class="w-4 h-4 text-brand-500"></i>
+              <span class="text-xs font-semibold text-slate-700">ยืนยันนัดแล้ว</span>
+            </div>
+            <p class="text-xs text-slate-500">พุธ 18 มิ.ย. — 10:00 น.</p>
+            <p class="text-xs text-brand-600 font-medium mt-0.5">ดร.สุภาพร เมธาวี</p>
+          </div>
+          <div class="absolute -bottom-4 -right-6 card shadow-lg max-w-[180px]">
+            <div class="flex items-center gap-1 mb-1">
+              <i data-lucide="star" class="w-3.5 h-3.5 text-amber-400 fill-amber-400"></i>
+              <i data-lucide="star" class="w-3.5 h-3.5 text-amber-400 fill-amber-400"></i>
+              <i data-lucide="star" class="w-3.5 h-3.5 text-amber-400 fill-amber-400"></i>
+              <i data-lucide="star" class="w-3.5 h-3.5 text-amber-400 fill-amber-400"></i>
+              <i data-lucide="star" class="w-3.5 h-3.5 text-amber-400 fill-amber-400"></i>
+            </div>
+            <p class="text-xs text-slate-600">"รู้สึกดีขึ้นมากหลังจากได้คุย ขอบคุณมากครับ"</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- How it works -->
+  <section id="how" class="py-20 bg-white">
+    <div class="max-w-6xl mx-auto px-6">
+      <div class="text-center mb-12">
+        <h2 class="text-3xl font-bold text-slate-800 mb-3">วิธีการใช้งาน</h2>
+        <p class="text-slate-500">เริ่มต้นดูแลสุขภาพจิตของคุณใน 3 ขั้นตอนง่ายๆ</p>
+      </div>
+      <div class="grid md:grid-cols-3 gap-8">
+        <% const steps = [
+          { icon:'search', num:'01', title:'ค้นหานักให้คำปรึกษา', desc:'เลือกจากนักจิตวิทยาและนักให้คำปรึกษาที่ผ่านการรับรอง กรองตามความเชี่ยวชาญและรูปแบบที่ต้องการ' },
+          { icon:'calendar', num:'02', title:'จองเวลาที่สะดวก', desc:'เลือกวันและเวลาที่คุณต้องการ ระบบจะยืนยันนัดหมายอัตโนมัติ' },
+          { icon:'video', num:'03', title:'เริ่มพูดคุย', desc:'พบกันออนไลน์ผ่านวิดีโอคอล หรือนัดพบที่คลินิกตามที่คุณสะดวก' }
+        ] %>
+        <% steps.forEach(s => { %>
+        <div class="text-center group">
+          <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-brand-50 to-ocean-50 border border-brand-100 flex items-center justify-center mx-auto mb-4 group-hover:from-brand-100 group-hover:to-ocean-100 transition-colors">
+            <i data-lucide="<%= s.icon %>" class="w-7 h-7 text-brand-600"></i>
+          </div>
+          <span class="text-xs font-bold text-brand-400 tracking-wider"><%= s.num %></span>
+          <h3 class="text-lg font-semibold text-slate-800 mt-1 mb-2"><%= s.title %></h3>
+          <p class="text-slate-500 text-sm leading-relaxed"><%= s.desc %></p>
+        </div>
+        <% }) %>
+      </div>
+    </div>
+  </section>
+
+  <!-- Counselors -->
+  <section id="counselors" class="py-20 bg-gradient-to-b from-slate-50 to-white">
+    <div class="max-w-6xl mx-auto px-6">
+      <div class="flex items-end justify-between mb-10">
+        <div>
+          <h2 class="text-3xl font-bold text-slate-800 mb-2">นักให้คำปรึกษาของเรา</h2>
+          <p class="text-slate-500">ทีมผู้เชี่ยวชาญที่ผ่านการคัดกรองและรับรองคุณภาพ</p>
+        </div>
+        <a href="#book" class="btn-secondary text-sm hidden md:inline-flex">ดูทั้งหมด</a>
+      </div>
+      <div class="grid md:grid-cols-3 gap-6">
+        <% counselors.forEach(c => { %>
+        <div class="card hover:shadow-md transition-shadow group">
+          <div class="flex items-start gap-4 mb-4">
+            <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-brand-400 to-ocean-500 flex items-center justify-center text-white font-bold text-lg flex-shrink-0">
+              <%= c.avatar %>
+            </div>
+            <div class="flex-1 min-w-0">
+              <h3 class="font-semibold text-slate-800 leading-tight"><%= c.name %></h3>
+              <p class="text-sm text-slate-500"><%= c.title %></p>
+              <div class="flex items-center gap-1 mt-1">
+                <i data-lucide="star" class="w-3.5 h-3.5 text-amber-400 fill-amber-400"></i>
+                <span class="text-sm font-medium text-slate-700"><%= c.rating %></span>
+                <span class="text-xs text-slate-400">(<%= c.reviewCount %> รีวิว)</span>
+              </div>
+            </div>
+          </div>
+          <div class="flex flex-wrap gap-1.5 mb-4">
+            <% c.specialties.forEach(sp => { %>
+            <span class="badge-blue text-[11px]"><%= sp %></span>
+            <% }) %>
+          </div>
+          <div class="flex items-center justify-between pt-4 border-t border-slate-50">
+            <div>
+              <span class="text-xl font-bold text-brand-700">฿<%= c.fee.toLocaleString() %></span>
+              <span class="text-xs text-slate-400"> / ครั้ง</span>
+            </div>
+            <a href="#book" class="btn-primary text-xs px-4 py-2">จองนัด</a>
+          </div>
+        </div>
+        <% }) %>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features -->
+  <section class="py-20 bg-gradient-to-r from-brand-600 to-ocean-600">
+    <div class="max-w-6xl mx-auto px-6">
+      <div class="grid md:grid-cols-2 gap-12 items-center">
+        <div class="text-white">
+          <h2 class="text-3xl font-bold mb-4">ทำไมต้องเลือก MindWell?</h2>
+          <p class="text-brand-100 mb-8 leading-relaxed">เราเชื่อว่าทุกคนมีสิทธิ์ได้รับการดูแลสุขภาพจิตที่ดี ในสภาพแวดล้อมที่ปลอดภัยและไว้วางใจได้</p>
+          <% const features = [
+            { icon:'shield-check', text:'นักให้คำปรึกษาผ่านการตรวจสอบและรับรองคุณสมบัติ' },
+            { icon:'lock', text:'ข้อมูลทุกอย่างเป็นความลับตาม PDPA' },
+            { icon:'clock', text:'จองนัดได้ตลอด 24 ชั่วโมง ทุกวัน' },
+            { icon:'video', text:'รองรับทั้งการพบออนไลน์และพบตัว' },
+            { icon:'bell', text:'แจ้งเตือนก่อนนัดหมาย ไม่ลืมแน่นอน' },
+          ] %>
+          <ul class="space-y-3">
+            <% features.forEach(f => { %>
+            <li class="flex items-center gap-3 text-brand-50">
+              <div class="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center flex-shrink-0">
+                <i data-lucide="<%= f.icon %>" class="w-4 h-4"></i>
+              </div>
+              <span class="text-sm"><%= f.text %></span>
+            </li>
+            <% }) %>
+          </ul>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <% const metrics = [
+            { icon:'users', num:'500+', label:'ผู้รับบริการ' },
+            { icon:'user-check', num:'20+', label:'นักให้คำปรึกษา' },
+            { icon:'calendar-check', num:'1,200+', label:'นัดหมายสำเร็จ' },
+            { icon:'star', num:'4.8', label:'คะแนนเฉลี่ย' },
+          ] %>
+          <% metrics.forEach(m => { %>
+          <div class="bg-white/10 backdrop-blur rounded-2xl p-6 text-white text-center">
+            <i data-lucide="<%= m.icon %>" class="w-7 h-7 mx-auto mb-3 text-brand-200"></i>
+            <p class="text-3xl font-bold"><%= m.num %></p>
+            <p class="text-sm text-brand-200 mt-1"><%= m.label %></p>
+          </div>
+          <% }) %>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA / Book -->
+  <section id="book" class="py-20 bg-white">
+    <div class="max-w-2xl mx-auto px-6 text-center">
+      <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-brand-400 to-ocean-500 flex items-center justify-center mx-auto mb-6">
+        <i data-lucide="calendar-heart" class="w-8 h-8 text-white"></i>
+      </div>
+      <h2 class="text-3xl font-bold text-slate-800 mb-4">พร้อมเริ่มต้นแล้วใช่ไหม?</h2>
+      <p class="text-slate-500 mb-8 leading-relaxed">การขอความช่วยเหลือไม่ใช่เรื่องอ่อนแอ มันคือความกล้าหาญ เริ่มต้นดูแลใจของคุณวันนี้เลย</p>
+      <div class="card border-2 border-brand-100 text-left">
+        <h3 class="font-semibold text-slate-700 mb-4 flex items-center gap-2">
+          <i data-lucide="send" class="w-4 h-4 text-brand-500"></i>
+          ฝากข้อมูลเพื่อให้ทีมติดต่อกลับ
+        </h3>
+        <form class="space-y-4">
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="form-label">ชื่อ-นามสกุล</label>
+              <input type="text" class="form-input" placeholder="กรอกชื่อของคุณ">
+            </div>
+            <div>
+              <label class="form-label">เบอร์โทรศัพท์</label>
+              <input type="tel" class="form-input" placeholder="08X-XXX-XXXX">
+            </div>
+          </div>
+          <div>
+            <label class="form-label">อีเมล</label>
+            <input type="email" class="form-input" placeholder="your@email.com">
+          </div>
+          <div>
+            <label class="form-label">คุณต้องการความช่วยเหลือเรื่องอะไร?</label>
+            <select class="form-select">
+              <option value="">-- เลือกประเภท --</option>
+              <option>ความวิตกกังวล / ความเครียด</option>
+              <option>ภาวะซึมเศร้า</option>
+              <option>ปัญหาความสัมพันธ์</option>
+              <option>ปัญหาครอบครัว</option>
+              <option>ความเศร้าโศก / การสูญเสีย</option>
+              <option>อื่นๆ</option>
+            </select>
+          </div>
+          <div>
+            <label class="form-label">รูปแบบที่ต้องการ</label>
+            <div class="grid grid-cols-2 gap-3">
+              <label class="flex items-center gap-2 p-3 border border-slate-200 rounded-xl cursor-pointer hover:border-brand-300 hover:bg-brand-50 transition-colors">
+                <input type="radio" name="type" value="online" class="accent-brand-600">
+                <i data-lucide="video" class="w-4 h-4 text-brand-500"></i>
+                <span class="text-sm font-medium">ออนไลน์</span>
+              </label>
+              <label class="flex items-center gap-2 p-3 border border-slate-200 rounded-xl cursor-pointer hover:border-brand-300 hover:bg-brand-50 transition-colors">
+                <input type="radio" name="type" value="onsite" class="accent-brand-600">
+                <i data-lucide="map-pin" class="w-4 h-4 text-brand-500"></i>
+                <span class="text-sm font-medium">พบตัว</span>
+              </label>
+            </div>
+          </div>
+          <button type="submit" class="btn-primary w-full justify-center py-3 text-base">
+            <i data-lucide="send" class="w-5 h-5"></i>
+            ส่งคำขอจองนัดหมาย
+          </button>
+          <p class="text-xs text-center text-slate-400">ข้อมูลของคุณจะถูกเก็บรักษาเป็นความลับตาม PDPA</p>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section id="faq" class="py-20 bg-slate-50">
+    <div class="max-w-3xl mx-auto px-6">
+      <h2 class="text-3xl font-bold text-slate-800 text-center mb-10">คำถามที่พบบ่อย</h2>
+      <div class="space-y-3">
+        <% const faqs = [
+          { q:'ข้อมูลที่ฉันแชร์จะถูกเก็บเป็นความลับไหม?', a:'ใช่ ข้อมูลทั้งหมดถูกเข้ารหัสและเก็บรักษาตาม พ.ร.บ.คุ้มครองข้อมูลส่วนบุคคล (PDPA) นักให้คำปรึกษาของเราผูกพันด้วยจรรยาบรรณวิชาชีพ' },
+          { q:'ถ้าฉันต้องการยกเลิกหรือเลื่อนนัด ทำอย่างไร?', a:'คุณสามารถยกเลิกหรือเลื่อนนัดได้ก่อน 24 ชั่วโมงโดยไม่มีค่าธรรมเนียม ผ่านระบบออนไลน์หรือโทรติดต่อเจ้าหน้าที่' },
+          { q:'การให้คำปรึกษาออนไลน์มีประสิทธิภาพเท่าการพบตัวไหม?', a:'งานวิจัยพบว่าการให้คำปรึกษาออนไลน์มีประสิทธิภาพใกล้เคียงกัน และสะดวกกว่าสำหรับหลายคน นักให้คำปรึกษาของเราผ่านการฝึกอบรมเฉพาะสำหรับรูปแบบออนไลน์' },
+          { q:'ค่าใช้จ่ายเป็นอย่างไร?', a:'ราคาแตกต่างกันตามนักให้คำปรึกษา เริ่มต้นที่ 800 บาทต่อเซสชัน สามารถดูราคาจากโปรไฟล์ของแต่ละท่านได้เลย' },
+        ] %>
+        <% faqs.forEach((f, i) => { %>
+        <details class="card group cursor-pointer" open="<%= i===0 %>">
+          <summary class="font-medium text-slate-700 flex items-center justify-between list-none">
+            <%= f.q %>
+            <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 flex-shrink-0 group-open:rotate-180 transition-transform"></i>
+          </summary>
+          <p class="mt-3 text-sm text-slate-500 leading-relaxed"><%= f.a %></p>
+        </details>
+        <% }) %>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="bg-slate-800 text-slate-400 py-12">
+    <div class="max-w-6xl mx-auto px-6">
+      <div class="grid md:grid-cols-4 gap-8 mb-8">
+        <div class="md:col-span-2">
+          <div class="flex items-center gap-2 mb-3">
+            <div class="w-7 h-7 rounded-lg bg-gradient-to-br from-brand-500 to-ocean-500 flex items-center justify-center">
+              <i data-lucide="heart-handshake" class="w-4 h-4 text-white"></i>
+            </div>
+            <span class="font-bold text-white">MindWell</span>
+          </div>
+          <p class="text-sm leading-relaxed">ระบบจองนัดหมายการให้คำปรึกษาทางสุขภาพจิต เชื่อมต่อผู้ที่ต้องการความช่วยเหลือกับผู้เชี่ยวชาญที่ไว้วางใจได้</p>
+        </div>
+        <div>
+          <p class="text-white font-medium mb-3">บริการ</p>
+          <ul class="space-y-2 text-sm">
+            <li><a href="#" class="hover:text-brand-400 transition-colors">ค้นหานักให้คำปรึกษา</a></li>
+            <li><a href="#" class="hover:text-brand-400 transition-colors">จองนัดหมาย</a></li>
+            <li><a href="#" class="hover:text-brand-400 transition-colors">ให้คำปรึกษาออนไลน์</a></li>
+          </ul>
+        </div>
+        <div>
+          <p class="text-white font-medium mb-3">ติดต่อ</p>
+          <ul class="space-y-2 text-sm">
+            <li class="flex items-center gap-2"><i data-lucide="mail" class="w-3.5 h-3.5"></i> hello@mindwell.th</li>
+            <li class="flex items-center gap-2"><i data-lucide="phone" class="w-3.5 h-3.5"></i> 02-XXX-XXXX</li>
+            <li class="flex items-center gap-2"><i data-lucide="clock" class="w-3.5 h-3.5"></i> จ–ศ 08:00–20:00 น.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="border-t border-slate-700 pt-6 text-center text-xs">
+        <p>© 2024 MindWell · ข้อมูลทุกอย่างได้รับการคุ้มครองตาม PDPA</p>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    lucide.createIcons();
+  </script>
+</body>
+</html>

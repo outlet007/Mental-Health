@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %> — MindWell Admin</title>
+  <link rel="stylesheet" href="/css/output.css">
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  <style>
+    .tbl { width:100%; border-collapse:collapse; }
+    .tbl thead { background:#f8fafc; }
+    .tbl th { padding:10px 14px; text-align:left; font-size:11px; font-weight:600; color:#64748b; text-transform:uppercase; letter-spacing:.05em; border-bottom:1px solid #f1f5f9; white-space:nowrap; }
+    .tbl td { padding:13px 14px; font-size:13px; color:#334155; border-bottom:1px solid #f8fafc; vertical-align:middle; }
+    .tbl tbody tr:hover { background:#f8fafc; }
+    .tbl tbody tr:last-child td { border-bottom:none; }
+    .act-btn { display:inline-flex; align-items:center; gap:4px; padding:5px 10px; border-radius:8px; font-size:12px; font-weight:500; cursor:pointer; border:none; transition:all .15s; text-decoration:none; white-space:nowrap; }
+    .ab-primary   { background:#05967e; color:#fff; }
+    .ab-primary:hover   { background:#067866; }
+    .ab-secondary { background:#fff; color:#05967e; border:1px solid #a0f3e1; }
+    .ab-secondary:hover { background:#ecfdf9; }
+    .ab-ghost     { background:transparent; color:#64748b; }
+    .ab-ghost:hover     { background:#f1f5f9; }
+    .ab-danger    { background:#ef4444; color:#fff; }
+    .ab-danger:hover    { background:#dc2626; }
+    .panel-overlay { position:fixed; inset:0; background:rgba(0,0,0,.35); z-index:40; display:none; }
+    .panel-drawer  { position:fixed; top:0; right:0; height:100%; width:100%; max-width:440px; background:#fff; box-shadow:-4px 0 32px rgba(0,0,0,.12); z-index:50; display:flex; flex-direction:column; transform:translateX(100%); transition:transform .25s ease; }
+    .panel-drawer.open { transform:translateX(0); }
+    .inp { width:100%; padding:9px 12px; border:1.5px solid #e2e8f0; border-radius:10px; font-size:13px; color:#334155; outline:none; font-family:inherit; box-sizing:border-box; }
+    .inp:focus { border-color:#2dd4b4; box-shadow:0 0 0 3px rgba(45,212,180,.15); }
+    .lbl { display:block; font-size:12px; font-weight:500; color:#64748b; margin-bottom:5px; }
+    .counselor-tab { display:flex; align-items:center; gap:8px; padding:8px 14px; border-radius:10px; border:1.5px solid #e2e8f0; font-size:13px; font-weight:500; color:#64748b; text-decoration:none; transition:all .15s; }
+    .counselor-tab:hover { border-color:#2dd4b4; color:#05967e; background:#ecfdf9; }
+    .counselor-tab.active { border-color:#05967e; background:#ecfdf9; color:#05967e; }
+  </style>
+</head>
+<body style="background:#f8fafc; margin:0;">
+<%- include('../partials/admin-sidebar') %>
+
+<div style="margin-left:256px; min-height:100vh; display:flex; flex-direction:column;">
+
+  <!-- Header -->
+  <div style="height:56px; background:#fff; border-bottom:1px solid #f1f5f9; padding:0 24px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:20;">
+    <h1 style="font-size:15px; font-weight:600; color:#1e293b; margin:0;"><%= title %></h1>
+    <div style="display:flex; align-items:center; gap:12px;">
+      <span style="font-size:12px; color:#94a3b8;">
+        <% const d=new Date(); %><%= d.toLocaleDateString('th-TH',{weekday:'short',year:'numeric',month:'short',day:'numeric'}) %>
+      </span>
+      <button onclick="openPanel('create')" class="act-btn ab-primary">
+        <i data-lucide="calendar-plus" style="width:14px;height:14px;"></i>
+        เพิ่มตารางเวลา
+      </button>
+    </div>
+  </div>
+
+  <div style="padding:24px;">
+
+    <!-- Alerts -->
+    <% if (query.saved) { %>
+    <div style="margin-bottom:16px; padding:12px 16px; background:#ecfdf9; border:1px solid #a0f3e1; border-radius:12px; color:#065f46; font-size:13px; display:flex; align-items:center; gap:8px;">
+      <i data-lucide="check-circle" style="width:16px;height:16px;flex-shrink:0;"></i> บันทึกตารางเวลาสำเร็จ
+    </div>
+    <% } if (query.deleted) { %>
+    <div style="margin-bottom:16px; padding:12px 16px; background:#fef2f2; border:1px solid #fca5a5; border-radius:12px; color:#991b1b; font-size:13px; display:flex; align-items:center; gap:8px;">
+      <i data-lucide="trash-2" style="width:16px;height:16px;flex-shrink:0;"></i> ลบตารางเวลาแล้ว
+    </div>
+    <% } %>
+
+    <!-- Counselor tabs -->
+    <div style="background:#fff; border:1px solid #f1f5f9; border-radius:16px; padding:16px; margin-bottom:16px;">
+      <div style="font-size:12px; font-weight:500; color:#64748b; margin-bottom:12px;">เลือกนักให้คำปรึกษา</div>
+      <div style="display:flex; flex-wrap:wrap; gap:8px;">
+        <% counselors.forEach(c => { %>
+        <a href="/admin/schedules?counselorId=<%= c.id %>"
+           class="counselor-tab <%= selected===c.id ? 'active' : '' %>">
+          <div style="width:26px; height:26px; border-radius:7px; background:linear-gradient(135deg,#2dd4b4,#06b6d4); display:flex; align-items:center; justify-content:center; color:#fff; font-size:11px; font-weight:700; flex-shrink:0;"><%= c.avatar %></div>
+          <%= c.name %>
+          <span style="padding:1px 6px; border-radius:99px; font-size:10px; font-weight:600; background:<%= selected===c.id?'#05967e':'#f1f5f9' %>; color:<%= selected===c.id?'#fff':'#64748b' %>;">
+            <%= mySchedules.filter(s=>s.counselorId===c.id).length || (selected===c.id?mySchedules.length:0) %> วัน
+          </span>
+        </a>
+        <% }) %>
+      </div>
+    </div>
+
+    <!-- Selected counselor info -->
+    <% const currentCounselor = counselors.find(c=>c.id===selected) %>
+    <% if (currentCounselor) { %>
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
+      <div style="display:flex; align-items:center; gap:8px;">
+        <i data-lucide="user-check" style="width:15px;height:15px;color:#05967e;"></i>
+        <span style="font-size:13px; font-weight:600; color:#1e293b;"><%= currentCounselor.name %></span>
+        <span style="font-size:12px; color:#94a3b8;">— <%= currentCounselor.title %></span>
+      </div>
+      <% if (availableDays.length > 0) { %>
+      <button onclick="openPanel('create')" class="act-btn ab-secondary">
+        <i data-lucide="plus" style="width:13px;height:13px;"></i>
+        เพิ่มวัน (<%= availableDays.length %> วันที่ยังไม่ได้เพิ่ม)
+      </button>
+      <% } else { %>
+      <span style="font-size:12px; color:#94a3b8; display:flex; align-items:center; gap:4px;">
+        <i data-lucide="check-circle" style="width:13px;height:13px;color:#05967e;"></i>
+        กำหนดตารางครบทั้ง 7 วันแล้ว
+      </span>
+      <% } %>
+    </div>
+    <% } %>
+
+    <!-- Schedule table -->
+    <div style="background:#fff; border:1px solid #f1f5f9; border-radius:16px; overflow:hidden;">
+      <div style="padding:14px 16px; border-bottom:1px solid #f1f5f9; display:flex; align-items:center; justify-content:space-between;">
+        <span style="font-size:13px; font-weight:600; color:#334155;">ตารางเวลารับนัด</span>
+        <span style="font-size:12px; color:#94a3b8;"><%= mySchedules.length %> วัน / 7 วัน</span>
+      </div>
+      <div style="overflow-x:auto;">
+        <table class="tbl">
+          <thead>
+            <tr>
+              <th>วัน</th>
+              <th>เวลาเริ่ม</th>
+              <th>เวลาสิ้นสุด</th>
+              <th>ช่วงเวลา</th>
+              <th>สถานะ</th>
+              <th>การจัดการ</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% mySchedules.forEach(s => { %>
+            <%
+              const [sh, sm] = s.startTime.split(':').map(Number)
+              const [eh, em] = s.endTime.split(':').map(Number)
+              const totalMin = (eh*60+em) - (sh*60+sm)
+            %>
+            <tr>
+              <td>
+                <div style="display:flex; align-items:center; gap:8px;">
+                  <div style="width:32px; height:32px; border-radius:8px; background:linear-gradient(135deg,#ecfdf9,#ecfeff); border:1px solid #a0f3e1; display:flex; align-items:center; justify-content:center;">
+                    <i data-lucide="calendar-days" style="width:14px;height:14px;color:#05967e;"></i>
+                  </div>
+                  <span style="font-weight:600; color:#1e293b; font-size:14px;"><%= s.dayName %></span>
+                </div>
+              </td>
+              <td>
+                <div style="display:flex; align-items:center; gap:6px;">
+                  <i data-lucide="clock" style="width:13px;height:13px;color:#2dd4b4;"></i>
+                  <span style="font-weight:500; font-size:14px; color:#1e293b;"><%= s.startTime %></span>
+                </div>
+              </td>
+              <td>
+                <div style="display:flex; align-items:center; gap:6px;">
+                  <i data-lucide="clock" style="width:13px;height:13px;color:#64748b;"></i>
+                  <span style="font-weight:500; font-size:14px; color:#1e293b;"><%= s.endTime %></span>
+                </div>
+              </td>
+              <td>
+                <span style="font-size:12px; color:#64748b;">
+                  <% if (totalMin >= 60) { %><%= Math.floor(totalMin/60) %> ชม. <% if(totalMin%60){ %><%= totalMin%60 %> นาที<% } %>
+                  <% } else { %><%= totalMin %> นาที<% } %>
+                </span>
+              </td>
+              <td>
+                <% if (s.isActive) { %>
+                  <span style="display:inline-flex; align-items:center; gap:4px; padding:3px 10px; background:#d1fae5; color:#065f46; border-radius:99px; font-size:11px; font-weight:500;">
+                    <span style="width:6px;height:6px;border-radius:50%;background:#10b981;display:inline-block;"></span> เปิดรับนัด
+                  </span>
+                <% } else { %>
+                  <span style="display:inline-flex; align-items:center; gap:4px; padding:3px 10px; background:#f1f5f9; color:#64748b; border-radius:99px; font-size:11px; font-weight:500;">
+                    <span style="width:6px;height:6px;border-radius:50%;background:#94a3b8;display:inline-block;"></span> ปิดพักตัว
+                  </span>
+                <% } %>
+              </td>
+              <td>
+                <div style="display:flex; align-items:center; gap:6px;">
+                  <button onclick="openPanel('edit', <%- JSON.stringify(s) %>)" class="act-btn ab-secondary">
+                    <i data-lucide="pencil" style="width:13px;height:13px;"></i> แก้ไข
+                  </button>
+                  <form method="POST" action="/admin/schedules/delete"
+                        onsubmit="return confirm('ลบตารางเวลา<%= s.dayName %>ของ<%= currentCounselor ? currentCounselor.name : '' %>?')" style="margin:0;">
+                    <input type="hidden" name="counselorId" value="<%= s.counselorId %>">
+                    <input type="hidden" name="dayOfWeek"   value="<%= s.dayOfWeek %>">
+                    <button type="submit" class="act-btn ab-danger">
+                      <i data-lucide="trash-2" style="width:13px;height:13px;"></i>
+                    </button>
+                  </form>
+                </div>
+              </td>
+            </tr>
+            <% }) %>
+
+            <% if (mySchedules.length === 0) { %>
+            <tr><td colspan="6" style="text-align:center; padding:48px 16px; color:#94a3b8;">
+              <i data-lucide="calendar-x" style="width:36px;height:36px;display:block;margin:0 auto 10px;opacity:.3;"></i>
+              <div style="margin-bottom:12px;">ยังไม่มีตารางเวลาสำหรับนักให้คำปรึกษาท่านนี้</div>
+              <button onclick="openPanel('create')" class="act-btn ab-primary" style="margin:0 auto;">
+                <i data-lucide="plus" style="width:14px;height:14px;"></i> เพิ่มตารางเวลาแรก
+              </button>
+            </td></tr>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Days not yet scheduled (quick-add chips) -->
+    <% if (availableDays.length > 0 && mySchedules.length > 0) { %>
+    <div style="margin-top:16px; background:#fff; border:1px solid #f1f5f9; border-radius:16px; padding:16px;">
+      <div style="font-size:12px; font-weight:600; color:#94a3b8; text-transform:uppercase; letter-spacing:.05em; margin-bottom:10px;">วันที่ยังไม่ได้กำหนด</div>
+      <div style="display:flex; flex-wrap:wrap; gap:8px;">
+        <% availableDays.forEach(day => { %>
+        <button onclick="openPanel('create', {dayOfWeek: <%= day.dayOfWeek %>, dayName: '<%= day.dayName %>'})"
+                class="act-btn ab-ghost"
+                style="border:1.5px dashed #cbd5e1; padding:7px 14px;">
+          <i data-lucide="plus" style="width:12px;height:12px;"></i>
+          <%= day.dayName %>
+        </button>
+        <% }) %>
+      </div>
+    </div>
+    <% } %>
+
+  </div>
+</div>
+
+<!-- Overlay -->
+<div id="overlay" class="panel-overlay" onclick="closePanel()"></div>
+
+<!-- Slide-over Panel -->
+<div id="panel" class="panel-drawer">
+  <div style="padding:16px 20px; border-bottom:1px solid #f1f5f9; display:flex; align-items:center; justify-content:space-between;">
+    <div style="display:flex; align-items:center; gap:10px;">
+      <div style="width:32px; height:32px; border-radius:8px; background:linear-gradient(135deg,#05967e,#06b6d4); display:flex; align-items:center; justify-content:center;">
+        <i id="panelIcon" data-lucide="calendar-plus" style="width:15px;height:15px;color:#fff;"></i>
+      </div>
+      <div>
+        <div id="panelTitle" style="font-size:14px; font-weight:600; color:#1e293b;">เพิ่มตารางเวลา</div>
+        <div id="panelSub"   style="font-size:11px; color:#94a3b8;">กำหนดวันและเวลารับนัด</div>
+      </div>
+    </div>
+    <button onclick="closePanel()" style="background:none; border:none; cursor:pointer; padding:6px; border-radius:8px; color:#94a3b8;">
+      <i data-lucide="x" style="width:18px;height:18px;"></i>
+    </button>
+  </div>
+
+  <div style="flex:1; overflow-y:auto; padding:24px;">
+    <form id="panelForm" method="POST" action="/admin/schedules/save">
+      <div style="display:grid; gap:18px;">
+
+        <!-- นักให้คำปรึกษา -->
+        <div>
+          <label class="lbl">นักให้คำปรึกษา *</label>
+          <select name="counselorId" id="f_counselorId" class="inp" required>
+            <% counselors.forEach(c => { %>
+            <option value="<%= c.id %>" <%=c.id===selected?'selected':''%>><%= c.name %></option>
+            <% }) %>
+          </select>
+        </div>
+
+        <!-- วัน -->
+        <div>
+          <label class="lbl">วัน *</label>
+          <select name="dayOfWeek" id="f_dayOfWeek" class="inp" required>
+            <option value="">— เลือกวัน —</option>
+            <% ['อาทิตย์','จันทร์','อังคาร','พุธ','พฤหัสบดี','ศุกร์','เสาร์'].forEach((name, i) => { %>
+            <option value="<%= i %>"><%= name %></option>
+            <% }) %>
+          </select>
+          <div id="dayWarning" style="display:none; margin-top:6px; padding:8px 12px; background:#fef3c7; border:1px solid #fde68a; border-radius:8px; font-size:11px; color:#92400e;">
+            <i data-lucide="alert-triangle" style="width:12px;height:12px;display:inline;margin-right:4px;"></i>
+            วันนี้มีตารางอยู่แล้ว — การบันทึกจะ<strong>แทนที่ข้อมูลเดิม</strong>
+          </div>
+        </div>
+
+        <!-- เวลา -->
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+          <div>
+            <label class="lbl">เวลาเริ่ม *</label>
+            <input type="time" name="startTime" id="f_startTime" class="inp" value="09:00" required>
+          </div>
+          <div>
+            <label class="lbl">เวลาสิ้นสุด *</label>
+            <input type="time" name="endTime" id="f_endTime" class="inp" value="17:00" required>
+          </div>
+        </div>
+
+        <!-- Duration preview -->
+        <div id="durationPreview" style="padding:12px 16px; background:#f8fafc; border-radius:10px; border:1px solid #f1f5f9; display:flex; align-items:center; gap:10px;">
+          <i data-lucide="clock" style="width:16px;height:16px;color:#2dd4b4; flex-shrink:0;"></i>
+          <div>
+            <div style="font-size:11px; color:#94a3b8; margin-bottom:2px;">ระยะเวลาทำงานรวม</div>
+            <div id="durationText" style="font-size:14px; font-weight:600; color:#1e293b;">8 ชั่วโมง</div>
+          </div>
+        </div>
+
+        <!-- สถานะ -->
+        <div>
+          <label class="lbl">สถานะการรับนัด</label>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+            <label style="display:flex; align-items:flex-start; gap:10px; padding:12px; border:1.5px solid #a0f3e1; border-radius:10px; cursor:pointer; background:#ecfdf9;">
+              <input type="radio" name="isActive" value="true" id="r_open" checked style="margin-top:2px; accent-color:#05967e;">
+              <div>
+                <div style="font-size:13px; font-weight:500; color:#1e293b;">เปิดรับนัด</div>
+                <div style="font-size:11px; color:#64748b;">ผู้รับบริการจองได้</div>
+              </div>
+            </label>
+            <label style="display:flex; align-items:flex-start; gap:10px; padding:12px; border:1.5px solid #e2e8f0; border-radius:10px; cursor:pointer;">
+              <input type="radio" name="isActive" value="false" id="r_close" style="margin-top:2px; accent-color:#64748b;">
+              <div>
+                <div style="font-size:13px; font-weight:500; color:#1e293b;">ปิดพักตัว</div>
+                <div style="font-size:11px; color:#64748b;">ไม่รับนัดชั่วคราว</div>
+              </div>
+            </label>
+          </div>
+        </div>
+
+      </div>
+    </form>
+  </div>
+
+  <div style="padding:16px 20px; border-top:1px solid #f1f5f9; display:flex; gap:10px;">
+    <button onclick="closePanel()" class="act-btn ab-ghost" style="flex:1; justify-content:center; border:1px solid #e2e8f0;">ยกเลิก</button>
+    <button onclick="submitPanel()" class="act-btn ab-primary" style="flex:1; justify-content:center;">
+      <i data-lucide="save" style="width:14px;height:14px;"></i>
+      <span id="submitLabel">บันทึกตารางเวลา</span>
+    </button>
+  </div>
+</div>
+
+<script>
+  // Pass current schedules to JS so we can warn on duplicate day
+  const MY_SCHEDULES = <%- JSON.stringify(mySchedules) %>
+  const SELECTED_ID  = '<%= selected %>'
+
+  function openPanel(mode, data) {
+    // Reset
+    document.getElementById('panelForm').reset()
+    document.getElementById('dayWarning').style.display = 'none'
+    document.getElementById('f_startTime').value = '09:00'
+    document.getElementById('f_endTime').value   = '17:00'
+    document.getElementById('r_open').checked    = true
+    updateDuration()
+
+    if (mode === 'create') {
+      document.getElementById('panelTitle').textContent = 'เพิ่มตารางเวลา'
+      document.getElementById('panelSub').textContent   = 'กำหนดวันและเวลารับนัด'
+      document.getElementById('panelIcon').setAttribute('data-lucide','calendar-plus')
+      document.getElementById('submitLabel').textContent = 'บันทึกตารางเวลา'
+      document.getElementById('f_counselorId').value    = SELECTED_ID
+      if (data && data.dayOfWeek !== undefined) {
+        document.getElementById('f_dayOfWeek').value = data.dayOfWeek
+        checkDayConflict()
+      }
+    } else {
+      // edit mode
+      document.getElementById('panelTitle').textContent = 'แก้ไขตารางเวลา'
+      document.getElementById('panelSub').textContent   = data.dayName
+      document.getElementById('panelIcon').setAttribute('data-lucide','pencil')
+      document.getElementById('submitLabel').textContent = 'บันทึกการแก้ไข'
+      document.getElementById('f_counselorId').value    = data.counselorId
+      document.getElementById('f_dayOfWeek').value      = data.dayOfWeek
+      document.getElementById('f_startTime').value      = data.startTime
+      document.getElementById('f_endTime').value        = data.endTime
+      document.getElementById(data.isActive ? 'r_open' : 'r_close').checked = true
+      updateDuration()
+    }
+
+    lucide.createIcons()
+    document.getElementById('overlay').style.display = 'block'
+    document.getElementById('panel').classList.add('open')
+    document.body.style.overflow = 'hidden'
+  }
+
+  function closePanel() {
+    document.getElementById('overlay').style.display = 'none'
+    document.getElementById('panel').classList.remove('open')
+    document.body.style.overflow = ''
+  }
+
+  function submitPanel() {
+    const f = document.getElementById('panelForm')
+    if (f.reportValidity()) f.submit()
+  }
+
+  function checkDayConflict() {
+    const counselorId = document.getElementById('f_counselorId').value
+    const dayOfWeek   = parseInt(document.getElementById('f_dayOfWeek').value)
+    const conflict    = MY_SCHEDULES.some(
+      s => s.counselorId === counselorId && s.dayOfWeek === dayOfWeek
+    )
+    document.getElementById('dayWarning').style.display = conflict ? 'block' : 'none'
+    if(conflict) lucide.createIcons()
+  }
+
+  function updateDuration() {
+    const start = document.getElementById('f_startTime').value
+    const end   = document.getElementById('f_endTime').value
+    if (!start || !end) return
+    const [sh,sm] = start.split(':').map(Number)
+    const [eh,em] = end.split(':').map(Number)
+    const total = (eh*60+em) - (sh*60+sm)
+    let text = ''
+    if (total <= 0) { text = '⚠ เวลาสิ้นสุดต้องมากกว่าเวลาเริ่ม'; }
+    else {
+      const h = Math.floor(total/60), m = total%60
+      text = h ? `${h} ชั่วโมง${m ? ' '+m+' นาที' : ''}` : `${m} นาที`
+    }
+    document.getElementById('durationText').textContent = text
+  }
+
+  // Event listeners
+  document.getElementById('f_startTime').addEventListener('change', updateDuration)
+  document.getElementById('f_endTime').addEventListener('change', updateDuration)
+  document.getElementById('f_dayOfWeek').addEventListener('change', checkDayConflict)
+  document.addEventListener('keydown', e => { if(e.key==='Escape') closePanel() })
+
+  lucide.createIcons()
+</script>
+</body>
+</html>

@@ -1,0 +1,184 @@
+<%
+  const layout = `
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${title} — MindWell Admin</title>
+  <link rel="stylesheet" href="/css/output.css">
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"><\/script>
+</head>
+<body class="bg-slate-50">`;
+%>
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %> — MindWell Admin</title>
+  <link rel="stylesheet" href="/css/output.css">
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+</head>
+<body class="bg-slate-50">
+
+<%- include('../partials/admin-sidebar') %>
+
+<div class="ml-64 min-h-screen flex flex-col">
+  <header class="h-14 bg-white border-b border-slate-100 px-6 flex items-center justify-between sticky top-0 z-20">
+    <h1 class="font-semibold text-slate-800"><%= title %></h1>
+    <span class="text-xs text-slate-400">
+      <% const d = new Date(); %>
+      <%= d.toLocaleDateString('th-TH', { weekday:'long', year:'numeric', month:'long', day:'numeric' }) %>
+    </span>
+  </header>
+
+  <main class="flex-1 p-6">
+
+    <!-- Stat cards -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div class="stat-card">
+        <div class="w-10 h-10 rounded-xl bg-brand-100 flex items-center justify-center flex-shrink-0">
+          <i data-lucide="user-check" class="w-5 h-5 text-brand-600"></i>
+        </div>
+        <div>
+          <p class="text-2xl font-bold text-slate-800"><%= stats.totalCounselors %></p>
+          <p class="text-xs text-slate-500">นักให้คำปรึกษา</p>
+          <% if (stats.pendingApproval > 0) { %>
+          <p class="text-xs text-amber-600 font-medium mt-0.5">รออนุมัติ <%= stats.pendingApproval %> คน</p>
+          <% } %>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="w-10 h-10 rounded-xl bg-ocean-100 flex items-center justify-center flex-shrink-0">
+          <i data-lucide="users" class="w-5 h-5 text-ocean-600"></i>
+        </div>
+        <div>
+          <p class="text-2xl font-bold text-slate-800"><%= stats.totalClients %></p>
+          <p class="text-xs text-slate-500">ผู้รับบริการทั้งหมด</p>
+          <p class="text-xs text-brand-600 font-medium mt-0.5">ใช้งานอยู่ <%= stats.activeClients %> คน</p>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center flex-shrink-0">
+          <i data-lucide="calendar-check" class="w-5 h-5 text-purple-600"></i>
+        </div>
+        <div>
+          <p class="text-2xl font-bold text-slate-800"><%= stats.totalAppointments %></p>
+          <p class="text-xs text-slate-500">นัดหมายทั้งหมด</p>
+          <p class="text-xs text-amber-600 font-medium mt-0.5">รอยืนยัน <%= stats.pendingAppointments %> รายการ</p>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center flex-shrink-0">
+          <i data-lucide="banknote" class="w-5 h-5 text-emerald-600"></i>
+        </div>
+        <div>
+          <p class="text-2xl font-bold text-slate-800">฿<%= stats.revenue.toLocaleString() %></p>
+          <p class="text-xs text-slate-500">รายได้รวม</p>
+          <p class="text-xs text-slate-400 mt-0.5">จากการให้คำปรึกษา</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid lg:grid-cols-3 gap-6">
+      <!-- Recent appointments -->
+      <div class="lg:col-span-2 card">
+        <div class="flex items-center justify-between mb-5">
+          <h2 class="font-semibold text-slate-700 flex items-center gap-2">
+            <i data-lucide="calendar-clock" class="w-4 h-4 text-brand-500"></i>
+            นัดหมายล่าสุด
+          </h2>
+          <a href="/admin/appointments" class="text-xs text-brand-600 hover:underline">ดูทั้งหมด →</a>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full">
+            <thead>
+              <tr class="border-b border-slate-100">
+                <th class="table-th">ผู้รับบริการ</th>
+                <th class="table-th">นักให้คำปรึกษา</th>
+                <th class="table-th">วันที่</th>
+                <th class="table-th">สถานะ</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-50">
+              <% recentAppointments.forEach(a => { %>
+              <tr class="hover:bg-slate-50 transition-colors">
+                <td class="table-td font-medium text-slate-800"><%= a.clientName %></td>
+                <td class="table-td text-slate-500 text-xs"><%= a.counselorName %></td>
+                <td class="table-td text-slate-500 text-xs"><%= a.date %> <%= a.time %></td>
+                <td class="table-td">
+                  <% const badge = { pending:'badge-yellow', confirmed:'badge-blue', completed:'badge-green', cancelled:'badge-red' } %>
+                  <% const label = { pending:'รอยืนยัน', confirmed:'ยืนยันแล้ว', completed:'เสร็จสิ้น', cancelled:'ยกเลิก' } %>
+                  <span class="<%= badge[a.status] %>"><%= label[a.status] %></span>
+                </td>
+              </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Quick actions -->
+      <div class="space-y-4">
+        <div class="card">
+          <h2 class="font-semibold text-slate-700 mb-4 flex items-center gap-2">
+            <i data-lucide="zap" class="w-4 h-4 text-brand-500"></i>
+            เมนูด่วน
+          </h2>
+          <div class="space-y-2">
+            <a href="/admin/counselors?status=pending" class="flex items-center gap-3 p-3 rounded-xl bg-amber-50 hover:bg-amber-100 transition-colors">
+              <i data-lucide="user-check" class="w-4 h-4 text-amber-600"></i>
+              <div>
+                <p class="text-sm font-medium text-amber-800">อนุมัตินักให้คำปรึกษา</p>
+                <p class="text-xs text-amber-600">รออนุมัติ <%= stats.pendingApproval %> คน</p>
+              </div>
+            </a>
+            <a href="/admin/appointments?status=pending" class="flex items-center gap-3 p-3 rounded-xl bg-brand-50 hover:bg-brand-100 transition-colors">
+              <i data-lucide="calendar-clock" class="w-4 h-4 text-brand-600"></i>
+              <div>
+                <p class="text-sm font-medium text-brand-800">ยืนยันนัดหมาย</p>
+                <p class="text-xs text-brand-600">รอยืนยัน <%= stats.pendingAppointments %> รายการ</p>
+              </div>
+            </a>
+            <a href="/admin/schedules" class="flex items-center gap-3 p-3 rounded-xl bg-ocean-50 hover:bg-ocean-100 transition-colors">
+              <i data-lucide="clock" class="w-4 h-4 text-ocean-600"></i>
+              <div>
+                <p class="text-sm font-medium text-ocean-800">จัดการตารางเวลา</p>
+                <p class="text-xs text-ocean-600">ตั้งค่าความพร้อมของนักให้คำปรึกษา</p>
+              </div>
+            </a>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2 class="font-semibold text-slate-700 mb-3 flex items-center gap-2">
+            <i data-lucide="bar-chart-2" class="w-4 h-4 text-brand-500"></i>
+            สรุปสถิติ
+          </h2>
+          <div class="space-y-3">
+            <div class="flex justify-between items-center text-sm">
+              <span class="text-slate-500">อัตราการยืนยัน</span>
+              <span class="font-semibold text-slate-700">78%</span>
+            </div>
+            <div class="w-full bg-slate-100 rounded-full h-1.5">
+              <div class="bg-brand-500 h-1.5 rounded-full" style="width:78%"></div>
+            </div>
+            <div class="flex justify-between items-center text-sm">
+              <span class="text-slate-500">ความพึงพอใจ</span>
+              <span class="font-semibold text-slate-700">96%</span>
+            </div>
+            <div class="w-full bg-slate-100 rounded-full h-1.5">
+              <div class="bg-ocean-500 h-1.5 rounded-full" style="width:96%"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>lucide.createIcons();</script>
+</body>
+</html>

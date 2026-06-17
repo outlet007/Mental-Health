@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %> — MindWell Admin</title>
+  <link rel="stylesheet" href="/css/output.css">
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  <style>
+    .tbl { width:100%; border-collapse:collapse; }
+    .tbl thead { background:#f8fafc; }
+    .tbl th { padding:10px 14px; text-align:left; font-size:11px; font-weight:600; color:#64748b; text-transform:uppercase; letter-spacing:.05em; border-bottom:1px solid #f1f5f9; white-space:nowrap; }
+    .tbl td { padding:12px 14px; font-size:13px; color:#334155; border-bottom:1px solid #f8fafc; vertical-align:middle; }
+    .tbl tbody tr:hover { background:#f8fafc; }
+    .tbl tbody tr:last-child td { border-bottom:none; }
+    .act-btn { display:inline-flex; align-items:center; gap:4px; padding:5px 10px; border-radius:8px; font-size:12px; font-weight:500; cursor:pointer; border:none; transition:all .15s; white-space:nowrap; }
+    .act-btn-primary   { background:#05967e; color:#fff; }
+    .act-btn-primary:hover { background:#067866; }
+    .act-btn-secondary { background:#fff; color:#05967e; border:1px solid #a0f3e1; }
+    .act-btn-secondary:hover { background:#ecfdf9; }
+    .act-btn-ghost  { background:transparent; color:#64748b; }
+    .act-btn-ghost:hover  { background:#f1f5f9; }
+    .act-btn-danger { background:#ef4444; color:#fff; }
+    .act-btn-danger:hover { background:#dc2626; }
+    .act-btn-warn   { background:#f59e0b; color:#fff; }
+    .act-btn-warn:hover   { background:#d97706; }
+    .panel-overlay { position:fixed; inset:0; background:rgba(0,0,0,.35); z-index:40; display:none; }
+    .panel-drawer  { position:fixed; top:0; right:0; height:100%; width:100%; max-width:480px; background:#fff; box-shadow:-4px 0 32px rgba(0,0,0,.12); z-index:50; display:flex; flex-direction:column; transform:translateX(100%); transition:transform .25s ease; }
+    .panel-drawer.open { transform:translateX(0); }
+    .inp { width:100%; padding:9px 12px; border:1.5px solid #e2e8f0; border-radius:10px; font-size:13px; color:#334155; outline:none; font-family:inherit; box-sizing:border-box; }
+    .inp:focus { border-color:#2dd4b4; box-shadow:0 0 0 3px rgba(45,212,180,.15); }
+    .lbl { display:block; font-size:12px; font-weight:500; color:#64748b; margin-bottom:5px; }
+  </style>
+</head>
+<body style="background:#f8fafc; margin:0;">
+<%- include('../partials/admin-sidebar') %>
+
+<div style="margin-left:256px; min-height:100vh; display:flex; flex-direction:column;">
+
+  <!-- Header -->
+  <div style="height:56px; background:#fff; border-bottom:1px solid #f1f5f9; padding:0 24px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:20;">
+    <h1 style="font-size:15px; font-weight:600; color:#1e293b; margin:0;"><%= title %></h1>
+    <div style="display:flex; align-items:center; gap:12px;">
+      <span style="font-size:12px; color:#94a3b8;">
+        <% const d=new Date(); %><%= d.toLocaleDateString('th-TH',{weekday:'short',year:'numeric',month:'short',day:'numeric'}) %>
+      </span>
+      <button onclick="openPanel('create')" class="act-btn act-btn-primary">
+        <i data-lucide="user-plus" style="width:14px;height:14px;"></i>
+        เพิ่มนักให้คำปรึกษา
+      </button>
+    </div>
+  </div>
+
+  <div style="padding:24px;">
+
+    <!-- Alerts -->
+    <% if (query.created) { %>
+    <div style="margin-bottom:16px; padding:12px 16px; background:#ecfdf9; border:1px solid #a0f3e1; border-radius:12px; color:#065f46; font-size:13px; display:flex; align-items:center; gap:8px;">
+      <i data-lucide="check-circle" style="width:16px;height:16px;flex-shrink:0;"></i> เพิ่มนักให้คำปรึกษาสำเร็จ
+    </div>
+    <% } if (query.updated) { %>
+    <div style="margin-bottom:16px; padding:12px 16px; background:#ecfeff; border:1px solid #a5f3fc; border-radius:12px; color:#155e75; font-size:13px; display:flex; align-items:center; gap:8px;">
+      <i data-lucide="check-circle" style="width:16px;height:16px;flex-shrink:0;"></i> อัปเดตข้อมูลสำเร็จ
+    </div>
+    <% } if (query.error==='duplicate_email') { %>
+    <div style="margin-bottom:16px; padding:12px 16px; background:#fef2f2; border:1px solid #fca5a5; border-radius:12px; color:#991b1b; font-size:13px; display:flex; align-items:center; gap:8px;">
+      <i data-lucide="alert-circle" style="width:16px;height:16px;flex-shrink:0;"></i> อีเมลนี้มีในระบบแล้ว
+    </div>
+    <% } %>
+
+    <!-- Filter -->
+    <form method="GET" style="background:#fff; border:1px solid #f1f5f9; border-radius:16px; padding:16px; margin-bottom:16px; display:flex; flex-wrap:wrap; gap:12px; align-items:flex-end;">
+      <div style="flex:1; min-width:200px;">
+        <label class="lbl">ค้นหา</label>
+        <div style="position:relative;">
+          <i data-lucide="search" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);width:14px;height:14px;color:#94a3b8;"></i>
+          <input name="search" value="<%= query.search||'' %>" class="inp" style="padding-left:32px;" placeholder="ชื่อ, อีเมล, ความเชี่ยวชาญ">
+        </div>
+      </div>
+      <div>
+        <label class="lbl">สถานะ</label>
+        <select name="status" class="inp" style="width:140px;">
+          <option value="">ทั้งหมด</option>
+          <option value="active"   <%=query.status==='active'?'selected':''%>>ใช้งาน</option>
+          <option value="inactive" <%=query.status==='inactive'?'selected':''%>>ระงับ</option>
+          <option value="pending"  <%=query.status==='pending'?'selected':''%>>รออนุมัติ</option>
+        </select>
+      </div>
+      <button type="submit" class="act-btn act-btn-primary">
+        <i data-lucide="filter" style="width:13px;height:13px;"></i> กรอง
+      </button>
+      <a href="/admin/counselors" class="act-btn act-btn-ghost" style="text-decoration:none;">ล้าง</a>
+    </form>
+
+    <!-- Table -->
+    <div style="background:#fff; border:1px solid #f1f5f9; border-radius:16px; overflow:hidden;">
+      <div style="padding:14px 16px; border-bottom:1px solid #f1f5f9; display:flex; align-items:center; justify-content:space-between;">
+        <span style="font-size:13px; font-weight:600; color:#334155;">รายชื่อนักให้คำปรึกษา</span>
+        <span style="font-size:12px; color:#94a3b8;">ทั้งหมด <%= counselors.length %> คน</span>
+      </div>
+      <div style="overflow-x:auto;">
+        <table class="tbl">
+          <thead>
+            <tr>
+              <th>นักให้คำปรึกษา</th>
+              <th>ความเชี่ยวชาญ</th>
+              <th>ค่าบริการ</th>
+              <th>เวลา/ครั้ง</th>
+              <th>เรตติ้ง</th>
+              <th>สถานะ</th>
+              <th>การจัดการ</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% counselors.forEach(c => { %>
+            <tr>
+              <td>
+                <div style="display:flex; align-items:center; gap:10px;">
+                  <div style="width:38px; height:38px; border-radius:10px; background:linear-gradient(135deg,#2dd4b4,#06b6d4); display:flex; align-items:center; justify-content:center; color:#fff; font-weight:700; font-size:13px; flex-shrink:0;">
+                    <%= c.avatar %>
+                  </div>
+                  <div>
+                    <div style="font-weight:600; color:#1e293b; font-size:13px;"><%= c.name %></div>
+                    <div style="font-size:11px; color:#94a3b8;"><%= c.title %></div>
+                    <div style="font-size:11px; color:#94a3b8;"><%= c.email %></div>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <div style="display:flex; flex-wrap:wrap; gap:4px;">
+                  <% c.specialties.slice(0,2).forEach(s => { %>
+                  <span style="padding:2px 8px; background:#ecfeff; color:#0e7490; border-radius:99px; font-size:11px; font-weight:500;"><%= s %></span>
+                  <% }) %>
+                  <% if(c.specialties.length>2){ %><span style="padding:2px 8px; background:#f1f5f9; color:#64748b; border-radius:99px; font-size:11px;">+<%= c.specialties.length-2 %></span><% } %>
+                </div>
+                <div style="font-size:11px; color:#94a3b8; margin-top:3px;"><%= (c.languages||[]).join(', ') %></div>
+              </td>
+              <td style="font-weight:600; color:#05967e;">฿<%= c.fee.toLocaleString() %></td>
+              <td style="color:#64748b;"><%= c.sessionDuration %> นาที</td>
+              <td>
+                <% if (c.rating > 0) { %>
+                <div style="display:flex; align-items:center; gap:4px;">
+                  <i data-lucide="star" style="width:13px;height:13px;color:#f59e0b;fill:#f59e0b;"></i>
+                  <span style="font-weight:600; font-size:13px;"><%= c.rating %></span>
+                  <span style="font-size:11px; color:#94a3b8;">(<%= c.reviewCount %>)</span>
+                </div>
+                <% } else { %><span style="font-size:11px; color:#94a3b8;">ยังไม่มี</span><% } %>
+              </td>
+              <td>
+                <% if (!c.isApproved) { %>
+                  <span style="padding:3px 10px; background:#fef3c7; color:#92400e; border-radius:99px; font-size:11px; font-weight:500;">รออนุมัติ</span>
+                <% } else if (c.status==='active') { %>
+                  <span style="padding:3px 10px; background:#d1fae5; color:#065f46; border-radius:99px; font-size:11px; font-weight:500;">ใช้งาน</span>
+                <% } else { %>
+                  <span style="padding:3px 10px; background:#fee2e2; color:#991b1b; border-radius:99px; font-size:11px; font-weight:500;">ระงับ</span>
+                <% } %>
+              </td>
+              <td>
+                <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+
+                  <button onclick="openPanel('edit', <%- JSON.stringify(c) %>)" class="act-btn act-btn-ghost" title="แก้ไขข้อมูล">
+                    <i data-lucide="pencil" style="width:13px;height:13px;"></i> แก้ไข
+                  </button>
+
+                  <% if (!c.isApproved) { %>
+                  <form method="POST" action="/admin/counselors/<%= c.id %>/approve" style="margin:0;">
+                    <button type="submit" class="act-btn act-btn-primary">
+                      <i data-lucide="check" style="width:12px;height:12px;"></i> อนุมัติ
+                    </button>
+                  </form>
+                  <% } else { %>
+                  <form method="POST" action="/admin/counselors/<%= c.id %>/toggle-status" style="margin:0;">
+                    <button type="submit" class="act-btn <%= c.status==='active'?'act-btn-warn':'act-btn-secondary' %>">
+                      <i data-lucide="<%= c.status==='active'?'pause':'play' %>" style="width:12px;height:12px;"></i>
+                      <%= c.status==='active'?'ระงับ':'เปิดใช้' %>
+                    </button>
+                  </form>
+                  <% } %>
+
+                  <form method="POST" action="/admin/counselors/<%= c.id %>/delete"
+                        onsubmit="return confirm('ลบ <%= c.name %> ออกจากระบบ?')" style="margin:0;">
+                    <button type="submit" class="act-btn act-btn-danger" title="ลบ">
+                      <i data-lucide="trash-2" style="width:12px;height:12px;"></i>
+                    </button>
+                  </form>
+
+                </div>
+              </td>
+            </tr>
+            <% }) %>
+            <% if (counselors.length===0) { %>
+            <tr><td colspan="7" style="text-align:center; padding:48px; color:#94a3b8;">
+              <i data-lucide="user-x" style="width:36px;height:36px;display:block;margin:0 auto 8px;opacity:.4;"></i>
+              ไม่พบข้อมูลนักให้คำปรึกษา
+            </td></tr>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Overlay -->
+<div id="overlay" class="panel-overlay" onclick="closePanel()"></div>
+
+<!-- Slide-over Panel -->
+<div id="panel" class="panel-drawer">
+  <div style="padding:16px 20px; border-bottom:1px solid #f1f5f9; display:flex; align-items:center; justify-content:space-between;">
+    <div style="display:flex; align-items:center; gap:10px;">
+      <div style="width:32px; height:32px; border-radius:8px; background:linear-gradient(135deg,#0fb89a,#06b6d4); display:flex; align-items:center; justify-content:center;">
+        <i id="panelIcon" data-lucide="user-plus" style="width:15px;height:15px;color:#fff;"></i>
+      </div>
+      <div>
+        <div id="panelTitle" style="font-size:14px; font-weight:600; color:#1e293b;">เพิ่มนักให้คำปรึกษา</div>
+        <div id="panelSub"   style="font-size:11px; color:#94a3b8;">กรอกข้อมูลให้ครบถ้วน</div>
+      </div>
+    </div>
+    <button onclick="closePanel()" style="background:none; border:none; cursor:pointer; padding:6px; border-radius:8px; color:#94a3b8;">
+      <i data-lucide="x" style="width:18px;height:18px;"></i>
+    </button>
+  </div>
+
+  <div style="flex:1; overflow-y:auto;">
+    <form id="panelForm" method="POST" action="/admin/counselors/create">
+
+      <div style="padding:20px; border-bottom:1px solid #f8fafc;">
+        <div style="font-size:11px; font-weight:600; color:#94a3b8; text-transform:uppercase; letter-spacing:.05em; margin-bottom:14px;">ข้อมูลส่วนตัว</div>
+        <div style="display:grid; gap:12px;">
+          <div>
+            <label class="lbl">ชื่อ-นามสกุล *</label>
+            <input type="text" name="name" id="f_name" class="inp" required placeholder="ดร.สมชาย ใจดี">
+          </div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+            <div>
+              <label class="lbl">ตำแหน่ง / คุณวุฒิ *</label>
+              <input type="text" name="title" id="f_title" class="inp" required placeholder="นักจิตวิทยาคลินิก">
+            </div>
+            <div>
+              <label class="lbl">เบอร์โทรศัพท์</label>
+              <input type="tel" name="phone" id="f_phone" class="inp" placeholder="08X-XXX-XXXX">
+            </div>
+          </div>
+          <div>
+            <label class="lbl">อีเมล *</label>
+            <input type="email" name="email" id="f_email" class="inp" required placeholder="name@mindwell.th">
+          </div>
+          <div>
+            <label class="lbl">ประวัติย่อ</label>
+            <textarea name="bio" id="f_bio" rows="3" class="inp" style="resize:none;" placeholder="ประสบการณ์และความเชี่ยวชาญ..."></textarea>
+          </div>
+        </div>
+      </div>
+
+      <div style="padding:20px; border-bottom:1px solid #f8fafc;">
+        <div style="font-size:11px; font-weight:600; color:#94a3b8; text-transform:uppercase; letter-spacing:.05em; margin-bottom:14px;">ความเชี่ยวชาญ</div>
+        <div style="display:grid; gap:12px;">
+          <div>
+            <label class="lbl">ความเชี่ยวชาญ <span style="font-weight:400; color:#94a3b8;">(คั่นด้วยจุลภาค)</span></label>
+            <input type="text" name="specialties" id="f_specialties" class="inp" placeholder="ความวิตกกังวล, ภาวะซึมเศร้า, ความสัมพันธ์">
+          </div>
+          <div>
+            <label class="lbl">ภาษาที่สื่อสารได้ <span style="font-weight:400; color:#94a3b8;">(คั่นด้วยจุลภาค)</span></label>
+            <input type="text" name="languages" id="f_languages" class="inp" placeholder="ไทย, อังกฤษ">
+          </div>
+        </div>
+      </div>
+
+      <div style="padding:20px; border-bottom:1px solid #f8fafc;">
+        <div style="font-size:11px; font-weight:600; color:#94a3b8; text-transform:uppercase; letter-spacing:.05em; margin-bottom:14px;">ค่าบริการ</div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+          <div>
+            <label class="lbl">ค่าบริการ (บาท/ครั้ง) *</label>
+            <input type="number" name="fee" id="f_fee" class="inp" required min="0" placeholder="1000">
+          </div>
+          <div>
+            <label class="lbl">ระยะเวลาต่อครั้ง</label>
+            <select name="sessionDuration" id="f_sessionDuration" class="inp">
+              <option value="30">30 นาที</option>
+              <option value="45">45 นาที</option>
+              <option value="60" selected>60 นาที</option>
+              <option value="90">90 นาที</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div id="approveSection" style="padding:20px;">
+        <div style="font-size:11px; font-weight:600; color:#94a3b8; text-transform:uppercase; letter-spacing:.05em; margin-bottom:14px;">สถานะการอนุมัติ</div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+          <label style="display:flex; align-items:flex-start; gap:10px; padding:12px; border:1.5px solid #a0f3e1; border-radius:10px; cursor:pointer; background:#ecfdf9;">
+            <input type="radio" name="isApproved" value="true" checked style="margin-top:2px; accent-color:#05967e;">
+            <div>
+              <div style="font-size:13px; font-weight:500; color:#1e293b;">อนุมัติทันที</div>
+              <div style="font-size:11px; color:#64748b;">แสดงในหน้าค้นหา</div>
+            </div>
+          </label>
+          <label style="display:flex; align-items:flex-start; gap:10px; padding:12px; border:1.5px solid #e2e8f0; border-radius:10px; cursor:pointer;">
+            <input type="radio" name="isApproved" value="false" style="margin-top:2px; accent-color:#f59e0b;">
+            <div>
+              <div style="font-size:13px; font-weight:500; color:#1e293b;">รออนุมัติ</div>
+              <div style="font-size:11px; color:#64748b;">ซ่อนจากหน้าค้นหา</div>
+            </div>
+          </label>
+        </div>
+      </div>
+
+    </form>
+  </div>
+
+  <div style="padding:16px 20px; border-top:1px solid #f1f5f9; display:flex; gap:10px;">
+    <button onclick="closePanel()" class="act-btn act-btn-secondary" style="flex:1; justify-content:center;">ยกเลิก</button>
+    <button onclick="submitPanel()" class="act-btn act-btn-primary" style="flex:1; justify-content:center;">
+      <i data-lucide="save" style="width:14px;height:14px;"></i>
+      <span id="submitLabel">บันทึก</span>
+    </button>
+  </div>
+</div>
+
+<script>
+  const ALL_COUNSELORS = <%- JSON.stringify(allCounselors) %>
+
+  function openPanel(mode, data) {
+    document.getElementById('panelForm').reset()
+    document.getElementById('approveSection').style.display = mode==='create' ? '' : 'none'
+    if (mode==='create') {
+      document.getElementById('panelTitle').textContent = 'เพิ่มนักให้คำปรึกษา'
+      document.getElementById('panelSub').textContent   = 'กรอกข้อมูลให้ครบถ้วน'
+      document.getElementById('panelIcon').setAttribute('data-lucide','user-plus')
+      document.getElementById('submitLabel').textContent = 'เพิ่มนักให้คำปรึกษา'
+      document.getElementById('panelForm').action = '/admin/counselors/create'
+    } else {
+      document.getElementById('panelTitle').textContent = 'แก้ไขข้อมูล'
+      document.getElementById('panelSub').textContent   = data.name
+      document.getElementById('panelIcon').setAttribute('data-lucide','pencil')
+      document.getElementById('submitLabel').textContent = 'บันทึกการแก้ไข'
+      document.getElementById('panelForm').action = '/admin/counselors/'+data.id+'/edit'
+      document.getElementById('f_name').value            = data.name||''
+      document.getElementById('f_title').value           = data.title||''
+      document.getElementById('f_email').value           = data.email||''
+      document.getElementById('f_phone').value           = data.phone||''
+      document.getElementById('f_bio').value             = data.bio||''
+      document.getElementById('f_specialties').value     = (data.specialties||[]).join(', ')
+      document.getElementById('f_languages').value       = (data.languages||[]).join(', ')
+      document.getElementById('f_fee').value             = data.fee||''
+      document.getElementById('f_sessionDuration').value = String(data.sessionDuration||60)
+    }
+    lucide.createIcons()
+    document.getElementById('overlay').style.display='block'
+    document.getElementById('panel').classList.add('open')
+    document.body.style.overflow='hidden'
+  }
+  function closePanel() {
+    document.getElementById('overlay').style.display='none'
+    document.getElementById('panel').classList.remove('open')
+    document.body.style.overflow=''
+  }
+  function submitPanel() {
+    const f=document.getElementById('panelForm')
+    if(f.reportValidity()) f.submit()
+  }
+  document.addEventListener('keydown', e=>{ if(e.key==='Escape') closePanel() })
+  lucide.createIcons()
+</script>
+</body>
+</html>

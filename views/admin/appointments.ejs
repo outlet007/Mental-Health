@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %> — MindWell Admin</title>
+  <link rel="stylesheet" href="/css/output.css">
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  <style>
+    .tbl { width:100%; border-collapse:collapse; }
+    .tbl thead { background:#f8fafc; }
+    .tbl th { padding:10px 14px; text-align:left; font-size:11px; font-weight:600; color:#64748b; text-transform:uppercase; letter-spacing:.05em; border-bottom:1px solid #f1f5f9; white-space:nowrap; }
+    .tbl td { padding:12px 14px; font-size:13px; color:#334155; border-bottom:1px solid #f8fafc; vertical-align:middle; }
+    .tbl tbody tr:hover { background:#f8fafc; }
+    .tbl tbody tr:last-child td { border-bottom:none; }
+    .act-btn { display:inline-flex; align-items:center; gap:4px; padding:5px 10px; border-radius:8px; font-size:12px; font-weight:500; cursor:pointer; border:none; transition:all .15s; text-decoration:none; white-space:nowrap; }
+    .ab-primary   { background:#05967e; color:#fff; }
+    .ab-primary:hover   { background:#067866; }
+    .ab-secondary { background:#fff; color:#05967e; border:1px solid #a0f3e1; }
+    .ab-secondary:hover { background:#ecfdf9; }
+    .ab-ghost     { background:transparent; color:#64748b; }
+    .ab-ghost:hover     { background:#f1f5f9; }
+    .ab-danger    { background:#ef4444; color:#fff; }
+    .ab-danger:hover    { background:#dc2626; }
+    .ab-warn      { background:#f59e0b; color:#fff; }
+    .ab-warn:hover      { background:#d97706; }
+    .panel-overlay { position:fixed; inset:0; background:rgba(0,0,0,.35); z-index:40; display:none; }
+    .panel-drawer  { position:fixed; top:0; right:0; height:100%; width:100%; max-width:540px; background:#fff; box-shadow:-4px 0 32px rgba(0,0,0,.12); z-index:50; display:flex; flex-direction:column; transform:translateX(100%); transition:transform .25s ease; }
+    .panel-drawer.open { transform:translateX(0); }
+    .inp { width:100%; padding:9px 12px; border:1.5px solid #e2e8f0; border-radius:10px; font-size:13px; color:#334155; outline:none; font-family:inherit; box-sizing:border-box; }
+    .inp:focus { border-color:#2dd4b4; box-shadow:0 0 0 3px rgba(45,212,180,.15); }
+    .lbl { display:block; font-size:12px; font-weight:500; color:#64748b; margin-bottom:5px; }
+    .counselor-card { display:flex; align-items:center; gap:10px; padding:12px; border:1.5px solid #e2e8f0; border-radius:12px; cursor:pointer; transition:all .15s; }
+    .counselor-card:hover { border-color:#2dd4b4; background:#ecfdf9; }
+    .counselor-card.selected { border-color:#05967e; background:#ecfdf9; }
+    .slot-btn { padding:8px; border:1.5px solid #e2e8f0; border-radius:8px; font-size:12px; font-weight:500; color:#334155; cursor:pointer; background:#fff; transition:all .15s; }
+    .slot-btn:hover:not(:disabled) { border-color:#2dd4b4; background:#ecfdf9; color:#065f46; }
+    .slot-btn.selected { border-color:#05967e; background:#05967e; color:#fff; }
+    .slot-btn:disabled { opacity:.4; cursor:not-allowed; text-decoration:line-through; }
+  </style>
+</head>
+<body style="background:#f8fafc; margin:0;">
+<%- include('../partials/admin-sidebar') %>
+
+<div style="margin-left:256px; min-height:100vh; display:flex; flex-direction:column;">
+
+  <!-- Header -->
+  <div style="height:56px; background:#fff; border-bottom:1px solid #f1f5f9; padding:0 24px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:20;">
+    <h1 style="font-size:15px; font-weight:600; color:#1e293b; margin:0;"><%= title %></h1>
+    <div style="display:flex; align-items:center; gap:12px;">
+      <span style="font-size:12px; color:#94a3b8;">
+        <% const d=new Date(); %><%= d.toLocaleDateString('th-TH',{weekday:'short',year:'numeric',month:'short',day:'numeric'}) %>
+      </span>
+      <button onclick="openPanel()" class="act-btn ab-primary">
+        <i data-lucide="calendar-plus" style="width:14px;height:14px;"></i>
+        สร้างนัดหมาย
+      </button>
+    </div>
+  </div>
+
+  <div style="padding:24px;">
+
+    <!-- Alerts -->
+    <% if (query.created) { %>
+    <div style="margin-bottom:16px; padding:12px 16px; background:#ecfdf9; border:1px solid #a0f3e1; border-radius:12px; color:#065f46; font-size:13px; display:flex; align-items:center; gap:8px;">
+      <i data-lucide="check-circle" style="width:16px;height:16px;flex-shrink:0;"></i> สร้างนัดหมายสำเร็จ
+    </div>
+    <% } if (query.error==='conflict') { %>
+    <div style="margin-bottom:16px; padding:12px 16px; background:#fef2f2; border:1px solid #fca5a5; border-radius:12px; color:#991b1b; font-size:13px; display:flex; align-items:center; gap:8px;">
+      <i data-lucide="alert-circle" style="width:16px;height:16px;flex-shrink:0;"></i> ช่วงเวลานี้ถูกจองแล้ว กรุณาเลือกเวลาอื่น
+    </div>
+    <% } %>
+
+    <!-- Filter -->
+    <form method="GET" style="background:#fff; border:1px solid #f1f5f9; border-radius:16px; padding:16px; margin-bottom:16px; display:flex; flex-wrap:wrap; gap:12px; align-items:flex-end;">
+      <div style="flex:1; min-width:200px;">
+        <label class="lbl">ค้นหา</label>
+        <div style="position:relative;">
+          <i data-lucide="search" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);width:14px;height:14px;color:#94a3b8;"></i>
+          <input name="search" value="<%= query.search||'' %>" class="inp" style="padding-left:32px;" placeholder="ชื่อผู้รับบริการ หรือนักให้คำปรึกษา">
+        </div>
+      </div>
+      <div>
+        <label class="lbl">นักให้คำปรึกษา</label>
+        <select name="counselorId" class="inp" style="width:180px;">
+          <option value="">ทั้งหมด</option>
+          <% counselors.forEach(c => { %><option value="<%= c.id %>" <%=query.counselorId===c.id?'selected':''%>><%= c.name %></option><% }) %>
+        </select>
+      </div>
+      <div>
+        <label class="lbl">สถานะ</label>
+        <select name="status" class="inp" style="width:140px;">
+          <option value="">ทั้งหมด</option>
+          <option value="pending"   <%=query.status==='pending'?'selected':''%>>รอยืนยัน</option>
+          <option value="confirmed" <%=query.status==='confirmed'?'selected':''%>>ยืนยันแล้ว</option>
+          <option value="completed" <%=query.status==='completed'?'selected':''%>>เสร็จสิ้น</option>
+          <option value="cancelled" <%=query.status==='cancelled'?'selected':''%>>ยกเลิก</option>
+        </select>
+      </div>
+      <div>
+        <label class="lbl">รูปแบบ</label>
+        <select name="type" class="inp" style="width:120px;">
+          <option value="">ทั้งหมด</option>
+          <option value="online" <%=query.type==='online'?'selected':''%>>ออนไลน์</option>
+          <option value="onsite" <%=query.type==='onsite'?'selected':''%>>พบตัว</option>
+        </select>
+      </div>
+      <button type="submit" class="act-btn ab-primary">
+        <i data-lucide="filter" style="width:13px;height:13px;"></i> กรอง
+      </button>
+      <a href="/admin/appointments" class="act-btn ab-ghost">ล้าง</a>
+    </form>
+
+    <!-- Table -->
+    <div style="background:#fff; border:1px solid #f1f5f9; border-radius:16px; overflow:hidden;">
+      <div style="padding:14px 16px; border-bottom:1px solid #f1f5f9; display:flex; align-items:center; justify-content:space-between;">
+        <span style="font-size:13px; font-weight:600; color:#334155;">รายการนัดหมาย</span>
+        <span style="font-size:12px; color:#94a3b8;">ทั้งหมด <%= appointments.length %> รายการ</span>
+      </div>
+      <div style="overflow-x:auto;">
+        <table class="tbl">
+          <thead>
+            <tr>
+              <th>ผู้รับบริการ</th>
+              <th>นักให้คำปรึกษา</th>
+              <th>วันที่ / เวลา</th>
+              <th>รูปแบบ</th>
+              <th>ระยะเวลา</th>
+              <th>ค่าบริการ</th>
+              <th>สถานะ</th>
+              <th>การจัดการ</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% appointments.forEach(a => {
+              const statusColor = {
+                pending:   {bg:'#fef3c7', color:'#92400e'},
+                confirmed: {bg:'#dbeafe', color:'#1e40af'},
+                completed: {bg:'#d1fae5', color:'#065f46'},
+                cancelled: {bg:'#fee2e2', color:'#991b1b'},
+              }[a.status] || {bg:'#f1f5f9', color:'#64748b'}
+              const statusLabel = {
+                pending:'รอยืนยัน', confirmed:'ยืนยันแล้ว', completed:'เสร็จสิ้น', cancelled:'ยกเลิก'
+              }[a.status] || a.status
+            %>
+            <tr>
+              <td>
+                <div style="font-weight:500; color:#1e293b; font-size:13px;"><%= a.clientName %></div>
+              </td>
+              <td>
+                <div style="font-size:13px; color:#334155;"><%= a.counselorName %></div>
+              </td>
+              <td>
+                <div style="font-size:13px; font-weight:500; color:#1e293b;"><%= a.date %></div>
+                <div style="font-size:11px; color:#94a3b8;"><%= a.time %> น.</div>
+              </td>
+              <td>
+                <% if(a.type==='online') { %>
+                <div style="display:flex; align-items:center; gap:4px;">
+                  <i data-lucide="video" style="width:13px;height:13px;color:#0891b2;"></i>
+                  <span style="font-size:12px; color:#0891b2;">ออนไลน์</span>
+                </div>
+                <% } else { %>
+                <div style="display:flex; align-items:center; gap:4px;">
+                  <i data-lucide="map-pin" style="width:13px;height:13px;color:#05967e;"></i>
+                  <span style="font-size:12px; color:#05967e;">พบตัว</span>
+                </div>
+                <% } %>
+              </td>
+              <td style="font-size:12px; color:#64748b;"><%= a.duration %> นาที</td>
+              <td style="font-weight:600; font-size:13px; color:#05967e;">฿<%= a.fee.toLocaleString() %></td>
+              <td>
+                <span style="padding:3px 10px; background:<%= statusColor.bg %>; color:<%= statusColor.color %>; border-radius:99px; font-size:11px; font-weight:500;">
+                  <%= statusLabel %>
+                </span>
+              </td>
+              <td>
+                <div style="display:flex; align-items:center; gap:5px; flex-wrap:wrap;">
+                  <% if (a.status==='pending') { %>
+                    <form method="POST" action="/admin/appointments/<%= a.id %>/confirm" style="margin:0;">
+                      <button type="submit" class="act-btn ab-primary">
+                        <i data-lucide="check" style="width:12px;height:12px;"></i> ยืนยัน
+                      </button>
+                    </form>
+                    <form method="POST" action="/admin/appointments/<%= a.id %>/cancel" style="margin:0;">
+                      <button type="submit" class="act-btn ab-danger">
+                        <i data-lucide="x" style="width:12px;height:12px;"></i> ปฏิเสธ
+                      </button>
+                    </form>
+                  <% } else if (a.status==='confirmed') { %>
+                    <form method="POST" action="/admin/appointments/<%= a.id %>/complete" style="margin:0;">
+                      <button type="submit" class="act-btn ab-secondary">
+                        <i data-lucide="check-check" style="width:12px;height:12px;"></i> เสร็จสิ้น
+                      </button>
+                    </form>
+                    <form method="POST" action="/admin/appointments/<%= a.id %>/cancel" style="margin:0;">
+                      <button type="submit" class="act-btn ab-ghost" style="color:#ef4444;" title="ยกเลิก">
+                        <i data-lucide="x-circle" style="width:13px;height:13px;"></i>
+                      </button>
+                    </form>
+                  <% } else { %>
+                    <span style="font-size:11px; color:#94a3b8;">—</span>
+                  <% } %>
+                </div>
+                <% if(a.note) { %>
+                <div style="font-size:11px; color:#94a3b8; margin-top:3px; font-style:italic; max-width:180px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="<%= a.note %>">
+                  "<%= a.note %>"
+                </div>
+                <% } %>
+              </td>
+            </tr>
+            <% }) %>
+            <% if (appointments.length===0) { %>
+            <tr><td colspan="8" style="text-align:center; padding:48px 16px; color:#94a3b8;">
+              <i data-lucide="calendar-x" style="width:36px;height:36px;display:block;margin:0 auto 10px;opacity:.3;"></i>
+              ไม่พบนัดหมายที่ตรงกับเงื่อนไข
+            </td></tr>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Overlay -->
+<div id="overlay" class="panel-overlay" onclick="closePanel()"></div>
+
+<!-- Slide-over: สร้างนัดหมาย -->
+<div id="panel" class="panel-drawer">
+  <div style="padding:16px 20px; border-bottom:1px solid #f1f5f9; display:flex; align-items:center; justify-content:space-between;">
+    <div style="display:flex; align-items:center; gap:10px;">
+      <div style="width:32px; height:32px; border-radius:8px; background:linear-gradient(135deg,#05967e,#06b6d4); display:flex; align-items:center; justify-content:center;">
+        <i data-lucide="calendar-plus" style="width:15px;height:15px;color:#fff;"></i>
+      </div>
+      <div>
+        <div style="font-size:14px; font-weight:600; color:#1e293b;">สร้างนัดหมายใหม่</div>
+        <div style="font-size:11px; color:#94a3b8;">กรอกข้อมูลให้ครบทุกขั้นตอน</div>
+      </div>
+    </div>
+    <button onclick="closePanel()" style="background:none; border:none; cursor:pointer; padding:6px; border-radius:8px; color:#94a3b8;">
+      <i data-lucide="x" style="width:18px;height:18px;"></i>
+    </button>
+  </div>
+
+  <div style="flex:1; overflow-y:auto;">
+    <form method="POST" action="/admin/appointments/create" id="createForm">
+
+      <!-- STEP 1 -->
+      <div style="padding:20px; border-bottom:1px solid #f8fafc;">
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:14px;">
+          <div style="width:22px; height:22px; border-radius:50%; background:#05967e; color:#fff; font-size:11px; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0;">1</div>
+          <span style="font-size:13px; font-weight:600; color:#1e293b;">เลือกนักให้คำปรึกษา</span>
+        </div>
+        <div style="display:grid; gap:8px;" id="counselorList">
+          <% counselors.forEach(c => { %>
+          <label class="counselor-card" id="card_<%= c.id %>">
+            <input type="radio" name="counselorId" value="<%= c.id %>"
+                   data-fee="<%= c.fee %>" data-duration="<%= c.sessionDuration %>" data-name="<%= c.name %>"
+                   style="accent-color:#05967e;" onchange="onCounselorChange(this)" required>
+            <div style="width:38px; height:38px; border-radius:10px; background:linear-gradient(135deg,#2dd4b4,#0ea5e9); display:flex; align-items:center; justify-content:center; color:#fff; font-weight:700; font-size:13px; flex-shrink:0;">
+              <%= c.avatar %>
+            </div>
+            <div style="flex:1; min-width:0;">
+              <div style="font-weight:600; font-size:13px; color:#1e293b;"><%= c.name %></div>
+              <div style="font-size:11px; color:#94a3b8;"><%= c.title %></div>
+              <div style="display:flex; flex-wrap:wrap; gap:3px; margin-top:4px;">
+                <% c.specialties.slice(0,2).forEach(s => { %>
+                <span style="padding:1px 8px; background:#dbeafe; color:#1e40af; border-radius:99px; font-size:10px;"><%= s %></span>
+                <% }) %>
+              </div>
+            </div>
+            <div style="text-align:right; flex-shrink:0;">
+              <div style="font-size:13px; font-weight:700; color:#05967e;">฿<%= c.fee.toLocaleString() %></div>
+              <div style="font-size:10px; color:#94a3b8;"><%= c.sessionDuration %> นาที</div>
+            </div>
+          </label>
+          <% }) %>
+        </div>
+      </div>
+
+      <!-- STEP 2 -->
+      <div style="padding:20px; border-bottom:1px solid #f8fafc;">
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:14px;">
+          <div style="width:22px; height:22px; border-radius:50%; background:#05967e; color:#fff; font-size:11px; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0;">2</div>
+          <span style="font-size:13px; font-weight:600; color:#1e293b;">เลือกวันที่และเวลา</span>
+        </div>
+
+        <div style="margin-bottom:14px;">
+          <label class="lbl">วันที่นัดหมาย</label>
+          <input type="date" name="date" id="dateInput"
+                 min="<%= new Date().toISOString().split('T')[0] %>"
+                 class="inp" onchange="loadSlots()" required disabled>
+          <div id="dateHint" style="font-size:11px; color:#94a3b8; margin-top:5px;">
+            กรุณาเลือกนักให้คำปรึกษาก่อน
+          </div>
+        </div>
+
+        <div id="availableDays" style="display:none; margin-bottom:14px;">
+          <div style="font-size:11px; font-weight:500; color:#64748b; margin-bottom:6px;">วันที่เปิดรับนัด</div>
+          <div id="dayBadges" style="display:flex; flex-wrap:wrap; gap:6px;"></div>
+        </div>
+
+        <div id="slotLoading" style="display:none; font-size:13px; color:#94a3b8; padding:8px 0;">
+          กำลังโหลดช่วงเวลา...
+        </div>
+
+        <div id="slotSection" style="display:none;">
+          <label class="lbl">เลือกเวลา *</label>
+          <div id="slotGrid" style="display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-top:6px;"></div>
+          <input type="hidden" name="time" id="timeInput" required>
+          <div id="slotMsg" style="display:none; font-size:11px; color:#94a3b8; margin-top:6px;"></div>
+        </div>
+      </div>
+
+      <!-- STEP 3 -->
+      <div style="padding:20px;">
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:14px;">
+          <div style="width:22px; height:22px; border-radius:50%; background:#05967e; color:#fff; font-size:11px; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0;">3</div>
+          <span style="font-size:13px; font-weight:600; color:#1e293b;">ข้อมูลเพิ่มเติม</span>
+        </div>
+
+        <div style="display:grid; gap:14px;">
+          <div>
+            <label class="lbl">ผู้รับบริการ *</label>
+            <select name="clientId" class="inp" required>
+              <option value="">— เลือกผู้รับบริการ —</option>
+              <% clients.forEach(c => { %>
+              <option value="<%= c.id %>"><%= c.name %> (<%= c.email %>)</option>
+              <% }) %>
+            </select>
+          </div>
+
+          <div>
+            <label class="lbl">รูปแบบการให้คำปรึกษา</label>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+              <label style="display:flex; align-items:center; gap:8px; padding:10px; border:1.5px solid #a5f3fc; border-radius:10px; cursor:pointer; background:#ecfeff;">
+                <input type="radio" name="type" value="online" checked style="accent-color:#0891b2;">
+                <i data-lucide="video" style="width:14px;height:14px;color:#0891b2;flex-shrink:0;"></i>
+                <span style="font-size:13px; font-weight:500; color:#1e293b;">ออนไลน์</span>
+              </label>
+              <label style="display:flex; align-items:center; gap:8px; padding:10px; border:1.5px solid #e2e8f0; border-radius:10px; cursor:pointer;">
+                <input type="radio" name="type" value="onsite" style="accent-color:#05967e;">
+                <i data-lucide="map-pin" style="width:14px;height:14px;color:#05967e;flex-shrink:0;"></i>
+                <span style="font-size:13px; font-weight:500; color:#1e293b;">พบตัว</span>
+              </label>
+            </div>
+          </div>
+
+          <div>
+            <label class="lbl">หมายเหตุ (ถ้ามี)</label>
+            <textarea name="note" rows="2" class="inp" style="resize:none;"
+                      placeholder="เช่น ครั้งแรก, ติดตามอาการ ฯลฯ"></textarea>
+          </div>
+
+          <div id="feeSummary" style="display:none; padding:14px; background:#ecfdf9; border:1px solid #a0f3e1; border-radius:12px;">
+            <div style="font-size:11px; font-weight:600; color:#64748b; margin-bottom:10px; text-transform:uppercase; letter-spacing:.05em;">สรุปการนัดหมาย</div>
+            <div style="display:flex; justify-content:space-between; font-size:13px; margin-bottom:6px;">
+              <span style="color:#64748b;">นักให้คำปรึกษา</span>
+              <span id="summCounselor" style="font-weight:500; color:#1e293b;"></span>
+            </div>
+            <div style="display:flex; justify-content:space-between; font-size:13px; margin-bottom:8px;">
+              <span style="color:#64748b;">วันเวลา</span>
+              <span id="summDateTime" style="font-weight:500; color:#1e293b;"></span>
+            </div>
+            <div style="display:flex; justify-content:space-between; font-size:14px; padding-top:8px; border-top:1px solid #a0f3e1;">
+              <span style="font-weight:600; color:#334155;">ค่าบริการ</span>
+              <span id="summFee" style="font-weight:700; color:#05967e; font-size:16px;"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <div style="padding:16px 20px; border-top:1px solid #f1f5f9; display:flex; gap:10px;">
+    <button onclick="closePanel()" class="act-btn ab-secondary" style="flex:1; justify-content:center;">ยกเลิก</button>
+    <button onclick="submitForm()" class="act-btn ab-primary" style="flex:1; justify-content:center;">
+      <i data-lucide="calendar-check" style="width:14px;height:14px;"></i>
+      ยืนยันนัดหมาย
+    </button>
+  </div>
+</div>
+
+<script>
+  const SCHEDULES = <%- JSON.stringify(schedules) %>
+  let selectedCounselor = null
+  let selectedTime      = null
+
+  function openPanel() {
+    document.getElementById('overlay').style.display = 'block'
+    document.getElementById('panel').classList.add('open')
+    document.body.style.overflow = 'hidden'
+  }
+  function closePanel() {
+    document.getElementById('overlay').style.display = 'none'
+    document.getElementById('panel').classList.remove('open')
+    document.body.style.overflow = ''
+  }
+  document.addEventListener('keydown', e => { if(e.key==='Escape') closePanel() })
+
+  function onCounselorChange(radio) {
+    selectedCounselor = { id:radio.value, fee:parseInt(radio.dataset.fee), duration:parseInt(radio.dataset.duration), name:radio.dataset.name }
+    document.querySelectorAll('.counselor-card').forEach(el => {
+      const r = el.querySelector('input')
+      el.classList.toggle('selected', r && r.value===radio.value)
+    })
+    const di = document.getElementById('dateInput')
+    di.disabled = false
+    di.value = ''
+    document.getElementById('dateHint').style.display = 'none'
+    const mySched = SCHEDULES.filter(s => s.counselorId===radio.value && s.isActive)
+    document.getElementById('dayBadges').innerHTML = mySched.map(s =>
+      `<span style="padding:3px 10px; background:#dbeafe; color:#1e40af; border-radius:99px; font-size:11px;">${s.dayName} ${s.startTime}–${s.endTime}</span>`
+    ).join('')
+    document.getElementById('availableDays').style.display = 'block'
+    resetSlots()
+    document.getElementById('feeSummary').style.display = 'none'
+  }
+
+  async function loadSlots() {
+    const date = document.getElementById('dateInput').value
+    if (!date || !selectedCounselor) return
+    resetSlots()
+    document.getElementById('slotLoading').style.display = 'block'
+    const resp = await fetch(`/admin/appointments/slots?counselorId=${selectedCounselor.id}&date=${date}`)
+    const { slots } = await resp.json()
+    document.getElementById('slotLoading').style.display = 'none'
+    document.getElementById('slotSection').style.display = 'block'
+    const grid = document.getElementById('slotGrid')
+    const msg  = document.getElementById('slotMsg')
+    if (!slots.length) {
+      msg.textContent = 'นักให้คำปรึกษาไม่มีตารางเวลาในวันนี้'
+      msg.style.display = 'block'
+      return
+    }
+    grid.innerHTML = slots.map(s => `
+      <button type="button" class="slot-btn" onclick="selectSlot(this,'${s.time}')" ${!s.available?'disabled':''}>
+        ${s.time}
+      </button>`
+    ).join('')
+  }
+
+  function selectSlot(btn, time) {
+    selectedTime = time
+    document.getElementById('timeInput').value = time
+    document.querySelectorAll('.slot-btn').forEach(b => b.classList.remove('selected'))
+    btn.classList.add('selected')
+    updateSummary()
+  }
+
+  function resetSlots() {
+    selectedTime = null
+    document.getElementById('timeInput').value = ''
+    document.getElementById('slotGrid').innerHTML = ''
+    document.getElementById('slotSection').style.display = 'none'
+    document.getElementById('slotMsg').style.display = 'none'
+  }
+
+  function updateSummary() {
+    if (!selectedCounselor || !selectedTime) return
+    const date = document.getElementById('dateInput').value
+    if (!date) return
+    const dateStr = new Date(date).toLocaleDateString('th-TH', { weekday:'short', day:'numeric', month:'short', year:'numeric' })
+    document.getElementById('summCounselor').textContent = selectedCounselor.name
+    document.getElementById('summDateTime').textContent  = `${dateStr} ${selectedTime} น.`
+    document.getElementById('summFee').textContent       = `฿${selectedCounselor.fee.toLocaleString()}`
+    document.getElementById('feeSummary').style.display  = 'block'
+  }
+
+  function submitForm() {
+    const form = document.getElementById('createForm')
+    if (!form.reportValidity()) return
+    if (!selectedTime) { alert('กรุณาเลือกเวลานัดหมาย'); return }
+    form.submit()
+  }
+
+  lucide.createIcons()
+</script>
+</body>
+</html>

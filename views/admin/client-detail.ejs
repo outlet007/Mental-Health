@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %> — MindWell Admin</title>
+  <link rel="stylesheet" href="/css/output.css">
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+</head>
+<body class="bg-slate-50">
+<%- include('../partials/admin-sidebar') %>
+<div class="ml-64 min-h-screen flex flex-col">
+  <header class="h-14 bg-white border-b border-slate-100 px-6 flex items-center gap-3 sticky top-0 z-20">
+    <a href="/admin/clients" class="btn-ghost p-2"><i data-lucide="arrow-left" class="w-4 h-4"></i></a>
+    <h1 class="font-semibold text-slate-800"><%= title %></h1>
+  </header>
+  <main class="flex-1 p-6">
+    <div class="grid lg:grid-cols-3 gap-6">
+
+      <!-- Profile card -->
+      <div class="space-y-4">
+        <div class="card text-center">
+          <div class="w-20 h-20 rounded-2xl bg-gradient-to-br from-ocean-400 to-brand-500 flex items-center justify-center text-white font-bold text-2xl mx-auto mb-4">
+            <%= client.name.substring(client.name.length-2) %>
+          </div>
+          <h2 class="font-bold text-slate-800 text-lg"><%= client.name %></h2>
+          <p class="text-sm text-slate-500 mb-3"><%= client.age %> ปี · <%= client.gender %></p>
+          <% if (client.status==='active') { %><span class="badge-green">ใช้งาน</span>
+          <% } else { %><span class="badge-gray">ไม่ได้ใช้งาน</span><% } %>
+        </div>
+
+        <div class="card space-y-4">
+          <h3 class="font-semibold text-slate-700 text-sm">ข้อมูลติดต่อ</h3>
+          <div class="space-y-3">
+            <div class="flex items-center gap-2 text-sm">
+              <i data-lucide="mail" class="w-4 h-4 text-slate-400 flex-shrink-0"></i>
+              <span class="text-slate-600"><%= client.email %></span>
+            </div>
+            <div class="flex items-center gap-2 text-sm">
+              <i data-lucide="phone" class="w-4 h-4 text-slate-400 flex-shrink-0"></i>
+              <span class="text-slate-600"><%= client.phone %></span>
+            </div>
+            <div class="flex items-center gap-2 text-sm">
+              <i data-lucide="calendar" class="w-4 h-4 text-slate-400 flex-shrink-0"></i>
+              <span class="text-slate-600">ลงทะเบียน <%= client.registeredAt %></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3 class="font-semibold text-slate-700 text-sm mb-4">สรุปการรับบริการ</h3>
+          <div class="grid grid-cols-2 gap-3">
+            <div class="text-center p-3 bg-brand-50 rounded-xl">
+              <p class="text-2xl font-bold text-brand-700"><%= client.totalSessions %></p>
+              <p class="text-xs text-brand-500">ครั้งทั้งหมด</p>
+            </div>
+            <div class="text-center p-3 bg-ocean-50 rounded-xl">
+              <p class="text-2xl font-bold text-ocean-700"><%= appointments.filter(a=>a.status==='completed').length %></p>
+              <p class="text-xs text-ocean-500">เสร็จสิ้น</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Appointment history -->
+      <div class="lg:col-span-2 card">
+        <h3 class="font-semibold text-slate-700 mb-4 flex items-center gap-2">
+          <i data-lucide="history" class="w-4 h-4 text-brand-500"></i>
+          ประวัตินัดหมาย
+        </h3>
+        <% if (appointments.length===0) { %>
+        <div class="text-center py-12 text-slate-400">
+          <i data-lucide="calendar-x" class="w-8 h-8 mx-auto mb-2 opacity-40"></i>
+          <p class="text-sm">ยังไม่มีประวัตินัดหมาย</p>
+        </div>
+        <% } else { %>
+        <div class="space-y-3">
+          <% appointments.forEach(a => { %>
+          <%
+            const statusBadge={pending:'badge-yellow',confirmed:'badge-blue',completed:'badge-green',cancelled:'badge-red'}
+            const statusLabel={pending:'รอยืนยัน',confirmed:'ยืนยันแล้ว',completed:'เสร็จสิ้น',cancelled:'ยกเลิก'}
+          %>
+          <div class="flex items-center gap-4 p-4 rounded-xl border border-slate-100 hover:border-brand-200 hover:bg-brand-50/30 transition-colors">
+            <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 <%= a.type==='online'?'bg-ocean-100':'bg-brand-100' %>">
+              <i data-lucide="<%= a.type==='online'?'video':'map-pin' %>" class="w-5 h-5 <%= a.type==='online'?'text-ocean-600':'text-brand-600' %>"></i>
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="font-medium text-slate-800 text-sm"><%= a.counselorName %></p>
+              <p class="text-xs text-slate-400"><%= a.date %> เวลา <%= a.time %> · <%= a.duration %> นาที · ฿<%= a.fee.toLocaleString() %></p>
+            </div>
+            <span class="<%= statusBadge[a.status] %>"><%= statusLabel[a.status] %></span>
+          </div>
+          <% }) %>
+        </div>
+        <% } %>
+      </div>
+    </div>
+  </main>
+</div>
+<script>lucide.createIcons();</script>
+</body>
+</html>
