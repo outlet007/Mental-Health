@@ -2,13 +2,38 @@ const express = require('express')
 const router  = express.Router()
 const fs      = require('fs')
 const path    = require('path')
+const multer  = require('multer')
+const bcrypt  = require('bcryptjs')
 
-const dataFile = path.join(__dirname, '../../../data/counselors.json')
+const dataFile   = path.join(__dirname, '../../../data/counselors.json')
+const uploadDir  = path.join(__dirname, '../../../public/uploads/counselors')
+
+const storage = multer.diskStorage({
+  destination: uploadDir,
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase()
+    cb(null, Date.now() + ext)
+  },
+})
+const upload = multer({
+  storage,
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    const ok = /jpeg|jpg|png|webp/.test(path.extname(file.originalname).toLowerCase())
+    cb(ok ? null : new Error('รองรับเฉพาะไฟล์รูปภาพ'), ok)
+  },
+})
 
 function readData()    { return JSON.parse(fs.readFileSync(dataFile, 'utf8')) }
 function writeData(d)  { fs.writeFileSync(dataFile, JSON.stringify(d, null, 2)) }
 function parseArr(str) { return (str || '').split(',').map(s => s.trim()).filter(Boolean) }
 function initials(name){ const parts = name.trim().split(' '); return parts.map(p => p[0]).join('').toUpperCase().slice(0,2) }
+
+function deletePhoto(photoPath) {
+  if (!photoPath) return
+  const abs = path.join(__dirname, '../../../public', photoPath)
+  if (fs.existsSync(abs)) fs.unlinkSync(abs)
+}
 
 // ── LIST ──────────────────────────────────────────────────────────────────────
 router.get('/', (req, res) => {
@@ -27,14 +52,19 @@ router.get('/', (req, res) => {
 })
 
 // ── CREATE ────────────────────────────────────────────────────────────────────
-router.post('/create', (req, res) => {
-  const { name, title, email, phone, bio, specialties, languages, sessionDuration, isApproved } = req.body
+router.post('/create', upload.single('photo'), async (req, res) => {
+  const { username, password, name, title, email, phone, bio, specialties, languages, sessionDuration, isApproved } = req.body
   const data = readData()
 
-  if (data.some(c => c.email === email)) return res.redirect('/admin/counselors?error=duplicate_email')
+  if (data.some(c => c.email === email)) {
+    if (req.file) fs.unlinkSync(req.file.path)
+    return res.redirect('/admin/counselors?error=duplicate_email')
+  }
 
   const newId = 'c' + Date.now().toString().slice(-6)
-  data.push({
+  const photo = req.file ? '/uploads/counselors/' + req.file.filename : null
+
+  const record = {
     id:              newId,
     name:            name.trim(),
     title:           title.trim(),
@@ -49,18 +79,34 @@ router.post('/create', (req, res) => {
     status:          isApproved === 'true' ? 'active' : 'pending',
     isApproved:      isApproved === 'true',
     avatar:          initials(name),
+    photo:           photo,
     createdAt:       new Date().toISOString().split('T')[0],
-  })
+  }
+
+  if (username && username.trim()) {
+    record.username = username.trim().toLowerCase()
+    if (password && password.trim()) {
+      record.password = await bcrypt.hash(password.trim(), 10)
+    }
+  }
+
+  data.push(record)
   writeData(data)
   res.redirect('/admin/counselors?created=1')
 })
 
 // ── EDIT ──────────────────────────────────────────────────────────────────────
-router.post('/:id/edit', (req, res) => {
-  const { name, title, email, phone, bio, specialties, languages, sessionDuration } = req.body
+router.post('/:id/edit', upload.single('photo'), async (req, res) => {
+  const { username, password, name, title, email, phone, bio, specialties, languages, sessionDuration } = req.body
   const data = readData()
   const idx  = data.findIndex(c => c.id === req.params.id)
   if (idx === -1) return res.redirect('/admin/counselors')
+
+  let photo = data[idx].photo || null
+  if (req.file) {
+    deletePhoto(data[idx].photo)
+    photo = '/uploads/counselors/' + req.file.filename
+  }
 
   data[idx] = {
     ...data[idx],
@@ -73,7 +119,12 @@ router.post('/:id/edit', (req, res) => {
     languages:       parseArr(languages),
     sessionDuration: parseInt(sessionDuration) || data[idx].sessionDuration,
     avatar:          initials(name),
+    photo:           photo,
   }
+
+  if (username && username.trim()) data[idx].username = username.trim().toLowerCase()
+  if (password && password.trim()) data[idx].password = await bcrypt.hash(password.trim(), 10)
+
   writeData(data)
   res.redirect('/admin/counselors?updated=1')
 })
@@ -99,7 +150,10 @@ router.post('/:id/toggle-status', (req, res) => {
 
 // ── DELETE ────────────────────────────────────────────────────────────────────
 router.post('/:id/delete', (req, res) => {
-  writeData(readData().filter(c => c.id !== req.params.id))
+  const data = readData()
+  const c    = data.find(x => x.id === req.params.id)
+  if (c) deletePhoto(c.photo)
+  writeData(data.filter(x => x.id !== req.params.id))
   res.redirect('/admin/counselors')
 })
 

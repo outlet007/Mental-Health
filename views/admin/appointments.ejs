@@ -8,8 +8,8 @@
   <style>
     .tbl { width:100%; border-collapse:collapse; }
     .tbl thead { background:#f8fafc; }
-    .tbl th { padding:10px 14px; text-align:left; font-size:11px; font-weight:600; color:#64748b; text-transform:uppercase; letter-spacing:.05em; border-bottom:1px solid #f1f5f9; white-space:nowrap; }
-    .tbl td { padding:12px 14px; font-size:13px; color:#334155; border-bottom:1px solid #f8fafc; vertical-align:middle; }
+    .tbl th { padding:10px 14px; text-align:left; font-size:12px; font-weight:600; color:#64748b; text-transform:uppercase; letter-spacing:.05em; border-bottom:1px solid #f1f5f9; white-space:nowrap; }
+    .tbl td { padding:12px 14px; font-size:14px; color:#334155; border-bottom:1px solid #f8fafc; vertical-align:middle; }
     .tbl tbody tr:hover { background:#f8fafc; }
     .tbl tbody tr:last-child td { border-bottom:none; }
     .act-btn { display:inline-flex; align-items:center; gap:4px; padding:5px 10px; border-radius:8px; font-size:12px; font-weight:500; cursor:pointer; border:none; transition:all .15s; text-decoration:none; white-space:nowrap; }
@@ -23,9 +23,10 @@
     .ab-danger:hover    { background:#dc2626; }
     .ab-warn      { background:#f59e0b; color:#fff; }
     .ab-warn:hover      { background:#d97706; }
-    .panel-overlay { position:fixed; inset:0; background:rgba(0,0,0,.35); z-index:40; display:none; }
-    .panel-drawer  { position:fixed; top:0; right:0; height:100%; width:100%; max-width:540px; background:#fff; box-shadow:-4px 0 32px rgba(0,0,0,.12); z-index:50; display:flex; flex-direction:column; transform:translateX(100%); transition:transform .25s ease; }
-    .panel-drawer.open { transform:translateX(0); }
+    .panel-overlay { position:fixed; inset:0; background:rgba(15,23,42,.45); z-index:40; display:none; backdrop-filter:blur(2px); opacity:0; transition:opacity .2s ease; }
+    .panel-overlay.open { opacity:1; }
+    .panel-drawer  { position:fixed; top:50%; left:50%; width:calc(100% - 48px); max-width:560px; max-height:90vh; background:#fff; border-radius:20px; box-shadow:0 20px 60px rgba(0,0,0,.18); z-index:50; display:flex; flex-direction:column; transform:translate(-50%,-50%) scale(.94); opacity:0; transition:transform .22s cubic-bezier(.34,1.56,.64,1), opacity .18s ease; pointer-events:none; }
+    .panel-drawer.open { transform:translate(-50%,-50%) scale(1); opacity:1; pointer-events:auto; }
     .inp { width:100%; padding:9px 12px; border:1.5px solid #e2e8f0; border-radius:10px; font-size:13px; color:#334155; outline:none; font-family:inherit; box-sizing:border-box; }
     .inp:focus { border-color:#2dd4b4; box-shadow:0 0 0 3px rgba(45,212,180,.15); }
     .lbl { display:block; font-size:12px; font-weight:500; color:#64748b; margin-bottom:5px; }
@@ -46,15 +47,17 @@
   <!-- Header -->
   <div style="height:56px; background:#fff; border-bottom:1px solid #f1f5f9; padding:0 24px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:20;">
     <h1 style="font-size:15px; font-weight:600; color:#1e293b; margin:0;"><%= title %></h1>
-    <div style="display:flex; align-items:center; gap:12px;">
-      <span style="font-size:12px; color:#94a3b8;">
-        <% const d=new Date(); %><%= d.toLocaleDateString('th-TH',{weekday:'short',year:'numeric',month:'short',day:'numeric'}) %>
-      </span>
-      <button onclick="openPanel()" class="act-btn ab-primary">
-        <i data-lucide="calendar-plus" style="width:14px;height:14px;"></i>
-        สร้างนัดหมาย
-      </button>
-    </div>
+    <span style="font-size:12px; color:#94a3b8;">
+      <% const d=new Date(); %><%= d.toLocaleDateString('th-TH',{weekday:'short',year:'numeric',month:'short',day:'numeric'}) %>
+    </span>
+  </div>
+
+  <!-- Action Bar -->
+  <div style="padding:14px 24px; background:#fff; border-bottom:2px solid #f1f5f9; display:flex; justify-content:flex-end;">
+    <button onclick="openPanel()" style="display:inline-flex; align-items:center; gap:10px; padding:11px 22px; background:linear-gradient(135deg,#05967e,#06b6d4); color:#fff; border:none; border-radius:12px; font-size:14px; font-weight:600; cursor:pointer; box-shadow:0 2px 8px rgba(5,150,126,.30); transition:all .15s;" onmouseover="this.style.boxShadow='0 4px 16px rgba(5,150,126,.45)';this.style.transform='translateY(-1px)'" onmouseout="this.style.boxShadow='0 2px 8px rgba(5,150,126,.30)';this.style.transform='translateY(0)'">
+      <i data-lucide="calendar-plus" style="width:18px;height:18px;"></i>
+      + สร้างนัดหมาย
+    </button>
   </div>
 
   <div style="padding:24px;">
@@ -67,6 +70,14 @@
     <% } if (query.error==='conflict') { %>
     <div style="margin-bottom:16px; padding:12px 16px; background:#fef2f2; border:1px solid #fca5a5; border-radius:12px; color:#991b1b; font-size:13px; display:flex; align-items:center; gap:8px;">
       <i data-lucide="alert-circle" style="width:16px;height:16px;flex-shrink:0;"></i> ช่วงเวลานี้ถูกจองแล้ว กรุณาเลือกเวลาอื่น
+    </div>
+    <% } if (query.updated) { %>
+    <div style="margin-bottom:16px; padding:12px 16px; background:#ecfeff; border:1px solid #a5f3fc; border-radius:12px; color:#155e75; font-size:13px; display:flex; align-items:center; gap:8px;">
+      <i data-lucide="check-circle" style="width:16px;height:16px;flex-shrink:0;"></i> อัปเดตนัดหมายสำเร็จ
+    </div>
+    <% } if (query.deleted) { %>
+    <div style="margin-bottom:16px; padding:12px 16px; background:#fef2f2; border:1px solid #fca5a5; border-radius:12px; color:#991b1b; font-size:13px; display:flex; align-items:center; gap:8px;">
+      <i data-lucide="trash-2" style="width:16px;height:16px;flex-shrink:0;"></i> ลบนัดหมายแล้ว
     </div>
     <% } %>
 
@@ -101,7 +112,7 @@
         <select name="type" class="inp" style="width:120px;">
           <option value="">ทั้งหมด</option>
           <option value="online" <%=query.type==='online'?'selected':''%>>ออนไลน์</option>
-          <option value="onsite" <%=query.type==='onsite'?'selected':''%>>พบตัว</option>
+          <option value="onsite" <%=query.type==='onsite'?'selected':''%>>เข้ารับบริการด้วยตนเอง</option>
         </select>
       </div>
       <button type="submit" class="act-btn ab-primary">
@@ -143,13 +154,13 @@
             %>
             <tr>
               <td>
-                <div style="font-weight:500; color:#1e293b; font-size:13px;"><%= a.clientName %></div>
+                <div style="font-weight:500; color:#1e293b; font-size:14px;"><%= a.clientName %></div>
               </td>
               <td>
-                <div style="font-size:13px; color:#334155;"><%= a.counselorName %></div>
+                <div style="font-size:14px; color:#334155;"><%= a.counselorName %></div>
               </td>
               <td>
-                <div style="font-size:13px; font-weight:500; color:#1e293b;"><%= a.date %></div>
+                <div style="font-size:14px; font-weight:500; color:#1e293b;"><%= a.date %></div>
                 <div style="font-size:11px; color:#94a3b8;"><%= a.time %> น.</div>
               </td>
               <td>
@@ -161,7 +172,7 @@
                 <% } else { %>
                 <div style="display:flex; align-items:center; gap:4px;">
                   <i data-lucide="map-pin" style="width:13px;height:13px;color:#05967e;"></i>
-                  <span style="font-size:12px; color:#05967e;">พบตัว</span>
+                  <span style="font-size:12px; color:#05967e;">เข้ารับบริการด้วยตนเอง</span>
                 </div>
                 <% } %>
               </td>
@@ -172,31 +183,60 @@
                 </span>
               </td>
               <td>
-                <div style="display:flex; align-items:center; gap:5px; flex-wrap:wrap;">
-                  <% if (a.status==='pending') { %>
-                    <form method="POST" action="/admin/appointments/<%= a.id %>/confirm" style="margin:0;">
-                      <button type="submit" class="act-btn ab-primary">
-                        <i data-lucide="check" style="width:12px;height:12px;"></i> ยืนยัน
-                      </button>
-                    </form>
-                    <form method="POST" action="/admin/appointments/<%= a.id %>/cancel" style="margin:0;">
-                      <button type="submit" class="act-btn ab-danger">
-                        <i data-lucide="x" style="width:12px;height:12px;"></i> ปฏิเสธ
-                      </button>
-                    </form>
-                  <% } else if (a.status==='confirmed') { %>
-                    <form method="POST" action="/admin/appointments/<%= a.id %>/complete" style="margin:0;">
-                      <button type="submit" class="act-btn ab-secondary">
-                        <i data-lucide="check-check" style="width:12px;height:12px;"></i> เสร็จสิ้น
-                      </button>
-                    </form>
-                    <form method="POST" action="/admin/appointments/<%= a.id %>/cancel" style="margin:0;">
-                      <button type="submit" class="act-btn ab-ghost" style="color:#ef4444;" title="ยกเลิก">
-                        <i data-lucide="x-circle" style="width:13px;height:13px;"></i>
-                      </button>
-                    </form>
-                  <% } else { %>
-                    <span style="font-size:11px; color:#94a3b8;">—</span>
+                <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+                  <%/* ดูข้อมูล — ทุก role เห็น */%>
+                  <button data-apt="<%= JSON.stringify(a) %>" onclick="openViewPanel(JSON.parse(this.dataset.apt))" class="act-btn ab-ghost" title="ดูข้อมูล">
+                    <i data-lucide="eye" style="width:13px;height:13px;"></i> ดูข้อมูล
+                  </button>
+
+                  <%/* แก้ไข — เฉพาะ admin */%>
+                  <% if (userType !== 'counselor') { %>
+                  <button data-apt="<%= JSON.stringify(a) %>" onclick="openEditPanel(JSON.parse(this.dataset.apt))" class="act-btn ab-secondary" title="แก้ไข">
+                    <i data-lucide="pencil" style="width:13px;height:13px;"></i> แก้ไข
+                  </button>
+                  <% } %>
+
+                  <%/* ยืนยัน — pending ทุก role */%>
+                  <% if (a.status === 'pending') { %>
+                  <form method="POST" action="/admin/appointments/<%= a.id %>/confirm" style="margin:0;">
+                    <button type="submit" class="act-btn ab-primary">
+                      <i data-lucide="check" style="width:12px;height:12px;"></i> ยืนยัน
+                    </button>
+                  </form>
+                  <% } %>
+
+                  <%/* ปฏิเสธ — pending ทุก role */%>
+                  <% if (a.status === 'pending') { %>
+                  <form method="POST" action="/admin/appointments/<%= a.id %>/cancel"
+                        onsubmit="return confirm('ปฏิเสธนัดหมายนี้?')" style="margin:0;">
+                    <button type="submit" class="act-btn ab-danger">
+                      <i data-lucide="x" style="width:12px;height:12px;"></i> ปฏิเสธ
+                    </button>
+                  </form>
+                  <% } %>
+
+                  <%/* เสร็จสิ้น — เฉพาะ confirmed + counselor */%>
+                  <% if (a.status === 'confirmed' && userType === 'counselor') { %>
+                  <button onclick="openCompletePanel('<%= a.id %>')" class="act-btn ab-secondary">
+                    <i data-lucide="check-check" style="width:12px;height:12px;"></i> เสร็จสิ้น
+                  </button>
+                  <% } %>
+
+                  <%/* แก้ไขหมายเหตุ — เฉพาะ completed + counselor */%>
+                  <% if (a.status === 'completed' && userType === 'counselor') { %>
+                  <button data-id="<%= a.id %>" data-note="<%= a.counselorNote || '' %>" onclick="openEditNotePanel(this.dataset.id, this.dataset.note)" class="act-btn ab-warn" title="แก้ไขหมายเหตุการให้คำปรึกษา">
+                    <i data-lucide="file-pen" style="width:12px;height:12px;"></i> แก้ไขหมายเหตุ
+                  </button>
+                  <% } %>
+
+                  <%/* ลบ — เฉพาะ admin */%>
+                  <% if (userType !== 'counselor') { %>
+                  <form method="POST" action="/admin/appointments/<%= a.id %>/delete"
+                        onsubmit="return confirm('ลบนัดหมายนี้ถาวร?')" style="margin:0;">
+                    <button type="submit" class="act-btn ab-danger" title="ลบ">
+                      <i data-lucide="trash-2" style="width:13px;height:13px;"></i>
+                    </button>
+                  </form>
                   <% } %>
                 </div>
                 <% if(a.note) { %>
@@ -338,7 +378,7 @@
               <label style="display:flex; align-items:center; gap:8px; padding:10px; border:1.5px solid #e2e8f0; border-radius:10px; cursor:pointer;">
                 <input type="radio" name="type" value="onsite" style="accent-color:#05967e;">
                 <i data-lucide="map-pin" style="width:14px;height:14px;color:#05967e;flex-shrink:0;"></i>
-                <span style="font-size:13px; font-weight:500; color:#1e293b;">พบตัว</span>
+                <span style="font-size:13px; font-weight:500; color:#1e293b;">เข้ารับบริการด้วยตนเอง</span>
               </label>
             </div>
           </div>
@@ -374,22 +414,255 @@
   </div>
 </div>
 
+<!-- View Panel -->
+<div id="viewOverlay" class="panel-overlay" onclick="closeViewPanel()"></div>
+<div id="viewPanel" class="panel-drawer">
+  <div style="padding:16px 20px; border-bottom:1px solid #f1f5f9; display:flex; align-items:center; justify-content:space-between;">
+    <div style="display:flex; align-items:center; gap:10px;">
+      <div style="width:32px; height:32px; border-radius:8px; background:linear-gradient(135deg,#0891b2,#06b6d4); display:flex; align-items:center; justify-content:center;">
+        <i data-lucide="calendar-check" style="width:15px;height:15px;color:#fff;"></i>
+      </div>
+      <div>
+        <div style="font-size:14px; font-weight:600; color:#1e293b;">รายละเอียดนัดหมาย</div>
+        <div id="viewPanelSub" style="font-size:11px; color:#94a3b8;"></div>
+      </div>
+    </div>
+    <button onclick="closeViewPanel()" style="background:none; border:none; cursor:pointer; padding:6px; border-radius:8px; color:#94a3b8;">
+      <i data-lucide="x" style="width:18px;height:18px;"></i>
+    </button>
+  </div>
+  <div style="flex:1; overflow-y:auto; padding:24px;">
+    <div style="display:grid; gap:16px;">
+      <!-- Client info -->
+      <div style="padding:14px; background:#f8fafc; border-radius:12px;">
+        <div style="font-size:11px; color:#94a3b8; margin-bottom:12px; font-weight:500; text-transform:uppercase; letter-spacing:.05em;">ข้อมูลผู้รับบริการ</div>
+        <div style="display:grid; gap:9px;">
+          <div style="display:flex; gap:12px; align-items:baseline;">
+            <span style="font-size:12px; color:#94a3b8; min-width:120px; flex-shrink:0;">ชื่อ-นามสกุล</span>
+            <span id="v_clientName" style="font-size:14px; font-weight:600; color:#1e293b;"></span>
+          </div>
+          <div style="display:flex; gap:12px; align-items:baseline;">
+            <span style="font-size:12px; color:#94a3b8; min-width:120px; flex-shrink:0;">รหัสนักศึกษา</span>
+            <span id="v_clientStudentId" style="font-size:13px; color:#334155;"></span>
+          </div>
+          <div style="display:flex; gap:12px; align-items:baseline;">
+            <span style="font-size:12px; color:#94a3b8; min-width:120px; flex-shrink:0;">เบอร์โทรศัพท์</span>
+            <span id="v_clientPhone" style="font-size:13px; color:#334155;"></span>
+          </div>
+          <div style="display:flex; gap:12px; align-items:baseline;">
+            <span style="font-size:12px; color:#94a3b8; min-width:120px; flex-shrink:0;">Email</span>
+            <span id="v_clientEmail" style="font-size:13px; color:#334155;"></span>
+          </div>
+        </div>
+      </div>
+      <!-- Counselor -->
+      <div style="padding:14px; background:#f8fafc; border-radius:12px;">
+        <div style="font-size:11px; color:#94a3b8; margin-bottom:4px; font-weight:500; text-transform:uppercase; letter-spacing:.05em;">นักให้คำปรึกษา</div>
+        <div id="v_counselorName" style="font-size:14px; font-weight:600; color:#1e293b;"></div>
+      </div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
+        <div style="padding:14px; background:#f8fafc; border-radius:12px;">
+          <div style="font-size:11px; color:#94a3b8; margin-bottom:4px; font-weight:500; text-transform:uppercase; letter-spacing:.05em;">วันที่</div>
+          <div id="v_date" style="font-size:14px; font-weight:600; color:#1e293b;"></div>
+        </div>
+        <div style="padding:14px; background:#f8fafc; border-radius:12px;">
+          <div style="font-size:11px; color:#94a3b8; margin-bottom:4px; font-weight:500; text-transform:uppercase; letter-spacing:.05em;">เวลา</div>
+          <div id="v_time" style="font-size:14px; font-weight:600; color:#1e293b;"></div>
+        </div>
+      </div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
+        <div style="padding:14px; background:#f8fafc; border-radius:12px;">
+          <div style="font-size:11px; color:#94a3b8; margin-bottom:4px; font-weight:500; text-transform:uppercase; letter-spacing:.05em;">รูปแบบ</div>
+          <div id="v_type" style="font-size:14px; font-weight:600; color:#1e293b;"></div>
+        </div>
+        <div style="padding:14px; background:#f8fafc; border-radius:12px;">
+          <div style="font-size:11px; color:#94a3b8; margin-bottom:4px; font-weight:500; text-transform:uppercase; letter-spacing:.05em;">ระยะเวลา</div>
+          <div id="v_duration" style="font-size:14px; font-weight:600; color:#1e293b;"></div>
+        </div>
+      </div>
+      <div style="padding:14px; background:#f8fafc; border-radius:12px;">
+        <div style="font-size:11px; color:#94a3b8; margin-bottom:4px; font-weight:500; text-transform:uppercase; letter-spacing:.05em;">สถานะ</div>
+        <div id="v_status"></div>
+      </div>
+      <div id="v_noteWrap" style="display:none; padding:14px; background:#fffbeb; border:1px solid #fde68a; border-radius:12px;">
+        <div style="font-size:11px; color:#92400e; margin-bottom:4px; font-weight:500; text-transform:uppercase; letter-spacing:.05em;">หมายเหตุ</div>
+        <div id="v_note" style="font-size:13px; color:#1e293b; line-height:1.6;"></div>
+      </div>
+      <div id="v_counselorNoteWrap" style="display:none; padding:14px; background:#f0fdf4; border:1px solid #86efac; border-radius:12px;">
+        <div style="font-size:11px; color:#166534; margin-bottom:4px; font-weight:500; text-transform:uppercase; letter-spacing:.05em;">หมายเหตุการให้คำปรึกษา</div>
+        <div id="v_counselorNote" style="font-size:13px; color:#1e293b; line-height:1.6;"></div>
+      </div>
+    </div>
+  </div>
+  <div style="padding:16px 20px; border-top:1px solid #f1f5f9;">
+    <button onclick="closeViewPanel()" class="act-btn ab-ghost" style="width:100%; justify-content:center; border:1px solid #e2e8f0;">ปิด</button>
+  </div>
+</div>
+
+<!-- Edit Panel -->
+<div id="editOverlay" class="panel-overlay" onclick="closeEditPanel()"></div>
+<div id="editPanel" class="panel-drawer">
+  <div style="padding:16px 20px; border-bottom:1px solid #f1f5f9; display:flex; align-items:center; justify-content:space-between;">
+    <div style="display:flex; align-items:center; gap:10px;">
+      <div style="width:32px; height:32px; border-radius:8px; background:linear-gradient(135deg,#05967e,#06b6d4); display:flex; align-items:center; justify-content:center;">
+        <i data-lucide="pencil" style="width:15px;height:15px;color:#fff;"></i>
+      </div>
+      <div>
+        <div style="font-size:14px; font-weight:600; color:#1e293b;">แก้ไขนัดหมาย</div>
+        <div id="editPanelSub" style="font-size:11px; color:#94a3b8;"></div>
+      </div>
+    </div>
+    <button onclick="closeEditPanel()" style="background:none; border:none; cursor:pointer; padding:6px; border-radius:8px; color:#94a3b8;">
+      <i data-lucide="x" style="width:18px;height:18px;"></i>
+    </button>
+  </div>
+  <div style="flex:1; overflow-y:auto; padding:24px;">
+    <form id="editForm" method="POST" action="">
+      <div style="display:grid; gap:16px;">
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+          <div>
+            <label class="lbl">วันที่</label>
+            <input type="date" name="date" id="e_date" class="inp" required>
+          </div>
+          <div>
+            <label class="lbl">เวลา</label>
+            <input type="time" name="time" id="e_time" class="inp" required>
+          </div>
+        </div>
+        <div>
+          <label class="lbl">รูปแบบการให้คำปรึกษา</label>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+            <label style="display:flex; align-items:center; gap:8px; padding:10px; border:1.5px solid #e2e8f0; border-radius:10px; cursor:pointer;">
+              <input type="radio" name="type" value="online" id="e_online" style="accent-color:#0891b2;">
+              <i data-lucide="video" style="width:14px;height:14px;color:#0891b2;flex-shrink:0;"></i>
+              <span style="font-size:13px; font-weight:500; color:#1e293b;">ออนไลน์</span>
+            </label>
+            <label style="display:flex; align-items:center; gap:8px; padding:10px; border:1.5px solid #e2e8f0; border-radius:10px; cursor:pointer;">
+              <input type="radio" name="type" value="onsite" id="e_onsite" style="accent-color:#05967e;">
+              <i data-lucide="map-pin" style="width:14px;height:14px;color:#05967e;flex-shrink:0;"></i>
+              <span style="font-size:13px; font-weight:500; color:#1e293b;">เข้ารับบริการด้วยตนเอง</span>
+            </label>
+          </div>
+        </div>
+        <div>
+          <label class="lbl">สถานะ</label>
+          <select name="status" id="e_status" class="inp">
+            <option value="pending">รอยืนยัน</option>
+            <option value="confirmed">ยืนยันแล้ว</option>
+            <option value="completed">เสร็จสิ้น</option>
+            <option value="cancelled">ยกเลิก</option>
+          </select>
+        </div>
+        <div>
+          <label class="lbl">หมายเหตุ</label>
+          <textarea name="note" id="e_note" rows="3" class="inp" style="resize:none;" placeholder="หมายเหตุ (ถ้ามี)"></textarea>
+        </div>
+      </div>
+    </form>
+  </div>
+  <div style="padding:16px 20px; border-top:1px solid #f1f5f9; display:flex; gap:10px;">
+    <button onclick="closeEditPanel()" class="act-btn ab-ghost" style="flex:1; justify-content:center; border:1px solid #e2e8f0;">ยกเลิก</button>
+    <button onclick="submitEditPanel()" class="act-btn ab-primary" style="flex:1; justify-content:center;">
+      <i data-lucide="save" style="width:14px;height:14px;"></i> บันทึกการแก้ไข
+    </button>
+  </div>
+</div>
+
+<!-- Complete Panel -->
+<div id="completeOverlay" class="panel-overlay" onclick="closeCompletePanel()"></div>
+<div id="completePanel" class="panel-drawer">
+  <div style="padding:16px 20px; border-bottom:1px solid #f1f5f9; display:flex; align-items:center; justify-content:space-between;">
+    <div style="display:flex; align-items:center; gap:10px;">
+      <div style="width:32px; height:32px; border-radius:8px; background:linear-gradient(135deg,#05967e,#10b981); display:flex; align-items:center; justify-content:center;">
+        <i data-lucide="check-check" style="width:15px;height:15px;color:#fff;"></i>
+      </div>
+      <div>
+        <div style="font-size:14px; font-weight:600; color:#1e293b;">บันทึกการให้คำปรึกษา</div>
+        <div style="font-size:11px; color:#94a3b8;">กรอกหมายเหตุก่อนยืนยันเสร็จสิ้น</div>
+      </div>
+    </div>
+    <button onclick="closeCompletePanel()" style="background:none; border:none; cursor:pointer; padding:6px; border-radius:8px; color:#94a3b8;">
+      <i data-lucide="x" style="width:18px;height:18px;"></i>
+    </button>
+  </div>
+  <div style="flex:1; overflow-y:auto; padding:24px;">
+    <form id="completeForm" method="POST" action="">
+      <div style="display:grid; gap:16px;">
+        <div style="padding:14px; background:#ecfdf9; border:1px solid #a0f3e1; border-radius:12px; font-size:13px; color:#065f46; display:flex; align-items:center; gap:8px;">
+          <i data-lucide="info" style="width:16px;height:16px;flex-shrink:0;"></i>
+          กรุณากรอกสรุปผลการให้คำปรึกษาในครั้งนี้
+        </div>
+        <div>
+          <label class="lbl">หมายเหตุการให้คำปรึกษา <span style="color:#ef4444;">*</span></label>
+          <textarea name="counselorNote" id="counselorNoteInput" rows="5" class="inp" style="resize:vertical; min-height:120px;"
+                    placeholder="สรุปผลการให้คำปรึกษา ประเด็นที่พูดคุย แนวทางการรักษาต่อไป ฯลฯ" required></textarea>
+        </div>
+      </div>
+    </form>
+  </div>
+  <div style="padding:16px 20px; border-top:1px solid #f1f5f9; display:flex; gap:10px;">
+    <button onclick="closeCompletePanel()" class="act-btn ab-ghost" style="flex:1; justify-content:center; border:1px solid #e2e8f0;">ยกเลิก</button>
+    <button onclick="submitCompletePanel()" class="act-btn ab-primary" style="flex:1; justify-content:center;">
+      <i data-lucide="check-check" style="width:14px;height:14px;"></i> ยืนยันเสร็จสิ้น
+    </button>
+  </div>
+</div>
+
+<!-- Edit Note Panel -->
+<div id="editNoteOverlay" class="panel-overlay" onclick="closeEditNotePanel()"></div>
+<div id="editNotePanel" class="panel-drawer">
+  <div style="padding:16px 20px; border-bottom:1px solid #f1f5f9; display:flex; align-items:center; justify-content:space-between;">
+    <div style="display:flex; align-items:center; gap:10px;">
+      <div style="width:32px; height:32px; border-radius:8px; background:linear-gradient(135deg,#f59e0b,#f97316); display:flex; align-items:center; justify-content:center;">
+        <i data-lucide="file-pen" style="width:15px;height:15px;color:#fff;"></i>
+      </div>
+      <div>
+        <div style="font-size:14px; font-weight:600; color:#1e293b;">แก้ไขหมายเหตุการให้คำปรึกษา</div>
+        <div style="font-size:11px; color:#94a3b8;">แก้ไขหรือเพิ่มเติมบันทึกหลังการให้คำปรึกษา</div>
+      </div>
+    </div>
+    <button onclick="closeEditNotePanel()" style="background:none; border:none; cursor:pointer; padding:6px; border-radius:8px; color:#94a3b8;">
+      <i data-lucide="x" style="width:18px;height:18px;"></i>
+    </button>
+  </div>
+  <div style="flex:1; overflow-y:auto; padding:24px;">
+    <form id="editNoteForm" method="POST" action="">
+      <div>
+        <label class="lbl">หมายเหตุการให้คำปรึกษา</label>
+        <textarea name="counselorNote" id="editNoteInput" rows="6" class="inp" style="resize:vertical; min-height:140px;"
+                  placeholder="สรุปผลการให้คำปรึกษา ประเด็นที่พูดคุย แนวทางการรักษาต่อไป ฯลฯ"></textarea>
+      </div>
+    </form>
+  </div>
+  <div style="padding:16px 20px; border-top:1px solid #f1f5f9; display:flex; gap:10px;">
+    <button onclick="closeEditNotePanel()" class="act-btn ab-ghost" style="flex:1; justify-content:center; border:1px solid #e2e8f0;">ยกเลิก</button>
+    <button onclick="submitEditNotePanel()" class="act-btn ab-warn" style="flex:1; justify-content:center;">
+      <i data-lucide="save" style="width:14px;height:14px;"></i> บันทึก
+    </button>
+  </div>
+</div>
+
 <script>
   const SCHEDULES = <%- JSON.stringify(schedules) %>
+  const CLIENTS   = <%- JSON.stringify(clients) %>
   let selectedCounselor = null
   let selectedTime      = null
 
   function openPanel() {
-    document.getElementById('overlay').style.display = 'block'
+    const ov = document.getElementById('overlay')
+    ov.style.display = 'block'
+    requestAnimationFrame(() => { ov.classList.add('open') })
     document.getElementById('panel').classList.add('open')
     document.body.style.overflow = 'hidden'
   }
   function closePanel() {
-    document.getElementById('overlay').style.display = 'none'
+    const ov = document.getElementById('overlay')
+    ov.classList.remove('open')
     document.getElementById('panel').classList.remove('open')
     document.body.style.overflow = ''
+    setTimeout(() => { ov.style.display = 'none' }, 200)
   }
-  document.addEventListener('keydown', e => { if(e.key==='Escape') closePanel() })
+  document.addEventListener('keydown', e => { if(e.key==='Escape') { closePanel(); closeViewPanel(); closeEditPanel(); closeCompletePanel(); closeEditNotePanel() } })
 
   function onCounselorChange(radio) {
     selectedCounselor = { id:radio.value, duration:parseInt(radio.dataset.duration), name:radio.dataset.name }
@@ -464,6 +737,137 @@
     if (!form.reportValidity()) return
     if (!selectedTime) { alert('กรุณาเลือกเวลานัดหมาย'); return }
     form.submit()
+  }
+
+  // ── View Panel ───────────────────────────────────────────────
+  const STATUS_LABELS = { pending:'รอยืนยัน', confirmed:'ยืนยันแล้ว', completed:'เสร็จสิ้น', cancelled:'ยกเลิก' }
+  const STATUS_COLORS = {
+    pending:   { bg:'#fef3c7', color:'#92400e' },
+    confirmed: { bg:'#dbeafe', color:'#1e40af' },
+    completed: { bg:'#d1fae5', color:'#065f46' },
+    cancelled: { bg:'#fee2e2', color:'#991b1b' },
+  }
+
+  function openViewPanel(a) {
+    const client = CLIENTS.find(c => c.id === a.clientId) || {}
+    document.getElementById('viewPanelSub').textContent = `#${a.id}`
+    document.getElementById('v_clientName').textContent      = a.clientName
+    document.getElementById('v_clientStudentId').textContent = client.studentId || '-'
+    document.getElementById('v_clientPhone').textContent     = client.phone     || '-'
+    document.getElementById('v_clientEmail').textContent     = client.email     || '-'
+    document.getElementById('v_counselorName').textContent = a.counselorName
+    document.getElementById('v_date').textContent = a.date
+    document.getElementById('v_time').textContent = a.time + ' น.'
+    document.getElementById('v_type').textContent = a.type === 'online' ? 'ออนไลน์' : 'เข้ารับบริการด้วยตนเอง'
+    document.getElementById('v_duration').textContent = (a.duration || 60) + ' นาที'
+    const sc = STATUS_COLORS[a.status] || { bg:'#f1f5f9', color:'#64748b' }
+    document.getElementById('v_status').innerHTML =
+      `<span style="display:inline-block;padding:4px 12px;background:${sc.bg};color:${sc.color};border-radius:99px;font-size:12px;font-weight:500;">${STATUS_LABELS[a.status] || a.status}</span>`
+    const noteWrap = document.getElementById('v_noteWrap')
+    if (a.note) {
+      document.getElementById('v_note').textContent = a.note
+      noteWrap.style.display = 'block'
+    } else {
+      noteWrap.style.display = 'none'
+    }
+    const cnWrap = document.getElementById('v_counselorNoteWrap')
+    if (a.counselorNote) {
+      document.getElementById('v_counselorNote').textContent = a.counselorNote
+      cnWrap.style.display = 'block'
+    } else {
+      cnWrap.style.display = 'none'
+    }
+    const ov = document.getElementById('viewOverlay')
+    ov.style.display = 'block'
+    requestAnimationFrame(() => { ov.classList.add('open') })
+    document.getElementById('viewPanel').classList.add('open')
+    document.body.style.overflow = 'hidden'
+    lucide.createIcons()
+  }
+
+  function closeViewPanel() {
+    const ov = document.getElementById('viewOverlay')
+    ov.classList.remove('open')
+    document.getElementById('viewPanel').classList.remove('open')
+    document.body.style.overflow = ''
+    setTimeout(() => { ov.style.display = 'none' }, 200)
+  }
+
+  // ── Edit Panel ───────────────────────────────────────────────
+  function openEditPanel(a) {
+    document.getElementById('editPanelSub').textContent = `${a.clientName} — ${a.date}`
+    document.getElementById('editForm').action = '/admin/appointments/' + a.id + '/edit'
+    document.getElementById('e_date').value   = a.date   || ''
+    document.getElementById('e_time').value   = a.time   || ''
+    document.getElementById('e_status').value = a.status || 'pending'
+    document.getElementById('e_note').value   = a.note   || ''
+    document.getElementById(a.type === 'onsite' ? 'e_onsite' : 'e_online').checked = true
+    const ov = document.getElementById('editOverlay')
+    ov.style.display = 'block'
+    requestAnimationFrame(() => { ov.classList.add('open') })
+    document.getElementById('editPanel').classList.add('open')
+    document.body.style.overflow = 'hidden'
+    lucide.createIcons()
+  }
+
+  function closeEditPanel() {
+    const ov = document.getElementById('editOverlay')
+    ov.classList.remove('open')
+    document.getElementById('editPanel').classList.remove('open')
+    document.body.style.overflow = ''
+    setTimeout(() => { ov.style.display = 'none' }, 200)
+  }
+
+  function submitEditPanel() {
+    document.getElementById('editForm').submit()
+  }
+
+  // ── Edit Note Panel ───────────────────────────────────────────────
+  function openEditNotePanel(id, note) {
+    document.getElementById('editNoteForm').action = '/admin/appointments/' + id + '/edit-note'
+    document.getElementById('editNoteInput').value = note || ''
+    const ov = document.getElementById('editNoteOverlay')
+    ov.style.display = 'block'
+    requestAnimationFrame(() => { ov.classList.add('open') })
+    document.getElementById('editNotePanel').classList.add('open')
+    document.body.style.overflow = 'hidden'
+    lucide.createIcons()
+    setTimeout(() => { document.getElementById('editNoteInput').focus() }, 220)
+  }
+  function closeEditNotePanel() {
+    const ov = document.getElementById('editNoteOverlay')
+    ov.classList.remove('open')
+    document.getElementById('editNotePanel').classList.remove('open')
+    document.body.style.overflow = ''
+    setTimeout(() => { ov.style.display = 'none' }, 200)
+  }
+  function submitEditNotePanel() {
+    document.getElementById('editNoteForm').submit()
+  }
+
+  // ── Complete Panel ────────────────────────────────────────────────
+  function openCompletePanel(id) {
+    document.getElementById('completeForm').action = '/admin/appointments/' + id + '/complete'
+    document.getElementById('counselorNoteInput').value = ''
+    const ov = document.getElementById('completeOverlay')
+    ov.style.display = 'block'
+    requestAnimationFrame(() => { ov.classList.add('open') })
+    document.getElementById('completePanel').classList.add('open')
+    document.body.style.overflow = 'hidden'
+    lucide.createIcons()
+    setTimeout(() => { document.getElementById('counselorNoteInput').focus() }, 220)
+  }
+  function closeCompletePanel() {
+    const ov = document.getElementById('completeOverlay')
+    ov.classList.remove('open')
+    document.getElementById('completePanel').classList.remove('open')
+    document.body.style.overflow = ''
+    setTimeout(() => { ov.style.display = 'none' }, 200)
+  }
+  function submitCompletePanel() {
+    const ta = document.getElementById('counselorNoteInput')
+    if (!ta.value.trim()) { ta.focus(); return }
+    document.getElementById('completeForm').submit()
   }
 
   lucide.createIcons()

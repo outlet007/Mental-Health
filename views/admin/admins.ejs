@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %> — MindWell Admin</title>
+  <%- include('../partials/head') %>
+  <style>
+    .tbl { width:100%; border-collapse:collapse; }
+    .tbl thead { background:#f8fafc; }
+    .tbl th { padding:10px 14px; text-align:left; font-size:12px; font-weight:600; color:#64748b; text-transform:uppercase; letter-spacing:.05em; border-bottom:1px solid #f1f5f9; white-space:nowrap; }
+    .tbl td { padding:12px 14px; font-size:14px; color:#334155; border-bottom:1px solid #f8fafc; vertical-align:middle; }
+    .tbl tbody tr:hover { background:#f8fafc; }
+    .tbl tbody tr:last-child td { border-bottom:none; }
+    .act-btn { display:inline-flex; align-items:center; gap:4px; padding:5px 10px; border-radius:8px; font-size:12px; font-weight:500; cursor:pointer; border:none; transition:all .15s; white-space:nowrap; text-decoration:none; }
+    .ab-primary   { background:#05967e; color:#fff; }
+    .ab-primary:hover   { background:#067866; }
+    .ab-secondary { background:#fff; color:#05967e; border:1px solid #a0f3e1; }
+    .ab-secondary:hover { background:#ecfdf9; }
+    .ab-ghost     { background:transparent; color:#64748b; }
+    .ab-ghost:hover     { background:#f1f5f9; }
+    .ab-danger    { background:#ef4444; color:#fff; }
+    .ab-danger:hover    { background:#dc2626; }
+    .inp { width:100%; padding:9px 12px; border:1.5px solid #e2e8f0; border-radius:10px; font-size:13px; color:#334155; outline:none; font-family:inherit; box-sizing:border-box; }
+    .inp:focus { border-color:#2dd4b4; box-shadow:0 0 0 3px rgba(45,212,180,.15); }
+    .lbl { display:block; font-size:12px; font-weight:500; color:#64748b; margin-bottom:5px; }
+    .panel-overlay { position:fixed; inset:0; background:rgba(15,23,42,.45); z-index:40; display:none; backdrop-filter:blur(2px); opacity:0; transition:opacity .2s ease; }
+    .panel-overlay.open { opacity:1; }
+    .panel-drawer  { position:fixed; top:50%; left:50%; width:calc(100% - 48px); max-width:460px; max-height:90vh; background:#fff; border-radius:20px; box-shadow:0 20px 60px rgba(0,0,0,.18); z-index:50; display:flex; flex-direction:column; transform:translate(-50%,-50%) scale(.94); opacity:0; transition:transform .22s cubic-bezier(.34,1.56,.64,1), opacity .18s ease; pointer-events:none; }
+    .panel-drawer.open { transform:translate(-50%,-50%) scale(1); opacity:1; pointer-events:auto; }
+  </style>
+</head>
+<body style="background:#f8fafc; margin:0;">
+<%- include('../partials/admin-sidebar') %>
+
+<div style="margin-left:256px; min-height:100vh; display:flex; flex-direction:column;">
+
+  <div style="height:56px; background:#fff; border-bottom:1px solid #f1f5f9; padding:0 24px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:20;">
+    <h1 style="font-size:15px; font-weight:600; color:#1e293b; margin:0;"><%= title %></h1>
+    <div style="display:flex;align-items:center;gap:12px;">
+      <span style="font-size:12px;color:#94a3b8;"><%= new Date().toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric'}) %></span>
+      <a href="/" target="_blank" style="display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 12px;border-radius:8px;border:1px solid #e2e8f0;background:#f8fafc;font-size:12px;font-weight:500;color:#334155;text-decoration:none;transition:background .15s;" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='#f8fafc'">
+        <i data-lucide="external-link" style="width:13px;height:13px;"></i> ดูหน้าเว็บหลัก
+      </a>
+    </div>
+  </div>
+
+  <div style="padding:24px;">
+
+    <!-- Alerts -->
+    <% if (query.created) { %>
+    <div style="margin-bottom:16px;padding:12px 16px;background:#ecfdf9;border:1px solid #a0f3e1;border-radius:12px;color:#065f46;font-size:13px;display:flex;align-items:center;gap:8px;">
+      <i data-lucide="check-circle" style="width:16px;height:16px;"></i> เพิ่มผู้ใช้งานสำเร็จ
+    </div>
+    <% } if (query.updated) { %>
+    <div style="margin-bottom:16px;padding:12px 16px;background:#ecfeff;border:1px solid #a5f3fc;border-radius:12px;color:#155e75;font-size:13px;display:flex;align-items:center;gap:8px;">
+      <i data-lucide="check-circle" style="width:16px;height:16px;"></i> อัปเดตข้อมูลสำเร็จ
+    </div>
+    <% } if (query.error==='duplicate') { %>
+    <div style="margin-bottom:16px;padding:12px 16px;background:#fef2f2;border:1px solid #fca5a5;border-radius:12px;color:#991b1b;font-size:13px;display:flex;align-items:center;gap:8px;">
+      <i data-lucide="alert-circle" style="width:16px;height:16px;"></i> ชื่อผู้ใช้นี้มีในระบบแล้ว
+    </div>
+    <% } if (query.error==='last') { %>
+    <div style="margin-bottom:16px;padding:12px 16px;background:#fef3c7;border:1px solid #fde68a;border-radius:12px;color:#92400e;font-size:13px;display:flex;align-items:center;gap:8px;">
+      <i data-lucide="alert-triangle" style="width:16px;height:16px;"></i> ไม่สามารถลบได้ ต้องมีผู้ดูแลระบบอย่างน้อย 1 คน
+    </div>
+    <% } %>
+
+    <!-- Page header -->
+    <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:16px;margin-bottom:20px;">
+      <div>
+        <h2 style="font-size:20px;font-weight:700;color:#1e293b;display:flex;align-items:center;gap:8px;margin:0;">
+          <i data-lucide="users" style="width:22px;height:22px;color:#05967e;"></i> จัดการผู้ใช้
+        </h2>
+        <p style="color:#64748b;margin:4px 0 0;font-size:13.5px;">เพิ่ม แก้ไข และจัดการสิทธิ์ผู้ใช้งานในระบบ</p>
+      </div>
+      <button onclick="openPanel('create')" style="display:inline-flex;align-items:center;gap:10px;padding:11px 22px;background:linear-gradient(135deg,#05967e,#06b6d4);color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;box-shadow:0 2px 8px rgba(5,150,126,.30);transition:.15s;transform:translateY(0);" onmouseover="this.style.boxShadow='0 4px 16px rgba(5,150,126,.45)';this.style.transform='translateY(-1px)'" onmouseout="this.style.boxShadow='0 2px 8px rgba(5,150,126,.30)';this.style.transform='translateY(0)'">
+        <i data-lucide="user-plus" style="width:18px;height:18px;"></i> + เพิ่มผู้ใช้
+      </button>
+    </div>
+
+    <!-- Search -->
+    <div style="background:#fff;border:1px solid #f1f5f9;border-radius:16px;padding:16px;margin-bottom:16px;">
+      <form method="GET" action="/admin/admins" style="display:flex;flex-wrap:wrap;align-items:flex-end;gap:12px;">
+        <div style="flex:1;min-width:200px;">
+          <label class="lbl">ค้นหาผู้ใช้</label>
+          <div style="position:relative;">
+            <i data-lucide="search" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);width:14px;height:14px;color:#94a3b8;pointer-events:none;"></i>
+            <input type="text" name="search" value="<%= query.search || '' %>" class="inp" style="padding-left:32px;" placeholder="ชื่อ, ชื่อผู้ใช้, อีเมล, เบอร์โทร...">
+          </div>
+        </div>
+        <div style="min-width:150px;">
+          <label class="lbl">บทบาท</label>
+          <select name="role_filter" class="inp">
+            <option value="" <%= !query.role_filter ? 'selected' : '' %>>ทุกบทบาท</option>
+            <option value="staff" <%= query.role_filter==='staff' ? 'selected' : '' %>>เจ้าหน้าที่</option>
+            <option value="superadmin" <%= query.role_filter==='superadmin' ? 'selected' : '' %>>ผู้ดูแลระบบ</option>
+          </select>
+        </div>
+        <div style="min-width:130px;">
+          <label class="lbl">สถานะ</label>
+          <select name="status_filter" class="inp">
+            <option value="" <%= !query.status_filter ? 'selected' : '' %>>ทุกสถานะ</option>
+            <option value="active" <%= query.status_filter==='active' ? 'selected' : '' %>>ใช้งาน</option>
+            <option value="inactive" <%= query.status_filter==='inactive' ? 'selected' : '' %>>ระงับ</option>
+          </select>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button type="submit" class="act-btn ab-primary">
+            <i data-lucide="search" style="width:14px;height:14px;"></i> ค้นหา
+          </button>
+          <% if (query.search || query.role_filter || query.status_filter) { %>
+          <a href="/admin/admins" class="act-btn ab-secondary">ล้าง</a>
+          <% } %>
+        </div>
+      </form>
+    </div>
+
+    <!-- Table -->
+    <div style="background:#fff;border:1px solid #f1f5f9;border-radius:16px;overflow:hidden;">
+      <div style="padding:14px 16px;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;justify-content:space-between;">
+        <span style="font-size:13px;font-weight:600;color:#334155;">รายชื่อผู้ใช้งานระบบ</span>
+        <span style="font-size:12px;color:#94a3b8;"><%= admins.length %> รายการ</span>
+      </div>
+      <table class="tbl">
+        <thead>
+          <tr>
+            <th style="width:42px;">#</th>
+            <th>ชื่อผู้ใช้</th>
+            <th>ชื่อ-นามสกุล</th>
+            <th>อีเมล</th>
+            <th>เบอร์โทร</th>
+            <th>บทบาท</th>
+            <th>สถานะ</th>
+            <th>วันที่สร้าง</th>
+            <th>การจัดการ</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% admins.forEach((a, idx) => {
+            const roleMap = {
+              superadmin: { bg:'#ecfdf5', color:'#047857', label:'ผู้ดูแลระบบ' },
+              admin:      { bg:'#ecfdf5', color:'#047857', label:'ผู้ดูแลระบบ' },
+              staff:      { bg:'#eff6ff', color:'#1d4ed8', label:'เจ้าหน้าที่' },
+              viewer:     { bg:'#f8fafc', color:'#64748b', label:'เจ้าหน้าที่' },
+            }
+            const role = roleMap[a.role] || roleMap.staff
+            const isActive = a.status === 'active'
+          %>
+          <tr>
+            <td style="color:#94a3b8;font-size:12px;text-align:center;"><%= idx + 1 %></td>
+            <td style="font-weight:600;color:#1e293b;"><%= a.username || '-' %></td>
+            <td>
+              <div style="display:flex;align-items:center;gap:8px;">
+                <div style="width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#05967e,#06b6d4);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:12px;flex-shrink:0;">
+                  <%= (a.name||'?').slice(0,1) %>
+                </div>
+                <span style="color:#334155;"><%= a.name || '-' %></span>
+              </div>
+            </td>
+            <td style="color:#64748b;font-size:12px;"><%= a.email || '-' %></td>
+            <td style="color:#64748b;font-size:12px;"><%= a.phone || '-' %></td>
+            <td>
+              <span style="padding:3px 10px;background:<%= role.bg %>;color:<%= role.color %>;border-radius:99px;font-size:11px;font-weight:500;">
+                <%= role.label %>
+              </span>
+            </td>
+            <td>
+              <span style="padding:3px 10px;background:<%= isActive?'#d1fae5':'#f1f5f9' %>;color:<%= isActive?'#065f46':'#64748b' %>;border-radius:99px;font-size:11px;font-weight:500;">
+                <%= isActive ? 'ใช้งาน' : 'ระงับ' %>
+              </span>
+            </td>
+            <td style="font-size:12px;color:#94a3b8;"><%= a.createdAt || '-' %></td>
+            <td>
+              <div style="display:flex;gap:6px;">
+                <button class="act-btn ab-secondary edit-btn" data-rec="<%= JSON.stringify(a) %>">
+                  <i data-lucide="pencil" style="width:13px;height:13px;"></i> แก้ไข
+                </button>
+                <form method="POST" action="/admin/admins/<%= a.id %>/delete"
+                      onsubmit="return confirm('ลบ <%= a.name %>?')" style="margin:0;">
+                  <button type="submit" class="act-btn ab-danger">
+                    <i data-lucide="trash-2" style="width:12px;height:12px;"></i>
+                  </button>
+                </form>
+              </div>
+            </td>
+          </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Overlay -->
+<div id="overlay" class="panel-overlay" onclick="closePanel()"></div>
+
+<!-- Panel -->
+<div id="panel" class="panel-drawer">
+  <div style="padding:16px 20px;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;justify-content:space-between;">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <div style="width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,#7c3aed,#6366f1);display:flex;align-items:center;justify-content:center;">
+        <i data-lucide="shield-check" style="width:15px;height:15px;color:#fff;"></i>
+      </div>
+      <div id="panelTitle" style="font-size:14px;font-weight:600;color:#1e293b;">ผู้ใช้งาน</div>
+    </div>
+    <button onclick="closePanel()" style="background:none;border:none;cursor:pointer;padding:6px;border-radius:8px;color:#94a3b8;">
+      <i data-lucide="x" style="width:18px;height:18px;"></i>
+    </button>
+  </div>
+  <div style="flex:1;overflow-y:auto;padding:20px;">
+    <form id="panelForm" method="POST" action="">
+      <div style="display:grid;gap:14px;">
+        <div>
+          <label class="lbl">ชื่อผู้ใช้ *</label>
+          <input type="text" name="username" id="f_username" class="inp" required placeholder="เช่น admin01">
+        </div>
+        <div>
+          <label class="lbl" id="pwdLabel">รหัสผ่าน *</label>
+          <input type="password" name="password" id="f_password" class="inp" placeholder="กรอกรหัสผ่าน">
+        </div>
+        <div>
+          <label class="lbl">ชื่อ-นามสกุล *</label>
+          <input type="text" name="name" id="f_name" class="inp" required placeholder="เช่น สมชาย ใจดี">
+        </div>
+        <div>
+          <label class="lbl">อีเมล</label>
+          <input type="email" name="email" id="f_email" class="inp" placeholder="example@email.com">
+        </div>
+        <div>
+          <label class="lbl">เบอร์โทรศัพท์</label>
+          <input type="tel" name="phone" id="f_phone" class="inp" placeholder="0XX-XXX-XXXX">
+        </div>
+        <div>
+          <label class="lbl">บทบาท</label>
+          <select name="role" id="f_role" class="inp">
+            <option value="staff">เจ้าหน้าที่</option>
+            <option value="superadmin">ผู้ดูแลระบบ</option>
+          </select>
+        </div>
+        <div id="statusRow" style="display:none;">
+          <label class="lbl">สถานะ</label>
+          <select name="status" id="f_status" class="inp">
+            <option value="active">ใช้งาน</option>
+            <option value="inactive">ระงับ</option>
+          </select>
+        </div>
+      </div>
+    </form>
+  </div>
+  <div style="padding:16px 20px;border-top:1px solid #f1f5f9;display:flex;gap:10px;">
+    <button onclick="closePanel()" class="act-btn ab-secondary" style="flex:1;justify-content:center;">ยกเลิก</button>
+    <button onclick="document.getElementById('panelForm').submit()" class="act-btn ab-primary" style="flex:1;justify-content:center;">
+      <i data-lucide="save" style="width:14px;height:14px;"></i> บันทึก
+    </button>
+  </div>
+</div>
+
+<script>
+  function openPanel(mode, rec) {
+    document.getElementById('statusRow').style.display = mode === 'edit' ? 'block' : 'none'
+    const pwdInput = document.getElementById('f_password')
+    if (mode === 'create') {
+      document.getElementById('panelTitle').textContent = 'เพิ่มผู้ใช้งาน'
+      document.getElementById('panelForm').action       = '/admin/admins/create'
+      document.getElementById('pwdLabel').textContent   = 'รหัสผ่าน *'
+      pwdInput.required    = true
+      pwdInput.placeholder = 'กรอกรหัสผ่าน'
+      document.getElementById('f_username').value   = ''
+      document.getElementById('f_password').value   = ''
+      document.getElementById('f_name').value       = ''
+      document.getElementById('f_email').value      = ''
+      document.getElementById('f_phone').value      = ''
+      document.getElementById('f_role').value       = 'superadmin'
+    } else {
+      document.getElementById('panelTitle').textContent = 'แก้ไขผู้ใช้งาน'
+      document.getElementById('panelForm').action       = '/admin/admins/' + rec.id + '/edit'
+      document.getElementById('pwdLabel').textContent   = 'รหัสผ่านใหม่ (ปล่อยว่างถ้าไม่เปลี่ยน)'
+      pwdInput.required    = false
+      pwdInput.placeholder = 'ปล่อยว่างถ้าไม่ต้องการเปลี่ยน'
+      document.getElementById('f_username').value   = rec.username   || ''
+      document.getElementById('f_password').value   = ''
+      document.getElementById('f_name').value       = rec.name       || ''
+      document.getElementById('f_department').value = rec.department || ''
+      document.getElementById('f_email').value      = rec.email      || ''
+      document.getElementById('f_phone').value      = rec.phone      || ''
+      document.getElementById('f_role').value       = rec.role === 'admin' ? 'superadmin' : (rec.role || 'superadmin')
+      document.getElementById('f_status').value     = rec.status
+    }
+    const ov = document.getElementById('overlay')
+    ov.style.display = 'block'
+    requestAnimationFrame(() => ov.classList.add('open'))
+    document.getElementById('panel').classList.add('open')
+    document.body.style.overflow = 'hidden'
+  }
+
+  function closePanel() {
+    const ov = document.getElementById('overlay')
+    ov.classList.remove('open')
+    document.getElementById('panel').classList.remove('open')
+    document.body.style.overflow = ''
+    setTimeout(() => { ov.style.display = 'none' }, 200)
+  }
+
+  document.querySelectorAll('.edit-btn').forEach(btn => {
+    btn.addEventListener('click', () => openPanel('edit', JSON.parse(btn.dataset.rec)))
+  })
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closePanel() })
+  lucide.createIcons()
+</script>
+</body>
+</html>

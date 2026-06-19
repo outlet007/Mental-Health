@@ -1,14 +1,98 @@
 [
-  { "counselorId": "c001", "dayOfWeek": 1, "dayName": "จันทร์", "startTime": "09:00", "endTime": "17:00", "isActive": true },
-  { "counselorId": "c001", "dayOfWeek": 2, "dayName": "อังคาร", "startTime": "09:00", "endTime": "17:00", "isActive": true },
-  { "counselorId": "c001", "dayOfWeek": 3, "dayName": "พุธ", "startTime": "13:00", "endTime": "17:00", "isActive": true },
-  { "counselorId": "c001", "dayOfWeek": 4, "dayName": "พฤหัสบดี", "startTime": "09:00", "endTime": "17:00", "isActive": false },
-  { "counselorId": "c001", "dayOfWeek": 5, "dayName": "ศุกร์", "startTime": "09:00", "endTime": "15:00", "isActive": true },
-  { "counselorId": "c002", "dayOfWeek": 1, "dayName": "จันทร์", "startTime": "10:00", "endTime": "18:00", "isActive": true },
-  { "counselorId": "c002", "dayOfWeek": 3, "dayName": "พุธ", "startTime": "10:00", "endTime": "18:00", "isActive": true },
-  { "counselorId": "c002", "dayOfWeek": 5, "dayName": "ศุกร์", "startTime": "10:00", "endTime": "16:00", "isActive": true },
-  { "counselorId": "c002", "dayOfWeek": 6, "dayName": "เสาร์", "startTime": "09:00", "endTime": "13:00", "isActive": true },
-  { "counselorId": "c003", "dayOfWeek": 2, "dayName": "อังคาร", "startTime": "08:00", "endTime": "16:00", "isActive": true },
-  { "counselorId": "c003", "dayOfWeek": 4, "dayName": "พฤหัสบดี", "startTime": "08:00", "endTime": "16:00", "isActive": true },
-  { "counselorId": "c003", "dayOfWeek": 6, "dayName": "เสาร์", "startTime": "09:00", "endTime": "12:00", "isActive": true }
+  {
+    "counselorId": "c001",
+    "dayOfWeek": 1,
+    "dayName": "จันทร์",
+    "startTime": "09:00",
+    "endTime": "17:00",
+    "isActive": true
+  },
+  {
+    "counselorId": "c001",
+    "dayOfWeek": 2,
+    "dayName": "อังคาร",
+    "startTime": "09:00",
+    "endTime": "17:00",
+    "isActive": true
+  },
+  {
+    "counselorId": "c001",
+    "dayOfWeek": 3,
+    "dayName": "พุธ",
+    "startTime": "08:00",
+    "endTime": "11:00",
+    "isActive": true
+  },
+  {
+    "counselorId": "c001",
+    "dayOfWeek": 4,
+    "dayName": "พฤหัสบดี",
+    "startTime": "09:00",
+    "endTime": "17:00",
+    "isActive": false
+  },
+  {
+    "counselorId": "c001",
+    "dayOfWeek": 5,
+    "dayName": "ศุกร์",
+    "startTime": "09:00",
+    "endTime": "15:00",
+    "isActive": true
+  },
+  {
+    "counselorId": "c002",
+    "dayOfWeek": 1,
+    "dayName": "จันทร์",
+    "startTime": "10:00",
+    "endTime": "18:00",
+    "isActive": true
+  },
+  {
+    "counselorId": "c002",
+    "dayOfWeek": 3,
+    "dayName": "พุธ",
+    "startTime": "10:00",
+    "endTime": "18:00",
+    "isActive": true
+  },
+  {
+    "counselorId": "c002",
+    "dayOfWeek": 5,
+    "dayName": "ศุกร์",
+    "startTime": "10:00",
+    "endTime": "16:00",
+    "isActive": true
+  },
+  {
+    "counselorId": "c002",
+    "dayOfWeek": 6,
+    "dayName": "เสาร์",
+    "startTime": "09:00",
+    "endTime": "13:00",
+    "isActive": true
+  },
+  {
+    "counselorId": "c003",
+    "dayOfWeek": 2,
+    "dayName": "อังคาร",
+    "startTime": "08:00",
+    "endTime": "16:00",
+    "isActive": true
+  },
+  {
+    "counselorId": "c003",
+    "dayOfWeek": 4,
+    "dayName": "พฤหัสบดี",
+    "startTime": "08:00",
+    "endTime": "16:00",
+    "isActive": true
+  },
+  {
+    "counselorId": "c003",
+    "dayOfWeek": 6,
+    "dayName": "เสาร์",
+    "startTime": "09:00",
+    "endTime": "12:00",
+    "isActive": true
+  }
 ]

@@ -11,9 +11,10 @@ function readData(file) {
 
 // Dashboard
 router.get('/', (req, res) => {
-  const counselors  = readData('counselors.json')
-  const clients     = readData('clients.json')
+  const counselors   = readData('counselors.json')
+  const clients      = readData('clients.json')
   const appointments = readData('appointments.json')
+  const contacts     = readData('contacts.json')
 
   const stats = {
     totalCounselors:  counselors.filter(c => c.isApproved).length,
@@ -26,6 +27,7 @@ router.get('/', (req, res) => {
       return a.date === today
     }).length,
     pendingAppointments: appointments.filter(a => a.status === 'pending').length,
+    newContacts:      contacts.filter(c => c.status === 'new').length,
   }
 
   const recentAppointments = appointments

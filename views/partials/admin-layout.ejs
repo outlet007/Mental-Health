@@ -13,11 +13,15 @@
     <!-- Top bar -->
     <header class="h-14 bg-white border-b border-slate-100 px-6 flex items-center justify-between sticky top-0 z-20">
       <h1 class="font-semibold text-slate-800"><%= title %></h1>
-      <div class="flex items-center gap-2">
+      <div class="flex items-center gap-3">
         <span class="text-xs text-slate-400">
           <% const d = new Date(); %>
           <%= d.toLocaleDateString('th-TH', { weekday:'long', year:'numeric', month:'long', day:'numeric' }) %>
         </span>
+        <a href="/" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-xs font-medium text-slate-600 hover:text-brand-600 hover:border-brand-200 transition-colors">
+          <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+          ดูหน้าเว็บหลัก
+        </a>
       </div>
     </header>
 

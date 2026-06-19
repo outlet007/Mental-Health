@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="th">
 <head>
   <meta charset="UTF-8">
@@ -18,15 +18,20 @@
         <span class="font-bold text-slate-800 text-lg">MindWell</span>
       </div>
       <div class="hidden md:flex items-center gap-1">
-        <a href="#how" class="btn-ghost text-sm">วิธีการใช้งาน</a>
-        <a href="#counselors" class="btn-ghost text-sm">นักให้คำปรึกษา</a>
-        <a href="#faq" class="btn-ghost text-sm">คำถามที่พบบ่อย</a>
+        <a href="#book" class="btn-ghost text-sm" data-i18n="nav-register">ลงทะเบียนเพื่อขอรับบริการ</a>
+        <a href="#counselors" class="btn-ghost text-sm" data-i18n="nav-counselors">นักให้คำปรึกษา</a>
+        <a href="#faq" class="btn-ghost text-sm" data-i18n="nav-faq">คำถามที่พบบ่อย</a>
       </div>
       <div class="flex items-center gap-2">
-        <a href="#book" class="btn-primary text-sm">จองนัดหมาย</a>
-        <a href="/admin" class="btn-ghost text-sm">
-          <i data-lucide="shield" class="w-4 h-4"></i>
-          Admin
+        <!-- Language toggle -->
+        <div class="flex items-center gap-0.5 bg-slate-100 rounded-lg p-0.5">
+          <button id="lang-th" onclick="setLang('th')" class="px-2 py-1 rounded-md text-xs font-semibold transition-colors bg-white shadow text-brand-600">TH</button>
+          <button id="lang-en" onclick="setLang('en')" class="px-2 py-1 rounded-md text-xs font-semibold transition-colors text-slate-500 hover:text-slate-700">EN</button>
+        </div>
+        <a href="#book" class="btn-primary text-sm"><i data-lucide="calendar-plus" class="w-5 h-5"></i> <span data-i18n="nav-btn-register">ลงทะเบียน</span></a>
+        <a href="/admin/login" class="btn-ghost text-sm">
+          <i data-lucide="log-in" class="w-4 h-4"></i>
+          <span data-i18n="nav-staff">สำหรับเจ้าหน้าที่</span>
         </a>
       </div>
     </div>
@@ -38,39 +43,24 @@
       <div>
         <span class="inline-flex items-center gap-2 px-3 py-1 bg-brand-100 text-brand-700 text-sm font-medium rounded-full mb-6">
           <i data-lucide="shield-check" class="w-3.5 h-3.5"></i>
-          ปลอดภัย · เป็นส่วนตัว · เชื่อถือได้
+          <span data-i18n="hero-badge"><%= content.hero.badge %></span>
         </span>
         <h1 class="text-4xl md:text-5xl font-bold text-slate-800 leading-tight mb-6">
-          ดูแลใจของคุณ<br>
-          <span class="text-transparent bg-clip-text bg-gradient-to-r from-brand-600 to-ocean-500">อย่างที่ควรได้รับ</span>
+          <span data-i18n="hero-h1"><%= content.hero.heading1 %></span><br>
+          <span class="text-transparent bg-clip-text bg-gradient-to-r from-brand-600 to-ocean-500" data-i18n="hero-h2"><%= content.hero.heading2 %></span>
         </h1>
-        <p class="text-slate-500 text-lg leading-relaxed mb-8">
-          เชื่อมต่อกับนักจิตวิทยาและนักให้คำปรึกษาที่ผ่านการรับรอง จองนัดหมายได้ง่ายๆ ทั้งแบบออนไลน์และพบตัว
+        <p class="text-slate-500 text-lg leading-relaxed mb-8" data-i18n="hero-subtext">
+          <%= content.hero.subtext %>
         </p>
         <div class="flex flex-wrap gap-3">
           <a href="#book" class="btn-primary px-7 py-3 text-base">
             <i data-lucide="calendar-plus" class="w-5 h-5"></i>
-            จองนัดหมายฟรี
+            <span data-i18n="hero-cta-main"><%= content.hero.ctaMain %></span>
           </a>
           <a href="#counselors" class="btn-secondary px-7 py-3 text-base">
             <i data-lucide="users" class="w-5 h-5"></i>
-            ดูนักให้คำปรึกษา
+            <span data-i18n="hero-cta-sub"><%= content.hero.ctaSub %></span>
           </a>
-        </div>
-        <!-- Trust -->
-        <div class="mt-10 flex flex-wrap gap-6 text-sm text-slate-500">
-          <div class="flex items-center gap-1.5">
-            <i data-lucide="users" class="w-4 h-4 text-brand-500"></i>
-            <span>นักให้คำปรึกษา 20+ คน</span>
-          </div>
-          <div class="flex items-center gap-1.5">
-            <i data-lucide="star" class="w-4 h-4 text-amber-400"></i>
-            <span>รีวิวเฉลี่ย 4.8/5</span>
-          </div>
-          <div class="flex items-center gap-1.5">
-            <i data-lucide="lock" class="w-4 h-4 text-ocean-500"></i>
-            <span>ข้อมูลเป็นความลับ</span>
-          </div>
         </div>
       </div>
 
@@ -84,10 +74,10 @@
           <div class="absolute -top-4 -left-6 card shadow-lg max-w-[200px]">
             <div class="flex items-center gap-2 mb-1">
               <i data-lucide="check-circle" class="w-4 h-4 text-brand-500"></i>
-              <span class="text-xs font-semibold text-slate-700">ยืนยันนัดแล้ว</span>
+              <span class="text-xs font-semibold text-slate-700" data-i18n="hero-card-confirmed">ยืนยันนัดแล้ว</span>
             </div>
-            <p class="text-xs text-slate-500">พุธ 18 มิ.ย. — 10:00 น.</p>
-            <p class="text-xs text-brand-600 font-medium mt-0.5">ดร.สุภาพร เมธาวี</p>
+            <p class="text-xs text-slate-500" data-i18n="hero-card-date">พุธ 18 มิ.ย. — 10:00 น.</p>
+            <p class="text-xs text-brand-600 font-medium mt-0.5" data-i18n="hero-card-name">ดร.สุภาพร เมธาวี</p>
           </div>
           <div class="absolute -bottom-4 -right-6 card shadow-lg max-w-[180px]">
             <div class="flex items-center gap-1 mb-1">
@@ -97,78 +87,60 @@
               <i data-lucide="star" class="w-3.5 h-3.5 text-amber-400 fill-amber-400"></i>
               <i data-lucide="star" class="w-3.5 h-3.5 text-amber-400 fill-amber-400"></i>
             </div>
-            <p class="text-xs text-slate-600">"รู้สึกดีขึ้นมากหลังจากได้คุย ขอบคุณมากครับ"</p>
+            <p class="text-xs text-slate-600" data-i18n="hero-card-review">"รู้สึกดีขึ้นมากหลังจากได้คุย ขอบคุณมากครับ"</p>
           </div>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- How it works -->
-  <section id="how" class="py-20 bg-white">
-    <div class="max-w-6xl mx-auto px-6">
-      <div class="text-center mb-12">
-        <h2 class="text-3xl font-bold text-slate-800 mb-3">วิธีการใช้งาน</h2>
-        <p class="text-slate-500">เริ่มต้นดูแลสุขภาพจิตของคุณใน 3 ขั้นตอนง่ายๆ</p>
-      </div>
-      <div class="grid md:grid-cols-3 gap-8">
-        <% const steps = [
-          { icon:'search', num:'01', title:'ค้นหานักให้คำปรึกษา', desc:'เลือกจากนักจิตวิทยาและนักให้คำปรึกษาที่ผ่านการรับรอง กรองตามความเชี่ยวชาญและรูปแบบที่ต้องการ' },
-          { icon:'calendar', num:'02', title:'จองเวลาที่สะดวก', desc:'เลือกวันและเวลาที่คุณต้องการ ระบบจะยืนยันนัดหมายอัตโนมัติ' },
-          { icon:'video', num:'03', title:'เริ่มพูดคุย', desc:'พบกันออนไลน์ผ่านวิดีโอคอล หรือนัดพบที่คลินิกตามที่คุณสะดวก' }
-        ] %>
-        <% steps.forEach(s => { %>
-        <div class="text-center group">
-          <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-brand-50 to-ocean-50 border border-brand-100 flex items-center justify-center mx-auto mb-4 group-hover:from-brand-100 group-hover:to-ocean-100 transition-colors">
-            <i data-lucide="<%= s.icon %>" class="w-7 h-7 text-brand-600"></i>
-          </div>
-          <span class="text-xs font-bold text-brand-400 tracking-wider"><%= s.num %></span>
-          <h3 class="text-lg font-semibold text-slate-800 mt-1 mb-2"><%= s.title %></h3>
-          <p class="text-slate-500 text-sm leading-relaxed"><%= s.desc %></p>
-        </div>
-        <% }) %>
-      </div>
-    </div>
-  </section>
 
   <!-- Counselors -->
   <section id="counselors" class="py-20 bg-gradient-to-b from-slate-50 to-white">
     <div class="max-w-6xl mx-auto px-6">
-      <div class="flex items-end justify-between mb-10">
-        <div>
-          <h2 class="text-3xl font-bold text-slate-800 mb-2">นักให้คำปรึกษาของเรา</h2>
-          <p class="text-slate-500">ทีมผู้เชี่ยวชาญที่ผ่านการคัดกรองและรับรองคุณภาพ</p>
-        </div>
-        <a href="#book" class="btn-secondary text-sm hidden md:inline-flex">ดูทั้งหมด</a>
+      <div class="text-center mb-12">
+        <h2 class="text-3xl font-bold text-slate-800 mb-2" data-i18n="counselors-heading"><%= content.counselors.heading %></h2>
+        <p class="text-slate-500" data-i18n="counselors-subtext"><%= content.counselors.subtext %></p>
       </div>
-      <div class="grid md:grid-cols-3 gap-6">
-        <% counselors.forEach(c => { %>
-        <div class="card hover:shadow-md transition-shadow group">
-          <div class="flex items-start gap-4 mb-4">
-            <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-brand-400 to-ocean-500 flex items-center justify-center text-white font-bold text-lg flex-shrink-0">
-              <%= c.avatar %>
-            </div>
-            <div class="flex-1 min-w-0">
-              <h3 class="font-semibold text-slate-800 leading-tight"><%= c.name %></h3>
-              <p class="text-sm text-slate-500"><%= c.title %></p>
-              <div class="flex items-center gap-1 mt-1">
-                <i data-lucide="star" class="w-3.5 h-3.5 text-amber-400 fill-amber-400"></i>
-                <span class="text-sm font-medium text-slate-700"><%= c.rating %></span>
-                <span class="text-xs text-slate-400">(<%= c.reviewCount %> รีวิว)</span>
+
+      <div class="relative">
+        <button id="c-prev" class="absolute -left-5 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white shadow-md border border-slate-200 flex items-center justify-center text-slate-500 hover:text-brand-600 hover:border-brand-300 transition-colors">
+          <i data-lucide="chevron-left" class="w-5 h-5"></i>
+        </button>
+
+        <div id="c-track" class="overflow-hidden">
+          <div id="c-inner" class="flex gap-6" style="transition: transform 0.5s ease;">
+            <% counselors.forEach(c => { %>
+            <div class="c-slide flex-none">
+              <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-8 text-center hover:shadow-md transition-shadow">
+                <div class="w-20 h-20 rounded-full mx-auto mb-5 overflow-hidden flex-shrink-0">
+                  <% if (c.photo) { %>
+                  <img src="<%= c.photo %>" alt="<%= c.name %>" class="w-full h-full object-cover">
+                  <% } else { %>
+                  <div class="w-full h-full bg-gradient-to-br from-brand-400 to-ocean-500 flex items-center justify-center text-white font-bold text-2xl">
+                    <%= c.avatar %>
+                  </div>
+                  <% } %>
+                </div>
+                <h3 class="font-semibold text-slate-800 text-lg leading-tight mb-1"><%= c.name %></h3>
+                <p class="text-sm text-brand-600 font-medium mb-4"><%= c.title %></p>
+                <div class="flex flex-wrap gap-1.5 justify-center">
+                  <% c.specialties.forEach(sp => { %>
+                  <span class="badge-blue text-[11px]"><%= sp %></span>
+                  <% }) %>
+                </div>
               </div>
             </div>
-          </div>
-          <div class="flex flex-wrap gap-1.5 mb-4">
-            <% c.specialties.forEach(sp => { %>
-            <span class="badge-blue text-[11px]"><%= sp %></span>
             <% }) %>
           </div>
-          <div class="flex items-center justify-end pt-4 border-t border-slate-50">
-            <a href="#book" class="btn-primary text-xs px-4 py-2">จองนัด</a>
-          </div>
         </div>
-        <% }) %>
+
+        <button id="c-next" class="absolute -right-5 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white shadow-md border border-slate-200 flex items-center justify-center text-slate-500 hover:text-brand-600 hover:border-brand-300 transition-colors">
+          <i data-lucide="chevron-right" class="w-5 h-5"></i>
+        </button>
       </div>
+
+      <div id="c-dots" class="flex justify-center gap-2 mt-8"></div>
     </div>
   </section>
 
@@ -177,22 +149,22 @@
     <div class="max-w-6xl mx-auto px-6">
       <div class="grid md:grid-cols-2 gap-12 items-center">
         <div class="text-white">
-          <h2 class="text-3xl font-bold mb-4">ทำไมต้องเลือก MindWell?</h2>
-          <p class="text-brand-100 mb-8 leading-relaxed">เราเชื่อว่าทุกคนมีสิทธิ์ได้รับการดูแลสุขภาพจิตที่ดี ในสภาพแวดล้อมที่ปลอดภัยและไว้วางใจได้</p>
+          <h2 class="text-3xl font-bold mb-4" data-i18n="features-heading">ทำไมต้องเลือก MindWell?</h2>
+          <p class="text-brand-100 mb-8 leading-relaxed" data-i18n="features-subtext">เราเชื่อว่าทุกคนมีสิทธิ์ได้รับการดูแลสุขภาพจิตที่ดี ในสภาพแวดล้อมที่ปลอดภัยและไว้วางใจได้</p>
           <% const features = [
             { icon:'shield-check', text:'นักให้คำปรึกษาผ่านการตรวจสอบและรับรองคุณสมบัติ' },
             { icon:'lock', text:'ข้อมูลทุกอย่างเป็นความลับตาม PDPA' },
             { icon:'clock', text:'จองนัดได้ตลอด 24 ชั่วโมง ทุกวัน' },
-            { icon:'video', text:'รองรับทั้งการพบออนไลน์และพบตัว' },
+            { icon:'video', text:'รองรับทั้งการพบออนไลน์และเข้ารับบริการด้วยตนเอง' },
             { icon:'bell', text:'แจ้งเตือนก่อนนัดหมาย ไม่ลืมแน่นอน' },
           ] %>
           <ul class="space-y-3">
-            <% features.forEach(f => { %>
+            <% features.forEach((f, idx) => { %>
             <li class="flex items-center gap-3 text-brand-50">
               <div class="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center flex-shrink-0">
                 <i data-lucide="<%= f.icon %>" class="w-4 h-4"></i>
               </div>
-              <span class="text-sm"><%= f.text %></span>
+              <span class="text-sm" data-i18n="feature-<%= idx %>"><%= f.text %></span>
             </li>
             <% }) %>
           </ul>
@@ -204,11 +176,11 @@
             { icon:'calendar-check', num:'1,200+', label:'นัดหมายสำเร็จ' },
             { icon:'star', num:'4.8', label:'คะแนนเฉลี่ย' },
           ] %>
-          <% metrics.forEach(m => { %>
+          <% metrics.forEach((m, idx) => { %>
           <div class="bg-white/10 backdrop-blur rounded-2xl p-6 text-white text-center">
             <i data-lucide="<%= m.icon %>" class="w-7 h-7 mx-auto mb-3 text-brand-200"></i>
             <p class="text-3xl font-bold"><%= m.num %></p>
-            <p class="text-sm text-brand-200 mt-1"><%= m.label %></p>
+            <p class="text-sm text-brand-200 mt-1" data-i18n="metric-<%= idx %>"><%= m.label %></p>
           </div>
           <% }) %>
         </div>
@@ -222,83 +194,111 @@
       <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-brand-400 to-ocean-500 flex items-center justify-center mx-auto mb-6">
         <i data-lucide="calendar-heart" class="w-8 h-8 text-white"></i>
       </div>
-      <h2 class="text-3xl font-bold text-slate-800 mb-4">พร้อมเริ่มต้นแล้วใช่ไหม?</h2>
-      <p class="text-slate-500 mb-8 leading-relaxed">การขอความช่วยเหลือไม่ใช่เรื่องอ่อนแอ มันคือความกล้าหาญ เริ่มต้นดูแลใจของคุณวันนี้เลย</p>
+      <h2 class="text-3xl font-bold text-slate-800 mb-4" data-i18n="book-heading"><%= content.book.heading %></h2>
+      <p class="text-slate-500 mb-8 leading-relaxed" data-i18n="book-subtext"><%= content.book.subtext %></p>
+      <% if (query && query.sent) { %>
+      <div class="card border-2 border-brand-100 text-center py-10">
+        <div class="w-16 h-16 rounded-full bg-brand-50 flex items-center justify-center mx-auto mb-4">
+          <i data-lucide="circle-check" class="w-8 h-8 text-brand-500"></i>
+        </div>
+        <h3 class="font-semibold text-slate-800 text-lg mb-2" data-i18n="book-success-heading">ส่งคำขอสำเร็จแล้ว!</h3>
+        <p class="text-slate-500 text-sm leading-relaxed" data-i18n-html="book-success-text">ทีมงานจะติดต่อกลับหาคุณภายใน 1 วันทำการ<br>ขอบคุณที่ไว้วางใจ MindWell</p>
+      </div>
+      <% } else { %>
       <div class="card border-2 border-brand-100 text-left">
         <h3 class="font-semibold text-slate-700 mb-4 flex items-center gap-2">
           <i data-lucide="send" class="w-4 h-4 text-brand-500"></i>
-          ฝากข้อมูลเพื่อให้ทีมติดต่อกลับ
+          <span data-i18n="form-heading"><%= content.book.formHeading %></span>
         </h3>
-        <form class="space-y-4">
+        <% if (query && query.error === 'missing') { %>
+        <div class="flex items-center gap-2 mb-4 px-4 py-3 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm">
+          <i data-lucide="alert-circle" class="w-4 h-4 flex-shrink-0"></i>
+          <span data-i18n="form-error">กรุณากรอกข้อมูลที่จำเป็นให้ครบทุกช่อง</span>
+        </div>
+        <% } %>
+        <form method="POST" action="/contact" class="space-y-4">
           <div class="grid grid-cols-2 gap-4">
             <div>
-              <label class="form-label">ชื่อ-นามสกุล</label>
-              <input type="text" class="form-input" placeholder="กรอกชื่อของคุณ">
+              <label class="form-label"><span data-i18n="form-label-name">ชื่อ-นามสกุล</span> <span class="text-red-400">*</span></label>
+              <input type="text" name="name" class="form-input" placeholder="กรอกชื่อของคุณ" data-i18n-ph="form-ph-name" required>
             </div>
             <div>
-              <label class="form-label">เบอร์โทรศัพท์</label>
-              <input type="tel" class="form-input" placeholder="08X-XXX-XXXX">
+              <label class="form-label"><span data-i18n="form-label-studentid">รหัสนักศึกษา</span> <span class="text-red-400">*</span></label>
+              <input type="text" name="studentId" class="form-input" placeholder="เช่น 1680123456" data-i18n-ph="form-ph-studentid" required>
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="form-label"><span data-i18n="form-label-phone">เบอร์โทรศัพท์</span> <span class="text-red-400">*</span></label>
+              <input type="tel" name="phone" class="form-input" placeholder="08X-XXX-XXXX" required>
+            </div>
+            <div>
+              <label class="form-label"><span data-i18n="form-label-email">อีเมล</span> <span class="text-red-400">*</span></label>
+              <input type="email" name="email" class="form-input" placeholder="your@email.com" required>
             </div>
           </div>
           <div>
-            <label class="form-label">อีเมล</label>
-            <input type="email" class="form-input" placeholder="your@email.com">
-          </div>
-          <div>
-            <label class="form-label">คุณต้องการความช่วยเหลือเรื่องอะไร?</label>
-            <select class="form-select">
-              <option value="">-- เลือกประเภท --</option>
-              <option>ความวิตกกังวล / ความเครียด</option>
-              <option>ภาวะซึมเศร้า</option>
-              <option>ปัญหาความสัมพันธ์</option>
-              <option>ปัญหาครอบครัว</option>
-              <option>ความเศร้าโศก / การสูญเสีย</option>
-              <option>อื่นๆ</option>
+            <label class="form-label" data-i18n="form-label-concern">คุณต้องการความช่วยเหลือเรื่องอะไร?</label>
+            <select name="concern" class="form-select">
+              <option value="" data-i18n-opt="concern-0">-- เลือกประเภท --</option>
+              <option data-i18n-opt="concern-1">ความวิตกกังวล / ความเครียด</option>
+              <option data-i18n-opt="concern-2">ภาวะซึมเศร้า</option>
+              <option data-i18n-opt="concern-3">ปัญหาความสัมพันธ์</option>
+              <option data-i18n-opt="concern-4">ปัญหาครอบครัว</option>
+              <option data-i18n-opt="concern-5">ความเศร้าโศก / การสูญเสีย</option>
+              <option data-i18n-opt="concern-6">อื่นๆ</option>
             </select>
           </div>
           <div>
-            <label class="form-label">รูปแบบที่ต้องการ</label>
+            <label class="form-label" data-i18n="form-label-type">รูปแบบที่ต้องการ</label>
             <div class="grid grid-cols-2 gap-3">
               <label class="flex items-center gap-2 p-3 border border-slate-200 rounded-xl cursor-pointer hover:border-brand-300 hover:bg-brand-50 transition-colors">
-                <input type="radio" name="type" value="online" class="accent-brand-600">
+                <input type="radio" name="type" value="online" checked class="accent-brand-600">
                 <i data-lucide="video" class="w-4 h-4 text-brand-500"></i>
-                <span class="text-sm font-medium">ออนไลน์</span>
+                <span class="text-sm font-medium" data-i18n="form-type-online">ออนไลน์</span>
               </label>
               <label class="flex items-center gap-2 p-3 border border-slate-200 rounded-xl cursor-pointer hover:border-brand-300 hover:bg-brand-50 transition-colors">
                 <input type="radio" name="type" value="onsite" class="accent-brand-600">
                 <i data-lucide="map-pin" class="w-4 h-4 text-brand-500"></i>
-                <span class="text-sm font-medium">พบตัว</span>
+                <span class="text-sm font-medium" data-i18n="form-type-onsite">เข้ารับบริการด้วยตนเอง</span>
               </label>
             </div>
           </div>
+          <div class="bg-gradient-to-r from-brand-50 to-emerald-50 rounded-2xl border border-brand-100" style="padding:15px">
+            <div class="flex items-center gap-2 mb-3">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="w-5 h-5 text-brand-500 flex-shrink-0"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"></path><path d="m9 12 2 2 4-4"></path></svg>
+              <h4 class="font-semibold text-slate-800 text-base"><span data-i18n="pdpa-heading">การยินยอมเปิดเผยข้อมูล</span> <span class="text-red-400">*</span></h4>
+            </div>
+            <div class="text-sm text-slate-600 leading-relaxed mb-4">
+              <p data-i18n="pdpa-text">ข้าพเจ้า ตกลงและยินยอมให้มหาวิทยาลัยเก็บรวบรวม ใช้ ประมวลผล และเปิดเผยข้อมูลส่วนบุคคลของข้าพเจ้า ทั้งที่ปรากฏในเอกสารฉบับนี้ หรือที่มหาวิทยาลัยรวบรวมจากบุคคลอื่น เพื่อวัตถุประสงค์ในการนัดพบแพทย์ หรือเพื่อใช้ประโยชน์ในกิจการของมหาวิทยาลัย ทั้งนี้ข้าพเจ้ารับทราบ ตกลงและยินยอมว่า มหาวิทยาลัยมีสิทธิ์เก็บรวบรวม ใช้ประมวลผลและเปิดเผยข้อมูลส่วนบุคคลของข้าพเจ้า โดยเป็นไปตามนโยบายคุ้มครองข้อมูลส่วนบุคคลของมหาวิทยาลัย ที่ประกาศใช้ในปัจจุบันหรืออาจเปลี่ยนแปลงแก้ไขในภายหลัง รายละเอียดปรากฏตาม นโยบายคุ้มครองข้อมูลส่วนบุคคล ในเว็บไซต์</p>
+            </div>
+            <label class="flex items-start gap-3 cursor-pointer group">
+              <input type="checkbox" name="pdpa_consent" class="mt-0.5 w-4 h-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500 cursor-pointer" required="">
+              <span class="text-sm text-slate-700 group-hover:text-slate-900 transition-colors" data-i18n="pdpa-checkbox">ข้าพเจ้าได้อ่านและยอมรับการยินยอมเปิดเผยข้อมูลแล้ว</span>
+            </label>
+          </div>
           <button type="submit" class="btn-primary w-full justify-center py-3 text-base">
             <i data-lucide="send" class="w-5 h-5"></i>
-            ส่งคำขอจองนัดหมาย
+            <span data-i18n="form-submit">ส่งคำขอจองนัดหมาย</span>
           </button>
-          <p class="text-xs text-center text-slate-400">ข้อมูลของคุณจะถูกเก็บรักษาเป็นความลับตาม PDPA</p>
         </form>
       </div>
+      <% } %>
     </div>
   </section>
 
   <!-- FAQ -->
   <section id="faq" class="py-20 bg-slate-50">
     <div class="max-w-3xl mx-auto px-6">
-      <h2 class="text-3xl font-bold text-slate-800 text-center mb-10">คำถามที่พบบ่อย</h2>
+      <h2 class="text-3xl font-bold text-slate-800 text-center mb-10" data-i18n="faq-heading">คำถามที่พบบ่อย</h2>
       <div class="space-y-3">
-        <% const faqs = [
-          { q:'ข้อมูลที่ฉันแชร์จะถูกเก็บเป็นความลับไหม?', a:'ใช่ ข้อมูลทั้งหมดถูกเข้ารหัสและเก็บรักษาตาม พ.ร.บ.คุ้มครองข้อมูลส่วนบุคคล (PDPA) นักให้คำปรึกษาของเราผูกพันด้วยจรรยาบรรณวิชาชีพ' },
-          { q:'ถ้าฉันต้องการยกเลิกหรือเลื่อนนัด ทำอย่างไร?', a:'คุณสามารถยกเลิกหรือเลื่อนนัดได้ก่อน 24 ชั่วโมงโดยไม่มีค่าธรรมเนียม ผ่านระบบออนไลน์หรือโทรติดต่อเจ้าหน้าที่' },
-          { q:'การให้คำปรึกษาออนไลน์มีประสิทธิภาพเท่าการพบตัวไหม?', a:'งานวิจัยพบว่าการให้คำปรึกษาออนไลน์มีประสิทธิภาพใกล้เคียงกัน และสะดวกกว่าสำหรับหลายคน นักให้คำปรึกษาของเราผ่านการฝึกอบรมเฉพาะสำหรับรูปแบบออนไลน์' },
-          { q:'ค่าใช้จ่ายเป็นอย่างไร?', a:'ราคาแตกต่างกันตามนักให้คำปรึกษา เริ่มต้นที่ 800 บาทต่อเซสชัน สามารถดูราคาจากโปรไฟล์ของแต่ละท่านได้เลย' },
-        ] %>
-        <% faqs.forEach((f, i) => { %>
-        <details class="card group cursor-pointer" open="<%= i===0 %>">
+        <% content.faqs.forEach((f, i) => { %>
+        <details class="card group cursor-pointer" data-faq-idx="<%= i %>" open="<%= i===0 %>">
           <summary class="font-medium text-slate-700 flex items-center justify-between list-none">
-            <%= f.q %>
+            <span data-faq-q><%= f.q %></span>
             <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 flex-shrink-0 group-open:rotate-180 transition-transform"></i>
           </summary>
-          <p class="mt-3 text-sm text-slate-500 leading-relaxed"><%= f.a %></p>
+          <p class="mt-3 text-sm text-slate-500 leading-relaxed" data-faq-a><%- f.a %></p>
         </details>
         <% }) %>
       </div>
@@ -316,33 +316,292 @@
             </div>
             <span class="font-bold text-white">MindWell</span>
           </div>
-          <p class="text-sm leading-relaxed">ระบบจองนัดหมายการให้คำปรึกษาทางสุขภาพจิต เชื่อมต่อผู้ที่ต้องการความช่วยเหลือกับผู้เชี่ยวชาญที่ไว้วางใจได้</p>
+          <p class="text-sm leading-relaxed" data-i18n="footer-desc">ระบบจองนัดหมายการให้คำปรึกษาทางสุขภาพจิต เชื่อมต่อผู้ที่ต้องการความช่วยเหลือกับผู้เชี่ยวชาญที่ไว้วางใจได้</p>
         </div>
         <div>
-          <p class="text-white font-medium mb-3">บริการ</p>
+          <p class="text-white font-medium mb-3" data-i18n="footer-services">บริการ</p>
           <ul class="space-y-2 text-sm">
-            <li><a href="#" class="hover:text-brand-400 transition-colors">ค้นหานักให้คำปรึกษา</a></li>
-            <li><a href="#" class="hover:text-brand-400 transition-colors">จองนัดหมาย</a></li>
-            <li><a href="#" class="hover:text-brand-400 transition-colors">ให้คำปรึกษาออนไลน์</a></li>
+            <li><a href="#counselors" class="hover:text-brand-400 transition-colors" data-i18n="footer-link-1">นักให้คำปรึกษาของเรา</a></li>
+            <li><a href="#book" class="hover:text-brand-400 transition-colors" data-i18n="footer-link-2">ลงทะเบียนเพื่อขอรับบริการ</a></li>
           </ul>
         </div>
         <div>
-          <p class="text-white font-medium mb-3">ติดต่อ</p>
+          <p class="text-white font-medium mb-3" data-i18n="footer-contact">ติดต่อ</p>
           <ul class="space-y-2 text-sm">
-            <li class="flex items-center gap-2"><i data-lucide="mail" class="w-3.5 h-3.5"></i> hello@mindwell.th</li>
-            <li class="flex items-center gap-2"><i data-lucide="phone" class="w-3.5 h-3.5"></i> 02-XXX-XXXX</li>
-            <li class="flex items-center gap-2"><i data-lucide="clock" class="w-3.5 h-3.5"></i> จ–ศ 08:00–20:00 น.</li>
+            <li class="flex items-center gap-2">
+              <i data-lucide="message-circle" class="w-3.5 h-3.5 shrink-0"></i>
+              <a href="https://page.line.me/bucare?openQrModal=true" target="_blank" rel="noopener" class="hover:text-brand-400 transition-colors">LINE @bucare</a>
+            </li>
+            <li class="flex items-start gap-2">
+              <i data-lucide="clock" class="w-3.5 h-3.5 shrink-0 mt-0.5"></i>
+              <span data-i18n="footer-hours">จันทร์-เสาร์ 08.30 – 17.00 น. (ยกเว้นวันหยุดนักขัตฤกษ์)</span>
+            </li>
           </ul>
         </div>
       </div>
       <div class="border-t border-slate-700 pt-6 text-center text-xs">
-        <p>© 2024 MindWell · ข้อมูลทุกอย่างได้รับการคุ้มครองตาม PDPA</p>
+        <p data-i18n="footer-copyright">© 2024 MindWell · ข้อมูลทุกอย่างได้รับการคุ้มครองตาม PDPA</p>
       </div>
     </div>
   </footer>
 
   <script>
+    // Counselor Carousel
+    (function () {
+      const inner = document.getElementById('c-inner');
+      const slides = Array.from(inner.querySelectorAll('.c-slide'));
+      const prevBtn = document.getElementById('c-prev');
+      const nextBtn = document.getElementById('c-next');
+      const dotsEl = document.getElementById('c-dots');
+      let current = 0;
+      const GAP = 24;
+
+      function pv() { return window.innerWidth >= 768 ? 3 : 1; }
+      function maxIdx() { return Math.max(0, slides.length - pv()); }
+      function sw() { return slides[0].offsetWidth + GAP; }
+
+      function buildDots() {
+        dotsEl.innerHTML = '';
+        for (let i = 0; i <= maxIdx(); i++) {
+          const d = document.createElement('button');
+          d.className = 'w-2 h-2 rounded-full transition-colors ' + (i === current ? 'bg-brand-500' : 'bg-slate-300');
+          d.addEventListener('click', () => goTo(i));
+          dotsEl.appendChild(d);
+        }
+      }
+
+      function updateDots() {
+        dotsEl.querySelectorAll('button').forEach((d, i) => {
+          d.className = 'w-2 h-2 rounded-full transition-colors ' + (i === current ? 'bg-brand-500' : 'bg-slate-300');
+        });
+      }
+
+      function goTo(i) {
+        current = Math.max(0, Math.min(i, maxIdx()));
+        inner.style.transform = 'translateX(-' + (current * sw()) + 'px)';
+        updateDots();
+      }
+
+      function setWidths() {
+        const track = document.getElementById('c-track');
+        const w = (track.offsetWidth - (pv() - 1) * GAP) / pv();
+        slides.forEach(s => { s.style.width = w + 'px'; });
+        current = Math.min(current, maxIdx());
+        goTo(current);
+        buildDots();
+      }
+
+      prevBtn.addEventListener('click', () => goTo(current - 1));
+      nextBtn.addEventListener('click', () => goTo(current + 1));
+      window.addEventListener('resize', setWidths);
+      setWidths();
+    })();
+
     lucide.createIcons();
+
+    // ─── i18n ────────────────────────────────────────────────────────────────
+    const LANG_KEY = 'mw-lang';
+    const TRANSLATIONS = {
+      th: {
+        'page-title': 'MindWell — ระบบจองนัดหมายการให้คำปรึกษาทางจิตใจ',
+        'nav-register': 'ลงทะเบียนเพื่อขอรับบริการ',
+        'nav-counselors': 'นักให้คำปรึกษา',
+        'nav-faq': 'คำถามที่พบบ่อย',
+        'nav-btn-register': 'ลงทะเบียน',
+        'nav-staff': 'สำหรับเจ้าหน้าที่',
+        'hero-badge': 'ปลอดภัย · เป็นส่วนตัว · เชื่อถือได้',
+        'hero-h1': 'ดูแลใจของคุณ',
+        'hero-h2': 'อย่างที่ควรได้รับ',
+        'hero-subtext': 'เชื่อมต่อกับนักจิตวิทยาและนักให้คำปรึกษาที่ผ่านการรับรอง จองนัดหมายได้ง่ายๆ ทั้งแบบออนไลน์และเข้ารับบริการด้วยตนเอง',
+        'hero-cta-main': 'ลงทะเบียนเพื่อขอรับบริการ',
+        'hero-cta-sub': 'ดูนักให้คำปรึกษา',
+        'hero-card-confirmed': 'ยืนยันนัดแล้ว',
+        'hero-card-date': 'พุธ 18 มิ.ย. — 10:00 น.',
+        'hero-card-name': 'ดร.สุภาพร เมธาวี',
+        'hero-card-review': '"รู้สึกดีขึ้นมากหลังจากได้คุย ขอบคุณมากครับ"',
+        'counselors-heading': 'นักให้คำปรึกษาของเรา',
+        'counselors-subtext': 'ทีมผู้เชี่ยวชาญที่ผ่านการคัดกรองและรับรองคุณภาพ',
+        'features-heading': 'ทำไมต้องเลือก MindWell?',
+        'features-subtext': 'เราเชื่อว่าทุกคนมีสิทธิ์ได้รับการดูแลสุขภาพจิตที่ดี ในสภาพแวดล้อมที่ปลอดภัยและไว้วางใจได้',
+        'feature-0': 'นักให้คำปรึกษาผ่านการตรวจสอบและรับรองคุณสมบัติ',
+        'feature-1': 'ข้อมูลทุกอย่างเป็นความลับตาม PDPA',
+        'feature-2': 'จองนัดได้ตลอด 24 ชั่วโมง ทุกวัน',
+        'feature-3': 'รองรับทั้งการพบออนไลน์และเข้ารับบริการด้วยตนเอง',
+        'feature-4': 'แจ้งเตือนก่อนนัดหมาย ไม่ลืมแน่นอน',
+        'metric-0': 'ผู้รับบริการ',
+        'metric-1': 'นักให้คำปรึกษา',
+        'metric-2': 'นัดหมายสำเร็จ',
+        'metric-3': 'คะแนนเฉลี่ย',
+        'book-heading': 'ลงทะเบียนเพื่อขอรับบริการให้คำปรึกษา',
+        'book-subtext': 'การขอความช่วยเหลือไม่ใช่เรื่องอ่อนแอ มันคือความกล้าหาญ เริ่มต้นดูแลใจของคุณวันนี้เลย',
+        'book-success-heading': 'ส่งคำขอสำเร็จแล้ว!',
+        'book-success-text': 'ทีมงานจะติดต่อกลับหาคุณภายใน 1 วันทำการ<br>ขอบคุณที่ไว้วางใจ MindWell',
+        'form-heading': 'กรุณาฝากข้อมูลของท่าน เพื่อให้เจ้าหน้าที่ติดต่อกลับสำหรับการนัดหมายรับคำปรึกษา',
+        'form-error': 'กรุณากรอกข้อมูลที่จำเป็นให้ครบทุกช่อง',
+        'form-label-name': 'ชื่อ-นามสกุล',
+        'form-label-studentid': 'รหัสนักศึกษา',
+        'form-label-phone': 'เบอร์โทรศัพท์',
+        'form-label-email': 'อีเมล',
+        'form-ph-name': 'กรอกชื่อของคุณ',
+        'form-ph-studentid': 'เช่น 1680123456',
+        'form-label-concern': 'คุณต้องการความช่วยเหลือเรื่องอะไร?',
+        'concern-0': '-- เลือกประเภท --',
+        'concern-1': 'ความวิตกกังวล / ความเครียด',
+        'concern-2': 'ภาวะซึมเศร้า',
+        'concern-3': 'ปัญหาความสัมพันธ์',
+        'concern-4': 'ปัญหาครอบครัว',
+        'concern-5': 'ความเศร้าโศก / การสูญเสีย',
+        'concern-6': 'อื่นๆ',
+        'form-label-type': 'รูปแบบที่ต้องการ',
+        'form-type-online': 'ออนไลน์',
+        'form-type-onsite': 'เข้ารับบริการด้วยตนเอง',
+        'pdpa-heading': 'การยินยอมเปิดเผยข้อมูล',
+        'pdpa-text': 'ข้าพเจ้า ตกลงและยินยอมให้มหาวิทยาลัยเก็บรวบรวม ใช้ ประมวลผล และเปิดเผยข้อมูลส่วนบุคคลของข้าพเจ้า ทั้งที่ปรากฏในเอกสารฉบับนี้ หรือที่มหาวิทยาลัยรวบรวมจากบุคคลอื่น เพื่อวัตถุประสงค์ในการนัดพบแพทย์ หรือเพื่อใช้ประโยชน์ในกิจการของมหาวิทยาลัย ทั้งนี้ข้าพเจ้ารับทราบ ตกลงและยินยอมว่า มหาวิทยาลัยมีสิทธิ์เก็บรวบรวม ใช้ประมวลผลและเปิดเผยข้อมูลส่วนบุคคลของข้าพเจ้า โดยเป็นไปตามนโยบายคุ้มครองข้อมูลส่วนบุคคลของมหาวิทยาลัย ที่ประกาศใช้ในปัจจุบันหรืออาจเปลี่ยนแปลงแก้ไขในภายหลัง รายละเอียดปรากฏตาม นโยบายคุ้มครองข้อมูลส่วนบุคคล ในเว็บไซต์',
+        'pdpa-checkbox': 'ข้าพเจ้าได้อ่านและยอมรับการยินยอมเปิดเผยข้อมูลแล้ว',
+        'form-submit': 'ส่งคำขอจองนัดหมาย',
+        'faq-heading': 'คำถามที่พบบ่อย',
+        'faq-items': [
+          { q: 'ข้อมูลที่ฉันแชร์จะถูกเก็บเป็นความลับไหม?', a: 'ใช่ ข้อมูลทั้งหมดถูกเข้ารหัสและเก็บรักษาตาม พ.ร.บ.คุ้มครองข้อมูลส่วนบุคคล (PDPA) นักให้คำปรึกษาของเราผูกพันด้วยจรรยาบรรณวิชาชีพ' },
+          { q: 'ถ้าฉันต้องการยกเลิกหรือเลื่อนนัด ทำอย่างไร?', a: 'คุณสามารถยกเลิกหรือเลื่อนนัดได้ก่อน 24 ชั่วโมง ผ่าน <a href="https://page.line.me/bucare?openQrModal=true" target="_blank" rel="noopener" class="text-brand-600 font-medium hover:underline">LINE @bucare</a>' },
+          { q: 'การให้คำปรึกษาออนไลน์มีประสิทธิภาพเท่าการเข้ารับบริการด้วยตนเองไหม?', a: 'งานวิจัยพบว่าการให้คำปรึกษาออนไลน์มีประสิทธิภาพใกล้เคียงกัน และสะดวกกว่าสำหรับหลายคน นักให้คำปรึกษาของเราผ่านการฝึกอบรมเฉพาะสำหรับรูปแบบออนไลน์' }
+        ],
+        'footer-desc': 'ระบบจองนัดหมายการให้คำปรึกษาทางสุขภาพจิต เชื่อมต่อผู้ที่ต้องการความช่วยเหลือกับผู้เชี่ยวชาญที่ไว้วางใจได้',
+        'footer-services': 'บริการ',
+        'footer-link-1': 'นักให้คำปรึกษาของเรา',
+        'footer-link-2': 'ลงทะเบียนเพื่อขอรับบริการ',
+        'footer-contact': 'ติดต่อ',
+        'footer-hours': 'จันทร์-เสาร์ 08.30 – 17.00 น. (ยกเว้นวันหยุดนักขัตฤกษ์)',
+        'footer-copyright': '© 2024 MindWell · ข้อมูลทุกอย่างได้รับการคุ้มครองตาม PDPA',
+      },
+      en: {
+        'page-title': 'MindWell — Mental Health Counseling Appointment System',
+        'nav-register': 'Register for Services',
+        'nav-counselors': 'Counselors',
+        'nav-faq': 'FAQ',
+        'nav-btn-register': 'Register',
+        'nav-staff': 'Staff Login',
+        'hero-badge': 'Safe · Private · Trusted',
+        'hero-h1': 'Take Care of Your Mind',
+        'hero-h2': 'The Way You Deserve',
+        'hero-subtext': 'Connect with certified psychologists and counselors. Book appointments easily, online or in-person.',
+        'hero-cta-main': 'Register for Services',
+        'hero-cta-sub': 'View Counselors',
+        'hero-card-confirmed': 'Appointment Confirmed',
+        'hero-card-date': 'Wed Jun 18 — 10:00 AM',
+        'hero-card-name': 'Dr. Supaporn Methawi',
+        'hero-card-review': '"Feeling much better after our talk. Thank you so much!"',
+        'counselors-heading': 'Our Counselors',
+        'counselors-subtext': 'A team of experts who have been screened and quality-certified',
+        'features-heading': 'Why Choose MindWell?',
+        'features-subtext': 'We believe everyone deserves good mental health care in a safe and trustworthy environment.',
+        'feature-0': 'Counselors verified and certified',
+        'feature-1': 'All information is confidential under PDPA',
+        'feature-2': 'Book appointments 24 hours a day, every day',
+        'feature-3': 'Supports both online and in-person sessions',
+        'feature-4': 'Appointment reminders so you never miss a session',
+        'metric-0': 'Service Recipients',
+        'metric-1': 'Counselors',
+        'metric-2': 'Successful Appointments',
+        'metric-3': 'Average Rating',
+        'book-heading': 'Register for Counseling Services',
+        'book-subtext': 'Seeking help is not weakness — it takes courage. Start taking care of your mind today.',
+        'book-success-heading': 'Request Sent Successfully!',
+        'book-success-text': 'Our team will contact you within 1 business day.<br>Thank you for trusting MindWell.',
+        'form-heading': 'Please leave your information so our staff can contact you to schedule a counseling appointment.',
+        'form-error': 'Please fill in all required fields.',
+        'form-label-name': 'Full Name',
+        'form-label-studentid': 'Student ID',
+        'form-label-phone': 'Phone Number',
+        'form-label-email': 'Email',
+        'form-ph-name': 'Enter your name',
+        'form-ph-studentid': 'e.g. 1680123456',
+        'form-label-concern': 'What would you like help with?',
+        'concern-0': '-- Select Type --',
+        'concern-1': 'Anxiety / Stress',
+        'concern-2': 'Depression',
+        'concern-3': 'Relationship Issues',
+        'concern-4': 'Family Problems',
+        'concern-5': 'Grief / Loss',
+        'concern-6': 'Other',
+        'form-label-type': 'Preferred Format',
+        'form-type-online': 'Online',
+        'form-type-onsite': 'In-Person',
+        'pdpa-heading': 'Data Disclosure Consent',
+        'pdpa-text': "I agree and consent to the University collecting, using, processing, and disclosing my personal information — both appearing in this document and gathered from other persons — for the purpose of scheduling medical appointments or for University operations. I acknowledge that the University has the right to collect, use, process, and disclose my personal data in accordance with the University's Personal Data Protection Policy as currently published or as may be amended in the future. Details are available in the Personal Data Protection Policy on the website.",
+        'pdpa-checkbox': 'I have read and accept the data disclosure consent.',
+        'form-submit': 'Submit Registration Request',
+        'faq-heading': 'Frequently Asked Questions',
+        'faq-items': [
+          { q: 'Will the information I share be kept confidential?', a: "Yes, all data is encrypted and maintained in accordance with Thailand's Personal Data Protection Act (PDPA). Our counselors are bound by professional ethics." },
+          { q: 'How can I cancel or reschedule my appointment?', a: 'You can cancel or reschedule at least 24 hours in advance via <a href="https://page.line.me/bucare?openQrModal=true" target="_blank" rel="noopener" class="text-brand-600 font-medium hover:underline">LINE @bucare</a>' },
+          { q: 'Is online counseling as effective as in-person visits?', a: 'Research shows that online counseling is similarly effective and more convenient for many people. Our counselors are specially trained for the online format.' }
+        ],
+        'footer-desc': 'Mental health counseling appointment system — connecting those who need help with trusted experts.',
+        'footer-services': 'Services',
+        'footer-link-1': 'Our Counselors',
+        'footer-link-2': 'Register for Services',
+        'footer-contact': 'Contact',
+        'footer-hours': 'Mon–Sat 08:30–17:00 (excl. public holidays)',
+        'footer-copyright': '© 2024 MindWell · All information is protected under PDPA',
+      }
+    };
+
+    function setLang(lang) {
+      localStorage.setItem(LANG_KEY, lang);
+      const T = TRANSLATIONS[lang];
+
+      // Toggle button styles
+      const activeClass = 'px-2 py-1 rounded-md text-xs font-semibold transition-colors bg-white shadow text-brand-600';
+      const inactiveClass = 'px-2 py-1 rounded-md text-xs font-semibold transition-colors text-slate-500 hover:text-slate-700';
+      document.getElementById('lang-th').className = lang === 'th' ? activeClass : inactiveClass;
+      document.getElementById('lang-en').className = lang === 'en' ? activeClass : inactiveClass;
+
+      // Text content
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.dataset.i18n;
+        if (T[key] !== undefined) el.textContent = T[key];
+      });
+
+      // innerHTML (for <br> etc.)
+      document.querySelectorAll('[data-i18n-html]').forEach(el => {
+        const key = el.dataset.i18nHtml;
+        if (T[key] !== undefined) el.innerHTML = T[key];
+      });
+
+      // Placeholders
+      document.querySelectorAll('[data-i18n-ph]').forEach(el => {
+        const key = el.dataset.i18nPh;
+        if (T[key] !== undefined) el.placeholder = T[key];
+      });
+
+      // Select options
+      document.querySelectorAll('[data-i18n-opt]').forEach(el => {
+        const key = el.dataset.i18nOpt;
+        if (T[key] !== undefined) el.textContent = T[key];
+      });
+
+      // FAQ items
+      const faqItems = T['faq-items'] || [];
+      document.querySelectorAll('[data-faq-idx]').forEach(el => {
+        const idx = parseInt(el.getAttribute('data-faq-idx'));
+        if (faqItems[idx]) {
+          const qEl = el.querySelector('[data-faq-q]');
+          const aEl = el.querySelector('[data-faq-a]');
+          if (qEl) qEl.textContent = faqItems[idx].q;
+          if (aEl) aEl.innerHTML = faqItems[idx].a;
+        }
+      });
+
+      // Page title + html lang
+      if (T['page-title']) document.title = T['page-title'];
+      document.documentElement.lang = lang === 'en' ? 'en' : 'th';
+    }
+
+    // Initialize from saved preference
+    (function () {
+      const saved = localStorage.getItem(LANG_KEY) || 'th';
+      setLang(saved);
+    })();
   </script>
 </body>
 </html>

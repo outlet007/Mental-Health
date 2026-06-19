@@ -12,11 +12,29 @@ function readSchedules()   { return JSON.parse(fs.readFileSync(scheduleFile,  'u
 function readCounselors()  { return JSON.parse(fs.readFileSync(counselorFile, 'utf8')) }
 function writeSchedules(d) { fs.writeFileSync(scheduleFile, JSON.stringify(d, null, 2)) }
 
+function isCounselor(req) {
+  return req.session.userType === 'counselor'
+}
+
+function canUseCounselor(req, counselorId) {
+  return !isCounselor(req) || counselorId === req.session.counselorId
+}
+
+function forbidden(res) {
+  return res.status(403).send('Forbidden')
+}
+
 // ── LIST ──────────────────────────────────────────────────────────────────────
 router.get('/', (req, res) => {
-  const counselors = readCounselors().filter(c => c.isApproved)
+  let counselors = readCounselors().filter(c => c.isApproved)
   const schedules  = readSchedules()
-  const selected   = req.query.counselorId || counselors[0]?.id
+
+  // Counselors only see their own schedule
+  let selected = req.query.counselorId || counselors[0]?.id
+  if (req.session.userType === 'counselor') {
+    selected   = req.session.counselorId
+    counselors = counselors.filter(c => c.id === selected)
+  }
   const mySchedules = schedules
     .filter(s => s.counselorId === selected)
     .sort((a, b) => a.dayOfWeek - b.dayOfWeek)
@@ -37,12 +55,15 @@ router.get('/', (req, res) => {
 // ── CREATE / UPDATE (upsert by counselorId + dayOfWeek) ───────────────────────
 router.post('/save', (req, res) => {
   const { counselorId, dayOfWeek, startTime, endTime, isActive } = req.body
+  if (!canUseCounselor(req, counselorId)) return forbidden(res)
+
+  const targetCounselorId = isCounselor(req) ? req.session.counselorId : counselorId
   const schedules = readSchedules()
   const idx = schedules.findIndex(
-    s => s.counselorId === counselorId && s.dayOfWeek == dayOfWeek
+    s => s.counselorId === targetCounselorId && s.dayOfWeek == dayOfWeek
   )
   const entry = {
-    counselorId,
+    counselorId: targetCounselorId,
     dayOfWeek:  parseInt(dayOfWeek),
     dayName:    DAY_NAMES[parseInt(dayOfWeek)],
     startTime,
@@ -52,29 +73,35 @@ router.post('/save', (req, res) => {
   if (idx !== -1) schedules[idx] = entry
   else            schedules.push(entry)
   writeSchedules(schedules)
-  res.redirect(`/admin/schedules?counselorId=${counselorId}&saved=1`)
+  res.redirect(`/admin/schedules?counselorId=${targetCounselorId}&saved=1`)
 })
 
 // ── DELETE ────────────────────────────────────────────────────────────────────
 router.post('/delete', (req, res) => {
   const { counselorId, dayOfWeek } = req.body
+  if (!canUseCounselor(req, counselorId)) return forbidden(res)
+
+  const targetCounselorId = isCounselor(req) ? req.session.counselorId : counselorId
   writeSchedules(
     readSchedules().filter(
-      s => !(s.counselorId === counselorId && s.dayOfWeek == dayOfWeek)
+      s => !(s.counselorId === targetCounselorId && s.dayOfWeek == dayOfWeek)
     )
   )
-  res.redirect(`/admin/schedules?counselorId=${counselorId}&deleted=1`)
+  res.redirect(`/admin/schedules?counselorId=${targetCounselorId}&deleted=1`)
 })
 
 // ── LEGACY (keep old /update working if anything still calls it) ───────────────
 router.post('/update', (req, res) => {
   const { counselorId, dayOfWeek, startTime, endTime, isActive } = req.body
+  if (!canUseCounselor(req, counselorId)) return forbidden(res)
+
+  const targetCounselorId = isCounselor(req) ? req.session.counselorId : counselorId
   const schedules = readSchedules()
   const idx = schedules.findIndex(
-    s => s.counselorId === counselorId && s.dayOfWeek == dayOfWeek
+    s => s.counselorId === targetCounselorId && s.dayOfWeek == dayOfWeek
   )
   const entry = {
-    counselorId,
+    counselorId: targetCounselorId,
     dayOfWeek:  parseInt(dayOfWeek),
     dayName:    DAY_NAMES[parseInt(dayOfWeek)],
     startTime, endTime,
@@ -83,7 +110,7 @@ router.post('/update', (req, res) => {
   if (idx !== -1) schedules[idx] = entry
   else            schedules.push(entry)
   writeSchedules(schedules)
-  res.redirect(`/admin/schedules?counselorId=${counselorId}`)
+  res.redirect(`/admin/schedules?counselorId=${targetCounselorId}`)
 })
 
 module.exports = router

@@ -8,8 +8,8 @@
   <style>
     .tbl { width:100%; border-collapse:collapse; }
     .tbl thead { background:#f8fafc; }
-    .tbl th { padding:10px 14px; text-align:left; font-size:11px; font-weight:600; color:#64748b; text-transform:uppercase; letter-spacing:.05em; border-bottom:1px solid #f1f5f9; white-space:nowrap; }
-    .tbl td { padding:13px 14px; font-size:13px; color:#334155; border-bottom:1px solid #f8fafc; vertical-align:middle; }
+    .tbl th { padding:10px 14px; text-align:left; font-size:12px; font-weight:600; color:#64748b; text-transform:uppercase; letter-spacing:.05em; border-bottom:1px solid #f1f5f9; white-space:nowrap; }
+    .tbl td { padding:13px 14px; font-size:14px; color:#334155; border-bottom:1px solid #f8fafc; vertical-align:middle; }
     .tbl tbody tr:hover { background:#f8fafc; }
     .tbl tbody tr:last-child td { border-bottom:none; }
     .act-btn { display:inline-flex; align-items:center; gap:4px; padding:5px 10px; border-radius:8px; font-size:12px; font-weight:500; cursor:pointer; border:none; transition:all .15s; text-decoration:none; white-space:nowrap; }
@@ -21,9 +21,10 @@
     .ab-ghost:hover     { background:#f1f5f9; }
     .ab-danger    { background:#ef4444; color:#fff; }
     .ab-danger:hover    { background:#dc2626; }
-    .panel-overlay { position:fixed; inset:0; background:rgba(0,0,0,.35); z-index:40; display:none; }
-    .panel-drawer  { position:fixed; top:0; right:0; height:100%; width:100%; max-width:440px; background:#fff; box-shadow:-4px 0 32px rgba(0,0,0,.12); z-index:50; display:flex; flex-direction:column; transform:translateX(100%); transition:transform .25s ease; }
-    .panel-drawer.open { transform:translateX(0); }
+    .panel-overlay { position:fixed; inset:0; background:rgba(15,23,42,.45); z-index:40; display:none; backdrop-filter:blur(2px); opacity:0; transition:opacity .2s ease; }
+    .panel-overlay.open { opacity:1; }
+    .panel-drawer  { position:fixed; top:50%; left:50%; width:calc(100% - 48px); max-width:480px; max-height:90vh; background:#fff; border-radius:20px; box-shadow:0 20px 60px rgba(0,0,0,.18); z-index:50; display:flex; flex-direction:column; transform:translate(-50%,-50%) scale(.94); opacity:0; transition:transform .22s cubic-bezier(.34,1.56,.64,1), opacity .18s ease; pointer-events:none; }
+    .panel-drawer.open { transform:translate(-50%,-50%) scale(1); opacity:1; pointer-events:auto; }
     .inp { width:100%; padding:9px 12px; border:1.5px solid #e2e8f0; border-radius:10px; font-size:13px; color:#334155; outline:none; font-family:inherit; box-sizing:border-box; }
     .inp:focus { border-color:#2dd4b4; box-shadow:0 0 0 3px rgba(45,212,180,.15); }
     .lbl { display:block; font-size:12px; font-weight:500; color:#64748b; margin-bottom:5px; }
@@ -40,15 +41,23 @@
   <!-- Header -->
   <div style="height:56px; background:#fff; border-bottom:1px solid #f1f5f9; padding:0 24px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:20;">
     <h1 style="font-size:15px; font-weight:600; color:#1e293b; margin:0;"><%= title %></h1>
-    <div style="display:flex; align-items:center; gap:12px;">
+    <div style="display:flex;align-items:center;gap:12px;">
       <span style="font-size:12px; color:#94a3b8;">
         <% const d=new Date(); %><%= d.toLocaleDateString('th-TH',{weekday:'short',year:'numeric',month:'short',day:'numeric'}) %>
       </span>
-      <button onclick="openPanel('create')" class="act-btn ab-primary">
-        <i data-lucide="calendar-plus" style="width:14px;height:14px;"></i>
-        เพิ่มตารางเวลา
-      </button>
+      <a href="/" target="_blank" style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:8px;border:1px solid #e2e8f0;background:#fff;font-size:12px;font-weight:500;color:#475569;text-decoration:none;">
+        <i data-lucide="external-link" style="width:13px;height:13px;"></i>
+        ดูหน้าเว็บหลัก
+      </a>
     </div>
+  </div>
+
+  <!-- Action Bar -->
+  <div style="padding:14px 24px; background:#fff; border-bottom:2px solid #f1f5f9; display:flex; justify-content:flex-end;">
+    <button onclick="openPanel('create')" style="display:inline-flex; align-items:center; gap:10px; padding:11px 22px; background:linear-gradient(135deg,#05967e,#06b6d4); color:#fff; border:none; border-radius:12px; font-size:14px; font-weight:600; cursor:pointer; box-shadow:0 2px 8px rgba(5,150,126,.30); transition:all .15s;" onmouseover="this.style.boxShadow='0 4px 16px rgba(5,150,126,.45)';this.style.transform='translateY(-1px)'" onmouseout="this.style.boxShadow='0 2px 8px rgba(5,150,126,.30)';this.style.transform='translateY(0)'">
+      <i data-lucide="calendar-plus" style="width:18px;height:18px;"></i>
+      + เพิ่มตารางเวลา
+    </button>
   </div>
 
   <div style="padding:24px;">
@@ -169,7 +178,7 @@
               </td>
               <td>
                 <div style="display:flex; align-items:center; gap:6px;">
-                  <button onclick="openPanel('edit', <%- JSON.stringify(s) %>)" class="act-btn ab-secondary">
+                  <button class="act-btn ab-secondary edit-btn" data-rec="<%= JSON.stringify(s) %>">
                     <i data-lucide="pencil" style="width:13px;height:13px;"></i> แก้ไข
                   </button>
                   <form method="POST" action="/admin/schedules/delete"
@@ -362,15 +371,19 @@
     }
 
     lucide.createIcons()
-    document.getElementById('overlay').style.display = 'block'
+    const ov = document.getElementById('overlay')
+    ov.style.display = 'block'
+    requestAnimationFrame(() => { ov.classList.add('open') })
     document.getElementById('panel').classList.add('open')
     document.body.style.overflow = 'hidden'
   }
 
   function closePanel() {
-    document.getElementById('overlay').style.display = 'none'
+    const ov = document.getElementById('overlay')
+    ov.classList.remove('open')
     document.getElementById('panel').classList.remove('open')
     document.body.style.overflow = ''
+    setTimeout(() => { ov.style.display = 'none' }, 200)
   }
 
   function submitPanel() {
@@ -408,6 +421,9 @@
   document.getElementById('f_startTime').addEventListener('change', updateDuration)
   document.getElementById('f_endTime').addEventListener('change', updateDuration)
   document.getElementById('f_dayOfWeek').addEventListener('change', checkDayConflict)
+  document.querySelectorAll('.edit-btn').forEach(btn => {
+    btn.addEventListener('click', () => openPanel('edit', JSON.parse(btn.dataset.rec)))
+  })
   document.addEventListener('keydown', e => { if(e.key==='Escape') closePanel() })
 
   lucide.createIcons()

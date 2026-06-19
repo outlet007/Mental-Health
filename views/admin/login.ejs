@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>เข้าสู่ระบบ — MindWell Admin</title>
+  <%- include('../partials/head') %>
+  <style>
+    *{box-sizing:border-box}
+    body{margin:0;background:#f8f7fb;font-family:inherit}
+    .root{display:flex;min-height:100vh;align-items:center;justify-content:center;background:#f8f7fb;padding:32px 16px}
+    .card{display:grid;width:100%;max-width:1100px;min-height:680px;border-radius:28px;border:1px solid #e6e2ee;background:#fff;box-shadow:0 8px 48px rgba(0,0,0,.09);overflow:hidden;padding:0}
+    @media(min-width:1024px){.card{grid-template-columns:1.05fr .95fr}}
+    /* Left */
+    .lft{position:relative;display:none;flex-direction:column;background:#064e3b;padding:56px;color:#fff;overflow:hidden;border-radius:28px 0 0 28px}
+    @media(min-width:1024px){.lft{display:flex}}
+    .deco{position:absolute;border-radius:50%;pointer-events:none}
+    /* Right */
+    .rgt{display:flex;flex-direction:column;background:#fff}
+    .rgt-top{display:flex;justify-content:flex-end;padding:24px}
+    .rgt-body{flex:1;display:flex;align-items:center;justify-content:center;padding:16px 24px 48px}
+    .form{display:flex;flex-direction:column;gap:20px;width:100%;max-width:368px}
+    /* Inputs */
+    .inp-wrap{position:relative}
+    .inp{height:44px;width:100%;border-radius:12px;border:1.5px solid #e6e2ee;background:#fff;padding:0 12px 0 40px;font-size:14px;color:#15182e;outline:none;transition:border-color .15s,box-shadow .15s;font-family:inherit}
+    .inp:focus{border-color:rgba(5,150,126,.55);box-shadow:0 0 0 4px rgba(5,150,126,.1)}
+    .inp-pass{padding:0 40px}
+    .ico-l{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#747183;pointer-events:none;width:16px;height:16px}
+    .ico-r{position:absolute;right:12px;top:50%;transform:translateY(-50%);color:#747183;cursor:pointer;background:none;border:none;padding:0;display:flex;align-items:center}
+    .lbl{display:flex;flex-direction:column;gap:8px;font-size:14px;font-weight:500;color:#15182e}
+    .submit{height:44px;border-radius:12px;background:linear-gradient(135deg,#05967e,#06b6d4);color:#fff;border:none;font-size:14px;font-weight:600;cursor:pointer;transition:opacity .15s;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px;width:100%}
+    .submit:hover{opacity:.9}
+    .err{padding:12px 14px;background:#fef2f2;border:1px solid #fca5a5;border-radius:12px;color:#991b1b;font-size:13px;display:flex;align-items:center;gap:8px}
+    .back-btn{display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 14px;border-radius:10px;border:1px solid #e6e2ee;background:#f8f7fb;font-size:12px;font-weight:500;color:#15182e;text-decoration:none;transition:background .15s}
+    .back-btn:hover{background:#ede9f6}
+  </style>
+</head>
+<body>
+<div class="root">
+  <div class="card">
+
+    <!-- ░ Left panel ░ -->
+    <aside class="lft">
+      <div class="deco" style="width:520px;height:520px;right:-144px;top:-144px;background:rgba(5,150,126,.30)"></div>
+      <div class="deco" style="width:520px;height:520px;left:-140px;bottom:-176px;background:rgba(5,150,126,.20)"></div>
+      <div class="deco" style="width:460px;height:460px;right:-180px;bottom:112px;background:rgba(6,182,212,.12)"></div>
+
+      <!-- Logo -->
+      <div style="position:relative;z-index:10;display:flex;align-items:center;gap:12px;">
+        <div style="width:44px;height:44px;border-radius:16px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M2 9.5a5.5 5.5 0 0 1 9.591-3.676.56.56 0 0 0 .818 0A5.49 5.49 0 0 1 22 9.5c0 2.29-1.5 4-3 5.5l-5.492 5.313a2 2 0 0 1-3 .019L5 15c-1.5-1.5-3-3.2-3-5.5"></path>
+            <path d="M3.22 13H9.5l.5-1 2 4.5 2-7 1.5 3.5h5.27"></path>
+          </svg>
+        </div>
+        <div>
+          <p style="font-size:18px;font-weight:700;margin:0;line-height:1.2;">MindWell</p>
+          <p style="font-size:11px;color:rgba(255,255,255,.58);margin:0;">ระบบให้คำปรึกษาและดูแลด้านจิตใจ</p>
+        </div>
+      </div>
+
+      <!-- Tagline -->
+      <div style="position:relative;z-index:10;margin-top:64px;max-width:400px;">
+        <p style="font-size:30px;font-weight:600;line-height:1.4;margin:0;">ดูแลใจของผู้รับบริการ ปลอดภัย และน่าเชื่อถือ</p>
+        <p style="margin:20px 0 0;font-size:14px;line-height:1.8;color:rgba(255,255,255,.68);">จัดการนัดหมาย ข้อมูลผู้รับบริการ และตารางเวลานักจิตวิทยา ในระบบเดียวที่ออกแบบมาเพื่อทีมสุขภาพจิตโดยเฉพาะ</p>
+      </div>
+
+      <!-- Footer -->
+      <div style="position:relative;z-index:10;margin-top:auto;display:flex;align-items:center;gap:12px;font-size:12px;color:rgba(255,255,255,.4);">
+        <span>นโยบายความเป็นส่วนตัว</span><span>|</span><span>เงื่อนไขการใช้งาน</span>
+      </div>
+    </aside>
+
+    <!-- ░ Right panel ░ -->
+    <div class="rgt">
+      <div class="rgt-top">
+        <a href="/" class="back-btn">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 19-7-7 7-7"></path><path d="M19 12H5"></path></svg>
+          กลับหน้าหลัก
+        </a>
+      </div>
+
+      <div class="rgt-body">
+        <form class="form" method="POST" action="/admin/login">
+
+          <div style="display:flex;flex-direction:column;gap:4px;">
+            <h1 style="font-size:24px;font-weight:700;color:#15182e;margin:0;">เข้าสู่ระบบ</h1>
+            <p style="font-size:13.5px;color:#747183;margin:0;">กรอกอีเมลและรหัสผ่านเพื่อเข้าใช้งานระบบ</p>
+          </div>
+
+          <% if (error) { %>
+          <div class="err">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink:0"><circle cx="12" cy="12" r="10"></circle><line x1="12" x2="12" y1="8" y2="12"></line><line x1="12" x2="12.01" y1="16" y2="16"></line></svg>
+            อีเมลหรือรหัสผ่านไม่ถูกต้อง กรุณาลองใหม่
+          </div>
+          <% } %>
+
+          <!-- Username -->
+          <label class="lbl">
+            ชื่อผู้ใช้
+            <div class="inp-wrap">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="ico-l" aria-hidden="true"><circle cx="12" cy="8" r="5"></circle><path d="M20 21a8 8 0 0 0-16 0"></path></svg>
+              <input type="text" name="username" class="inp" autocomplete="username" placeholder="กรอกชื่อผู้ใช้" required>
+            </div>
+          </label>
+
+          <!-- Password -->
+          <label class="lbl">
+            รหัสผ่าน
+            <div class="inp-wrap">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="ico-l" aria-hidden="true"><circle cx="12" cy="16" r="1"></circle><rect x="3" y="10" width="18" height="12" rx="2"></rect><path d="M7 10V7a5 5 0 0 1 10 0v3"></path></svg>
+              <input type="password" name="password" id="pwdInput" class="inp inp-pass" autocomplete="current-password" placeholder="กรอกรหัสผ่าน" required>
+              <button type="button" class="ico-r" onclick="togglePwd()" tabindex="-1" aria-label="แสดง/ซ่อนรหัสผ่าน">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" id="eyeIcon" aria-hidden="true"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"></path><circle cx="12" cy="12" r="3"></circle></svg>
+              </button>
+            </div>
+          </label>
+
+          <button type="submit" class="submit">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m10 17 5-5-5-5"></path><path d="M15 12H3"></path><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path></svg>
+            เข้าสู่ระบบ
+          </button>
+
+        </form>
+      </div>
+    </div>
+
+  </div>
+</div>
+<script>
+  const EYE_OPEN = '<path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"></path><circle cx="12" cy="12" r="3"></circle>'
+  const EYE_OFF  = '<path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"></path><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"></path><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"></path><line x1="2" x2="22" y1="2" y2="22"></line>'
+  function togglePwd() {
+    const inp  = document.getElementById('pwdInput')
+    const icon = document.getElementById('eyeIcon')
+    const show = inp.type === 'password'
+    inp.type       = show ? 'text' : 'password'
+    icon.innerHTML = show ? EYE_OFF : EYE_OPEN
+  }
+</script>
+</body>
+</html>
