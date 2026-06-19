@@ -10,7 +10,7 @@ function writeData(d) { fs.writeFileSync(dataFile, JSON.stringify(d, null, 2)) }
 
 router.post('/', (req, res) => {
   const { name, phone, email, studentId, concern, type } = req.body
-  if (!name || !studentId || !phone || !email) return res.redirect('/?error=missing#book')
+  if (!name || !studentId || !phone || !email || !type) return res.redirect('/?error=missing#book')
 
   const data = readData()
   data.push({
@@ -20,7 +20,7 @@ router.post('/', (req, res) => {
     phone:       phone.trim(),
     email:       (email || '').trim(),
     concern:     concern || '',
-    sessionType: type || 'online',
+    sessionType: type,
     status:      'new',
     note:        '',
     createdAt:   new Date().toISOString().split('T')[0],

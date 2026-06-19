@@ -22,20 +22,91 @@
         <a href="#counselors" class="btn-ghost text-sm" data-i18n="nav-counselors">นักให้คำปรึกษา</a>
         <a href="#faq" class="btn-ghost text-sm" data-i18n="nav-faq">คำถามที่พบบ่อย</a>
       </div>
-      <div class="flex items-center gap-2">
+      <div class="hidden md:flex items-center gap-2">
         <!-- Language toggle -->
-        <div class="flex items-center gap-0.5 bg-slate-100 rounded-lg p-0.5">
-          <button id="lang-th" onclick="setLang('th')" class="px-2 py-1 rounded-md text-xs font-semibold transition-colors bg-white shadow text-brand-600">TH</button>
-          <button id="lang-en" onclick="setLang('en')" class="px-2 py-1 rounded-md text-xs font-semibold transition-colors text-slate-500 hover:text-slate-700">EN</button>
+        <div class="relative" id="lang-wrap">
+          <button id="lang-btn" onclick="toggleLangMenu()" type="button"
+            class="inline-flex items-center justify-center whitespace-nowrap rounded-full px-2 py-1.5 text-sm font-semibold text-slate-900 transition-colors hover:text-brand-600 focus:outline-none"
+            aria-haspopup="menu" aria-expanded="false">
+            <span id="lang-flag-display"></span>
+            <span id="lang-code-display" class="ml-1.5">TH</span>
+            <svg xmlns="http://www.w3.org/2000/svg" id="lang-chevron" width="14" height="14" viewBox="0 0 256 256" class="ml-0.5 text-slate-700 transition-transform duration-200">
+              <path fill="currentColor" d="m213.66 101.66l-80 80a8 8 0 0 1-11.32 0l-80-80a8 8 0 0 1 11.32-11.32L128 164.69l74.34-74.35a8 8 0 0 1 11.32 11.32"/>
+            </svg>
+          </button>
+          <div id="lang-menu" class="hidden absolute right-0 top-full mt-1 w-36 rounded-xl border border-slate-100 bg-white py-1.5 shadow-[0_12px_30px_rgba(15,23,42,0.16)] z-[999]">
+            <button id="lang-option-th" onclick="setLang('th')" type="button"
+              class="w-full flex items-center gap-2.5 px-3 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50 transition-colors">
+              <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 64 64" style="font-size:20px" aria-hidden="true"><path fill="#ed4c5c" d="M52.4 10C47 5 39.9 2 32 2s-15 3-20.4 8zM11.6 54c5.4 5 12.5 8 20.4 8s15-3 20.4-8z"/><path fill="#2a5f9e" d="M2 32c0 4.3.9 8.3 2.5 12h55c1.6-3.7 2.5-7.7 2.5-12s-.9-8.3-2.5-12h-55C2.9 23.7 2 27.7 2 32"/><path fill="#f9f9f9" d="M11.6 54h40.7c3-2.8 5.5-6.2 7.1-10h-55c1.8 3.8 4.2 7.2 7.2 10m40.8-44H11.6c-3 2.8-5.5 6.2-7.1 10h55c-1.7-3.8-4.1-7.2-7.1-10"/></svg>
+              <span>TH</span>
+            </button>
+            <button id="lang-option-en" onclick="setLang('en')" type="button"
+              class="w-full flex items-center gap-2.5 px-3 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50 transition-colors">
+              <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 64 64" style="font-size:22px" aria-hidden="true"><path fill="#ed4c5c" d="M48 6.6C43.3 3.7 37.9 2 32 2v4.6z"/><path fill="#fff" d="M32 11.2h21.6C51.9 9.5 50 7.9 48 6.6H32z"/><path fill="#ed4c5c" d="M32 15.8h25.3c-1.1-1.7-2.3-3.2-3.6-4.6H32z"/><path fill="#fff" d="M32 20.4h27.7c-.7-1.6-1.5-3.2-2.4-4.6H32z"/><path fill="#ed4c5c" d="M32 25h29.2c-.4-1.6-.9-3.1-1.5-4.6H32z"/><path fill="#fff" d="M32 29.7h29.9c-.1-1.6-.4-3.1-.7-4.6H32z"/><path fill="#ed4c5c" d="M61.9 29.7H32V32H2c0 .8 0 1.5.1 2.3h59.8c.1-.8.1-1.5.1-2.3s0-1.6-.1-2.3"/><path fill="#fff" d="M2.8 38.9h58.4c.4-1.5.6-3 .7-4.6H2.1c.1 1.5.4 3.1.7 4.6"/><path fill="#ed4c5c" d="M4.3 43.5h55.4c.6-1.5 1.1-3 1.5-4.6H2.8c.4 1.6.9 3.1 1.5 4.6"/><path fill="#fff" d="M6.7 48.1h50.6c.9-1.5 1.7-3 2.4-4.6H4.3c.7 1.6 1.5 3.1 2.4 4.6"/><path fill="#ed4c5c" d="M10.3 52.7h43.4c1.3-1.4 2.6-3 3.6-4.6H6.7c1 1.7 2.3 3.2 3.6 4.6"/><path fill="#fff" d="M15.9 57.3h32.2c2.1-1.3 3.9-2.9 5.6-4.6H10.3c1.7 1.8 3.6 3.3 5.6 4.6"/><path fill="#ed4c5c" d="M32 62c5.9 0 11.4-1.7 16.1-4.7H15.9c4.7 3 10.2 4.7 16.1 4.7"/><path fill="#428bc1" d="M16 6.6c-2.1 1.3-4 2.9-5.7 4.6c-1.4 1.4-2.6 3-3.6 4.6c-.9 1.5-1.8 3-2.4 4.6c-.6 1.5-1.1 3-1.5 4.6c-.4 1.5-.6 3-.7 4.6c-.1.8-.1 1.6-.1 2.4h30V2c-5.9 0-11.3 1.7-16 4.6"/><path fill="#fff" d="m25 3l.5 1.5H27l-1.2 1l.4 1.5l-1.2-.9l-1.2.9l.4-1.5l-1.2-1h1.5zm4 6l.5 1.5H31l-1.2 1l.4 1.5l-1.2-.9l-1.2.9l.4-1.5l-1.2-1h1.5zm-8 0l.5 1.5H23l-1.2 1l.4 1.5l-1.2-.9l-1.2.9l.4-1.5l-1.2-1h1.5zm4 6l.5 1.5H27l-1.2 1l.4 1.5l-1.2-.9l-1.2.9l.4-1.5l-1.2-1h1.5zm-8 0l.5 1.5H19l-1.2 1l.4 1.5l-1.2-.9l-1.2.9l.4-1.5l-1.2-1h1.5zm-8 0l.5 1.5H11l-1.2 1l.4 1.5l-1.2-.9l-1.2.9l.4-1.5l-1.2-1h1.5zm20 6l.5 1.5H31l-1.2 1l.4 1.5l-1.2-.9l-1.2.9l.4-1.5l-1.2-1h1.5zm-8 0l.5 1.5H23l-1.2 1l.4 1.5l-1.2-.9l-1.2.9l.4-1.5l-1.2-1h1.5zm-8 0l.5 1.5H15l-1.2 1l.4 1.5l-1.2-.9l-1.2.9l.4-1.5l-1.2-1h1.5zm12 6l.5 1.5H27l-1.2 1l.4 1.5l-1.2-.9l-1.2.9l.4-1.5l-1.2-1h1.5zm-8 0l.5 1.5H19l-1.2 1l.4 1.5l-1.2-.9l-1.2.9l.4-1.5l-1.2-1h1.5zm-8 0l.5 1.5H11l-1.2 1l.4 1.5l-1.2-.9l-1.2.9l.4-1.5l-1.2-1h1.5zm2.8-14l1.2-.9l1.2.9l-.5-1.5l1.2-1h-1.5L13 9l-.5 1.5h-1.4l1.2.9zm-8 12l1.2-.9l1.2.9l-.5-1.5l1.2-1H5.5L5 21l-.5 1.5h-1c0 .1-.1.2-.1.3l.8.6z"/></svg>
+              <span>EN</span>
+            </button>
+          </div>
         </div>
+        <div class="w-px h-6 bg-gray-300 self-center" aria-hidden="true"></div>
         <a href="#book" class="btn-primary text-sm"><i data-lucide="calendar-plus" class="w-5 h-5"></i> <span data-i18n="nav-btn-register">ลงทะเบียน</span></a>
-        <a href="/admin/login" class="btn-ghost text-sm">
+        <a href="/admin/login" class="btn-secondary text-sm">
           <i data-lucide="log-in" class="w-4 h-4"></i>
           <span data-i18n="nav-staff">สำหรับเจ้าหน้าที่</span>
         </a>
       </div>
+      <button id="mobile-menu-btn" onclick="openMobileMenu()" type="button"
+        class="md:hidden inline-flex h-10 w-10 items-center justify-center rounded-full text-slate-700 hover:bg-slate-100 transition-colors"
+        aria-label="Open menu" aria-controls="mobile-menu" aria-expanded="false">
+        <i data-lucide="menu" class="w-6 h-6"></i>
+      </button>
     </div>
   </nav>
+
+  <div id="mobile-menu" class="hidden fixed inset-0 z-[1000] bg-white md:hidden" aria-hidden="true">
+      <div class="h-12 bg-brand-600 flex items-center justify-end px-5">
+        <button onclick="closeMobileMenu()" type="button"
+          class="inline-flex h-9 w-9 items-center justify-center rounded-full text-white hover:bg-white/10 transition-colors"
+          aria-label="Close menu">
+          <i data-lucide="x" class="w-6 h-6"></i>
+        </button>
+      </div>
+
+      <div class="min-h-[calc(100vh-3rem)] flex flex-col px-5 py-4">
+        <div class="grid grid-cols-2 gap-3 mb-7">
+          <a href="#book" onclick="closeMobileMenu()" class="btn-primary justify-center text-sm">
+            <span data-i18n="nav-btn-register">ลงทะเบียน</span>
+          </a>
+          <a href="/admin/login" class="btn-secondary justify-center text-sm">
+            <span data-i18n="nav-staff">สำหรับเจ้าหน้าที่</span>
+          </a>
+        </div>
+
+        <div class="flex flex-col text-slate-800">
+          <a href="#" onclick="closeMobileMenu()" class="flex items-center justify-between py-4 text-base font-medium">
+            <span data-i18n="mobile-home">หน้าแรก</span>
+          </a>
+          <a href="#book" onclick="closeMobileMenu()" class="flex items-center justify-between py-4 text-base font-medium">
+            <span data-i18n="mobile-services">บริการของเรา</span>
+            <i data-lucide="chevron-down" class="w-5 h-5 text-slate-600"></i>
+          </a>
+          <a href="#counselors" onclick="closeMobileMenu()" class="flex items-center justify-between py-4 text-base font-medium">
+            <span data-i18n="nav-counselors">นักให้คำปรึกษา</span>
+          </a>
+          <a href="#faq" onclick="closeMobileMenu()" class="flex items-center justify-between py-4 text-base font-medium">
+            <span data-i18n="nav-faq">คำถามที่พบบ่อย</span>
+            <i data-lucide="chevron-down" class="w-5 h-5 text-slate-600"></i>
+          </a>
+        </div>
+
+        <div class="mt-auto pb-1">
+          <div class="inline-flex items-center rounded-full border border-slate-300 bg-white p-0.5 text-sm font-semibold text-slate-500">
+            <button id="mobile-lang-th" onclick="setLang('th')" type="button" class="rounded-full px-3 py-1 transition-colors">TH</button>
+            <span class="text-slate-300">|</span>
+            <button id="mobile-lang-en" onclick="setLang('en')" type="button" class="rounded-full px-3 py-1 transition-colors">EN</button>
+          </div>
+        </div>
+      </div>
+  </div>
 
   <!-- Hero -->
   <section class="pt-32 pb-24 bg-gradient-to-br from-brand-50 via-ocean-50 to-white">
@@ -217,7 +288,7 @@
         </div>
         <% } %>
         <form method="POST" action="/contact" class="space-y-4">
-          <div class="grid grid-cols-2 gap-4">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label class="form-label"><span data-i18n="form-label-name">ชื่อ-นามสกุล</span> <span class="text-red-400">*</span></label>
               <input type="text" name="name" class="form-input" placeholder="กรอกชื่อของคุณ" data-i18n-ph="form-ph-name" required>
@@ -227,7 +298,7 @@
               <input type="text" name="studentId" class="form-input" placeholder="เช่น 1680123456" data-i18n-ph="form-ph-studentid" required>
             </div>
           </div>
-          <div class="grid grid-cols-2 gap-4">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label class="form-label"><span data-i18n="form-label-phone">เบอร์โทรศัพท์</span> <span class="text-red-400">*</span></label>
               <input type="tel" name="phone" class="form-input" placeholder="08X-XXX-XXXX" required>
@@ -250,10 +321,10 @@
             </select>
           </div>
           <div>
-            <label class="form-label" data-i18n="form-label-type">รูปแบบที่ต้องการ</label>
-            <div class="grid grid-cols-2 gap-3">
+            <label class="form-label"><span data-i18n="form-label-type">รูปแบบที่ต้องการ</span> <span class="text-red-400">*</span></label>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
               <label class="flex items-center gap-2 p-3 border border-slate-200 rounded-xl cursor-pointer hover:border-brand-300 hover:bg-brand-50 transition-colors">
-                <input type="radio" name="type" value="online" checked class="accent-brand-600">
+                <input type="radio" name="type" value="online" required class="accent-brand-600">
                 <i data-lucide="video" class="w-4 h-4 text-brand-500"></i>
                 <span class="text-sm font-medium" data-i18n="form-type-online">ออนไลน์</span>
               </label>
@@ -401,6 +472,10 @@
 
     // ─── i18n ────────────────────────────────────────────────────────────────
     const LANG_KEY = 'mw-lang';
+    const FLAGS = {
+      th: `<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 64 64" style="font-size:24px" aria-hidden="true"><path fill="#ed4c5c" d="M52.4 10C47 5 39.9 2 32 2s-15 3-20.4 8zM11.6 54c5.4 5 12.5 8 20.4 8s15-3 20.4-8z"/><path fill="#2a5f9e" d="M2 32c0 4.3.9 8.3 2.5 12h55c1.6-3.7 2.5-7.7 2.5-12s-.9-8.3-2.5-12h-55C2.9 23.7 2 27.7 2 32"/><path fill="#f9f9f9" d="M11.6 54h40.7c3-2.8 5.5-6.2 7.1-10h-55c1.8 3.8 4.2 7.2 7.2 10m40.8-44H11.6c-3 2.8-5.5 6.2-7.1 10h55c-1.7-3.8-4.1-7.2-7.1-10"/></svg>`,
+      en: `<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 64 64" style="font-size:24px" aria-hidden="true"><path fill="#ed4c5c" d="M48 6.6C43.3 3.7 37.9 2 32 2v4.6z"/><path fill="#fff" d="M32 11.2h21.6C51.9 9.5 50 7.9 48 6.6H32z"/><path fill="#ed4c5c" d="M32 15.8h25.3c-1.1-1.7-2.3-3.2-3.6-4.6H32z"/><path fill="#fff" d="M32 20.4h27.7c-.7-1.6-1.5-3.2-2.4-4.6H32z"/><path fill="#ed4c5c" d="M32 25h29.2c-.4-1.6-.9-3.1-1.5-4.6H32z"/><path fill="#fff" d="M32 29.7h29.9c-.1-1.6-.4-3.1-.7-4.6H32z"/><path fill="#ed4c5c" d="M61.9 29.7H32V32H2c0 .8 0 1.5.1 2.3h59.8c.1-.8.1-1.5.1-2.3s0-1.6-.1-2.3"/><path fill="#fff" d="M2.8 38.9h58.4c.4-1.5.6-3 .7-4.6H2.1c.1 1.5.4 3.1.7 4.6"/><path fill="#ed4c5c" d="M4.3 43.5h55.4c.6-1.5 1.1-3 1.5-4.6H2.8c.4 1.6.9 3.1 1.5 4.6"/><path fill="#fff" d="M6.7 48.1h50.6c.9-1.5 1.7-3 2.4-4.6H4.3c.7 1.6 1.5 3.1 2.4 4.6"/><path fill="#ed4c5c" d="M10.3 52.7h43.4c1.3-1.4 2.6-3 3.6-4.6H6.7c1 1.7 2.3 3.2 3.6 4.6"/><path fill="#fff" d="M15.9 57.3h32.2c2.1-1.3 3.9-2.9 5.6-4.6H10.3c1.7 1.8 3.6 3.3 5.6 4.6"/><path fill="#ed4c5c" d="M32 62c5.9 0 11.4-1.7 16.1-4.7H15.9c4.7 3 10.2 4.7 16.1 4.7"/><path fill="#428bc1" d="M16 6.6c-2.1 1.3-4 2.9-5.7 4.6c-1.4 1.4-2.6 3-3.6 4.6c-.9 1.5-1.8 3-2.4 4.6c-.6 1.5-1.1 3-1.5 4.6c-.4 1.5-.6 3-.7 4.6c-.1.8-.1 1.6-.1 2.4h30V2c-5.9 0-11.3 1.7-16 4.6"/><path fill="#fff" d="m25 3l.5 1.5H27l-1.2 1l.4 1.5l-1.2-.9l-1.2.9l.4-1.5l-1.2-1h1.5zm4 6l.5 1.5H31l-1.2 1l.4 1.5l-1.2-.9l-1.2.9l.4-1.5l-1.2-1h1.5zm-8 0l.5 1.5H23l-1.2 1l.4 1.5l-1.2-.9l-1.2.9l.4-1.5l-1.2-1h1.5zm4 6l.5 1.5H27l-1.2 1l.4 1.5l-1.2-.9l-1.2.9l.4-1.5l-1.2-1h1.5zm-8 0l.5 1.5H19l-1.2 1l.4 1.5l-1.2-.9l-1.2.9l.4-1.5l-1.2-1h1.5zm-8 0l.5 1.5H11l-1.2 1l.4 1.5l-1.2-.9l-1.2.9l.4-1.5l-1.2-1h1.5zm20 6l.5 1.5H31l-1.2 1l.4 1.5l-1.2-.9l-1.2.9l.4-1.5l-1.2-1h1.5zm-8 0l.5 1.5H23l-1.2 1l.4 1.5l-1.2-.9l-1.2.9l.4-1.5l-1.2-1h1.5zm-8 0l.5 1.5H15l-1.2 1l.4 1.5l-1.2-.9l-1.2.9l.4-1.5l-1.2-1h1.5zm12 6l.5 1.5H27l-1.2 1l.4 1.5l-1.2-.9l-1.2.9l.4-1.5l-1.2-1h1.5zm-8 0l.5 1.5H19l-1.2 1l.4 1.5l-1.2-.9l-1.2.9l.4-1.5l-1.2-1h1.5zm-8 0l.5 1.5H11l-1.2 1l.4 1.5l-1.2-.9l-1.2.9l.4-1.5l-1.2-1h1.5zm2.8-14l1.2-.9l1.2.9l-.5-1.5l1.2-1h-1.5L13 9l-.5 1.5h-1.4l1.2.9zm-8 12l1.2-.9l1.2.9l-.5-1.5l1.2-1H5.5L5 21l-.5 1.5h-1c0 .1-.1.2-.1.3l.8.6z"/></svg>`
+    };
     const TRANSLATIONS = {
       th: {
         'page-title': 'MindWell — ระบบจองนัดหมายการให้คำปรึกษาทางจิตใจ',
@@ -409,6 +484,8 @@
         'nav-faq': 'คำถามที่พบบ่อย',
         'nav-btn-register': 'ลงทะเบียน',
         'nav-staff': 'สำหรับเจ้าหน้าที่',
+        'mobile-home': 'หน้าแรก',
+        'mobile-services': 'บริการของเรา',
         'hero-badge': 'ปลอดภัย · เป็นส่วนตัว · เชื่อถือได้',
         'hero-h1': 'ดูแลใจของคุณ',
         'hero-h2': 'อย่างที่ควรได้รับ',
@@ -480,6 +557,8 @@
         'nav-faq': 'FAQ',
         'nav-btn-register': 'Register',
         'nav-staff': 'Staff Login',
+        'mobile-home': 'Home',
+        'mobile-services': 'Services',
         'hero-badge': 'Safe · Private · Trusted',
         'hero-h1': 'Take Care of Your Mind',
         'hero-h2': 'The Way You Deserve',
@@ -550,11 +629,28 @@
       localStorage.setItem(LANG_KEY, lang);
       const T = TRANSLATIONS[lang];
 
-      // Toggle button styles
-      const activeClass = 'px-2 py-1 rounded-md text-xs font-semibold transition-colors bg-white shadow text-brand-600';
-      const inactiveClass = 'px-2 py-1 rounded-md text-xs font-semibold transition-colors text-slate-500 hover:text-slate-700';
-      document.getElementById('lang-th').className = lang === 'th' ? activeClass : inactiveClass;
-      document.getElementById('lang-en').className = lang === 'en' ? activeClass : inactiveClass;
+      // Update flag button display
+      document.getElementById('lang-flag-display').innerHTML = FLAGS[lang];
+      document.getElementById('lang-code-display').textContent = lang.toUpperCase();
+      document.querySelectorAll('[id^="lang-option-"]').forEach(option => {
+        const isActive = option.id === `lang-option-${lang}`;
+        option.classList.toggle('bg-slate-50', isActive);
+        option.classList.toggle('text-brand-600', isActive);
+        option.setAttribute('aria-current', isActive ? 'true' : 'false');
+      });
+      ['th', 'en'].forEach(code => {
+        const option = document.getElementById(`mobile-lang-${code}`);
+        if (!option) return;
+        const isActive = code === lang;
+        option.classList.toggle('bg-slate-100', isActive);
+        option.classList.toggle('text-slate-900', isActive);
+        option.classList.toggle('text-slate-500', !isActive);
+        option.setAttribute('aria-current', isActive ? 'true' : 'false');
+      });
+      // Close dropdown after selection
+      document.getElementById('lang-menu').classList.add('hidden');
+      document.getElementById('lang-btn').setAttribute('aria-expanded', 'false');
+      document.getElementById('lang-chevron').style.transform = '';
 
       // Text content
       document.querySelectorAll('[data-i18n]').forEach(el => {
@@ -596,6 +692,50 @@
       if (T['page-title']) document.title = T['page-title'];
       document.documentElement.lang = lang === 'en' ? 'en' : 'th';
     }
+
+    function toggleLangMenu() {
+      const menu = document.getElementById('lang-menu');
+      const btn = document.getElementById('lang-btn');
+      const chevron = document.getElementById('lang-chevron');
+      const isOpen = !menu.classList.contains('hidden');
+      menu.classList.toggle('hidden', isOpen);
+      btn.setAttribute('aria-expanded', String(!isOpen));
+      chevron.style.transform = isOpen ? '' : 'rotate(180deg)';
+    }
+
+    document.addEventListener('click', function (e) {
+      const wrap = document.getElementById('lang-wrap');
+      if (wrap && !wrap.contains(e.target)) {
+        document.getElementById('lang-menu').classList.add('hidden');
+        document.getElementById('lang-btn').setAttribute('aria-expanded', 'false');
+        document.getElementById('lang-chevron').style.transform = '';
+      }
+    });
+
+    function openMobileMenu() {
+      const menu = document.getElementById('mobile-menu');
+      const btn = document.getElementById('mobile-menu-btn');
+      if (!menu) return;
+      menu.classList.remove('hidden');
+      menu.setAttribute('aria-hidden', 'false');
+      if (btn) btn.setAttribute('aria-expanded', 'true');
+      document.body.style.overflow = 'hidden';
+      lucide.createIcons();
+    }
+
+    function closeMobileMenu() {
+      const menu = document.getElementById('mobile-menu');
+      const btn = document.getElementById('mobile-menu-btn');
+      if (!menu) return;
+      menu.classList.add('hidden');
+      menu.setAttribute('aria-hidden', 'true');
+      if (btn) btn.setAttribute('aria-expanded', 'false');
+      document.body.style.overflow = '';
+    }
+
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') closeMobileMenu();
+    });
 
     // Initialize from saved preference
     (function () {
