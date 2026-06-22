@@ -19,10 +19,32 @@
     .faq-item { border:1.5px solid #e2e8f0; border-radius:12px; padding:14px; position:relative; }
     .remove-faq { position:absolute; top:10px; right:10px; background:none; border:none; cursor:pointer; color:#94a3b8; padding:4px; border-radius:6px; }
     .remove-faq:hover { background:#fef2f2; color:#ef4444; }
+    .lang-toggle { display:flex; border:1.5px solid #e2e8f0; border-radius:8px; overflow:hidden; margin-left:auto; flex-shrink:0; }
+    .lang-btn { padding:4px 14px; font-size:11px; font-weight:700; border:none; cursor:pointer; transition:all .15s; letter-spacing:.02em; }
+    .lang-btn-active { background:#05967e; color:#fff; }
+    .lang-btn-inactive { background:transparent; color:#94a3b8; }
+    .lang-badge { display:inline-flex; align-items:center; gap:4px; font-size:10px; font-weight:600; padding:2px 8px; border-radius:9999px; margin-left:8px; }
+    .lang-badge-th { background:#fff3cd; color:#7c5500; border:1px solid #fde68a; }
+    .lang-badge-en { background:#dbeafe; color:#1d4ed8; border:1px solid #93c5fd; }
   </style>
 </head>
 <body style="background:#f8fafc; margin:0;">
 <%- include('../partials/admin-sidebar') %>
+
+<%
+  const en = content.en || {}
+  const enHero = en.hero || {}
+  const enCounselors = en.counselors || {}
+  const enBook = en.book || {}
+  const enFaqs = en.faqs || []
+  const enContact = en.contact || {}
+
+  // Determine which tabs to auto-open based on ?saved=
+  const savedKey = query.saved || ''
+  const autoEnHero     = savedKey === 'hero-en'
+  const autoEnSections = savedKey === 'sections-en'
+  const autoEnFaqs     = savedKey === 'faqs-en'
+%>
 
 <div style="margin-left:256px; min-height:100vh; display:flex; flex-direction:column;">
 
@@ -63,7 +85,6 @@
       </div>
       <% } %>
 
-      <!-- Status indicator -->
       <% const smtpConfigured = process.env && process.env.SMTP_USER && process.env.SMTP_USER !== 'your-email@gmail.com' %>
       <div style="display:flex;align-items:center;gap:10px;padding:12px 14px;background:<%= smtpConfigured ? '#ecfdf9' : '#fef9c3' %>;border:1px solid <%= smtpConfigured ? '#a0f3e1' : '#fde68a' %>;border-radius:10px;margin-bottom:16px;">
         <i data-lucide="<%= smtpConfigured ? 'check-circle' : 'alert-triangle' %>" style="width:16px;height:16px;color:<%= smtpConfigured ? '#05967e' : '#92400e' %>;flex-shrink:0;"></i>
@@ -78,7 +99,6 @@
         </div>
       </div>
 
-      <!-- Config reference -->
       <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:14px 16px;margin-bottom:16px;">
         <p style="margin:0 0 10px;font-size:12px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:.05em;">ตัวแปรใน .env ที่ต้องตั้งค่า</p>
         <pre style="margin:0;font-size:12px;color:#334155;font-family:monospace;line-height:1.8;overflow-x:auto;">SMTP_HOST=smtp.gmail.com
@@ -92,7 +112,6 @@ SMTP_BCC=   <span style="color:#94a3b8;"># optional สำเนาทุกอ�
         <p style="margin:10px 0 0;font-size:11px;color:#94a3b8;">Gmail: ใช้ App Password จาก <a href="https://myaccount.google.com/apppasswords" target="_blank" style="color:#6366f1;">myaccount.google.com/apppasswords</a> (ต้องเปิด 2-Step Verification)</p>
       </div>
 
-      <!-- Test form -->
       <form method="POST" action="/admin/content/test-email" style="display:flex;gap:10px;align-items:flex-end;">
         <div style="flex:1;">
           <label class="lbl">ส่งอีเมลทดสอบไปที่</label>
@@ -104,176 +123,355 @@ SMTP_BCC=   <span style="color:#94a3b8;"># optional สำเนาทุกอ�
       </form>
     </div>
 
-    <!-- Hero Section -->
+    <!-- ── Hero Section ── -->
     <div class="section-card">
       <div class="section-title">
         <div style="width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,#05967e,#06b6d4);display:flex;align-items:center;justify-content:center;">
           <i data-lucide="layout" style="width:14px;height:14px;color:#fff;"></i>
         </div>
         Hero — ส่วนหัวของหน้าเว็บ
+        <div class="lang-toggle" style="margin-left:auto;">
+          <button type="button" class="lang-btn <%= autoEnHero ? 'lang-btn-inactive' : 'lang-btn-active' %>" id="hero-btn-th" onclick="cardLang('hero','th')">🇹🇭 TH</button>
+          <button type="button" class="lang-btn <%= autoEnHero ? 'lang-btn-active' : 'lang-btn-inactive' %>" id="hero-btn-en" onclick="cardLang('hero','en')">🇬🇧 EN</button>
+        </div>
       </div>
-      <form method="POST" action="/admin/content/hero">
-        <div style="display:grid;gap:14px;">
-          <div>
-            <label class="lbl">ข้อความ Badge</label>
-            <input type="text" name="badge" class="inp" value="<%= content.hero.badge %>">
-          </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+
+      <!-- TH -->
+      <div id="hero-th" style="display:<%= autoEnHero ? 'none' : '' %>;">
+        <form method="POST" action="/admin/content/hero">
+          <div style="display:grid;gap:14px;">
             <div>
-              <label class="lbl">หัวข้อหลัก บรรทัด 1</label>
-              <input type="text" name="heading1" class="inp" value="<%= content.hero.heading1 %>">
+              <label class="lbl">ข้อความ Badge <span class="lang-badge lang-badge-th">ภาษาไทย</span></label>
+              <input type="text" name="badge" class="inp" value="<%= content.hero.badge %>">
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+              <div>
+                <label class="lbl">หัวข้อหลัก บรรทัด 1</label>
+                <input type="text" name="heading1" class="inp" value="<%= content.hero.heading1 %>">
+              </div>
+              <div>
+                <label class="lbl">หัวข้อหลัก บรรทัด 2 (Gradient)</label>
+                <input type="text" name="heading2" class="inp" value="<%= content.hero.heading2 %>">
+              </div>
             </div>
             <div>
-              <label class="lbl">หัวข้อหลัก บรรทัด 2 (Gradient)</label>
-              <input type="text" name="heading2" class="inp" value="<%= content.hero.heading2 %>">
+              <label class="lbl">คำอธิบาย</label>
+              <textarea name="subtext" class="inp" rows="2" style="resize:none;"><%= content.hero.subtext %></textarea>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+              <div>
+                <label class="lbl">ปุ่มหลัก</label>
+                <input type="text" name="ctaMain" class="inp" value="<%= content.hero.ctaMain %>">
+              </div>
+              <div>
+                <label class="lbl">ปุ่มรอง</label>
+                <input type="text" name="ctaSub" class="inp" value="<%= content.hero.ctaSub %>">
+              </div>
             </div>
           </div>
-          <div>
-            <label class="lbl">คำอธิบาย</label>
-            <textarea name="subtext" class="inp" rows="2" style="resize:none;"><%= content.hero.subtext %></textarea>
+          <div style="margin-top:16px;display:flex;justify-content:flex-end;">
+            <button type="submit" class="act-btn ab-primary">
+              <i data-lucide="save" style="width:14px;height:14px;"></i> บันทึก Hero (TH)
+            </button>
           </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        </form>
+      </div>
+
+      <!-- EN -->
+      <div id="hero-en" style="display:<%= autoEnHero ? '' : 'none' %>;">
+        <form method="POST" action="/admin/content/hero-en">
+          <div style="display:grid;gap:14px;">
             <div>
-              <label class="lbl">ปุ่มหลัก</label>
-              <input type="text" name="ctaMain" class="inp" value="<%= content.hero.ctaMain %>">
+              <label class="lbl">Badge text <span class="lang-badge lang-badge-en">English</span></label>
+              <input type="text" name="badge" class="inp" value="<%= enHero.badge || '' %>">
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+              <div>
+                <label class="lbl">Main heading line 1</label>
+                <input type="text" name="heading1" class="inp" value="<%= enHero.heading1 || '' %>">
+              </div>
+              <div>
+                <label class="lbl">Main heading line 2 (Gradient)</label>
+                <input type="text" name="heading2" class="inp" value="<%= enHero.heading2 || '' %>">
+              </div>
             </div>
             <div>
-              <label class="lbl">ปุ่มรอง</label>
-              <input type="text" name="ctaSub" class="inp" value="<%= content.hero.ctaSub %>">
+              <label class="lbl">Description</label>
+              <textarea name="subtext" class="inp" rows="2" style="resize:none;"><%= enHero.subtext || '' %></textarea>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+              <div>
+                <label class="lbl">Primary button</label>
+                <input type="text" name="ctaMain" class="inp" value="<%= enHero.ctaMain || '' %>">
+              </div>
+              <div>
+                <label class="lbl">Secondary button</label>
+                <input type="text" name="ctaSub" class="inp" value="<%= enHero.ctaSub || '' %>">
+              </div>
             </div>
           </div>
-        </div>
-        <div style="margin-top:16px;display:flex;justify-content:flex-end;">
-          <button type="submit" class="act-btn ab-primary">
-            <i data-lucide="save" style="width:14px;height:14px;"></i> บันทึก Hero
-          </button>
-        </div>
-      </form>
+          <div style="margin-top:16px;display:flex;justify-content:flex-end;">
+            <button type="submit" class="act-btn ab-primary">
+              <i data-lucide="save" style="width:14px;height:14px;"></i> Save Hero (EN)
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
 
-    <!-- Sections + Contact -->
+    <!-- ── Sections + Contact ── -->
     <div class="section-card">
       <div class="section-title">
         <div style="width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,#0891b2,#6366f1);display:flex;align-items:center;justify-content:center;">
           <i data-lucide="align-left" style="width:14px;height:14px;color:#fff;"></i>
         </div>
         ข้อความในส่วนต่างๆ
+        <div class="lang-toggle" style="margin-left:auto;">
+          <button type="button" class="lang-btn <%= autoEnSections ? 'lang-btn-inactive' : 'lang-btn-active' %>" id="sections-btn-th" onclick="cardLang('sections','th')">🇹🇭 TH</button>
+          <button type="button" class="lang-btn <%= autoEnSections ? 'lang-btn-active' : 'lang-btn-inactive' %>" id="sections-btn-en" onclick="cardLang('sections','en')">🇬🇧 EN</button>
+        </div>
       </div>
-      <form method="POST" action="/admin/content/sections">
-        <div style="display:grid;gap:20px;">
-          <!-- Counselors section -->
-          <div>
-            <div style="font-size:12px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">ส่วนนักจิตวิทยา</div>
-            <div style="display:grid;gap:10px;">
-              <div>
-                <label class="lbl">หัวข้อ</label>
-                <input type="text" name="counselorsHeading" class="inp" value="<%= content.counselors.heading %>">
+
+      <!-- TH -->
+      <div id="sections-th" style="display:<%= autoEnSections ? 'none' : '' %>;">
+        <form method="POST" action="/admin/content/sections">
+          <div style="display:grid;gap:20px;">
+            <div>
+              <div style="font-size:12px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">ส่วนนักจิตวิทยา <span class="lang-badge lang-badge-th">ภาษาไทย</span></div>
+              <div style="display:grid;gap:10px;">
+                <div>
+                  <label class="lbl">หัวข้อ</label>
+                  <input type="text" name="counselorsHeading" class="inp" value="<%= content.counselors.heading %>">
+                </div>
+                <div>
+                  <label class="lbl">คำอธิบาย</label>
+                  <input type="text" name="counselorsSubtext" class="inp" value="<%= content.counselors.subtext %>">
+                </div>
               </div>
-              <div>
-                <label class="lbl">คำอธิบาย</label>
-                <input type="text" name="counselorsSubtext" class="inp" value="<%= content.counselors.subtext %>">
+            </div>
+            <div>
+              <div style="font-size:12px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">ส่วนฝากข้อมูล</div>
+              <div style="display:grid;gap:10px;">
+                <div>
+                  <label class="lbl">หัวข้อ</label>
+                  <input type="text" name="bookHeading" class="inp" value="<%= content.book.heading %>">
+                </div>
+                <div>
+                  <label class="lbl">คำอธิบาย</label>
+                  <textarea name="bookSubtext" class="inp" rows="2" style="resize:none;"><%= content.book.subtext %></textarea>
+                </div>
+                <div>
+                  <label class="lbl">หัวข้อฟอร์ม</label>
+                  <input type="text" name="bookFormHeading" class="inp" value="<%= content.book.formHeading %>">
+                </div>
+              </div>
+            </div>
+            <div>
+              <div style="font-size:12px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">ข้อมูลติดต่อ (Footer)</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">
+                <div>
+                  <label class="lbl">อีเมล</label>
+                  <input type="text" name="contactEmail" class="inp" value="<%= content.contact.email %>">
+                </div>
+                <div>
+                  <label class="lbl">เบอร์โทร</label>
+                  <input type="text" name="contactPhone" class="inp" value="<%= content.contact.phone %>">
+                </div>
+                <div>
+                  <label class="lbl">เวลาทำการ</label>
+                  <input type="text" name="contactHours" class="inp" value="<%= content.contact.hours %>">
+                </div>
               </div>
             </div>
           </div>
-          <!-- Book section -->
-          <div>
-            <div style="font-size:12px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">ส่วนฝากข้อมูล</div>
-            <div style="display:grid;gap:10px;">
-              <div>
-                <label class="lbl">หัวข้อ</label>
-                <input type="text" name="bookHeading" class="inp" value="<%= content.book.heading %>">
+          <div style="margin-top:16px;display:flex;justify-content:flex-end;">
+            <button type="submit" class="act-btn ab-primary">
+              <i data-lucide="save" style="width:14px;height:14px;"></i> บันทึกส่วนนี้ (TH)
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- EN -->
+      <div id="sections-en" style="display:<%= autoEnSections ? '' : 'none' %>;">
+        <form method="POST" action="/admin/content/sections-en">
+          <div style="display:grid;gap:20px;">
+            <div>
+              <div style="font-size:12px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">Counselors section <span class="lang-badge lang-badge-en">English</span></div>
+              <div style="display:grid;gap:10px;">
+                <div>
+                  <label class="lbl">Heading</label>
+                  <input type="text" name="counselorsHeading" class="inp" value="<%= enCounselors.heading || '' %>">
+                </div>
+                <div>
+                  <label class="lbl">Subtext</label>
+                  <input type="text" name="counselorsSubtext" class="inp" value="<%= enCounselors.subtext || '' %>">
+                </div>
               </div>
-              <div>
-                <label class="lbl">คำอธิบาย</label>
-                <textarea name="bookSubtext" class="inp" rows="2" style="resize:none;"><%= content.book.subtext %></textarea>
+            </div>
+            <div>
+              <div style="font-size:12px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">Registration section</div>
+              <div style="display:grid;gap:10px;">
+                <div>
+                  <label class="lbl">Heading</label>
+                  <input type="text" name="bookHeading" class="inp" value="<%= enBook.heading || '' %>">
+                </div>
+                <div>
+                  <label class="lbl">Subtext</label>
+                  <textarea name="bookSubtext" class="inp" rows="2" style="resize:none;"><%= enBook.subtext || '' %></textarea>
+                </div>
+                <div>
+                  <label class="lbl">Form heading</label>
+                  <input type="text" name="bookFormHeading" class="inp" value="<%= enBook.formHeading || '' %>">
+                </div>
               </div>
-              <div>
-                <label class="lbl">หัวข้อฟอร์ม</label>
-                <input type="text" name="bookFormHeading" class="inp" value="<%= content.book.formHeading %>">
+            </div>
+            <div>
+              <div style="font-size:12px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">Contact info (Footer)</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">
+                <div>
+                  <label class="lbl">Email</label>
+                  <input type="text" name="contactEmail" class="inp" value="<%= enContact.email || '' %>">
+                </div>
+                <div>
+                  <label class="lbl">Phone</label>
+                  <input type="text" name="contactPhone" class="inp" value="<%= enContact.phone || '' %>">
+                </div>
+                <div>
+                  <label class="lbl">Hours</label>
+                  <input type="text" name="contactHours" class="inp" value="<%= enContact.hours || '' %>">
+                </div>
               </div>
             </div>
           </div>
-          <!-- Contact info -->
-          <div>
-            <div style="font-size:12px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">ข้อมูลติดต่อ (Footer)</div>
-            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">
-              <div>
-                <label class="lbl">อีเมล</label>
-                <input type="text" name="contactEmail" class="inp" value="<%= content.contact.email %>">
-              </div>
-              <div>
-                <label class="lbl">เบอร์โทร</label>
-                <input type="text" name="contactPhone" class="inp" value="<%= content.contact.phone %>">
-              </div>
-              <div>
-                <label class="lbl">เวลาทำการ</label>
-                <input type="text" name="contactHours" class="inp" value="<%= content.contact.hours %>">
-              </div>
-            </div>
+          <div style="margin-top:16px;display:flex;justify-content:flex-end;">
+            <button type="submit" class="act-btn ab-primary">
+              <i data-lucide="save" style="width:14px;height:14px;"></i> Save Sections (EN)
+            </button>
           </div>
-        </div>
-        <div style="margin-top:16px;display:flex;justify-content:flex-end;">
-          <button type="submit" class="act-btn ab-primary">
-            <i data-lucide="save" style="width:14px;height:14px;"></i> บันทึกส่วนนี้
-          </button>
-        </div>
-      </form>
+        </form>
+      </div>
     </div>
 
-    <!-- FAQ -->
+    <!-- ── FAQ ── -->
     <div class="section-card">
       <div class="section-title">
         <div style="width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,#f59e0b,#f97316);display:flex;align-items:center;justify-content:center;">
           <i data-lucide="help-circle" style="width:14px;height:14px;color:#fff;"></i>
         </div>
         คำถามที่พบบ่อย (FAQ)
+        <div class="lang-toggle" style="margin-left:auto;">
+          <button type="button" class="lang-btn <%= autoEnFaqs ? 'lang-btn-inactive' : 'lang-btn-active' %>" id="faqs-btn-th" onclick="cardLang('faqs','th')">🇹🇭 TH</button>
+          <button type="button" class="lang-btn <%= autoEnFaqs ? 'lang-btn-active' : 'lang-btn-inactive' %>" id="faqs-btn-en" onclick="cardLang('faqs','en')">🇬🇧 EN</button>
+        </div>
       </div>
-      <form method="POST" action="/admin/content/faqs">
-        <div id="faqList" style="display:grid;gap:12px;margin-bottom:16px;">
-          <% content.faqs.forEach((f, i) => { %>
-          <div class="faq-item" id="faq_<%= i %>">
-            <button type="button" class="remove-faq" onclick="removeFaq(this)">
-              <i data-lucide="x" style="width:14px;height:14px;"></i>
-            </button>
-            <div style="display:grid;gap:8px;">
-              <div>
-                <label class="lbl">คำถาม</label>
-                <input type="text" name="faq_q" class="inp" value="<%= f.q %>">
-              </div>
-              <div>
-                <label class="lbl">คำตอบ</label>
-                <textarea name="faq_a" class="inp" rows="2" style="resize:none;"><%= f.a %></textarea>
+
+      <!-- TH -->
+      <div id="faqs-th" style="display:<%= autoEnFaqs ? 'none' : '' %>;">
+        <form method="POST" action="/admin/content/faqs">
+          <div id="faqListTh" style="display:grid;gap:12px;margin-bottom:16px;">
+            <% content.faqs.forEach((f, i) => { %>
+            <div class="faq-item">
+              <button type="button" class="remove-faq" onclick="removeFaq(this)">
+                <i data-lucide="x" style="width:14px;height:14px;"></i>
+              </button>
+              <div style="display:grid;gap:8px;">
+                <div>
+                  <label class="lbl">คำถาม <span class="lang-badge lang-badge-th">ภาษาไทย</span></label>
+                  <input type="text" name="faq_q" class="inp" value="<%= f.q %>">
+                </div>
+                <div>
+                  <label class="lbl">คำตอบ</label>
+                  <textarea name="faq_a" class="inp" rows="2" style="resize:none;"><%= f.a %></textarea>
+                </div>
               </div>
             </div>
+            <% }) %>
           </div>
-          <% }) %>
-        </div>
-        <button type="button" onclick="addFaq()" class="act-btn ab-ghost" style="margin-bottom:16px;">
-          <i data-lucide="plus" style="width:14px;height:14px;"></i> เพิ่มคำถาม
-        </button>
-        <div style="display:flex;justify-content:flex-end;">
-          <button type="submit" class="act-btn ab-primary">
-            <i data-lucide="save" style="width:14px;height:14px;"></i> บันทึก FAQ
+          <button type="button" onclick="addFaq('faqListTh')" class="act-btn ab-ghost" style="margin-bottom:16px;">
+            <i data-lucide="plus" style="width:14px;height:14px;"></i> เพิ่มคำถาม
           </button>
-        </div>
-      </form>
+          <div style="display:flex;justify-content:flex-end;">
+            <button type="submit" class="act-btn ab-primary">
+              <i data-lucide="save" style="width:14px;height:14px;"></i> บันทึก FAQ (TH)
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- EN -->
+      <div id="faqs-en" style="display:<%= autoEnFaqs ? '' : 'none' %>;">
+        <form method="POST" action="/admin/content/faqs-en">
+          <div id="faqListEn" style="display:grid;gap:12px;margin-bottom:16px;">
+            <% enFaqs.forEach((f, i) => { %>
+            <div class="faq-item">
+              <button type="button" class="remove-faq" onclick="removeFaq(this)">
+                <i data-lucide="x" style="width:14px;height:14px;"></i>
+              </button>
+              <div style="display:grid;gap:8px;">
+                <div>
+                  <label class="lbl">Question <span class="lang-badge lang-badge-en">English</span></label>
+                  <input type="text" name="faq_q" class="inp" value="<%= f.q %>">
+                </div>
+                <div>
+                  <label class="lbl">Answer</label>
+                  <textarea name="faq_a" class="inp" rows="2" style="resize:none;"><%= f.a %></textarea>
+                </div>
+              </div>
+            </div>
+            <% }) %>
+          </div>
+          <button type="button" onclick="addFaq('faqListEn', true)" class="act-btn ab-ghost" style="margin-bottom:16px;">
+            <i data-lucide="plus" style="width:14px;height:14px;"></i> Add question
+          </button>
+          <div style="display:flex;justify-content:flex-end;">
+            <button type="submit" class="act-btn ab-primary">
+              <i data-lucide="save" style="width:14px;height:14px;"></i> Save FAQ (EN)
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
 
   </div>
 </div>
 
 <script>
-  function addFaq() {
-    const list = document.getElementById('faqList')
+  function cardLang(section, lang) {
+    ['th', 'en'].forEach(l => {
+      const panel = document.getElementById(section + '-' + l)
+      const btn   = document.getElementById(section + '-btn-' + l)
+      if (panel) panel.style.display = (l === lang) ? '' : 'none'
+      if (btn) {
+        btn.className = 'lang-btn ' + (l === lang ? 'lang-btn-active' : 'lang-btn-inactive')
+      }
+    })
+  }
+
+  function addFaq(listId, isEn) {
+    const list = document.getElementById(listId)
     const div  = document.createElement('div')
     div.className = 'faq-item'
-    div.innerHTML = `
+    div.innerHTML = isEn ? `
       <button type="button" class="remove-faq" onclick="removeFaq(this)">
         <i data-lucide="x" style="width:14px;height:14px;"></i>
       </button>
       <div style="display:grid;gap:8px;">
         <div>
-          <label class="lbl">คำถาม</label>
+          <label class="lbl">Question <span class="lang-badge lang-badge-en">English</span></label>
+          <input type="text" name="faq_q" class="inp">
+        </div>
+        <div>
+          <label class="lbl">Answer</label>
+          <textarea name="faq_a" class="inp" rows="2" style="resize:none;"></textarea>
+        </div>
+      </div>` : `
+      <button type="button" class="remove-faq" onclick="removeFaq(this)">
+        <i data-lucide="x" style="width:14px;height:14px;"></i>
+      </button>
+      <div style="display:grid;gap:8px;">
+        <div>
+          <label class="lbl">คำถาม <span class="lang-badge lang-badge-th">ภาษาไทย</span></label>
           <input type="text" name="faq_q" class="inp">
         </div>
         <div>

@@ -11,12 +11,14 @@ function writeData(d) { fs.writeFileSync(dataFile, JSON.stringify(d, null, 2)) }
 
 router.get('/', (req, res) => {
   const content = readData()
+  if (!content.en) content.en = {}
   res.render('admin/content', {
     page: 'content', title: 'จัดการเนื้อหาเว็บไซต์',
     content, query: req.query,
   })
 })
 
+// ── TH endpoints ─────────────────────────────────────────────────────────────
 router.post('/hero', (req, res) => {
   const data = readData()
   data.hero = {
@@ -60,6 +62,55 @@ router.post('/faqs', (req, res) => {
     .filter(f => f.q)
   writeData(data)
   res.redirect('/admin/content?saved=faqs')
+})
+
+// ── EN endpoints ──────────────────────────────────────────────────────────────
+router.post('/hero-en', (req, res) => {
+  const data = readData()
+  if (!data.en) data.en = {}
+  data.en.hero = {
+    badge:    (req.body.badge    || '').trim(),
+    heading1: (req.body.heading1 || '').trim(),
+    heading2: (req.body.heading2 || '').trim(),
+    subtext:  (req.body.subtext  || '').trim(),
+    ctaMain:  (req.body.ctaMain  || '').trim(),
+    ctaSub:   (req.body.ctaSub   || '').trim(),
+  }
+  writeData(data)
+  res.redirect('/admin/content?saved=hero-en')
+})
+
+router.post('/sections-en', (req, res) => {
+  const data = readData()
+  if (!data.en) data.en = {}
+  data.en.counselors = {
+    heading: (req.body.counselorsHeading || '').trim(),
+    subtext: (req.body.counselorsSubtext || '').trim(),
+  }
+  data.en.book = {
+    heading:     (req.body.bookHeading     || '').trim(),
+    subtext:     (req.body.bookSubtext     || '').trim(),
+    formHeading: (req.body.bookFormHeading || '').trim(),
+  }
+  data.en.contact = {
+    email: (req.body.contactEmail || '').trim(),
+    phone: (req.body.contactPhone || '').trim(),
+    hours: (req.body.contactHours || '').trim(),
+  }
+  writeData(data)
+  res.redirect('/admin/content?saved=sections-en')
+})
+
+router.post('/faqs-en', (req, res) => {
+  const data = readData()
+  if (!data.en) data.en = {}
+  const qs = [].concat(req.body.faq_q || [])
+  const as = [].concat(req.body.faq_a || [])
+  data.en.faqs = qs
+    .map((q, i) => ({ q: q.trim(), a: (as[i] || '').trim() }))
+    .filter(f => f.q)
+  writeData(data)
+  res.redirect('/admin/content?saved=faqs-en')
 })
 
 // ── Test email ────────────────────────────────────────────────────────────────

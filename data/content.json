@@ -34,5 +34,43 @@
     "email": "hello@mindwell.th",
     "phone": "02-XXX-XXXX",
     "hours": "จ–ศ 08:00–20:00 น."
+  },
+  "en": {
+    "hero": {
+      "badge": "Safe · Private · Trusted",
+      "heading1": "Take Care of Your Mind",
+      "heading2": "The Way You Deserve",
+      "subtext": "Connect with certified psychologists and counselors. Book appointments easily, online or in-person.",
+      "ctaMain": "Register for Services",
+      "ctaSub": "View Counselors"
+    },
+    "counselors": {
+      "heading": "Our Counselors",
+      "subtext": "A team of experts who have been screened and quality-certified"
+    },
+    "book": {
+      "heading": "Register for Counseling Services",
+      "subtext": "Seeking help is not weakness — it takes courage. Start taking care of your mind today.",
+      "formHeading": "Please leave your details for our staff to contact you for a counseling appointment."
+    },
+    "faqs": [
+      {
+        "q": "Will the information I share be kept confidential?",
+        "a": "Yes, all data is encrypted and maintained in accordance with Thailand's Personal Data Protection Act (PDPA). Our counselors are bound by professional ethics."
+      },
+      {
+        "q": "How can I cancel or reschedule my appointment?",
+        "a": "You can cancel or reschedule at least 24 hours in advance via <a href=\"https://page.line.me/bucare?openQrModal=true\" target=\"_blank\" rel=\"noopener\" class=\"text-brand-600 font-medium hover:underline\">LINE @bucare</a>"
+      },
+      {
+        "q": "Is online counseling as effective as in-person sessions?",
+        "a": "Research shows that online counseling is comparably effective and more convenient for many people. Our counselors are specially trained for online sessions."
+      }
+    ],
+    "contact": {
+      "email": "hello@mindwell.th",
+      "phone": "02-XXX-XXXX",
+      "hours": "Mon–Sat 08:30 – 17:00 (Except public holidays)"
+    }
   }
 }
