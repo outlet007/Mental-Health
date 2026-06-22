@@ -26,8 +26,9 @@ const upload = multer({
 
 function readData()    { return JSON.parse(fs.readFileSync(dataFile, 'utf8')) }
 function writeData(d)  { fs.writeFileSync(dataFile, JSON.stringify(d, null, 2)) }
-function parseArr(str) { return (str || '').split(',').map(s => s.trim()).filter(Boolean) }
-function initials(name){ const parts = name.trim().split(' '); return parts.map(p => p[0]).join('').toUpperCase().slice(0,2) }
+function str(v)        { return Array.isArray(v) ? (v[0] || '') : String(v || '') }
+function parseArr(v)   { const s = Array.isArray(v) ? v.join(',') : (v || ''); return s.split(',').map(s => s.trim()).filter(Boolean) }
+function initials(name){ const parts = str(name).trim().split(' '); return parts.map(p => p[0]).join('').toUpperCase().slice(0,2) }
 
 function deletePhoto(photoPath) {
   if (!photoPath) return
@@ -66,28 +67,28 @@ router.post('/create', upload.single('photo'), async (req, res) => {
 
   const record = {
     id:              newId,
-    name:            name.trim(),
-    title:           title.trim(),
-    email:           email.trim().toLowerCase(),
-    phone:           phone.trim(),
-    bio:             (bio || '').trim(),
+    name:            str(name).trim(),
+    title:           str(title).trim(),
+    email:           str(email).trim().toLowerCase(),
+    phone:           str(phone).trim(),
+    bio:             str(bio).trim(),
     specialties:     parseArr(specialties),
     languages:       parseArr(languages),
-    sessionDuration: parseInt(sessionDuration) || 60,
+    sessionDuration: parseInt(str(sessionDuration)) || 60,
     rating:          0,
     reviewCount:     0,
-    status:          isApproved === 'true' ? 'active' : 'pending',
-    isApproved:      isApproved === 'true',
+    status:          str(isApproved) === 'true' ? 'active' : 'pending',
+    isApproved:      str(isApproved) === 'true',
     avatar:          initials(name),
     photo:           photo,
     createdAt:       new Date().toISOString().split('T')[0],
   }
 
-  if (username && username.trim()) {
-    record.username = username.trim().toLowerCase()
-    if (password && password.trim()) {
-      record.password = await bcrypt.hash(password.trim(), 10)
-    }
+  const uname = str(username).trim()
+  const pass  = str(password).trim()
+  if (uname) {
+    record.username = uname.toLowerCase()
+    if (pass) record.password = await bcrypt.hash(pass, 10)
   }
 
   data.push(record)
@@ -110,20 +111,22 @@ router.post('/:id/edit', upload.single('photo'), async (req, res) => {
 
   data[idx] = {
     ...data[idx],
-    name:            name.trim(),
-    title:           title.trim(),
-    email:           email.trim().toLowerCase(),
-    phone:           phone.trim(),
-    bio:             (bio || '').trim(),
+    name:            str(name).trim(),
+    title:           str(title).trim(),
+    email:           str(email).trim().toLowerCase(),
+    phone:           str(phone).trim(),
+    bio:             str(bio).trim(),
     specialties:     parseArr(specialties),
     languages:       parseArr(languages),
-    sessionDuration: parseInt(sessionDuration) || data[idx].sessionDuration,
+    sessionDuration: parseInt(str(sessionDuration)) || data[idx].sessionDuration,
     avatar:          initials(name),
     photo:           photo,
   }
 
-  if (username && username.trim()) data[idx].username = username.trim().toLowerCase()
-  if (password && password.trim()) data[idx].password = await bcrypt.hash(password.trim(), 10)
+  const uname = str(username).trim()
+  const pass  = str(password).trim()
+  if (uname) data[idx].username = uname.toLowerCase()
+  if (pass)  data[idx].password = await bcrypt.hash(pass, 10)
 
   writeData(data)
   res.redirect('/admin/counselors?updated=1')
