@@ -30,7 +30,7 @@ app.use((req, res, next) => {
 // Landing page
 app.get('/', (req, res) => {
   const counselors = JSON.parse(fs.readFileSync(path.join(__dirname, 'data/counselors.json'), 'utf8'))
-  const approved   = counselors.filter(c => c.isApproved).slice(0, 3)
+  const approved   = counselors.filter(c => c.isApproved)
   const content    = JSON.parse(fs.readFileSync(path.join(__dirname, 'data/content.json'), 'utf8'))
   res.render('index', { counselors: approved, query: req.query, content })
 })
