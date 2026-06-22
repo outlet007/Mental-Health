@@ -1,19 +1,3 @@
-﻿<%
-  const layout = `
-<!DOCTYPE html>
-<html lang="th">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${title} — MindWell Admin</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/output.css">
-  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"><\/script>
-</head>
-<body class="bg-slate-50">`;
-%>
 <!DOCTYPE html>
 <html lang="th">
 <head>
@@ -90,44 +74,166 @@
     </div>
 
     <div class="grid lg:grid-cols-3 gap-6">
-      <!-- Recent appointments -->
-      <div class="lg:col-span-2 card">
-        <div class="flex items-center justify-between mb-5">
-          <h2 class="font-semibold text-slate-700 flex items-center gap-2">
-            <i data-lucide="calendar-clock" class="w-4 h-4 text-brand-500"></i>
-            นัดหมายล่าสุด
-          </h2>
-          <a href="/admin/appointments" class="text-xs text-brand-600 hover:underline">ดูทั้งหมด →</a>
-        </div>
-        <div class="overflow-x-auto">
-          <table class="w-full">
-            <thead>
-              <tr class="border-b border-slate-100">
-                <th class="table-th">ผู้รับบริการ</th>
-                <th class="table-th">นักให้คำปรึกษา</th>
-                <th class="table-th">วันที่</th>
-                <th class="table-th">สถานะ</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-slate-50">
-              <% recentAppointments.forEach(a => { %>
-              <tr class="hover:bg-slate-50 transition-colors">
-                <td class="table-td font-medium text-slate-800"><%= a.clientName %></td>
-                <td class="table-td text-slate-500 text-xs"><%= a.counselorName %></td>
-                <td class="table-td text-slate-500 text-xs"><%= a.date %> <%= a.time %></td>
-                <td class="table-td">
-                  <% const badge = { pending:'badge-yellow', confirmed:'badge-blue', completed:'badge-green', cancelled:'badge-red' } %>
-                  <% const label = { pending:'รอยืนยัน', confirmed:'ยืนยันแล้ว', completed:'เสร็จสิ้น', cancelled:'ยกเลิก' } %>
-                  <span class="<%= badge[a.status] %>"><%= label[a.status] %></span>
-                </td>
-              </tr>
-              <% }) %>
-            </tbody>
-          </table>
-        </div>
-      </div>
 
-      <!-- Quick actions -->
+      <!-- Left column: calendar + recent appointments -->
+      <div class="lg:col-span-2 flex flex-col gap-6">
+
+        <!-- ── Weekly Calendar ── -->
+        <div class="card">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="font-semibold text-slate-700 flex items-center gap-2">
+              <i data-lucide="calendar-days" class="w-4 h-4 text-brand-500"></i>
+              ตารางเวลานักให้คำปรึกษา
+            </h2>
+            <a href="/admin/schedules" class="text-xs text-brand-600 hover:underline">จัดการตาราง →</a>
+          </div>
+
+          <!-- Week navigation -->
+          <%
+            const CAL_MONTHS = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.']
+            const ws = weekDays[0], we = weekDays[6]
+            const calYear = parseInt(we.dateStr.split('-')[0]) + 543
+            const calLabel = ws.dayNum + ' ' + CAL_MONTHS[ws.month - 1] + ' – ' + we.dayNum + ' ' + CAL_MONTHS[we.month - 1] + ' ' + calYear
+          %>
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;">
+            <a href="/admin?week=<%= prevWeekStr %>"
+               style="display:inline-flex; align-items:center; padding:5px 12px; border-radius:6px; border:1px solid #e2e8f0; font-size:12px; color:#64748b; text-decoration:none; background:#fff; font-weight:500; transition:background 0.15s;"
+               onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='#fff'">
+              ◀ ก่อนหน้า
+            </a>
+            <span style="font-size:13px; font-weight:700; color:#1e293b;"><%= calLabel %></span>
+            <a href="/admin?week=<%= nextWeekStr %>"
+               style="display:inline-flex; align-items:center; padding:5px 12px; border-radius:6px; border:1px solid #e2e8f0; font-size:12px; color:#64748b; text-decoration:none; background:#fff; font-weight:500; transition:background 0.15s;"
+               onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='#fff'">
+              ถัดไป ▶
+            </a>
+          </div>
+
+          <!-- Calendar grid -->
+          <div style="overflow-x:auto; overflow-y:auto; max-height:340px; border:1px solid #e2e8f0; border-radius:8px;">
+            <table style="width:100%; border-collapse:collapse; table-layout:fixed; min-width:480px;">
+              <!-- Day headers -->
+              <thead>
+                <tr style="background:#f8fafc; position:sticky; top:0; z-index:2;">
+                  <th style="width:42px; border-bottom:2px solid #e2e8f0; border-right:1px solid #e2e8f0;"></th>
+                  <% weekDays.forEach(day => { %>
+                  <th style="padding:6px 2px; text-align:center; border-bottom:2px solid #e2e8f0; border-left:1px solid #f1f5f9;">
+                    <div style="font-size:10px; color:#94a3b8; font-weight:600; letter-spacing:0.05em; text-transform:uppercase; line-height:1;"><%= day.dayNameShort %></div>
+                    <div style="width:26px; height:26px; border-radius:50%; display:flex; align-items:center; justify-content:center; margin:3px auto 0; font-size:12px; font-weight:700; background:<%= day.isToday ? '#3b82f6' : 'transparent' %>; color:<%= day.isToday ? '#fff' : '#1e293b' %>; line-height:1;"><%= day.dayNum %></div>
+                  </th>
+                  <% }) %>
+                </tr>
+              </thead>
+
+              <!-- Hour rows -->
+              <tbody>
+                <% HOURS.forEach((h, hi) => { %>
+                <tr>
+                  <td style="padding:0 6px 0 2px; text-align:right; color:#94a3b8; font-size:10px; vertical-align:top; padding-top:3px; border-right:1px solid #e2e8f0; border-top:<%= hi > 0 ? '1px solid #f1f5f9' : 'none' %>; white-space:nowrap; background:#fafbfc;">
+                    <%= String(h).padStart(2,'0') %>:00
+                  </td>
+                  <% calendarGrid[hi].forEach((cell, di) => {
+                    // detect if this is the first slot of a counselor's block
+                    const isStart = (s) => {
+                      if (hi === 0) return true
+                      const ph = HOURS[hi - 1]
+                      return !(parseInt(s.startTime.split(':')[0]) <= ph && parseInt(s.endTime.split(':')[0]) > ph)
+                    }
+                  %>
+                  <td style="border-left:1px solid #f1f5f9; border-top:<%= hi > 0 ? '1px solid #f8fafc' : 'none' %>; height:44px; vertical-align:top; padding:2px; overflow:hidden;">
+                    <% cell.schedules.forEach(s => {
+                      const clr = counselorColors[s.counselorId] || { color:'#6366f1', light:'#e0e7ff' }
+                      const cDisplayName = (counselorMap[s.counselorId] || {}).name || s.counselorId
+                      const showLabel = isStart(s)
+                    %>
+                    <div title="<%= cDisplayName %> (<%= s.startTime %>–<%= s.endTime %>)"
+                         style="background:<%= clr.light %>; border-left:2px solid <%= clr.color %>; border-radius:2px; padding:<%= showLabel ? '2px 3px' : '0' %>; margin-bottom:1px; height:<%= showLabel ? 'auto' : '7px' %>; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; font-size:9px; color:<%= clr.color %>; font-weight:600; line-height:1.4;">
+                      <% if (showLabel) { %><%= cDisplayName.split(' ')[0] || cDisplayName %><% } %>
+                    </div>
+                    <% }) %>
+                    <% cell.appointments.forEach(a => {
+                      const APT_BORDER = { pending:'#f59e0b', confirmed:'#3b82f6', completed:'#10b981' }
+                      const APT_BG     = { pending:'#fef9c3', confirmed:'#eff6ff', completed:'#f0fdf4' }
+                      const bdClr = APT_BORDER[a.status] || '#6366f1'
+                      const bgClr = APT_BG[a.status] || '#f5f3ff'
+                    %>
+                    <div title="<%= a.clientName %> (<%= a.time %>)"
+                         style="background:<%= bgClr %>; border-left:2px solid <%= bdClr %>; border-radius:2px; padding:2px 3px; margin-bottom:1px; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; font-size:9px; color:#334155; font-weight:600; line-height:1.4;">
+                      📅 <%= a.clientName %>
+                    </div>
+                    <% }) %>
+                  </td>
+                  <% }) %>
+                </tr>
+                <% }) %>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Legend -->
+          <div style="display:flex; align-items:center; gap:14px; flex-wrap:wrap; margin-top:10px; padding-top:10px; border-top:1px solid #f1f5f9;">
+            <span style="font-size:10px; color:#94a3b8; font-weight:600; text-transform:uppercase; letter-spacing:0.05em;">คำอธิบาย</span>
+            <%
+              const legendCounselors = Object.keys(counselorColors).map(id => ({
+                id,
+                color: counselorColors[id].color,
+                light: counselorColors[id].light,
+                name: (counselorMap[id] || {}).name || id
+              }))
+            %>
+            <% legendCounselors.forEach(c => { %>
+            <div style="display:flex; align-items:center; gap:5px; font-size:11px; color:#475569;">
+              <div style="width:12px; height:12px; border-radius:2px; background:<%= c.light %>; border-left:3px solid <%= c.color %>; flex-shrink:0;"></div>
+              <%= c.name %>
+            </div>
+            <% }) %>
+            <div style="display:flex; align-items:center; gap:5px; font-size:11px; color:#475569;">
+              <div style="width:12px; height:12px; border-radius:2px; background:#fef9c3; border-left:3px solid #f59e0b; flex-shrink:0;"></div>
+              นัดหมาย
+            </div>
+          </div>
+        </div>
+
+        <!-- ── Recent appointments ── -->
+        <div class="card">
+          <div class="flex items-center justify-between mb-5">
+            <h2 class="font-semibold text-slate-700 flex items-center gap-2">
+              <i data-lucide="calendar-clock" class="w-4 h-4 text-brand-500"></i>
+              นัดหมายล่าสุด
+            </h2>
+            <a href="/admin/appointments" class="text-xs text-brand-600 hover:underline">ดูทั้งหมด →</a>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full">
+              <thead>
+                <tr class="border-b border-slate-100">
+                  <th class="table-th">ผู้รับบริการ</th>
+                  <th class="table-th">นักให้คำปรึกษา</th>
+                  <th class="table-th">วันที่</th>
+                  <th class="table-th">สถานะ</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-50">
+                <% recentAppointments.forEach(a => { %>
+                <tr class="hover:bg-slate-50 transition-colors">
+                  <td class="table-td font-medium text-slate-800"><%= a.clientName %></td>
+                  <td class="table-td text-slate-500 text-xs"><%= a.counselorName %></td>
+                  <td class="table-td text-slate-500 text-xs"><%= a.date %> <%= a.time %></td>
+                  <td class="table-td">
+                    <% const badge = { pending:'badge-yellow', confirmed:'badge-blue', completed:'badge-green', cancelled:'badge-red' } %>
+                    <% const label = { pending:'รอยืนยัน', confirmed:'ยืนยันแล้ว', completed:'เสร็จสิ้น', cancelled:'ยกเลิก' } %>
+                    <span class="<%= badge[a.status] %>"><%= label[a.status] %></span>
+                  </td>
+                </tr>
+                <% }) %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div><!-- /left column -->
+
+      <!-- Right column: quick actions + stats -->
       <div class="space-y-4">
         <div class="card">
           <h2 class="font-semibold text-slate-700 mb-4 flex items-center gap-2">
@@ -181,8 +287,9 @@
             </div>
           </div>
         </div>
-      </div>
-    </div>
+      </div><!-- /right column -->
+
+    </div><!-- /grid -->
 
   </main>
 </div>
