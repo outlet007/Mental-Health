@@ -1,4 +1,5 @@
 const assert = require('node:assert/strict')
+const fs = require('node:fs')
 const path = require('node:path')
 const test = require('node:test')
 const ejs = require('ejs')
@@ -74,4 +75,48 @@ test('admin survey page keeps rating filters and badges inside the MindCare them
   assert.match(html, /rating-filter-icon/)
   assert.match(html, /data-lucide="smile-plus"/)
   assert.match(html, /data-lucide="bar-chart-3"/)
+})
+
+
+test('admin counselors page uses lucide satisfaction icons instead of emoji', async () => {
+  const html = await renderView('admin/counselors.ejs', {
+    title: 'Counselors',
+    page: 'counselors',
+    session: { adminName: 'Admin', adminEmail: 'admin@example.com', userType: 'admin' },
+    query: {},
+    counselors: [{
+      id: 'c001',
+      name: 'Counselor',
+      title: 'Clinical Psychologist',
+      username: 'counselor',
+      email: 'counselor@example.com',
+      phone: '',
+      photo: '',
+      avatar: 'C',
+      specialties: ['Stress'],
+      languages: ['Thai'],
+      sessionDuration: 50,
+      isApproved: true,
+      status: 'active',
+      role: 'counselor',
+    }],
+    allCounselors: [],
+    surveyStats: { c001: { sum: 5, count: 1 } },
+  })
+
+  assert.doesNotMatch(html, emojiPattern)
+  assert.match(html, /data-lucide="smile-plus"/)
+  const source = fs.readFileSync(path.join(__dirname, '..', 'views', 'admin', 'counselors.ejs'), 'utf8')
+  assert.doesNotMatch(source, /const _ems/)
+  assert.match(source, /const _icons = \{5:'smile-plus',4:'smile',3:'meh',2:'frown',1:'circle-alert'\}/)
+  assert.match(source, /const _color = \{5:'#159f91',4:'#9db64b',3:'#d8b545',2:'#d88a55',1:'#d85b6c'\}/)
+  assert.match(source, /const _bg = \{5:'#eefbf8',4:'#f5fae9',3:'#fff8df',2:'#fff1e8',1:'#fff0f3'\}/)
+})
+
+
+test('admin reports satisfaction icons use the same score color palette', () => {
+  const source = fs.readFileSync(path.join(__dirname, '..', 'views', 'admin', 'reports.ejs'), 'utf8')
+
+  assert.match(source, /const RATING_COLOR = \{5:'#159f91',4:'#9db64b',3:'#d8b545',2:'#d88a55',1:'#d85b6c'\}/)
+  assert.match(source, /const RATING_BG = \{5:'#eefbf8',4:'#f5fae9',3:'#fff8df',2:'#fff1e8',1:'#fff0f3'\}/)
 })

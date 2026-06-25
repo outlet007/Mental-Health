@@ -44,7 +44,10 @@
       "textColors": {
         "heading": "",
         "subtext": ""
-      }
+      },
+      "motionEnabled": true,
+      "motionDuration": 38,
+      "motionScale": 1.12
     },
     "counselors": {
       "color": "#ffffff",
@@ -54,7 +57,10 @@
       "textColors": {
         "heading": "",
         "subtext": "#5a5f68"
-      }
+      },
+      "motionEnabled": true,
+      "motionDuration": 38,
+      "motionScale": 1.12
     },
     "features": {
       "color": "",
@@ -64,18 +70,24 @@
       "textColors": {
         "heading": "",
         "subtext": ""
-      }
+      },
+      "motionEnabled": true,
+      "motionDuration": 38,
+      "motionScale": 1.12
     },
     "book": {
-      "color": "#ffffff",
-      "opacity": 0.25,
-      "image": "/uploads/content/1782277736606.png",
-      "imgOpacity": 0.35,
+      "color": "#83c9b7",
+      "opacity": 0.15,
+      "image": "/uploads/content/1782366455711.jpg",
+      "imgOpacity": 0.1,
       "textColors": {
         "heading": "",
         "subtext": "#6a717c",
         "formHeading": "#6a717c"
-      }
+      },
+      "motionEnabled": true,
+      "motionDuration": 70,
+      "motionScale": 1.35
     },
     "faq": {
       "color": "#adafd2",
@@ -86,7 +98,10 @@
         "heading": "",
         "questions": "",
         "answers": ""
-      }
+      },
+      "motionEnabled": true,
+      "motionDuration": 38,
+      "motionScale": 1.12
     }
   },
   "en": {

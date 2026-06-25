@@ -8,6 +8,10 @@ const dataFile = path.join(__dirname, '../../../data/admins.json')
 
 function readData()   { return JSON.parse(fs.readFileSync(dataFile, 'utf8')) }
 function writeData(d) { fs.writeFileSync(dataFile, JSON.stringify(d, null, 2)) }
+function isSuperAdminRole(role) { return ['superadmin', 'admin'].includes(role) }
+function activeSuperAdminCount(data) {
+  return data.filter(a => isSuperAdminRole(a.role) && a.status === 'active').length
+}
 
 router.get('/', (req, res) => {
   const { search, role_filter, status_filter } = req.query
@@ -67,6 +71,9 @@ router.post('/:id/edit', async (req, res) => {
   const data = readData()
   const idx  = data.findIndex(a => a.id === req.params.id)
   if (idx !== -1) {
+    if (status === 'inactive' && data[idx].status === 'active' && isSuperAdminRole(data[idx].role) && activeSuperAdminCount(data) <= 1) {
+      return res.redirect('/admin/admins?error=last_active')
+    }
     if (username) data[idx].username = username.trim().toLowerCase()
     data[idx].name       = (name || '').trim()
     data[idx].department = (department || '').trim()
@@ -77,6 +84,20 @@ router.post('/:id/edit', async (req, res) => {
     if (password && password.trim()) {
       data[idx].password = await bcrypt.hash(password.trim(), 10)
     }
+    writeData(data)
+  }
+  res.redirect('/admin/admins?updated=1')
+})
+
+router.post('/:id/toggle-status', (req, res) => {
+  const data = readData()
+  const idx  = data.findIndex(a => a.id === req.params.id)
+  if (idx !== -1) {
+    const admin = data[idx]
+    if (admin.status === 'active' && isSuperAdminRole(admin.role) && activeSuperAdminCount(data) <= 1) {
+      return res.redirect('/admin/admins?error=last_active')
+    }
+    admin.status = admin.status === 'active' ? 'inactive' : 'active'
     writeData(data)
   }
   res.redirect('/admin/admins?updated=1')

@@ -13,13 +13,9 @@
     [data-animate="fade-left"] {transform:translateX(44px);}
     [data-animate="zoom-in"]   {transform:scale(.86);}
     [data-animate].is-visible  {opacity:1;transform:none;}
-    .section-bg-motion { animation:section-bg-zoom var(--bg-zoom-duration,38s) ease-in-out infinite alternate; transform-origin:center; will-change:transform; }
-    @keyframes section-bg-zoom {
-      from { transform:scale(1); }
-      to { transform:scale(var(--bg-zoom-scale,1.12)); }
-    }
+    .section-bg-motion { transform-origin:center; will-change:transform; }
     @media (prefers-reduced-motion: reduce) {
-      .section-bg-motion { animation:none; transform:none; }
+      .section-bg-motion { animation:none !important; transform:none; }
     }
   </style>
 </head>
@@ -49,9 +45,13 @@ function _bgLayers(sec) {
   const motionScale = typeof bg.motionScale === 'number' ? bg.motionScale : 1.12
   let html = ''
   if (bg.image) {
-    const motionClass = motionEnabled ? ' class="section-bg-motion"' : ''
-    const motionVars = motionEnabled ? '--bg-zoom-duration:'+motionDuration+'s;--bg-zoom-scale:'+motionScale+';' : ''
-    html += '<div aria-hidden="true"'+motionClass+' style="position:absolute;inset:0;background-image:url(\''+bg.image+'\');background-size:cover;background-position:center;background-repeat:no-repeat;opacity:'+imgOp+';'+motionVars+'pointer-events:none;z-index:0;"></div>'
+    if (motionEnabled) {
+      const kfName = '_bgzm_' + sec
+      html += '<style>@keyframes ' + kfName + '{from{transform:scale(1)}to{transform:scale(' + motionScale + ')}}</style>'
+      html += '<div aria-hidden="true" class="section-bg-motion" style="position:absolute;inset:0;background-image:url(\'' + bg.image + '\');background-size:cover;background-position:center;background-repeat:no-repeat;opacity:' + imgOp + ';animation:' + kfName + ' ' + motionDuration + 's ease-in-out infinite alternate;pointer-events:none;z-index:0;"></div>'
+    } else {
+      html += '<div aria-hidden="true" style="position:absolute;inset:0;background-image:url(\'' + bg.image + '\');background-size:cover;background-position:center;background-repeat:no-repeat;opacity:' + imgOp + ';pointer-events:none;z-index:0;"></div>'
+    }
   }
   if (bg.color) {
     const rgba = _hexToRgba(bg.color, colorOp) || bg.color

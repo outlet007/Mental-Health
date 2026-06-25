@@ -62,12 +62,11 @@ test('section background images use configurable slow zoom animation with reduce
     counselors: { image: '/uploads/content/counselors.jpg', imgOpacity: 0.5, color: '', opacity: 1, textColors: {} },
   })
 
-  assert.match(html, /@keyframes\s+section-bg-zoom/)
-  assert.match(html, /prefers-reduced-motion:\s*reduce/)
+  assert.match(html, /@keyframes _bgzm_hero/)
+  assert.match(html, /transform:scale\(1\.22\)/)
+  assert.match(html, /animation:_bgzm_hero 24s ease-in-out infinite alternate/)
   assert.match(html, /class="section-bg-motion"/)
-  assert.match(html, /animation:\s*section-bg-zoom\s+var\(--bg-zoom-duration,38s\)\s+ease-in-out\s+infinite alternate/)
-  assert.match(html, /--bg-zoom-duration:24s;/)
-  assert.match(html, /--bg-zoom-scale:1\.22;/)
+  assert.match(html, /prefers-reduced-motion:\s*reduce/)
 })
 
 test('background settings form saves movement controls per section', async () => {

@@ -63,6 +63,7 @@
             <input class="report-input" id="overview-to" name="to" type="date" value="<%= filters.to %>">
           </div>
           <input type="hidden" name="type" value="<%= filters.type %>">
+          <input type="hidden" name="graphMonth" value="<%= filters.graphMonth %>">
           <input type="hidden" name="pageSize" value="<%= pagination.pageSize %>">
           <button class="report-button" type="submit" style="background:#05967e;color:#fff;">
             <i data-lucide="filter" style="width:15px;height:15px;"></i>
@@ -115,8 +116,8 @@
             <p style="font-size:12px;color:#64748b;margin:0;">ผลประเมินความพึงพอใจ</p>
             <p style="font-size:30px;font-weight:800;color:#0f172a;margin:4px 0 0;"><%= stats.avgRating || '-' %><span style="font-size:14px;color:#64748b;font-weight:600;"> / 5</span></p>
           </div>
-          <div style="width:40px;height:40px;border-radius:8px;background:#fef2f2;display:flex;align-items:center;justify-content:center;">
-            <i data-lucide="star" style="width:20px;height:20px;color:#dc2626;"></i>
+          <div style="width:40px;height:40px;border-radius:8px;background:#ecfdf5;display:flex;align-items:center;justify-content:center;">
+            <i data-lucide="smile-plus" style="width:20px;height:20px;color:#05967e;"></i>
           </div>
         </div>
         <p style="font-size:12px;color:#64748b;margin:10px 0 0;">จากแบบประเมิน <%= stats.surveyCount %> รายการ</p>
@@ -128,39 +129,103 @@
         <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px;gap:12px;">
           <div>
             <h3 style="font-size:15px;font-weight:800;color:#1e293b;margin:0;"><%= '\u0e2a\u0e16\u0e34\u0e15\u0e34\u0e01\u0e32\u0e23\u0e43\u0e0a\u0e49\u0e1a\u0e23\u0e34\u0e01\u0e32\u0e23' %></h3>
-            <p style="font-size:12px;color:#64748b;margin:5px 0 0;"><%= '\u0e08\u0e33\u0e19\u0e27\u0e19\u0e19\u0e31\u0e14\u0e2b\u0e21\u0e32\u0e22\u0e23\u0e32\u0e22\u0e27\u0e31\u0e19' %></p>
+            <p style="font-size:12px;color:#64748b;margin:5px 0 0;">จำนวน</p>
           </div>
-          <span style="font-size:12px;color:#64748b;white-space:nowrap;"><%= '\u0e19\u0e31\u0e14\u0e2b\u0e21\u0e32\u0e22\u0e17\u0e31\u0e49\u0e07\u0e2b\u0e21\u0e14' %> <%= stats.totalAppointments %> <%= '\u0e23\u0e32\u0e22\u0e01\u0e32\u0e23' %></span>
+          <form method="GET" action="/admin/reports" style="display:flex;align-items:flex-end;gap:8px;flex-wrap:wrap;margin:0;">
+            <input type="hidden" name="from" value="<%= filters.from %>">
+            <input type="hidden" name="to" value="<%= filters.to %>">
+            <input type="hidden" name="type" value="<%= filters.type %>">
+            <input type="hidden" name="pageSize" value="<%= pagination.pageSize %>">
+            <div>
+              <label class="report-label" for="chart-month">เดือนของกราฟ</label>
+              <input class="report-input" id="chart-month" name="graphMonth" type="month" value="<%= filters.graphMonth %>" style="min-width:140px;">
+            </div>
+            <button class="report-button" type="submit" style="height:38px;background:#05967e;color:#fff;">
+              <i data-lucide="calendar-days" style="width:15px;height:15px;"></i>
+              แสดงกราฟ
+            </button>
+          </form>
         </div>
         <% if (stats.dailyUsage.length) { %>
           <%
-            const dailyChartWidth = 640
-            const dailyChartHeight = 170
-            const dailyMax = Math.max(1, ...stats.dailyUsage.map(day => day.count))
-            const dailyPoints = stats.dailyUsage.map((day, index) => {
-              const x = stats.dailyUsage.length === 1 ? dailyChartWidth / 2 : (index / (stats.dailyUsage.length - 1)) * dailyChartWidth
-              const y = dailyChartHeight - ((Number(day.count) || 0) / dailyMax) * (dailyChartHeight - 18)
-              return { ...day, x: x.toFixed(2), y: y.toFixed(2) }
+            const dailyChart = { width: 760, height: 240, left: 24, right: 4, top: 10, bottom: 28 }
+            dailyChart.plotWidth = dailyChart.width - dailyChart.left - dailyChart.right
+            dailyChart.plotHeight = dailyChart.height - dailyChart.top - dailyChart.bottom
+            const contactDailyUsage = stats.dailyContactRequests || []
+            const dailyMax = Math.max(
+              1,
+              ...stats.dailyUsage.map(day => Number(day.count) || 0),
+              ...contactDailyUsage.map(day => Number(day.count) || 0)
+            )
+            const dailyChartMax = Math.max(4, Math.ceil(dailyMax / 4) * 4)
+            const dailyTickCount = 4
+            const dailyTickValues = Array.from({ length: dailyTickCount + 1 }, (_, index) => Math.round((dailyChartMax / dailyTickCount) * index))
+            const buildDailyPoints = (items) => items.map((day, index) => {
+              const x = dailyChart.left + (items.length === 1 ? dailyChart.plotWidth / 2 : (index / (items.length - 1)) * dailyChart.plotWidth)
+              const y = dailyChart.top + dailyChart.plotHeight - ((Number(day.count) || 0) / dailyChartMax) * dailyChart.plotHeight
+              return { ...day, x, y, xText: x.toFixed(2), yText: y.toFixed(2) }
             })
-            const dailyPolyline = dailyPoints.map(point => `${point.x},${point.y}`).join(' ')
+            const dailyPoints = buildDailyPoints(stats.dailyUsage)
+            const contactPoints = buildDailyPoints(contactDailyUsage)
+            const dailyPolyline = dailyPoints.map(point => `${point.xText},${point.yText}`).join(' ')
+            const contactPolyline = contactPoints.map(point => `${point.xText},${point.yText}`).join(' ')
           %>
-          <div data-report-chart="appointments-daily-line" style="height:230px;border:1px solid #e2e8f0;border-radius:8px;background:#f8fafc;padding:12px 14px 8px;">
-            <svg viewBox="0 0 640 210" role="img" aria-label="<%= '\u0e08\u0e33\u0e19\u0e27\u0e19\u0e19\u0e31\u0e14\u0e2b\u0e21\u0e32\u0e22\u0e23\u0e32\u0e22\u0e27\u0e31\u0e19' %>" style="width:100%;height:100%;overflow:visible;display:block;">
-              <title><%= '\u0e08\u0e33\u0e19\u0e27\u0e19\u0e19\u0e31\u0e14\u0e2b\u0e21\u0e32\u0e22\u0e23\u0e32\u0e22\u0e27\u0e31\u0e19' %></title>
-              <line x1="0" y1="170" x2="640" y2="170" stroke="#cbd5e1" stroke-width="1" />
-              <line x1="0" y1="113" x2="640" y2="113" stroke="#e2e8f0" stroke-width="1" stroke-dasharray="4 6" />
-              <line x1="0" y1="56" x2="640" y2="56" stroke="#e2e8f0" stroke-width="1" stroke-dasharray="4 6" />
-              <polyline class="daily-appointment-line" fill="none" stroke="#05967e" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" points="<%= dailyPolyline %>"></polyline>
-              <% dailyPoints.forEach(point => { %>
-                <circle class="daily-appointment-point" cx="<%= point.x %>" cy="<%= point.y %>" r="<%= point.count ? 4.5 : 3 %>" fill="#fff" stroke="#05967e" stroke-width="2">
-                  <title><%= point.date %>: <%= point.count %> <%= '\u0e23\u0e32\u0e22\u0e01\u0e32\u0e23' %></title>
+          <div data-report-chart="appointments-daily-line" class="daily-usage-chart-shell" style="height:260px;border:1px solid #e5e7eb;border-radius:8px;background:#fff;padding:0;box-shadow:0 1px 2px rgba(15,23,42,.04);">
+            <svg viewBox="0 0 760 240" role="img" aria-label="จำนวน" style="width:100%;height:100%;display:block;overflow:visible;">
+              <title>จำนวน</title>
+              <defs>
+                <linearGradient id="daily-line-fill" x1="0" x2="0" y1="0" y2="1">
+                  <stop offset="0%" stop-color="#2563eb" stop-opacity=".13" />
+                  <stop offset="100%" stop-color="#2563eb" stop-opacity="0" />
+                </linearGradient>
+              </defs>
+              <rect x="<%= dailyChart.left %>" y="<%= dailyChart.top %>" width="<%= dailyChart.plotWidth %>" height="<%= dailyChart.plotHeight %>" rx="8" fill="#fff" stroke="#edf2f7" />
+              <% for (let index = 0; index <= 10; index += 1) {
+                   const x = dailyChart.left + (dailyChart.plotWidth / 10) * index
+              %>
+                <line class="daily-chart-grid-x" x1="<%= x.toFixed(2) %>" y1="<%= dailyChart.top %>" x2="<%= x.toFixed(2) %>" y2="<%= dailyChart.top + dailyChart.plotHeight %>" stroke="#e5e7eb" stroke-width="1" />
+              <% } %>
+              <% dailyTickValues.slice().reverse().forEach(value => {
+                   const y = dailyChart.top + dailyChart.plotHeight - (value / dailyChartMax) * dailyChart.plotHeight
+              %>
+                <text x="2" y="<%= (y + 4).toFixed(2) %>" fill="#9ca3af" font-size="12" font-weight="600"><%= value %></text>
+                <line class="daily-chart-grid-y" x1="<%= dailyChart.left %>" y1="<%= y.toFixed(2) %>" x2="<%= dailyChart.left + dailyChart.plotWidth %>" y2="<%= y.toFixed(2) %>" stroke="#e5e7eb" stroke-width="1" />
+              <% }) %>
+              <polyline class="daily-appointment-area" fill="url(#daily-line-fill)" stroke="none" points="<%= `${dailyChart.left},${dailyChart.top + dailyChart.plotHeight} ${dailyPolyline} ${dailyChart.left + dailyChart.plotWidth},${dailyChart.top + dailyChart.plotHeight}` %>"></polyline>
+              <% if (contactPolyline) { %>
+                <polyline class="daily-contact-request-line" fill="none" stroke="#22c55e" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="6 6" points="<%= contactPolyline %>"></polyline>
+              <% } %>
+              <polyline class="daily-appointment-line" fill="none" stroke="#1d4ed8" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" points="<%= dailyPolyline %>"></polyline>
+              <% contactPoints.forEach(point => { %>
+                <circle class="daily-contact-request-point" cx="<%= point.xText %>" cy="<%= point.yText %>" r="3.8" fill="#fff" stroke="#22c55e" stroke-width="2">
+                  <title><%= point.date %>: คำขอเพื่อทำนัดหมาย <%= point.count %> รายการ</title>
                 </circle>
               <% }) %>
+              <% dailyPoints.forEach(point => { %>
+                <circle class="daily-appointment-point" cx="<%= point.xText %>" cy="<%= point.yText %>" r="4" fill="#fff" stroke="#1d4ed8" stroke-width="2.2">
+                  <title><%= point.date %>: นัดหมาย <%= point.count %> <%= '\u0e23\u0e32\u0e22\u0e01\u0e32\u0e23' %></title>
+                </circle>
+              <% }) %>
+              <% const firstPoint = dailyPoints[0]
+                 const lastPoint = dailyPoints[dailyPoints.length - 1]
+                 const firstDateLabel = firstPoint ? firstPoint.date : ''
+                 const lastDateLabel = lastPoint ? lastPoint.date : ''
+              %>
+              <% if (firstPoint) { %>
+                <text class="daily-chart-date-label daily-chart-date-start" x="<%= firstPoint.xText %>" y="226" text-anchor="start" fill="#9ca3af" font-size="11" font-weight="600"><%= firstDateLabel %></text>
+              <% } %>
+              <% if (lastPoint) { %>
+                <text class="daily-chart-date-label daily-chart-date-end" x="<%= lastPoint.xText %>" y="226" text-anchor="end" fill="#9ca3af" font-size="11" font-weight="600"><%= lastDateLabel %></text>
+              <% } %>
             </svg>
           </div>
-          <div style="display:flex;justify-content:space-between;margin-top:8px;font-size:11px;color:#94a3b8;">
-            <span><%= filters.from %></span>
-            <span><%= filters.to %></span>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px;font-size:11px;color:#94a3b8;">
+            <span><%= stats.dailyUsage[0]?.date || filters.graphMonth %></span>
+            <span style="display:inline-flex;align-items:center;gap:12px;color:#64748b;font-weight:700;">
+              <span><i style="display:inline-block;width:8px;height:8px;border-radius:2px;background:#1d4ed8;margin-right:5px;"></i>นัดหมาย</span>
+              <span><i style="display:inline-block;width:8px;height:8px;border-radius:2px;background:#22c55e;margin-right:5px;"></i>คำขอเพื่อทำนัดหมาย</span>
+            </span>
+            <span><%= stats.dailyUsage[stats.dailyUsage.length - 1]?.date || filters.graphMonth %></span>
           </div>
         <% } else { %>
           <div style="height:210px;display:flex;align-items:center;justify-content:center;color:#94a3b8;font-size:13px;"><%= '\u0e44\u0e21\u0e48\u0e21\u0e35\u0e02\u0e49\u0e2d\u0e21\u0e39\u0e25\u0e43\u0e19\u0e0a\u0e48\u0e27\u0e07\u0e27\u0e31\u0e19\u0e17\u0e35\u0e48\u0e19\u0e35\u0e49' %></div>
@@ -199,16 +264,31 @@
 
     <section class="report-card" style="padding:18px;margin-bottom:18px;">
       <h3 style="font-size:15px;font-weight:800;color:#1e293b;margin:0 0 16px;">ผลประเมินความพึงพอใจ</h3>
+      <%
+        const RATING_ICONS = {5:'smile-plus',4:'smile',3:'meh',2:'frown',1:'circle-alert'}
+        const RATING_LABELS = {5:'มากที่สุด',4:'มาก',3:'ปานกลาง',2:'น้อย',1:'น้อยที่สุด'}
+        const RATING_BG = {5:'#eefbf8',4:'#f5fae9',3:'#fff8df',2:'#fff1e8',1:'#fff0f3'}
+        const RATING_COLOR = {5:'#159f91',4:'#9db64b',3:'#d8b545',2:'#d88a55',1:'#d85b6c'}
+      %>
       <div style="display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;">
         <% stats.ratingCounts.forEach(item => {
              const pct = stats.surveyCount ? Math.round(item.count / stats.surveyCount * 100) : 0
+             const ratingLabel = RATING_LABELS[item.rating] || `${item.rating} ดาว`
+             const ratingIcon = RATING_ICONS[item.rating] || 'smile'
+             const ratingBg = RATING_BG[item.rating] || '#f8fafc'
+             const ratingColor = RATING_COLOR[item.rating] || '#64748b'
         %>
           <div style="border:1px solid #e2e8f0;border-radius:8px;padding:12px;background:#f8fafc;">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-              <span style="font-size:13px;font-weight:800;color:#334155;"><%= item.rating %> ดาว</span>
-              <span style="font-size:12px;color:#64748b;"><%= item.count %></span>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;gap:8px;">
+              <span style="display:inline-flex;align-items:center;gap:7px;font-size:13px;font-weight:800;color:#334155;min-width:0;">
+                <span style="width:26px;height:26px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;background:<%= ratingBg %>;color:<%= ratingColor %>;border:1px solid <%= ratingBg %>;flex-shrink:0;">
+                  <i data-lucide="<%= ratingIcon %>" style="width:15px;height:15px;"></i>
+                </span>
+                <%= ratingLabel %>
+              </span>
+              <span style="font-size:12px;color:#64748b;flex-shrink:0;"><%= item.count %></span>
             </div>
-            <div class="bar-track"><div class="bar-fill" style="width:<%= pct %>%;background:#f59e0b;"></div></div>
+            <div class="bar-track"><div class="bar-fill" style="width:<%= pct %>%;background:<%= ratingColor %>;"></div></div>
             <p style="font-size:11px;color:#94a3b8;margin:7px 0 0;"><%= pct %>%</p>
           </div>
         <% }) %>
@@ -294,7 +374,8 @@
             <label class="report-label" for="report-to">วันที่ที่ต้องการ</label>
             <input class="report-input" id="report-to" name="to" type="date" value="<%= filters.to %>">
           </div>
-          <button class="report-button" type="submit" style="background:#0f172a;color:#fff;">
+          <input type="hidden" name="graphMonth" value="<%= filters.graphMonth %>">
+          <button class="report-button" type="submit" style="background:#05967e;color:#fff;">
             <i data-lucide="search" style="width:15px;height:15px;"></i>
             ค้นหา
           </button>
@@ -347,6 +428,7 @@
               <input type="hidden" name="from" value="<%= filters.from %>">
               <input type="hidden" name="to" value="<%= filters.to %>">
               <input type="hidden" name="type" value="<%= filters.type %>">
+              <input type="hidden" name="graphMonth" value="<%= filters.graphMonth %>">
               <input type="hidden" name="page" value="1">
               <select class="pagination-size-select" name="pageSize" aria-label="Rows per page" onchange="this.form.submit()">
                 <% pagination.pageSizeOptions.forEach(size => { %>

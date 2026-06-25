@@ -66,7 +66,8 @@ function getFilters(query) {
   if (from > to) [from, to] = [to, from]
 
   const type = REPORT_TYPES[query.type] ? query.type : 'all'
-  return { from, to, type }
+  const graphMonth = /^\d{4}-\d{2}$/.test(query.graphMonth || '') ? query.graphMonth : from.slice(0, 7)
+  return { from, to, type, graphMonth }
 }
 
 function getRequestedPage(query) {
@@ -169,6 +170,21 @@ function buildDateBuckets(filters) {
 
   const maxDays = 31
   for (let d = new Date(start); d <= end && days.length < maxDays; d.setDate(d.getDate() + 1)) {
+    days.push(fmtDate(d))
+  }
+  return days
+}
+
+function buildMonthDateBuckets(month) {
+  const days = []
+  if (!/^\d{4}-\d{2}$/.test(month || '')) return days
+
+  const [year, monthNumber] = month.split('-').map(Number)
+  const start = new Date(year, monthNumber - 1, 1)
+  const end = new Date(year, monthNumber, 0)
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return days
+
+  for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
     days.push(fmtDate(d))
   }
   return days
@@ -292,12 +308,16 @@ function buildStats(data, filters) {
 
   const serviceCounts = groupCount(activeAppointments, item => serviceTypeLabel(item.type))
   const maxServiceCount = Math.max(1, ...Object.values(serviceCounts))
-  const dailyBuckets = buildDateBuckets(filters)
+  const dailyBuckets = buildMonthDateBuckets(filters.graphMonth)
   const dailyUsage = dailyBuckets.map(date => ({
     date,
-    count: appointments.filter(item => normalizeDate(item.date || item.createdAt) === date).length,
+    count: data.appointments.filter(item => normalizeDate(item.date || item.createdAt) === date).length,
   }))
-  const maxDailyCount = Math.max(1, ...dailyUsage.map(item => item.count))
+  const dailyContactRequests = dailyBuckets.map(date => ({
+    date,
+    count: data.contacts.filter(item => normalizeDate(item.createdAt) === date).length,
+  }))
+  const maxDailyCount = Math.max(1, ...dailyUsage.map(item => item.count), ...dailyContactRequests.map(item => item.count))
   const ratingCounts = [5, 4, 3, 2, 1].map(rating => ({
     rating,
     count: surveys.filter(item => Number(item.rating) === rating).length,
@@ -323,6 +343,10 @@ function buildStats(data, filters) {
       percent: percent(count, maxServiceCount),
     })),
     dailyUsage: dailyUsage.map(item => ({
+      ...item,
+      percent: percent(item.count, maxDailyCount),
+    })),
+    dailyContactRequests: dailyContactRequests.map(item => ({
       ...item,
       percent: percent(item.count, maxDailyCount),
     })),

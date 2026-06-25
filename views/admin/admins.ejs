@@ -21,6 +21,8 @@
     .ab-ghost:hover     { background:#f1f5f9; }
     .ab-danger    { background:#ef4444; color:#fff; }
     .ab-danger:hover    { background:#dc2626; }
+    .ab-warn      { background:#f59e0b; color:#fff; }
+    .ab-warn:hover      { background:#d97706; }
     .inp { width:100%; padding:9px 12px; border:1.5px solid #e2e8f0; border-radius:10px; font-size:13px; color:#334155; outline:none; font-family:inherit; box-sizing:border-box; }
     .inp:focus { border-color:#2dd4b4; box-shadow:0 0 0 3px rgba(45,212,180,.15); }
     .lbl { display:block; font-size:12px; font-weight:500; color:#64748b; margin-bottom:5px; }
@@ -63,6 +65,11 @@
     <% } if (query.error==='last') { %>
     <div style="margin-bottom:16px;padding:12px 16px;background:#fef3c7;border:1px solid #fde68a;border-radius:12px;color:#92400e;font-size:13px;display:flex;align-items:center;gap:8px;">
       <i data-lucide="alert-triangle" style="width:16px;height:16px;"></i> ไม่สามารถลบได้ ต้องมีผู้ดูแลระบบอย่างน้อย 1 คน
+    </div>
+    <% } %>
+    <% if (query.error==='last_active') { %>
+    <div style="margin-bottom:16px;padding:12px 16px;background:#fef3c7;border:1px solid #fde68a;border-radius:12px;color:#92400e;font-size:13px;display:flex;align-items:center;gap:8px;">
+      <i data-lucide="alert-triangle" style="width:16px;height:16px;"></i> ไม่สามารถระงับผู้ดูแลระบบที่ใช้งานอยู่คนสุดท้ายได้
     </div>
     <% } %>
 
@@ -173,7 +180,7 @@
             <td style="font-size:12px;color:#94a3b8;"><%= a.createdAt || '-' %></td>
             <td>
               <div style="display:flex;gap:6px;">
-                <button class="act-btn ab-secondary edit-btn" data-rec="<%= JSON.stringify(a) %>">
+                <button class="act-btn ab-secondary edit-btn" data-rec="<%= JSON.stringify(a) %>" type="button">
                   <i data-lucide="pencil" style="width:13px;height:13px;"></i> แก้ไข
                 </button>
                 <form method="POST" action="/admin/admins/<%= a.id %>/delete"
@@ -182,6 +189,13 @@
                     <i data-lucide="trash-2" style="width:12px;height:12px;"></i>
                   </button>
                 </form>
+                <form method="POST" action="/admin/admins/<%= a.id %>/toggle-status"
+                      onsubmit="return confirm('<%= isActive ? 'ระงับ' : 'เปิดใช้' %> <%= a.name %>?')" style="margin:0;">
+                  <button type="submit" class="act-btn <%= isActive ? 'ab-warn' : 'ab-secondary' %>" title="<%= isActive ? 'ระงับผู้ใช้' : 'เปิดใช้งานผู้ใช้' %>">
+                    <i data-lucide="<%= isActive ? 'ban' : 'circle-check' %>" style="width:12px;height:12px;"></i> <%= isActive ? 'ระงับ' : 'เปิดใช้' %>
+                  </button>
+                </form>
+
               </div>
             </td>
           </tr>
@@ -222,6 +236,10 @@
         <div>
           <label class="lbl">ชื่อ-นามสกุล *</label>
           <input type="text" name="name" id="f_name" class="inp" required placeholder="เช่น สมชาย ใจดี">
+        </div>
+        <div>
+          <label class="lbl">หน่วยงาน</label>
+          <input type="text" name="department" id="f_department" class="inp" placeholder="เช่น ศูนย์ให้คำปรึกษา">
         </div>
         <div>
           <label class="lbl">อีเมล</label>
@@ -269,6 +287,7 @@
       document.getElementById('f_username').value   = ''
       document.getElementById('f_password').value   = ''
       document.getElementById('f_name').value       = ''
+      document.getElementById('f_department').value = ''
       document.getElementById('f_email').value      = ''
       document.getElementById('f_phone').value      = ''
       document.getElementById('f_role').value       = 'superadmin'
