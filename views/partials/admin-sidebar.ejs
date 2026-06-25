@@ -54,6 +54,14 @@
       แบบประเมินความพึงพอใจ
     </a>
 
+  <% if (isCounselor) { %>
+    <p class="px-3 pt-4 pb-1.5 text-xs font-semibold uppercase tracking-wider" style="color:rgba(255,255,255,.38)">ระบบ</p>
+    <a href="/admin/profile" class="nav-link <%= page==='profile' ? 'active' : '' %>">
+      <i data-lucide="user-cog" class="w-4 h-4"></i>
+      จัดการข้อมูลผู้ใช้
+    </a>
+  <% } %>
+
   <% if (!isCounselor) { %>
     <p class="px-3 pt-4 pb-1.5 text-xs font-semibold uppercase tracking-wider" style="color:rgba(255,255,255,.38)">ระบบ</p>
     <a href="/admin/admins" class="nav-link <%= page==='admins' ? 'active' : '' %>">

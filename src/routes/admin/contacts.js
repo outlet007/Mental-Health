@@ -1,6 +1,7 @@
 const express = require('express')
 const router  = express.Router()
 const fs      = require('fs')
+const { matchesSearch } = require('../../utils/search')
 const path    = require('path')
 const { sendAppointmentEmails } = require('../../utils/mailer')
 
@@ -19,9 +20,11 @@ router.get('/', (req, res) => {
 
   const { search } = req.query
   let filtered = contacts
-  if (search) filtered = filtered.filter(c =>
-    c.name.includes(search) || c.phone.includes(search) || (c.email || '').includes(search)
-  )
+  if (search) filtered = filtered.filter(c => matchesSearch([
+    c.name,
+    c.phone,
+    c.email,
+  ], search))
   filtered.sort((a, b) => b.createdAt.localeCompare(a.createdAt))
 
   res.render('admin/contacts', {

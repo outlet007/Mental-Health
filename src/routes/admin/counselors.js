@@ -1,6 +1,7 @@
 const express = require('express')
 const router  = express.Router()
 const fs      = require('fs')
+const { matchesSearch } = require('../../utils/search')
 const path    = require('path')
 const multer  = require('multer')
 const bcrypt  = require('bcryptjs')
@@ -43,9 +44,13 @@ router.get('/', (req, res) => {
   let filtered = counselors
   if (status === 'pending') filtered = filtered.filter(c => !c.isApproved)
   else if (status)          filtered = filtered.filter(c => c.status === status && c.isApproved)
-  if (search) filtered = filtered.filter(c =>
-    c.name.includes(search) || c.email.includes(search) || c.specialties.some(s => s.includes(search))
-  )
+  if (search) filtered = filtered.filter(c => matchesSearch([
+    c.name,
+    c.email,
+    c.phone,
+    c.specialties,
+    c.languages,
+  ], search))
 
   // คำนวณค่าเฉลี่ยความพึงพอใจแต่ละนักจิตวิทยาจาก surveys.json
   const surveysFile = path.join(__dirname, '../../../data/surveys.json')

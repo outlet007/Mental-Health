@@ -1,6 +1,7 @@
 const express = require('express')
 const router  = express.Router()
 const fs      = require('fs')
+const { matchesSearch } = require('../../utils/search')
 const path    = require('path')
 
 const dataDir    = path.join(__dirname, '../../../data')
@@ -49,9 +50,12 @@ router.get('/', (req, res) => {
   }
 
   if (status) filtered = filtered.filter(c => c.status === status)
-  if (search) filtered = filtered.filter(c =>
-    c.name.includes(search) || c.email.includes(search) || c.phone.includes(search)
-  )
+  if (search) filtered = filtered.filter(c => matchesSearch([
+    c.name,
+    c.email,
+    c.phone,
+    c.studentId,
+  ], search))
   res.render('admin/clients', {
     page: 'clients', title: 'ข้อมูลผู้รับบริการ',
     clients: filtered, query: req.query,

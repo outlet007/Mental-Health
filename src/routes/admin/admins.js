@@ -1,6 +1,7 @@
 const express = require('express')
 const router  = express.Router()
 const fs      = require('fs')
+const { matchesSearch } = require('../../utils/search')
 const path    = require('path')
 const bcrypt  = require('bcryptjs')
 
@@ -18,13 +19,12 @@ router.get('/', (req, res) => {
   let admins = readData()
 
   if (search) {
-    const q = search.trim().toLowerCase()
-    admins = admins.filter(a =>
-      (a.name     || '').toLowerCase().includes(q) ||
-      (a.username || '').toLowerCase().includes(q) ||
-      (a.email    || '').toLowerCase().includes(q) ||
-      (a.phone    || '').includes(q)
-    )
+    admins = admins.filter(a => matchesSearch([
+      a.name,
+      a.username,
+      a.email,
+      a.phone,
+    ], search))
   }
   if (role_filter) {
     admins = admins.filter(a =>

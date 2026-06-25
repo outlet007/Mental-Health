@@ -1,6 +1,7 @@
 const express = require('express')
 const router  = express.Router()
 const fs      = require('fs')
+const { matchesSearch } = require('../../utils/search')
 const path    = require('path')
 const crypto = require('crypto')
 const { sendAppointmentEmails, sendSurveyEmail } = require('../../utils/mailer')
@@ -86,9 +87,10 @@ router.get('/', (req, res) => {
 
   if (status) filtered = filtered.filter(a => a.status === status)
   if (type)   filtered = filtered.filter(a => a.type === type)
-  if (search) filtered = filtered.filter(a =>
-    a.clientName.includes(search) || a.counselorName.includes(search)
-  )
+  if (search) filtered = filtered.filter(a => matchesSearch([
+    a.clientName,
+    a.counselorName,
+  ], search))
   filtered = filtered.sort((a, b) => new Date(b.date) - new Date(a.date))
 
   const schedules = isCounselor(req)

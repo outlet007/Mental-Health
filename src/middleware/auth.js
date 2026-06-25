@@ -14,6 +14,7 @@ const COUNSELOR_ALLOWED = [
   '/admin/clients',
   '/admin/schedules',
   '/admin/surveys',
+  '/admin/profile',
 ]
 
 module.exports = (req, res, next) => {
