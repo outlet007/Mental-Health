@@ -83,8 +83,13 @@ router.post('/:id/book', async (req, res) => {
 
   const apptFile = path.join(dataDir, 'appointments.json')
   const appts    = JSON.parse(fs.readFileSync(apptFile, 'utf8'))
+  const maxNum = appts.reduce((max, a) => {
+    const m = String(a.id).match(/^app-(\d+)$/)
+    return m ? Math.max(max, parseInt(m[1])) : max
+  }, 0)
+
   const newAppt  = {
-    id:            'a' + Date.now().toString().slice(-6),
+    id:            'app-' + String(maxNum + 1).padStart(5, '0'),
     clientId:      client.id,
     clientName:    client.name,
     counselorId,

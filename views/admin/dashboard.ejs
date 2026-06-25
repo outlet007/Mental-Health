@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="th">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title><%= title %> — MindWell Admin</title>
+  <title><%= title %> — MindCare Admin</title>
   <%- include('../partials/head') %>
 </head>
 <body class="bg-slate-50">
@@ -27,6 +27,311 @@
 
   <main class="flex-1 p-6">
 
+<% if (locals.isCounselorUser) { %>
+
+    <!-- Welcome Banner -->
+    <div style="margin-bottom:20px; padding:20px 24px; background:linear-gradient(135deg,#05967e 0%,#06b6d4 100%); border-radius:16px; display:flex; align-items:center; gap:16px;">
+      <div style="width:52px;height:52px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;color:#fff;flex-shrink:0; letter-spacing:-1px;overflow:hidden;">
+        <% if (me.photo) { %>
+          <img data-counselor-profile-photo="<%= me.id %>" src="<%= me.photo %>" alt="<%= me.name || session.adminName %>" style="width:100%;height:100%;object-fit:cover;">
+        <% } else { %>
+          <%= me.avatar || (me.name||'?').slice(0,2).toUpperCase() %>
+        <% } %>
+      </div>
+      <div style="flex:1; min-width:0;">
+        <p style="font-size:18px;font-weight:700;color:#fff;line-height:1.3;">ยินดีต้อนรับ, <%= me.name || session.adminName %></p>
+        <p style="font-size:13px;color:rgba(255,255,255,.75);margin-top:2px;"><%= me.title || 'นักจิตวิทยาให้คำปรึกษา' %></p>
+      </div>
+      <div style="text-align:right;flex-shrink:0;">
+        <% const _wd = new Date(); %>
+        <p style="font-size:11px;color:rgba(255,255,255,.7);margin-bottom:4px;"><%= _wd.toLocaleDateString('th-TH',{weekday:'long',year:'numeric',month:'long',day:'numeric'}) %></p>
+        <p style="font-size:26px;font-weight:700;color:#fff;line-height:1;"><%= myStats.todayApts %><span style="font-size:13px;font-weight:400;margin-left:4px;">นัดวันนี้</span></p>
+      </div>
+    </div>
+
+    <!-- Stat Cards -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div class="stat-card">
+        <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style="background:#e0e7ff;">
+          <i data-lucide="calendar-days" class="w-5 h-5" style="color:#6366f1;"></i>
+        </div>
+        <div>
+          <p class="text-2xl font-bold text-slate-800"><%= myStats.total %></p>
+          <p class="text-xs text-slate-500">นัดหมายทั้งหมด</p>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style="background:#fef3c7;">
+          <i data-lucide="clock" class="w-5 h-5" style="color:#f59e0b;"></i>
+        </div>
+        <div>
+          <p class="text-2xl font-bold text-slate-800"><%= myStats.pending %></p>
+          <p class="text-xs text-slate-500">รอยืนยัน</p>
+          <% if (myStats.pending > 0) { %><p class="text-xs font-medium mt-0.5" style="color:#f59e0b;">ต้องดำเนินการ</p><% } %>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style="background:#cffafe;">
+          <i data-lucide="calendar-check" class="w-5 h-5" style="color:#06b6d4;"></i>
+        </div>
+        <div>
+          <p class="text-2xl font-bold text-slate-800"><%= myStats.confirmed %></p>
+          <p class="text-xs text-slate-500">ยืนยันแล้ว</p>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style="background:#d1fae5;">
+          <i data-lucide="check-circle-2" class="w-5 h-5" style="color:#10b981;"></i>
+        </div>
+        <div>
+          <p class="text-2xl font-bold text-slate-800"><%= myStats.completed %></p>
+          <p class="text-xs text-slate-500">เสร็จสิ้น</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Grid -->
+    <div class="grid lg:grid-cols-3 gap-6">
+
+      <!-- Left 2/3 -->
+      <div class="lg:col-span-2 flex flex-col gap-6">
+
+        <!-- My Weekly Schedule -->
+        <div class="card">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="font-semibold text-slate-700 flex items-center gap-2">
+              <i data-lucide="calendar-days" class="w-4 h-4 text-brand-500"></i>
+              ตารางเวลาของฉัน
+            </h2>
+            <a href="/admin/schedules" class="text-xs text-brand-600 hover:underline">จัดการตาราง →</a>
+          </div>
+
+          <%
+            const _CAL_MONTHS = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.']
+            const _ws = weekDays[0], _we = weekDays[6]
+            const _calYear  = parseInt(_we.dateStr.split('-')[0]) + 543
+            const _calLabel = _ws.dayNum + ' ' + _CAL_MONTHS[_ws.month-1] + ' – ' + _we.dayNum + ' ' + _CAL_MONTHS[_we.month-1] + ' ' + _calYear
+          %>
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;">
+            <a href="/admin?week=<%= prevWeekStr %>"
+               style="display:inline-flex;align-items:center;padding:5px 12px;border-radius:6px;border:1px solid #e2e8f0;font-size:12px;color:#64748b;text-decoration:none;background:#fff;font-weight:500;transition:background 0.15s;"
+               onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='#fff'">◀ ก่อนหน้า</a>
+            <span style="font-size:13px;font-weight:700;color:#1e293b;"><%= _calLabel %></span>
+            <a href="/admin?week=<%= nextWeekStr %>"
+               style="display:inline-flex;align-items:center;padding:5px 12px;border-radius:6px;border:1px solid #e2e8f0;font-size:12px;color:#64748b;text-decoration:none;background:#fff;font-weight:500;transition:background 0.15s;"
+               onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='#fff'">ถัดไป ▶</a>
+          </div>
+
+          <div style="overflow-x:auto; overflow-y:auto; max-height:340px; border:1px solid #e2e8f0; border-radius:8px;">
+            <table style="width:100%; border-collapse:collapse; table-layout:fixed; min-width:480px;">
+              <thead>
+                <tr style="background:#f8fafc; position:sticky; top:0; z-index:2;">
+                  <th style="width:42px; border-bottom:2px solid #e2e8f0; border-right:1px solid #e2e8f0;"></th>
+                  <% weekDays.forEach(day => { %>
+                  <th style="padding:6px 2px; text-align:center; border-bottom:2px solid #e2e8f0; border-left:1px solid #f1f5f9;">
+                    <div style="font-size:10px;color:#94a3b8;font-weight:600;letter-spacing:.05em;text-transform:uppercase;line-height:1;"><%= day.dayNameShort %></div>
+                    <div style="width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:3px auto 0;font-size:12px;font-weight:700;background:<%= day.isToday ? '#3b82f6' : 'transparent' %>;color:<%= day.isToday ? '#fff' : '#1e293b' %>;line-height:1;"><%= day.dayNum %></div>
+                  </th>
+                  <% }) %>
+                </tr>
+              </thead>
+              <tbody>
+                <% HOURS.forEach((h, hi) => { %>
+                <tr>
+                  <td style="padding:0 6px 0 2px;text-align:right;color:#94a3b8;font-size:10px;vertical-align:top;padding-top:3px;border-right:1px solid #e2e8f0;border-top:<%= hi>0?'1px solid #f1f5f9':'none' %>;white-space:nowrap;background:#fafbfc;">
+                    <%= String(h).padStart(2,'0') %>:00
+                  </td>
+                  <% myCalendarGrid[hi].forEach((cell, di) => {
+                    const isSchedStart = (s) => {
+                      if (hi === 0) return true
+                      const ph = HOURS[hi - 1]
+                      return !(parseInt(s.startTime.split(':')[0]) <= ph && parseInt(s.endTime.split(':')[0]) > ph)
+                    }
+                  %>
+                  <td style="border-left:1px solid #f1f5f9;border-top:<%= hi>0?'1px solid #f8fafc':'none' %>;height:44px;vertical-align:top;padding:2px;overflow:hidden;">
+                    <% cell.schedules.forEach(s => { const showLbl = isSchedStart(s) %>
+                    <div title="เวลาทำงาน <%= s.startTime %>–<%= s.endTime %>"
+                         style="background:#d0fae5;border-left:2px solid #05967e;border-radius:2px;padding:<%= showLbl?'2px 3px':'0' %>;margin-bottom:1px;height:<%= showLbl?'auto':'7px' %>;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font-size:9px;color:#05967e;font-weight:600;line-height:1.4;">
+                      <% if (showLbl) { %>พร้อมรับนัด<% } %>
+                    </div>
+                    <% }) %>
+                    <% cell.appointments.forEach(a => {
+                      const APT_BORDER = { pending:'#f59e0b', confirmed:'#3b82f6', completed:'#10b981' }
+                      const APT_BG     = { pending:'#fef9c3', confirmed:'#eff6ff', completed:'#f0fdf4' }
+                      const bdClr = APT_BORDER[a.status] || '#6366f1'
+                      const bgClr = APT_BG[a.status]     || '#f5f3ff'
+                    %>
+                    <div title="<%= a.clientName %> (<%= a.time %>)"
+                         style="background:<%= bgClr %>;border-left:2px solid <%= bdClr %>;border-radius:2px;padding:2px 3px;margin-bottom:1px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font-size:9px;color:#334155;font-weight:600;line-height:1.4;">
+                      📅 <%= a.clientName %>
+                    </div>
+                    <% }) %>
+                  </td>
+                  <% }) %>
+                </tr>
+                <% }) %>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Legend -->
+          <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:10px;padding-top:10px;border-top:1px solid #f1f5f9;">
+            <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:#475569;">
+              <div style="width:12px;height:12px;border-radius:2px;background:#d0fae5;border-left:3px solid #05967e;flex-shrink:0;"></div>
+              ช่วงเวลารับนัด
+            </div>
+            <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:#475569;">
+              <div style="width:12px;height:12px;border-radius:2px;background:#eff6ff;border-left:3px solid #3b82f6;flex-shrink:0;"></div>
+              นัดหมาย (ยืนยัน)
+            </div>
+            <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:#475569;">
+              <div style="width:12px;height:12px;border-radius:2px;background:#fef9c3;border-left:3px solid #f59e0b;flex-shrink:0;"></div>
+              นัดหมาย (รอยืนยัน)
+            </div>
+          </div>
+        </div>
+
+        <!-- Recent Appointments Table -->
+        <div class="card">
+          <div class="flex items-center justify-between mb-5">
+            <h2 class="font-semibold text-slate-700 flex items-center gap-2">
+              <i data-lucide="calendar-clock" class="w-4 h-4 text-brand-500"></i>
+              นัดหมายล่าสุด
+            </h2>
+            <a href="/admin/appointments" class="text-xs text-brand-600 hover:underline">ดูทั้งหมด →</a>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="tbl w-full">
+              <thead>
+                <tr class="border-b border-slate-100">
+                  <th class="table-th">ผู้รับบริการ</th>
+                  <th class="table-th">วันที่</th>
+                  <th class="table-th">เวลา</th>
+                  <th class="table-th">ระยะเวลา</th>
+                  <th class="table-th">รูปแบบ</th>
+                  <th class="table-th">บันทึก</th>
+                  <th class="table-th">สถานะ</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-50">
+                <% if (recentMyApts.length === 0) { %>
+                <tr><td colspan="7" class="table-td text-center text-slate-400">ยังไม่มีนัดหมาย</td></tr>
+                <% } %>
+                <% recentMyApts.forEach(a => { %>
+                <% const _badge = { pending:'badge-yellow', confirmed:'badge-blue', completed:'badge-green', cancelled:'badge-red' } %>
+                <% const _label = { pending:'รอยืนยัน', confirmed:'ยืนยันแล้ว', completed:'เสร็จสิ้น', cancelled:'ยกเลิก' } %>
+                <tr class="hover:bg-slate-50 transition-colors">
+                  <td class="table-td font-medium text-slate-800" style="white-space:nowrap;"><%= a.clientName %></td>
+                  <td class="table-td" style="font-size:13px;color:#475569;white-space:nowrap;"><%= a.date %></td>
+                  <td class="table-td" style="font-size:13px;color:#475569;white-space:nowrap;"><%= a.time || '—' %></td>
+                  <td class="table-td" style="font-size:13px;color:#475569;white-space:nowrap;"><%= a.duration ? a.duration + ' นาที' : '—' %></td>
+                  <td class="table-td" style="white-space:nowrap;">
+                    <% if (a.type === 'onsite') { %>
+                    <span style="display:inline-flex;align-items:center;gap:4px;font-size:12px;color:#475569;"><i data-lucide="map-pin" style="width:12px;height:12px;"></i> พบตัว</span>
+                    <% } else { %>
+                    <span style="display:inline-flex;align-items:center;gap:4px;font-size:12px;color:#0891b2;"><i data-lucide="video" style="width:12px;height:12px;"></i> ออนไลน์</span>
+                    <% } %>
+                  </td>
+                  <td class="table-td" style="font-size:12px;color:#64748b;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="<%= a.note || '' %>"><%= a.note || '—' %></td>
+                  <td class="table-td" style="white-space:nowrap;"><span class="<%= _badge[a.status] || 'badge-gray' %>"><%= _label[a.status] || a.status %></span></td>
+                </tr>
+                <% }) %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div><!-- /left -->
+
+      <!-- Right 1/3 -->
+      <div class="space-y-4">
+
+        <!-- Quick Menu -->
+        <div class="card">
+          <h2 class="font-semibold text-slate-700 mb-4 flex items-center gap-2">
+            <i data-lucide="zap" class="w-4 h-4 text-brand-500"></i>
+            เมนูด่วน
+          </h2>
+          <div class="space-y-2">
+            <a href="/admin/appointments?status=pending" class="flex items-center gap-3 p-3 rounded-xl hover:bg-amber-100 transition-colors" style="background:#fffbeb;text-decoration:none;">
+              <i data-lucide="clock" class="w-4 h-4" style="color:#f59e0b;flex-shrink:0;"></i>
+              <div>
+                <p class="text-sm font-medium" style="color:#92400e;">นัดรอยืนยัน</p>
+                <p class="text-xs" style="color:#b45309;"><%= myStats.pending %> รายการ</p>
+              </div>
+            </a>
+            <a href="/admin/appointments" class="flex items-center gap-3 p-3 rounded-xl hover:bg-brand-100 transition-colors" style="background:#ecfdf9;text-decoration:none;">
+              <i data-lucide="calendar-check" class="w-4 h-4 text-brand-600" style="flex-shrink:0;"></i>
+              <div>
+                <p class="text-sm font-medium text-brand-800">นัดหมายทั้งหมด</p>
+                <p class="text-xs text-brand-600">ดูและจัดการนัดหมาย</p>
+              </div>
+            </a>
+            <a href="/admin/schedules" class="flex items-center gap-3 p-3 rounded-xl transition-colors" style="background:#ecfeff;text-decoration:none;" onmouseover="this.style.background='#cffafe'" onmouseout="this.style.background='#ecfeff'">
+              <i data-lucide="clock" class="w-4 h-4" style="color:#06b6d4;flex-shrink:0;"></i>
+              <div>
+                <p class="text-sm font-medium" style="color:#0e7490;">ตารางเวลาของฉัน</p>
+                <p class="text-xs" style="color:#0891b2;">ตั้งค่าวันและเวลารับนัด</p>
+              </div>
+            </a>
+            <a href="/admin/clients" class="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-100 transition-colors" style="background:#f8fafc;text-decoration:none;">
+              <i data-lucide="users" class="w-4 h-4 text-slate-500" style="flex-shrink:0;"></i>
+              <div>
+                <p class="text-sm font-medium text-slate-700">ข้อมูลผู้รับบริการ</p>
+                <p class="text-xs text-slate-500">ดูประวัติผู้รับบริการ</p>
+              </div>
+            </a>
+          </div>
+        </div>
+
+        <!-- Stats Summary -->
+        <div class="card">
+          <h2 class="font-semibold text-slate-700 mb-4 flex items-center gap-2">
+            <i data-lucide="bar-chart-2" class="w-4 h-4 text-brand-500"></i>
+            สรุปสถิติ
+          </h2>
+          <div class="space-y-4">
+            <div>
+              <div class="flex justify-between items-center text-sm mb-1">
+                <span class="text-slate-500">อัตราการยืนยัน</span>
+                <span class="font-semibold text-slate-700"><%= myStats.confirmRate %>%</span>
+              </div>
+              <div class="w-full rounded-full h-1.5" style="background:#f1f5f9;">
+                <div class="h-1.5 rounded-full" style="width:<%= myStats.confirmRate %>%;background:#05967e;"></div>
+              </div>
+            </div>
+            <div>
+              <div class="flex justify-between items-center text-sm mb-1">
+                <span class="text-slate-500">อัตราความสำเร็จ</span>
+                <span class="font-semibold text-slate-700"><%= myStats.completeRate %>%</span>
+              </div>
+              <div class="w-full rounded-full h-1.5" style="background:#f1f5f9;">
+                <div class="h-1.5 rounded-full" style="width:<%= myStats.completeRate %>%;background:#06b6d4;"></div>
+              </div>
+            </div>
+            <div style="border-top:1px solid #f1f5f9;padding-top:12px;display:flex;flex-direction:column;gap:8px;">
+              <div class="flex justify-between items-center text-sm">
+                <span class="text-slate-500">นัดหมายวันนี้</span>
+                <span class="font-bold text-slate-800"><%= myStats.todayApts %> รายการ</span>
+              </div>
+              <div class="flex justify-between items-center text-sm">
+                <span class="text-slate-500">ยืนยันแล้ว</span>
+                <span class="font-semibold" style="color:#06b6d4;"><%= myStats.confirmed %> รายการ</span>
+              </div>
+              <div class="flex justify-between items-center text-sm">
+                <span class="text-slate-500">เสร็จสิ้นแล้ว</span>
+                <span class="font-semibold" style="color:#10b981;"><%= myStats.completed %> รายการ</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /right -->
+
+    </div><!-- /grid -->
+
+<% } else { %>
+
     <!-- Stat cards -->
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
       <div class="stat-card">
@@ -35,7 +340,7 @@
         </div>
         <div>
           <p class="text-2xl font-bold text-slate-800"><%= stats.totalCounselors %></p>
-          <p class="text-xs text-slate-500">นักให้คำปรึกษา</p>
+          <p class="text-xs text-slate-500">นักจิตวิทยาให้คำปรึกษา</p>
           <% if (stats.pendingApproval > 0) { %>
           <p class="text-xs text-amber-600 font-medium mt-0.5">รออนุมัติ <%= stats.pendingApproval %> คน</p>
           <% } %>
@@ -83,7 +388,7 @@
           <div class="flex items-center justify-between mb-4">
             <h2 class="font-semibold text-slate-700 flex items-center gap-2">
               <i data-lucide="calendar-days" class="w-4 h-4 text-brand-500"></i>
-              ตารางเวลานักให้คำปรึกษา
+              ตารางเวลานักจิตวิทยาให้คำปรึกษา
             </h2>
             <a href="/admin/schedules" class="text-xs text-brand-600 hover:underline">จัดการตาราง →</a>
           </div>
@@ -200,26 +505,53 @@
             <a href="/admin/appointments" class="text-xs text-brand-600 hover:underline">ดูทั้งหมด →</a>
           </div>
           <div class="overflow-x-auto">
-            <table class="w-full">
+            <table class="tbl w-full">
               <thead>
                 <tr class="border-b border-slate-100">
                   <th class="table-th">ผู้รับบริการ</th>
-                  <th class="table-th">นักให้คำปรึกษา</th>
+                  <th class="table-th">นักจิตวิทยาให้คำปรึกษา</th>
                   <th class="table-th">วันที่</th>
+                  <th class="table-th">เวลา</th>
+                  <th class="table-th">ระยะเวลา</th>
+                  <th class="table-th">รูปแบบ</th>
+                  <th class="table-th">บันทึก</th>
                   <th class="table-th">สถานะ</th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-slate-50">
+                <% if (recentAppointments.length === 0) { %>
+                <tr><td colspan="8" class="table-td text-center text-slate-400">ยังไม่มีนัดหมาย</td></tr>
+                <% } %>
                 <% recentAppointments.forEach(a => { %>
+                <% const badge = { pending:'badge-yellow', confirmed:'badge-blue', completed:'badge-green', cancelled:'badge-red' } %>
+                <% const label = { pending:'รอยืนยัน', confirmed:'ยืนยันแล้ว', completed:'เสร็จสิ้น', cancelled:'ยกเลิก' } %>
                 <tr class="hover:bg-slate-50 transition-colors">
-                  <td class="table-td font-medium text-slate-800"><%= a.clientName %></td>
-                  <td class="table-td text-slate-500 text-xs"><%= a.counselorName %></td>
-                  <td class="table-td text-slate-500 text-xs"><%= a.date %> <%= a.time %></td>
-                  <td class="table-td">
-                    <% const badge = { pending:'badge-yellow', confirmed:'badge-blue', completed:'badge-green', cancelled:'badge-red' } %>
-                    <% const label = { pending:'รอยืนยัน', confirmed:'ยืนยันแล้ว', completed:'เสร็จสิ้น', cancelled:'ยกเลิก' } %>
-                    <span class="<%= badge[a.status] %>"><%= label[a.status] %></span>
+                  <td class="table-td font-medium text-slate-800" style="white-space:nowrap;"><%= a.clientName %></td>
+                  <td class="table-td" style="font-size:13px;color:#475569;white-space:nowrap;">
+                    <% const dashCounselor = counselorMap[a.counselorId] %>
+                    <div style="display:flex;align-items:center;gap:8px;">
+                      <div style="width:28px;height:28px;border-radius:8px;overflow:hidden;flex-shrink:0;background:linear-gradient(135deg,#2dd4b4,#06b6d4);display:flex;align-items:center;justify-content:center;color:#fff;font-size:10px;font-weight:800;">
+                        <% if (dashCounselor && dashCounselor.photo) { %>
+                          <img data-counselor-table-photo="<%= dashCounselor.id %>" src="<%= dashCounselor.photo %>" alt="<%= dashCounselor.name %>" style="width:100%;height:100%;object-fit:cover;">
+                        <% } else { %>
+                          <%= dashCounselor ? (dashCounselor.avatar || dashCounselor.name.slice(0, 2)) : '?' %>
+                        <% } %>
+                      </div>
+                      <span><%= a.counselorName %></span>
+                    </div>
                   </td>
+                  <td class="table-td" style="font-size:13px;color:#475569;white-space:nowrap;"><%= a.date %></td>
+                  <td class="table-td" style="font-size:13px;color:#475569;white-space:nowrap;"><%= a.time || '—' %></td>
+                  <td class="table-td" style="font-size:13px;color:#475569;white-space:nowrap;"><%= a.duration ? a.duration + ' นาที' : '—' %></td>
+                  <td class="table-td" style="white-space:nowrap;">
+                    <% if (a.type === 'onsite') { %>
+                    <span style="display:inline-flex;align-items:center;gap:4px;font-size:12px;color:#475569;"><i data-lucide="map-pin" style="width:12px;height:12px;"></i> พบตัว</span>
+                    <% } else { %>
+                    <span style="display:inline-flex;align-items:center;gap:4px;font-size:12px;color:#0891b2;"><i data-lucide="video" style="width:12px;height:12px;"></i> ออนไลน์</span>
+                    <% } %>
+                  </td>
+                  <td class="table-td" style="font-size:12px;color:#64748b;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="<%= a.note || '' %>"><%= a.note || '—' %></td>
+                  <td class="table-td" style="white-space:nowrap;"><span class="<%= badge[a.status] || 'badge-gray' %>"><%= label[a.status] || a.status %></span></td>
                 </tr>
                 <% }) %>
               </tbody>
@@ -240,7 +572,7 @@
             <a href="/admin/counselors?status=pending" class="flex items-center gap-3 p-3 rounded-xl bg-amber-50 hover:bg-amber-100 transition-colors">
               <i data-lucide="user-check" class="w-4 h-4 text-amber-600"></i>
               <div>
-                <p class="text-sm font-medium text-amber-800">อนุมัตินักให้คำปรึกษา</p>
+                <p class="text-sm font-medium text-amber-800">อนุมัตินักจิตวิทยาให้คำปรึกษา</p>
                 <p class="text-xs text-amber-600">รออนุมัติ <%= stats.pendingApproval %> คน</p>
               </div>
             </a>
@@ -255,7 +587,7 @@
               <i data-lucide="clock" class="w-4 h-4 text-ocean-600"></i>
               <div>
                 <p class="text-sm font-medium text-ocean-800">จัดการตารางเวลา</p>
-                <p class="text-xs text-ocean-600">ตั้งค่าความพร้อมของนักให้คำปรึกษา</p>
+                <p class="text-xs text-ocean-600">ตั้งค่าความพร้อมของนักจิตวิทยาให้คำปรึกษา</p>
               </div>
             </a>
           </div>
@@ -286,6 +618,8 @@
       </div><!-- /right column -->
 
     </div><!-- /grid -->
+
+<% } %>
 
   </main>
 </div>

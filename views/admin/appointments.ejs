@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title><%= title %> — MindWell Admin</title>
+  <title><%= title %> — MindCare Admin</title>
   <%- include('../partials/head') %>
   <style>
     .tbl { width:100%; border-collapse:collapse; }
@@ -87,11 +87,11 @@
         <label class="lbl">ค้นหา</label>
         <div style="position:relative;">
           <i data-lucide="search" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);width:14px;height:14px;color:#94a3b8;"></i>
-          <input name="search" value="<%= query.search||'' %>" class="inp" style="padding-left:32px;" placeholder="ชื่อผู้รับบริการ หรือนักให้คำปรึกษา">
+          <input name="search" value="<%= query.search||'' %>" class="inp" style="padding-left:32px;" placeholder="ชื่อผู้รับบริการ หรือนักจิตวิทยาให้คำปรึกษา">
         </div>
       </div>
       <div>
-        <label class="lbl">นักให้คำปรึกษา</label>
+        <label class="lbl">นักจิตวิทยาให้คำปรึกษา</label>
         <select name="counselorId" class="inp" style="width:180px;">
           <option value="">ทั้งหมด</option>
           <% counselors.forEach(c => { %><option value="<%= c.id %>" <%=query.counselorId===c.id?'selected':''%>><%= c.name %></option><% }) %>
@@ -131,8 +131,9 @@
         <table class="tbl">
           <thead>
             <tr>
+              <th>รหัสนัดหมาย</th>
               <th>ผู้รับบริการ</th>
-              <th>นักให้คำปรึกษา</th>
+              <th>นักจิตวิทยาให้คำปรึกษา</th>
               <th>วันที่ / เวลา</th>
               <th>รูปแบบ</th>
               <th>ระยะเวลา</th>
@@ -154,10 +155,23 @@
             %>
             <tr>
               <td>
+                <div style="font-size:12px; color:#64748b; font-family:monospace; font-weight:600;"><%= a.id %></div>
+              </td>
+              <td>
                 <div style="font-weight:500; color:#1e293b; font-size:14px;"><%= a.clientName %></div>
               </td>
               <td>
-                <div style="font-size:14px; color:#334155;"><%= a.counselorName %></div>
+                <% const appointmentCounselor = counselors.find(c => c.id === a.counselorId) %>
+                <div style="display:flex;align-items:center;gap:8px;white-space:nowrap;">
+                  <div style="width:28px;height:28px;border-radius:8px;overflow:hidden;flex-shrink:0;background:linear-gradient(135deg,#2dd4b4,#06b6d4);display:flex;align-items:center;justify-content:center;color:#fff;font-size:10px;font-weight:800;">
+                    <% if (appointmentCounselor && appointmentCounselor.photo) { %>
+                      <img data-counselor-table-photo="<%= appointmentCounselor.id %>" src="<%= appointmentCounselor.photo %>" alt="<%= appointmentCounselor.name %>" style="width:100%;height:100%;object-fit:cover;">
+                    <% } else { %>
+                      <%= appointmentCounselor ? (appointmentCounselor.avatar || appointmentCounselor.name.slice(0, 2)) : '?' %>
+                    <% } %>
+                  </div>
+                  <span style="font-size:14px;color:#334155;"><%= a.counselorName %></span>
+                </div>
               </td>
               <td>
                 <div style="font-size:14px; font-weight:500; color:#1e293b;"><%= a.date %></div>
@@ -287,19 +301,40 @@
       <div style="padding:20px; border-bottom:1px solid #f8fafc;">
         <div style="display:flex; align-items:center; gap:8px; margin-bottom:14px;">
           <div style="width:22px; height:22px; border-radius:50%; background:#05967e; color:#fff; font-size:11px; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0;">1</div>
-          <span style="font-size:13px; font-weight:600; color:#1e293b;">เลือกนักให้คำปรึกษา</span>
+          <span style="font-size:13px; font-weight:600; color:#1e293b;">เลือกนักจิตวิทยาให้คำปรึกษา</span>
         </div>
+        <%
+          const _DAY_ABBR = { 0:'อา', 1:'จ', 2:'อ', 3:'พ', 4:'พฤ', 5:'ศ', 6:'ส' }
+          const _cDays = {}
+          schedules.forEach(s => {
+            if (!s.isActive) return
+            if (!_cDays[s.counselorId]) _cDays[s.counselorId] = []
+            if (!_cDays[s.counselorId].includes(s.dayOfWeek)) _cDays[s.counselorId].push(s.dayOfWeek)
+          })
+          Object.keys(_cDays).forEach(k => _cDays[k].sort((a,b) => a-b))
+        %>
         <div style="display:grid; gap:8px;" id="counselorList">
           <% counselors.forEach(c => { %>
           <label class="counselor-card" id="card_<%= c.id %>">
             <input type="radio" name="counselorId" value="<%= c.id %>"
                    data-duration="<%= c.sessionDuration %>" data-name="<%= c.name %>"
                    style="accent-color:#05967e;" onchange="onCounselorChange(this)" required>
-            <div style="width:38px; height:38px; border-radius:10px; background:linear-gradient(135deg,#2dd4b4,#0ea5e9); display:flex; align-items:center; justify-content:center; color:#fff; font-weight:700; font-size:13px; flex-shrink:0;">
-              <%= c.avatar %>
+            <div style="width:38px; height:38px; border-radius:10px; overflow:hidden; background:linear-gradient(135deg,#2dd4b4,#0ea5e9); display:flex; align-items:center; justify-content:center; color:#fff; font-weight:700; font-size:13px; flex-shrink:0;">
+              <% if (c.photo) { %>
+                <img data-counselor-profile-photo="<%= c.id %>" src="<%= c.photo %>" alt="<%= c.name %>" style="width:100%;height:100%;object-fit:cover;">
+              <% } else { %>
+                <%= c.avatar %>
+              <% } %>
             </div>
             <div style="flex:1; min-width:0;">
-              <div style="font-weight:600; font-size:13px; color:#1e293b;"><%= c.name %></div>
+              <div style="display:flex; align-items:center; flex-wrap:wrap; gap:3px; margin-bottom:2px;">
+                <span style="font-weight:600; font-size:13px; color:#1e293b;"><%= c.name %></span>
+                <% (_cDays[c.id] || []).forEach(dow => { %>
+                <span style="width:20px;height:20px;border-radius:50%;background:#ecfdf9;border:1px solid #a0f3e1;display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#05967e;flex-shrink:0;" title="วัน<%= ['อาทิตย์','จันทร์','อังคาร','พุธ','พฤหัสบดี','ศุกร์','เสาร์'][dow] %>">
+                  <%= _DAY_ABBR[dow] %>
+                </span>
+                <% }) %>
+              </div>
               <div style="font-size:11px; color:#94a3b8;"><%= c.title %></div>
               <div style="display:flex; flex-wrap:wrap; gap:3px; margin-top:4px;">
                 <% c.specialties.slice(0,2).forEach(s => { %>
@@ -328,7 +363,7 @@
                  min="<%= new Date().toISOString().split('T')[0] %>"
                  class="inp" onchange="loadSlots()" required disabled>
           <div id="dateHint" style="font-size:11px; color:#94a3b8; margin-top:5px;">
-            กรุณาเลือกนักให้คำปรึกษาก่อน
+            กรุณาเลือกนักจิตวิทยาให้คำปรึกษาก่อน
           </div>
         </div>
 
@@ -392,7 +427,7 @@
           <div id="apptSummary" style="display:none; padding:14px; background:#ecfdf9; border:1px solid #a0f3e1; border-radius:12px;">
             <div style="font-size:11px; font-weight:600; color:#64748b; margin-bottom:10px; text-transform:uppercase; letter-spacing:.05em;">สรุปการนัดหมาย</div>
             <div style="display:flex; justify-content:space-between; font-size:13px; margin-bottom:6px;">
-              <span style="color:#64748b;">นักให้คำปรึกษา</span>
+              <span style="color:#64748b;">นักจิตวิทยาให้คำปรึกษา</span>
               <span id="summCounselor" style="font-weight:500; color:#1e293b;"></span>
             </div>
             <div style="display:flex; justify-content:space-between; font-size:13px;">
@@ -457,7 +492,7 @@
       </div>
       <!-- Counselor -->
       <div style="padding:14px; background:#f8fafc; border-radius:12px;">
-        <div style="font-size:11px; color:#94a3b8; margin-bottom:4px; font-weight:500; text-transform:uppercase; letter-spacing:.05em;">นักให้คำปรึกษา</div>
+        <div style="font-size:11px; color:#94a3b8; margin-bottom:4px; font-weight:500; text-transform:uppercase; letter-spacing:.05em;">นักจิตวิทยาให้คำปรึกษา</div>
         <div id="v_counselorName" style="font-size:14px; font-weight:600; color:#1e293b;"></div>
       </div>
       <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
@@ -695,7 +730,7 @@
     const grid = document.getElementById('slotGrid')
     const msg  = document.getElementById('slotMsg')
     if (!slots.length) {
-      msg.textContent = 'นักให้คำปรึกษาไม่มีตารางเวลาในวันนี้'
+      msg.textContent = 'นักจิตวิทยาให้คำปรึกษาไม่มีตารางเวลาในวันนี้'
       msg.style.display = 'block'
       return
     }
@@ -798,7 +833,7 @@
     document.getElementById('editPanelSub').textContent = `${a.clientName} — ${a.date}`
     document.getElementById('editForm').action = '/admin/appointments/' + a.id + '/edit'
     document.getElementById('e_date').value   = a.date   || ''
-    document.getElementById('e_time').value   = a.time   || ''
+    document.getElementById('e_time').value = a.time || ''
     document.getElementById('e_status').value = a.status || 'pending'
     document.getElementById('e_note').value   = a.note   || ''
     document.getElementById(a.type === 'onsite' ? 'e_onsite' : 'e_online').checked = true

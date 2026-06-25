@@ -2,7 +2,8 @@ const express = require('express')
 const router  = express.Router()
 const fs      = require('fs')
 const path    = require('path')
-const { sendAppointmentEmails } = require('../../utils/mailer')
+const crypto = require('crypto')
+const { sendAppointmentEmails, sendSurveyEmail } = require('../../utils/mailer')
 
 const dataDir = path.join(__dirname, '../../../data')
 
@@ -137,8 +138,13 @@ router.post('/create', async (req, res) => {
   )
   if (conflict) return res.redirect('/admin/appointments?error=conflict')
 
+  const maxNum = appointments.reduce((max, a) => {
+    const m = String(a.id).match(/^app-(\d+)$/)
+    return m ? Math.max(max, parseInt(m[1])) : max
+  }, 0)
+
   const newAppt = {
-    id:            'a' + Date.now().toString().slice(-6),
+    id:            'app-' + String(maxNum + 1).padStart(5, '0'),
     clientId,
     clientName:    client.name,
     counselorId,
@@ -219,11 +225,29 @@ router.post('/:id/complete', (req, res) => {
   const idx  = data.findIndex(a => a.id === req.params.id)
   if (idx !== -1) {
     if (!canUseAppointment(req, data[idx])) return forbidden(res)
-    data[idx].status = 'completed'
+    const appt = data[idx]
+    appt.status = 'completed'
     if (req.body.counselorNote !== undefined) {
-      data[idx].counselorNote = req.body.counselorNote.trim()
+      appt.counselorNote = req.body.counselorNote.trim()
+    }
+    if (!appt.surveyToken) {
+      appt.surveyToken = crypto.randomBytes(16).toString('hex')
     }
     write('appointments.json', data)
+
+    const clients    = read('clients.json')
+    const counselors = read('counselors.json')
+    const client     = clients.find(c => c.id === appt.clientId)
+    const counselor  = counselors.find(c => c.id === appt.counselorId)
+    if (client && counselor) {
+      const baseUrl = process.env.BASE_URL || 'http://localhost:3000'
+      sendSurveyEmail({
+        appointment: appt,
+        client,
+        counselor,
+        surveyUrl: `${baseUrl}/survey/${appt.surveyToken}`,
+      }).catch(err => console.error('[Email] survey error:', err.message))
+    }
   }
   res.redirect('/admin/appointments')
 })

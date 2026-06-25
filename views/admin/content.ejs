@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title><%= title %> — MindWell Admin</title>
+  <title><%= title %> — MindCare Admin</title>
   <%- include('../partials/head') %>
   <style>
     .inp { width:100%; padding:9px 12px; border:1.5px solid #e2e8f0; border-radius:10px; font-size:13px; color:#334155; outline:none; font-family:inherit; box-sizing:border-box; }
@@ -26,6 +26,13 @@
     .lang-badge { display:inline-flex; align-items:center; gap:4px; font-size:10px; font-weight:600; padding:2px 8px; border-radius:9999px; margin-left:8px; }
     .lang-badge-th { background:#fff3cd; color:#7c5500; border:1px solid #fde68a; }
     .lang-badge-en { background:#dbeafe; color:#1d4ed8; border:1px solid #93c5fd; }
+    .text-color-panel { margin-top:10px; padding:12px; border:1px solid #e2e8f0; border-radius:12px; background:#f8fafc; }
+    .text-color-title { font-size:11px; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:.05em; margin-bottom:10px; }
+    .text-color-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px; }
+    .text-color-row { display:flex; align-items:center; gap:6px; min-width:0; }
+    .text-color-picker { width:32px; height:30px; border:1.5px solid #e2e8f0; border-radius:7px; cursor:pointer; padding:2px; flex-shrink:0; }
+    .text-color-input { flex:1; min-width:0; padding:7px 9px; font-size:11px; }
+    .text-color-clear { padding:6px 8px; font-size:11px; border:1px solid #e2e8f0; border-radius:7px; background:#fff; color:#94a3b8; cursor:pointer; flex-shrink:0; }
   </style>
 </head>
 <body style="background:#f8fafc; margin:0;">
@@ -44,6 +51,26 @@
   const autoEnHero     = savedKey === 'hero-en'
   const autoEnSections = savedKey === 'sections-en'
   const autoEnFaqs     = savedKey === 'faqs-en'
+  const _contentBgs = content.backgrounds || {}
+  function tcVal(section, field) {
+    const bg = _contentBgs[section] || {}
+    const colors = bg.textColors || {}
+    return colors[field] || ''
+  }
+  function colorControl(section, field, label, uid) {
+    const value = tcVal(section, field)
+    const pickerId = 'tcp_' + uid
+    const textId = 'tct_' + uid
+    const pickerValue = /^#[0-9A-Fa-f]{6}$/.test(value) ? value : '#1e293b'
+    return '<div>' +
+      '<label class="lbl">' + label + '</label>' +
+      '<div class="text-color-row">' +
+        '<input type="color" id="' + pickerId + '" class="text-color-picker" value="' + pickerValue + '" oninput="document.getElementById(\'' + textId + '\').value=this.value">' +
+        '<input type="text" id="' + textId + '" name="textColor_' + section + '_' + field + '" class="inp text-color-input" value="' + value + '" placeholder="ค่าเริ่มต้น" oninput="if(/^#[0-9A-Fa-f]{6}$/.test(this.value))document.getElementById(\'' + pickerId + '\').value=this.value">' +
+        '<button type="button" class="text-color-clear" onclick="document.getElementById(\'' + textId + '\').value=\'\';document.getElementById(\'' + pickerId + '\').value=\'#1e293b\';">ล้าง</button>' +
+      '</div>' +
+    '</div>'
+  }
 %>
 
 <div style="margin-left:256px; min-height:100vh; display:flex; flex-direction:column;">
@@ -55,12 +82,14 @@
     </a>
   </div>
 
-  <div style="padding:24px; max-width:800px;">
+  <div style="padding:24px;">
 
     <!-- Alerts -->
     <% if (query.saved) { %>
     <div style="margin-bottom:20px;padding:12px 16px;background:#ecfdf9;border:1px solid #a0f3e1;border-radius:12px;color:#065f46;font-size:13px;display:flex;align-items:center;gap:8px;">
-      <i data-lucide="check-circle" style="width:16px;height:16px;"></i> บันทึกการเปลี่ยนแปลงสำเร็จ
+      <i data-lucide="check-circle" style="width:16px;height:16px;"></i>
+      <% if (query.saved === 'backgrounds') { %> บันทึกพื้นหลัง Section สำเร็จ
+      <% } else { %> บันทึกการเปลี่ยนแปลงสำเร็จ <% } %>
     </div>
     <% } %>
 
@@ -106,7 +135,7 @@ SMTP_PORT=587
 SMTP_SECURE=false
 SMTP_USER=your-email@gmail.com
 SMTP_PASS=your-app-password
-SMTP_FROM_NAME=MindWell
+SMTP_FROM_NAME=MindCare
 SMTP_FROM_EMAIL=your-email@gmail.com
 SMTP_BCC=   <span style="color:#94a3b8;"># optional สำเนาทุกอีเมล</span></pre>
         <p style="margin:10px 0 0;font-size:11px;color:#94a3b8;">Gmail: ใช้ App Password จาก <a href="https://myaccount.google.com/apppasswords" target="_blank" style="color:#6366f1;">myaccount.google.com/apppasswords</a> (ต้องเปิด 2-Step Verification)</p>
@@ -122,6 +151,9 @@ SMTP_BCC=   <span style="color:#94a3b8;"># optional สำเนาทุกอ�
         </button>
       </form>
     </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start;">
+    <div>
 
     <!-- ── Hero Section ── -->
     <div class="section-card">
@@ -157,6 +189,13 @@ SMTP_BCC=   <span style="color:#94a3b8;"># optional สำเนาทุกอ�
             <div>
               <label class="lbl">คำอธิบาย</label>
               <textarea name="subtext" class="inp" rows="2" style="resize:none;"><%= content.hero.subtext %></textarea>
+            </div>
+            <div class="text-color-panel">
+              <div class="text-color-title">สีข้อความที่แสดงบนหน้าเว็บ</div>
+              <div class="text-color-grid">
+                <%- colorControl('hero', 'heading', 'สีหัวข้อ', 'hero_heading_th') %>
+                <%- colorControl('hero', 'subtext', 'สีคำอธิบาย', 'hero_subtext_th') %>
+              </div>
             </div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
               <div>
@@ -198,6 +237,13 @@ SMTP_BCC=   <span style="color:#94a3b8;"># optional สำเนาทุกอ�
             <div>
               <label class="lbl">Description</label>
               <textarea name="subtext" class="inp" rows="2" style="resize:none;"><%= enHero.subtext || '' %></textarea>
+            </div>
+            <div class="text-color-panel">
+              <div class="text-color-title">Text colors on website</div>
+              <div class="text-color-grid">
+                <%- colorControl('hero', 'heading', 'Heading color', 'hero_heading_en') %>
+                <%- colorControl('hero', 'subtext', 'Description color', 'hero_subtext_en') %>
+              </div>
             </div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
               <div>
@@ -247,6 +293,13 @@ SMTP_BCC=   <span style="color:#94a3b8;"># optional สำเนาทุกอ�
                   <label class="lbl">คำอธิบาย</label>
                   <input type="text" name="counselorsSubtext" class="inp" value="<%= content.counselors.subtext %>">
                 </div>
+                <div class="text-color-panel">
+                  <div class="text-color-title">สีข้อความส่วนนักจิตวิทยา</div>
+                  <div class="text-color-grid">
+                    <%- colorControl('counselors', 'heading', 'สีหัวข้อ', 'counselors_heading_th') %>
+                    <%- colorControl('counselors', 'subtext', 'สีคำอธิบาย', 'counselors_subtext_th') %>
+                  </div>
+                </div>
               </div>
             </div>
             <div>
@@ -263,6 +316,14 @@ SMTP_BCC=   <span style="color:#94a3b8;"># optional สำเนาทุกอ�
                 <div>
                   <label class="lbl">หัวข้อฟอร์ม</label>
                   <input type="text" name="bookFormHeading" class="inp" value="<%= content.book.formHeading %>">
+                </div>
+                <div class="text-color-panel">
+                  <div class="text-color-title">สีข้อความส่วนฝากข้อมูล</div>
+                  <div class="text-color-grid">
+                    <%- colorControl('book', 'heading', 'สีหัวข้อ', 'book_heading_th') %>
+                    <%- colorControl('book', 'subtext', 'สีคำอธิบาย', 'book_subtext_th') %>
+                    <%- colorControl('book', 'formHeading', 'สีหัวข้อฟอร์ม', 'book_form_heading_th') %>
+                  </div>
                 </div>
               </div>
             </div>
@@ -307,6 +368,13 @@ SMTP_BCC=   <span style="color:#94a3b8;"># optional สำเนาทุกอ�
                   <label class="lbl">Subtext</label>
                   <input type="text" name="counselorsSubtext" class="inp" value="<%= enCounselors.subtext || '' %>">
                 </div>
+                <div class="text-color-panel">
+                  <div class="text-color-title">Counselors text colors</div>
+                  <div class="text-color-grid">
+                    <%- colorControl('counselors', 'heading', 'Heading color', 'counselors_heading_en') %>
+                    <%- colorControl('counselors', 'subtext', 'Subtext color', 'counselors_subtext_en') %>
+                  </div>
+                </div>
               </div>
             </div>
             <div>
@@ -323,6 +391,14 @@ SMTP_BCC=   <span style="color:#94a3b8;"># optional สำเนาทุกอ�
                 <div>
                   <label class="lbl">Form heading</label>
                   <input type="text" name="bookFormHeading" class="inp" value="<%= enBook.formHeading || '' %>">
+                </div>
+                <div class="text-color-panel">
+                  <div class="text-color-title">Registration text colors</div>
+                  <div class="text-color-grid">
+                    <%- colorControl('book', 'heading', 'Heading color', 'book_heading_en') %>
+                    <%- colorControl('book', 'subtext', 'Subtext color', 'book_subtext_en') %>
+                    <%- colorControl('book', 'formHeading', 'Form heading color', 'book_form_heading_en') %>
+                  </div>
                 </div>
               </div>
             </div>
@@ -353,6 +429,9 @@ SMTP_BCC=   <span style="color:#94a3b8;"># optional สำเนาทุกอ�
       </div>
     </div>
 
+    </div>
+    <div>
+
     <!-- ── FAQ ── -->
     <div class="section-card">
       <div class="section-title">
@@ -369,6 +448,14 @@ SMTP_BCC=   <span style="color:#94a3b8;"># optional สำเนาทุกอ�
       <!-- TH -->
       <div id="faqs-th" style="display:<%= autoEnFaqs ? 'none' : '' %>;">
         <form method="POST" action="/admin/content/faqs">
+          <div class="text-color-panel" style="margin-bottom:16px;">
+            <div class="text-color-title">สีข้อความ FAQ บนหน้าเว็บ</div>
+            <div class="text-color-grid">
+              <%- colorControl('faq', 'heading', 'สีหัวข้อ', 'faq_heading_th') %>
+              <%- colorControl('faq', 'questions', 'สีคำถาม', 'faq_questions_th') %>
+              <%- colorControl('faq', 'answers', 'สีคำตอบ', 'faq_answers_th') %>
+            </div>
+          </div>
           <div id="faqListTh" style="display:grid;gap:12px;margin-bottom:16px;">
             <% content.faqs.forEach((f, i) => { %>
             <div class="faq-item">
@@ -402,6 +489,14 @@ SMTP_BCC=   <span style="color:#94a3b8;"># optional สำเนาทุกอ�
       <!-- EN -->
       <div id="faqs-en" style="display:<%= autoEnFaqs ? '' : 'none' %>;">
         <form method="POST" action="/admin/content/faqs-en">
+          <div class="text-color-panel" style="margin-bottom:16px;">
+            <div class="text-color-title">FAQ text colors on website</div>
+            <div class="text-color-grid">
+              <%- colorControl('faq', 'heading', 'Heading color', 'faq_heading_en') %>
+              <%- colorControl('faq', 'questions', 'Question color', 'faq_questions_en') %>
+              <%- colorControl('faq', 'answers', 'Answer color', 'faq_answers_en') %>
+            </div>
+          </div>
           <div id="faqListEn" style="display:grid;gap:12px;margin-bottom:16px;">
             <% enFaqs.forEach((f, i) => { %>
             <div class="faq-item">
@@ -431,6 +526,170 @@ SMTP_BCC=   <span style="color:#94a3b8;"># optional สำเนาทุกอ�
           </div>
         </form>
       </div>
+    </div>
+
+    <!-- ── Section Backgrounds ── -->
+    <%
+      const _bgs = content.backgrounds || {}
+      const _bgSections = [
+        { key:'hero',       label:'Hero (หน้าแรก)',           icon:'layout',        fields:[{f:'heading',l:'หัวข้อ'},{f:'subtext',l:'คำอธิบาย'}] },
+        { key:'counselors', label:'นักจิตวิทยา',              icon:'users',         fields:[{f:'heading',l:'หัวข้อ'},{f:'subtext',l:'คำอธิบาย'}] },
+        { key:'features',   label:'ทำไมต้องเลือก MindCare',  icon:'star',          fields:[{f:'heading',l:'หัวข้อ'},{f:'subtext',l:'คำอธิบาย'}] },
+        { key:'book',       label:'ลงทะเบียน',                icon:'calendar-plus', fields:[{f:'heading',l:'หัวข้อ'},{f:'subtext',l:'คำอธิบาย'},{f:'formHeading',l:'หัวข้อฟอร์ม'}] },
+        { key:'faq',        label:'FAQ',                      icon:'help-circle',   fields:[{f:'heading',l:'หัวข้อ'},{f:'questions',l:'คำถาม'},{f:'answers',l:'คำตอบ'}] },
+      ]
+    %>
+    <div class="section-card">
+      <div class="section-title">
+        <div style="width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,#8b5cf6,#ec4899);display:flex;align-items:center;justify-content:center;">
+          <i data-lucide="palette" style="width:14px;height:14px;color:#fff;"></i>
+        </div>
+        พื้นหลังแต่ละ Section
+        <span style="margin-left:auto;font-size:11px;font-weight:400;color:#94a3b8;">สีจะแสดงเป็น overlay บนรูปภาพ — ปรับ Opacity เพื่อให้เห็นรูปได้</span>
+      </div>
+
+      <form method="POST" action="/admin/content/backgrounds" enctype="multipart/form-data">
+        <div style="display:grid;gap:0;">
+          <% _bgSections.forEach((s, idx) => {
+            const bg = _bgs[s.key] || {}
+          %>
+          <div style="display:grid;grid-template-columns:150px 1fr 1fr 220px;gap:16px;align-items:start;padding:16px 0;<%= idx > 0 ? 'border-top:1px solid #f1f5f9;' : '' %>">
+
+            <!-- Section label -->
+            <div style="display:flex;align-items:center;gap:8px;padding-top:4px;">
+              <div style="width:22px;height:22px;border-radius:6px;background:#f1f5f9;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                <i data-lucide="<%= s.icon %>" style="width:12px;height:12px;color:#64748b;"></i>
+              </div>
+              <span style="font-size:13px;font-weight:600;color:#1e293b;"><%= s.label %></span>
+            </div>
+
+            <!-- Color picker -->
+            <div>
+              <label class="lbl">สีพื้นหลัง (overlay บนรูป)</label>
+              <div style="display:flex;align-items:center;gap:8px;">
+                <input type="color" id="cpicker_<%= s.key %>"
+                  value="<%= bg.color || '#ffffff' %>"
+                  style="width:38px;height:36px;border:1.5px solid #e2e8f0;border-radius:8px;cursor:pointer;padding:2px;flex-shrink:0;"
+                  oninput="document.getElementById('ctext_<%= s.key %>').value=this.value">
+                <input type="text" id="ctext_<%= s.key %>" name="color_<%= s.key %>" class="inp"
+                  value="<%= bg.color || '' %>" placeholder="#ffffff"
+                  style="width:90px;"
+                  oninput="if(/^#[0-9A-Fa-f]{6}$/.test(this.value))document.getElementById('cpicker_<%= s.key %>').value=this.value">
+                <button type="button" onclick="document.getElementById('ctext_<%= s.key %>').value='';document.getElementById('cpicker_<%= s.key %>').value='#ffffff';"
+                  style="padding:6px 10px;font-size:11px;border:1px solid #e2e8f0;border-radius:8px;background:#fff;color:#94a3b8;cursor:pointer;white-space:nowrap;">
+                  ล้างสี
+                </button>
+              </div>
+              <!-- Opacity slider -->
+              <div style="margin-top:8px;display:flex;align-items:center;gap:8px;">
+                <span style="font-size:11px;color:#64748b;white-space:nowrap;">Opacity:</span>
+                <input type="range" id="oprange_<%= s.key %>" name="opacity_<%= s.key %>"
+                  min="0" max="1" step="0.05"
+                  value="<%= typeof bg.opacity === 'number' ? bg.opacity : 1 %>"
+                  style="flex:1;accent-color:#8b5cf6;height:4px;cursor:pointer;"
+                  oninput="document.getElementById('opval_<%= s.key %>').textContent=Math.round(this.value*100)+'%'">
+                <span id="opval_<%= s.key %>" style="font-size:11px;font-weight:700;color:#1e293b;width:34px;text-align:right;">
+                  <%= typeof bg.opacity === 'number' ? Math.round(bg.opacity * 100) : 100 %>%
+                </span>
+              </div>
+            </div>
+
+            <!-- Image upload -->
+            <div>
+              <label class="lbl">รูปภาพพื้นหลัง</label>
+              <% if (bg.image) { %>
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;padding:8px 10px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;">
+                <img src="<%= bg.image %>" style="width:56px;height:36px;object-fit:cover;border-radius:5px;border:1px solid #e2e8f0;flex-shrink:0;">
+                <span style="font-size:11px;color:#64748b;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"><%= bg.image.split('/').pop() %></span>
+                <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:#ef4444;cursor:pointer;flex-shrink:0;white-space:nowrap;">
+                  <input type="checkbox" name="clear_<%= s.key %>" style="accent-color:#ef4444;"> ลบรูป
+                </label>
+              </div>
+              <% } %>
+              <input type="file" name="img_<%= s.key %>" class="inp" accept="image/jpeg,image/png,image/webp,image/gif" style="padding:6px;font-size:12px;">
+              <!-- Image opacity slider -->
+              <div style="margin-top:8px;display:flex;align-items:center;gap:8px;">
+                <span style="font-size:11px;color:#64748b;white-space:nowrap;">Opacity รูป:</span>
+                <input type="range" id="imoprange_<%= s.key %>" name="imgOpacity_<%= s.key %>"
+                  min="0" max="1" step="0.05"
+                  value="<%= typeof bg.imgOpacity === 'number' ? bg.imgOpacity : 1 %>"
+                  style="flex:1;accent-color:#0891b2;height:4px;cursor:pointer;"
+                  oninput="document.getElementById('imopval_<%= s.key %>').textContent=Math.round(this.value*100)+'%'">
+                <span id="imopval_<%= s.key %>" style="font-size:11px;font-weight:700;color:#1e293b;width:34px;text-align:right;">
+                  <%= typeof bg.imgOpacity === 'number' ? Math.round(bg.imgOpacity * 100) : 100 %>%
+                </span>
+              </div>
+              <div style="margin-top:10px;padding:10px;border:1px solid #e2e8f0;border-radius:10px;background:#fff;display:grid;gap:8px;">
+                <label style="display:flex;align-items:center;gap:6px;font-size:11px;font-weight:700;color:#475569;">
+                  <input type="hidden" name="motionEnabled_<%= s.key %>" value="off">
+                  <input type="checkbox" name="motionEnabled_<%= s.key %>" value="on" <%= bg.motionEnabled === false ? '' : 'checked' %> style="accent-color:#8b5cf6;">
+                  เปิด motion zoom (รูปค่อยๆ ขยาย)
+                </label>
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <span style="font-size:11px;color:#64748b;white-space:nowrap;">ระยะเวลา:</span>
+                  <input type="range" id="mvdur_<%= s.key %>" name="motionDuration_<%= s.key %>" min="8" max="90" step="1"
+                    value="<%= typeof bg.motionDuration === 'number' ? bg.motionDuration : 38 %>"
+                    style="flex:1;accent-color:#8b5cf6;height:4px;cursor:pointer;"
+                    oninput="document.getElementById('mvdurval_<%= s.key %>').textContent=this.value+'s'">
+                  <span id="mvdurval_<%= s.key %>" style="font-size:11px;font-weight:700;color:#1e293b;width:34px;text-align:right;">
+                    <%= typeof bg.motionDuration === 'number' ? bg.motionDuration : 38 %>s
+                  </span>
+                </div>
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <span style="font-size:11px;color:#64748b;white-space:nowrap;">ระดับ zoom:</span>
+                  <input type="range" id="mvscale_<%= s.key %>" name="motionScale_<%= s.key %>" min="1" max="1.35" step="0.01"
+                    value="<%= typeof bg.motionScale === 'number' ? bg.motionScale : 1.12 %>"
+                    style="flex:1;accent-color:#ec4899;height:4px;cursor:pointer;"
+                    oninput="document.getElementById('mvscaleval_<%= s.key %>').textContent=this.value+'x'">
+                  <span id="mvscaleval_<%= s.key %>" style="font-size:11px;font-weight:700;color:#1e293b;width:42px;text-align:right;">
+                    <%= typeof bg.motionScale === 'number' ? bg.motionScale : 1.12 %>x
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Text colors per element -->
+            <div>
+              <label class="lbl">สีข้อความ</label>
+              <div style="display:flex;flex-direction:column;gap:10px;">
+                <% const _tc = bg.textColors || {};
+                   const _hexRe = /^#[0-9A-Fa-f]{6}$/;
+                   s.fields.forEach(function(fd) {
+                     const _tcVal = _hexRe.test(_tc[fd.f] || '') ? _tc[fd.f] : '';
+                     const _tcPick = _tcVal || '#1e293b';
+                   %>
+                <div>
+                  <span style="font-size:11px;font-weight:600;color:#64748b;display:block;margin-bottom:4px;"><%= fd.l %></span>
+                  <div style="display:flex;align-items:center;gap:5px;">
+                    <input type="color" id="tcpicker_<%= s.key %>_<%= fd.f %>"
+                      value="<%= _tcPick %>"
+                      style="width:32px;height:28px;border:1.5px solid #e2e8f0;border-radius:6px;cursor:pointer;padding:2px;flex-shrink:0;"
+                      oninput="document.getElementById('tctext_<%= s.key %>_<%= fd.f %>').value=this.value">
+                    <input type="text" id="tctext_<%= s.key %>_<%= fd.f %>" name="textColor_<%= s.key %>_<%= fd.f %>" class="inp"
+                      value="<%= _tcVal %>" placeholder="ค่าเริ่มต้น"
+                      style="flex:1;min-width:0;font-size:11px;"
+                      oninput="if(/^#[0-9A-Fa-f]{6}$/.test(this.value))document.getElementById('tcpicker_<%= s.key %>_<%= fd.f %>').value=this.value">
+                    <button type="button"
+                      onclick="document.getElementById('tctext_<%= s.key %>_<%= fd.f %>').value='';document.getElementById('tcpicker_<%= s.key %>_<%= fd.f %>').value='#1e293b';"
+                      style="padding:4px 7px;font-size:11px;border:1px solid #e2e8f0;border-radius:6px;background:#fff;color:#94a3b8;cursor:pointer;flex-shrink:0;">✕</button>
+                  </div>
+                </div>
+                <% }) %>
+              </div>
+            </div>
+          </div>
+          <% }) %>
+        </div>
+
+        <div style="margin-top:16px;display:flex;justify-content:flex-end;">
+          <button type="submit" class="act-btn ab-primary">
+            <i data-lucide="save" style="width:14px;height:14px;"></i> บันทึกพื้นหลัง
+          </button>
+        </div>
+      </form>
+    </div>
+
+    </div>
     </div>
 
   </div>

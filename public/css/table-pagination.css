@@ -1,0 +1,112 @@
+.table-pagination-shell,
+.pagination-shell {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 18px;
+  border-top: 1px solid #f1f5f9;
+  background: #fff;
+  flex-wrap: wrap;
+}
+
+.table-pagination-results,
+.pagination-results {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #475569;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.table-pagination-size,
+.pagination-size-select {
+  height: 34px;
+  min-width: 68px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #fff;
+  color: #0f172a;
+  padding: 0 28px 0 12px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, .06);
+  cursor: pointer;
+}
+
+.table-pagination-size:focus,
+.pagination-size-select:focus {
+  outline: none;
+  border-color: #2dd4b4;
+  box-shadow: 0 0 0 3px rgba(45, 212, 180, .18);
+}
+
+.table-pagination-nav,
+.pagination-nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.table-pagination-link,
+.pagination-link {
+  min-width: 32px;
+  height: 32px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #475569;
+  background: #fff;
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.table-pagination-link:hover,
+.pagination-link:hover {
+  border-color: #99f6e4;
+  background: #ecfdf5;
+  color: #047857;
+}
+
+.table-pagination-link.active,
+.pagination-link.active {
+  border-color: #05967e;
+  background: #ecfdf5;
+  color: #047857;
+  box-shadow: 0 1px 2px rgba(5, 150, 126, .16);
+}
+
+.table-pagination-link.disabled,
+.pagination-link.disabled {
+  opacity: .38;
+  pointer-events: none;
+}
+
+.table-pagination-ellipsis,
+.pagination-ellipsis {
+  min-width: 28px;
+  text-align: center;
+  color: #94a3b8;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+@media (max-width: 720px) {
+  .table-pagination-shell,
+  .pagination-shell {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .table-pagination-nav,
+  .pagination-nav {
+    width: 100%;
+    justify-content: flex-end;
+  }
+}

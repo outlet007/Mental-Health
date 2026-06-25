@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>แบบประเมินความพึงพอใจ - MindCare</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Noto Sans Thai', 'Segoe UI', Arial, sans-serif;
+      min-height: 100vh;
+      background: linear-gradient(135deg, #ecfdf5 0%, #e0f2fe 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 16px;
+    }
+    .card {
+      background: #fff;
+      border-radius: 24px;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.10);
+      max-width: 520px;
+      width: 100%;
+      overflow: hidden;
+    }
+    .card-header {
+      background: linear-gradient(135deg, #05967e, #06b6d4);
+      padding: 32px 40px 28px;
+      text-align: center;
+    }
+    .card-header .logo {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255,255,255,0.2);
+      border-radius: 12px;
+      padding: 6px 14px;
+      margin-bottom: 20px;
+    }
+    .card-header .logo span { color: #fff; font-size: 13px; font-weight: 700; letter-spacing: 1px; }
+    .card-header h1 { color: #fff; font-size: 20px; font-weight: 700; line-height: 1.4; }
+    .card-body { padding: 36px 40px 40px; }
+    .appt-info {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 16px 20px;
+      margin-bottom: 28px;
+      font-size: 13px;
+      color: #64748b;
+      line-height: 1.7;
+    }
+    .appt-info strong { color: #1e293b; }
+    .section-label { font-size: 14px; font-weight: 700; color: #1e293b; margin-bottom: 16px; }
+    .rating-row { display: flex; gap: 10px; justify-content: center; margin-bottom: 28px; flex-wrap: wrap; }
+    .rating-option { display: none; }
+    .rating-label {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 7px;
+      cursor: pointer;
+      padding: 12px 14px;
+      border-radius: 14px;
+      border: 2px solid transparent;
+      transition: all 0.15s;
+      min-width: 76px;
+      user-select: none;
+    }
+    .rating-label:hover { background: #f1f5f9; border-color: #cbd5e1; }
+    .rating-option:checked + .rating-label { background: #ecfdf5; border-color: #05967e; }
+    .rating-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #64748b;
+      transition: all 0.15s;
+    }
+    .rating-icon i { width: 22px; height: 22px; }
+    .rating-label .txt { font-size: 11px; color: #64748b; font-weight: 600; text-align: center; }
+    .rating-option:checked + .rating-label .rating-icon { background: #05967e; border-color: #05967e; color: #fff; }
+    .rating-option:checked + .rating-label .txt { color: #05967e; }
+    textarea {
+      width: 100%;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 14px 16px;
+      font-family: inherit;
+      font-size: 14px;
+      color: #1e293b;
+      resize: vertical;
+      min-height: 100px;
+      outline: none;
+      transition: border-color 0.15s;
+      margin-bottom: 28px;
+    }
+    textarea:focus { border-color: #05967e; }
+    textarea::placeholder { color: #94a3b8; }
+    .btn-submit {
+      width: 100%;
+      background: linear-gradient(135deg, #05967e, #06b6d4);
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      padding: 14px;
+      font-size: 15px;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      transition: opacity 0.15s, transform 0.1s;
+    }
+    .btn-submit:hover { opacity: 0.9; transform: translateY(-1px); }
+    .btn-submit:active { transform: translateY(0); }
+    .error-box { text-align: center; padding: 20px 0 8px; }
+    .error-icon {
+      width: 58px;
+      height: 58px;
+      margin: 0 auto 14px;
+      border-radius: 18px;
+      background: #ecfdf5;
+      border: 1px solid #a7f3d0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #05967e;
+    }
+    .error-icon i { width: 30px; height: 30px; }
+    .error-title { font-size: 18px; font-weight: 700; color: #1e293b; margin-bottom: 8px; }
+    .error-desc { font-size: 14px; color: #64748b; line-height: 1.6; }
+  </style>
+</head>
+<body>
+<div class="card">
+
+  <div class="card-header">
+    <div class="logo">
+      <div style="width:28px;height:28px;background:rgba(255,255,255,0.25);border-radius:8px;display:flex;align-items:center;justify-content:center;">
+        <i data-lucide="heart-handshake" style="width:16px;height:16px;color:#fff;"></i>
+      </div>
+      <span>MindCare</span>
+    </div>
+    <h1>แบบประเมินความพึงพอใจ<br>ในการรับบริการ</h1>
+  </div>
+
+  <div class="card-body">
+    <% if (error === 'not_found') { %>
+      <div class="error-box">
+        <div class="error-icon"><i data-lucide="search-x"></i></div>
+        <div class="error-title">ไม่พบแบบประเมิน</div>
+        <div class="error-desc">ลิงก์นี้ไม่ถูกต้องหรือหมดอายุแล้ว<br>กรุณาตรวจสอบลิงก์จากอีเมลอีกครั้ง</div>
+      </div>
+    <% } else if (error === 'not_ready') { %>
+      <div class="error-box">
+        <div class="error-icon"><i data-lucide="clock"></i></div>
+        <div class="error-title">ยังไม่สามารถทำแบบประเมินได้</div>
+        <div class="error-desc">แบบประเมินจะเปิดให้ทำหลังจากที่เซสชันเสร็จสิ้นแล้ว</div>
+      </div>
+    <% } else if (error === 'already_done') { %>
+      <div class="error-box">
+        <div class="error-icon"><i data-lucide="badge-check"></i></div>
+        <div class="error-title">ทำแบบประเมินแล้ว</div>
+        <div class="error-desc">คุณได้ทำแบบประเมินสำหรับการนัดหมายครั้งนี้แล้ว<br>ขอบคุณสำหรับความคิดเห็นของคุณ</div>
+      </div>
+    <% } else { %>
+
+      <div class="appt-info">
+        นักจิตวิทยา: <strong><%= counselor.name || appt.counselorName %></strong><br>
+        วันที่: <strong><%
+          const _d = new Date(appt.date)
+          const _months = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.']
+          %><%= _d.getDate() + ' ' + _months[_d.getMonth()] + ' ' + (_d.getFullYear() + 543) %></strong>
+        เวลา <strong><%= appt.time %></strong> น.
+      </div>
+
+      <form method="POST" action="/survey/<%= appt.surveyToken %>">
+
+        <p class="section-label">ระดับความพึงพอใจของท่านในการรับบริการครั้งนี้</p>
+
+        <div class="rating-row">
+          <% const ratings = [
+            { val:5, icon:'smile-plus', txt:'มากที่สุด' },
+            { val:4, icon:'smile', txt:'มาก' },
+            { val:3, icon:'meh', txt:'ปานกลาง' },
+            { val:2, icon:'frown', txt:'น้อย' },
+            { val:1, icon:'circle-alert', txt:'น้อยที่สุด' },
+          ] %>
+          <% ratings.forEach(e => { %>
+            <div>
+              <input type="radio" name="rating" id="r<%= e.val %>" value="<%= e.val %>" class="rating-option" <%= e.val === 5 ? 'checked' : '' %>>
+              <label for="r<%= e.val %>" class="rating-label">
+                <span class="rating-icon"><i data-lucide="<%= e.icon %>"></i></span>
+                <span class="txt"><%= e.txt %></span>
+              </label>
+            </div>
+          <% }) %>
+        </div>
+
+        <p class="section-label">ข้อเสนอแนะ / ข้อร้องเรียน (ไม่บังคับ)</p>
+        <textarea name="comment" placeholder="แสดงความคิดเห็น เพื่อช่วยให้เราพัฒนาบริการต่อไป..."></textarea>
+
+        <button type="submit" class="btn-submit">ส่งแบบประเมิน</button>
+      </form>
+    <% } %>
+  </div>
+
+</div>
+<script>lucide.createIcons()</script>
+</body>
+</html>

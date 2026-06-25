@@ -8,7 +8,7 @@
     "ctaSub": "ดูนักให้คำปรึกษา"
   },
   "counselors": {
-    "heading": "นักให้คำปรึกษาของเรา",
+    "heading": "นักจิตวิทยาให้คำปรึกษาของเรา",
     "subtext": "ทีมผู้เชี่ยวชาญที่ผ่านการคัดกรองและรับรองคุณภาพ"
   },
   "book": {
@@ -31,9 +31,63 @@
     }
   ],
   "contact": {
-    "email": "hello@mindwell.th",
+    "email": "hello@MindCare.th",
     "phone": "02-XXX-XXXX",
-    "hours": "จ–ศ 08:00–20:00 น."
+    "hours": "จันทร์-เสาร์ 08.30 – 17.00 น.<br>(ยกเว้นวันหยุดนักขัตฤกษ์)"
+  },
+  "backgrounds": {
+    "hero": {
+      "color": "#ffffff",
+      "opacity": 0.1,
+      "image": "/uploads/content/1782273930131.png",
+      "imgOpacity": 1,
+      "textColors": {
+        "heading": "",
+        "subtext": ""
+      }
+    },
+    "counselors": {
+      "color": "#ffffff",
+      "opacity": 0.5,
+      "image": "/uploads/content/1782272390886.png",
+      "imgOpacity": 0.45,
+      "textColors": {
+        "heading": "",
+        "subtext": "#5a5f68"
+      }
+    },
+    "features": {
+      "color": "",
+      "opacity": 1,
+      "image": "",
+      "imgOpacity": 1,
+      "textColors": {
+        "heading": "",
+        "subtext": ""
+      }
+    },
+    "book": {
+      "color": "#ffffff",
+      "opacity": 0.25,
+      "image": "/uploads/content/1782277736606.png",
+      "imgOpacity": 0.35,
+      "textColors": {
+        "heading": "",
+        "subtext": "#6a717c",
+        "formHeading": "#6a717c"
+      }
+    },
+    "faq": {
+      "color": "#adafd2",
+      "opacity": 0.05,
+      "image": "/uploads/content/1782272361491.png",
+      "imgOpacity": 0.4,
+      "textColors": {
+        "heading": "",
+        "questions": "",
+        "answers": ""
+      }
+    }
   },
   "en": {
     "hero": {
@@ -68,7 +122,7 @@
       }
     ],
     "contact": {
-      "email": "hello@mindwell.th",
+      "email": "hello@MindCare.th",
       "phone": "02-XXX-XXXX",
       "hours": "Mon–Sat 08:30 – 17:00 (Except public holidays)"
     }

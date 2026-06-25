@@ -1,4 +1,4 @@
-<aside class="fixed inset-y-0 left-0 w-64 flex flex-col z-30" style="background:oklch(27.9% 0.041 260.031);border-right:1px solid rgba(255,255,255,.08)">
+﻿<aside class="fixed inset-y-0 left-0 w-64 flex flex-col z-30" style="background:oklch(27.9% 0.041 260.031);border-right:1px solid rgba(255,255,255,.08)">
   <!-- Logo -->
   <div class="px-6 py-5" style="border-bottom:1px solid rgba(255,255,255,.08)">
     <div class="flex items-center gap-3">
@@ -6,7 +6,7 @@
         <i data-lucide="heart-handshake" class="w-5 h-5 text-white"></i>
       </div>
       <div>
-        <p class="font-bold leading-tight" style="color:#fff">MindWell</p>
+        <p class="font-bold leading-tight" style="color:#fff">MindCare</p>
         <p class="text-xs" style="color:rgba(255,255,255,.5)">ระบบจัดการ</p>
       </div>
     </div>
@@ -16,14 +16,11 @@
   <nav class="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
   <% const isCounselor = session && session.userType === 'counselor' %>
 
-  <% if (!isCounselor) { %>
     <p class="px-3 py-1.5 text-xs font-semibold uppercase tracking-wider" style="color:rgba(255,255,255,.38)">ภาพรวม</p>
     <a href="/admin" class="nav-link <%= page==='dashboard' ? 'active' : '' %>">
       <i data-lucide="layout-dashboard" class="w-4 h-4"></i>
       แดชบอร์ด
     </a>
-  <% } %>
-
     <p class="px-3 pt-4 pb-1.5 text-xs font-semibold uppercase tracking-wider" style="color:rgba(255,255,255,.38)">
       <%= isCounselor ? 'เมนู' : 'จัดการบริการ' %>
     </p>
@@ -52,6 +49,10 @@
       <i data-lucide="clock" class="w-4 h-4"></i>
       ตารางเวลานักจิตวิทยา
     </a>
+    <a href="/admin/surveys" class="nav-link <%= page==='surveys' ? 'active' : '' %>">
+      <i data-lucide="star" class="w-4 h-4"></i>
+      แบบประเมินความพึงพอใจ
+    </a>
 
   <% if (!isCounselor) { %>
     <p class="px-3 pt-4 pb-1.5 text-xs font-semibold uppercase tracking-wider" style="color:rgba(255,255,255,.38)">ระบบ</p>
@@ -63,6 +64,15 @@
       <i data-lucide="file-text" class="w-4 h-4"></i>
       จัดการเนื้อหาเว็บไซต์
     </a>
+
+    <a href="/admin/reports" class="nav-link <%= page==='reports' ? 'active' : '' %>">
+      <i data-lucide="bar-chart-3" class="w-4 h-4"></i>
+      รายงานสถิติ
+    </a>
+    <a href="/admin/import-export" class="nav-link <%= page==='import-export' ? 'active' : '' %>">
+      <i data-lucide="arrow-left-right" class="w-4 h-4"></i>
+      นำเข้า-ส่งออก ข้อมูล
+    </a>
   <% } %>
 
   </nav>
@@ -70,8 +80,12 @@
   <!-- Footer -->
   <div class="px-4 py-4" style="border-top:1px solid rgba(255,255,255,.08)">
     <div class="flex items-center gap-3 px-2">
-      <div class="w-8 h-8 rounded-full flex items-center justify-center font-semibold text-sm shrink-0" style="background:rgba(255,255,255,.15);color:#fff">
-        <%= (session && session.adminName ? session.adminName.slice(0,1) : 'A') %>
+      <div class="w-8 h-8 rounded-full flex items-center justify-center font-semibold text-sm shrink-0" style="background:rgba(255,255,255,.15);color:#fff;overflow:hidden;">
+        <% if (session && session.adminPhoto) { %>
+          <img data-sidebar-profile-photo="true" src="<%= session.adminPhoto %>" alt="<%= session.adminName || 'User' %>" style="width:100%;height:100%;object-fit:cover;">
+        <% } else { %>
+          <%= (session && session.adminAvatar) ? session.adminAvatar : (session && session.adminName ? session.adminName.slice(0,1) : 'A') %>
+        <% } %>
       </div>
       <div class="flex-1 min-w-0">
         <p class="text-sm font-medium truncate" style="color:#fff"><%= session && session.adminName ? session.adminName : 'Admin' %></p>

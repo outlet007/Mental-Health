@@ -15,7 +15,7 @@ app.use(express.static(path.join(__dirname, 'public')))
 
 // Session
 app.use(session({
-  secret: process.env.SESSION_SECRET || 'mindwell-session-secret-2026',
+  secret: process.env.SESSION_SECRET || 'MindCare-session-secret-2026',
   resave: false,
   saveUninitialized: false,
   cookie: { maxAge: 8 * 60 * 60 * 1000, httpOnly: true },
@@ -38,6 +38,9 @@ app.get('/', (req, res) => {
 // Contact form (landing page)
 app.use('/contact', require('./src/routes/contact'))
 
+// Public survey (no auth required)
+app.use('/survey', require('./src/routes/survey'))
+
 // Auth routes — login/logout (no protection)
 app.use('/admin', require('./src/routes/admin/auth'))
 
@@ -53,6 +56,9 @@ app.use('/admin/schedules',     require('./src/routes/admin/schedules'))
 app.use('/admin/contacts',      require('./src/routes/admin/contacts'))
 app.use('/admin/admins',        require('./src/routes/admin/admins'))
 app.use('/admin/content',       require('./src/routes/admin/content'))
+app.use('/admin/import-export', require('./src/routes/admin/import-export'))
+app.use('/admin/surveys',       require('./src/routes/admin/surveys'))
+app.use('/admin/reports',       require('./src/routes/admin/reports'))
 
 const PORT = process.env.PORT || 3000
-app.listen(PORT, () => console.log(`MindWell running → http://localhost:${PORT}`))
+app.listen(PORT, () => console.log(`MindCare running → http://localhost:${PORT}`))

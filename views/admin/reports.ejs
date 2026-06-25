@@ -1,0 +1,383 @@
+﻿<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %> - MindCare Admin</title>
+  <%- include('../partials/head') %>
+  <style>
+    .report-card{background:#fff;border:1px solid #e2e8f0;border-radius:8px;}
+    .report-label{font-size:12px;font-weight:600;color:#64748b;}
+    .report-input{height:38px;border:1px solid #cbd5e1;border-radius:8px;padding:0 10px;font-size:13px;color:#1e293b;background:#fff;min-width:150px;}
+    .report-button{height:38px;border-radius:8px;padding:0 14px;font-size:13px;font-weight:700;display:inline-flex;align-items:center;gap:7px;text-decoration:none;border:0;cursor:pointer;}
+    .bar-track{height:9px;background:#f1f5f9;border-radius:999px;overflow:hidden;}
+    .bar-fill{height:100%;border-radius:999px;background:#05967e;}
+    .table-cell{padding:12px 14px;border-bottom:1px solid #f1f5f9;font-size:13px;color:#334155;vertical-align:top;}
+    .status-pill{display:inline-flex;align-items:center;border-radius:999px;padding:3px 8px;background:#f1f5f9;color:#475569;font-size:11px;font-weight:700;}
+    .pagination-shell{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 18px;border-top:1px solid #f1f5f9;background:#fff;flex-wrap:wrap;}
+    .pagination-results{display:flex;align-items:center;gap:10px;font-size:13px;font-weight:600;color:#475569;}
+    .pagination-size-form{margin:0;display:inline-flex;align-items:center;}
+    .pagination-size-select{height:34px;min-width:68px;border:1px solid #e2e8f0;border-radius:8px;background:#fff;color:#0f172a;padding:0 28px 0 12px;font-size:13px;font-weight:700;box-shadow:0 1px 2px rgba(15,23,42,.06);cursor:pointer;}
+    .pagination-nav{display:flex;align-items:center;gap:8px;}
+    .pagination-link{min-width:32px;height:32px;border:1px solid transparent;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;color:#475569;text-decoration:none;font-size:13px;font-weight:700;}
+    .pagination-link:hover{border-color:#99f6e4;background:#ecfdf5;color:#047857;}
+    .pagination-link.active{border-color:#05967e;background:#ecfdf5;color:#047857;box-shadow:0 1px 2px rgba(5,150,126,.16);}
+    .pagination-link.disabled{opacity:.38;pointer-events:none;}
+    .pagination-ellipsis{min-width:28px;text-align:center;color:#94a3b8;font-size:13px;font-weight:800;}
+  </style>
+</head>
+<body class="bg-slate-50">
+
+<%- include('../partials/admin-sidebar') %>
+
+<div style="margin-left:256px;min-height:100vh;display:flex;flex-direction:column;">
+  <header style="height:56px;background:#fff;border-bottom:1px solid #f1f5f9;padding:0 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:20;">
+    <h1 style="font-size:15px;font-weight:700;color:#1e293b;margin:0;"><%= title %></h1>
+    <div style="display:flex;align-items:center;gap:12px;">
+      <span style="font-size:12px;color:#94a3b8;">
+        <% const _today = new Date(); %>
+        <%= _today.toLocaleDateString('th-TH',{weekday:'short',year:'numeric',month:'short',day:'numeric'}) %>
+      </span>
+      <a href="/" target="_blank" style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:8px;border:1px solid #e2e8f0;background:#fff;font-size:12px;font-weight:600;color:#475569;text-decoration:none;">
+        <i data-lucide="external-link" style="width:13px;height:13px;"></i>
+        ดูหน้าเว็บหลัก
+      </a>
+    </div>
+  </header>
+
+  <main style="padding:24px 28px 32px;">
+    <section class="report-card" style="padding:18px 20px;margin-bottom:18px;">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:20px;flex-wrap:wrap;">
+        <div>
+          <p style="font-size:12px;font-weight:700;color:#05967e;margin:0 0 4px;">แดชบอร์ดสรุปภาพรวมระบบ</p>
+          <h2 style="font-size:22px;font-weight:800;color:#0f172a;margin:0;">รายงานสถิติทั้งหมดของระบบ</h2>
+          <p style="font-size:13px;color:#64748b;margin:6px 0 0;">ช่วงวันที่ <strong style="color:#1e293b;"><%= filters.from %></strong> ถึง <strong style="color:#1e293b;"><%= filters.to %></strong></p>
+        </div>
+        <form method="GET" action="/admin/reports" style="display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap;margin:0;">
+          <div>
+            <label class="report-label" for="overview-from">วันที่ตั้งต้น</label>
+            <input class="report-input" id="overview-from" name="from" type="date" value="<%= filters.from %>">
+          </div>
+          <div>
+            <label class="report-label" for="overview-to">วันที่ที่ต้องการ</label>
+            <input class="report-input" id="overview-to" name="to" type="date" value="<%= filters.to %>">
+          </div>
+          <input type="hidden" name="type" value="<%= filters.type %>">
+          <input type="hidden" name="pageSize" value="<%= pagination.pageSize %>">
+          <button class="report-button" type="submit" style="background:#05967e;color:#fff;">
+            <i data-lucide="filter" style="width:15px;height:15px;"></i>
+            แสดงผล
+          </button>
+        </form>
+      </div>
+    </section>
+
+    <section style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:18px;">
+      <div class="report-card" style="padding:18px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
+          <div>
+            <p style="font-size:12px;color:#64748b;margin:0;">นัดหมายทั้งหมด</p>
+            <p style="font-size:30px;font-weight:800;color:#0f172a;margin:4px 0 0;"><%= stats.totalAppointments %></p>
+          </div>
+          <div style="width:40px;height:40px;border-radius:8px;background:#e0f2fe;display:flex;align-items:center;justify-content:center;">
+            <i data-lucide="calendar-check" style="width:20px;height:20px;color:#0284c7;"></i>
+          </div>
+        </div>
+        <p style="font-size:12px;color:#05967e;margin:10px 0 0;">เสร็จสิ้น <%= stats.completedAppointments %> รายการ</p>
+      </div>
+      <div class="report-card" style="padding:18px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
+          <div>
+            <p style="font-size:12px;color:#64748b;margin:0;">ผู้รับบริการใหม่</p>
+            <p style="font-size:30px;font-weight:800;color:#0f172a;margin:4px 0 0;"><%= stats.totalClients %></p>
+          </div>
+          <div style="width:40px;height:40px;border-radius:8px;background:#dcfce7;display:flex;align-items:center;justify-content:center;">
+            <i data-lucide="users" style="width:20px;height:20px;color:#16a34a;"></i>
+          </div>
+        </div>
+        <p style="font-size:12px;color:#05967e;margin:10px 0 0;">ใช้งานอยู่ <%= stats.activeClients %> คน</p>
+      </div>
+      <div class="report-card" style="padding:18px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
+          <div>
+            <p style="font-size:12px;color:#64748b;margin:0;">คำขอฝากข้อมูล</p>
+            <p style="font-size:30px;font-weight:800;color:#0f172a;margin:4px 0 0;"><%= stats.totalContacts %></p>
+          </div>
+          <div style="width:40px;height:40px;border-radius:8px;background:#fef3c7;display:flex;align-items:center;justify-content:center;">
+            <i data-lucide="inbox" style="width:20px;height:20px;color:#d97706;"></i>
+          </div>
+        </div>
+        <p style="font-size:12px;color:#d97706;margin:10px 0 0;">รอดำเนินการ <%= stats.newContacts %> รายการ</p>
+      </div>
+      <div class="report-card" style="padding:18px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
+          <div>
+            <p style="font-size:12px;color:#64748b;margin:0;">ผลประเมินความพึงพอใจ</p>
+            <p style="font-size:30px;font-weight:800;color:#0f172a;margin:4px 0 0;"><%= stats.avgRating || '-' %><span style="font-size:14px;color:#64748b;font-weight:600;"> / 5</span></p>
+          </div>
+          <div style="width:40px;height:40px;border-radius:8px;background:#fef2f2;display:flex;align-items:center;justify-content:center;">
+            <i data-lucide="star" style="width:20px;height:20px;color:#dc2626;"></i>
+          </div>
+        </div>
+        <p style="font-size:12px;color:#64748b;margin:10px 0 0;">จากแบบประเมิน <%= stats.surveyCount %> รายการ</p>
+      </div>
+    </section>
+
+    <section style="display:grid;grid-template-columns:1.2fr .8fr;gap:18px;margin-bottom:18px;">
+      <div class="report-card" style="padding:18px;">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px;gap:12px;">
+          <div>
+            <h3 style="font-size:15px;font-weight:800;color:#1e293b;margin:0;"><%= '\u0e2a\u0e16\u0e34\u0e15\u0e34\u0e01\u0e32\u0e23\u0e43\u0e0a\u0e49\u0e1a\u0e23\u0e34\u0e01\u0e32\u0e23' %></h3>
+            <p style="font-size:12px;color:#64748b;margin:5px 0 0;"><%= '\u0e08\u0e33\u0e19\u0e27\u0e19\u0e19\u0e31\u0e14\u0e2b\u0e21\u0e32\u0e22\u0e23\u0e32\u0e22\u0e27\u0e31\u0e19' %></p>
+          </div>
+          <span style="font-size:12px;color:#64748b;white-space:nowrap;"><%= '\u0e19\u0e31\u0e14\u0e2b\u0e21\u0e32\u0e22\u0e17\u0e31\u0e49\u0e07\u0e2b\u0e21\u0e14' %> <%= stats.totalAppointments %> <%= '\u0e23\u0e32\u0e22\u0e01\u0e32\u0e23' %></span>
+        </div>
+        <% if (stats.dailyUsage.length) { %>
+          <%
+            const dailyChartWidth = 640
+            const dailyChartHeight = 170
+            const dailyMax = Math.max(1, ...stats.dailyUsage.map(day => day.count))
+            const dailyPoints = stats.dailyUsage.map((day, index) => {
+              const x = stats.dailyUsage.length === 1 ? dailyChartWidth / 2 : (index / (stats.dailyUsage.length - 1)) * dailyChartWidth
+              const y = dailyChartHeight - ((Number(day.count) || 0) / dailyMax) * (dailyChartHeight - 18)
+              return { ...day, x: x.toFixed(2), y: y.toFixed(2) }
+            })
+            const dailyPolyline = dailyPoints.map(point => `${point.x},${point.y}`).join(' ')
+          %>
+          <div data-report-chart="appointments-daily-line" style="height:230px;border:1px solid #e2e8f0;border-radius:8px;background:#f8fafc;padding:12px 14px 8px;">
+            <svg viewBox="0 0 640 210" role="img" aria-label="<%= '\u0e08\u0e33\u0e19\u0e27\u0e19\u0e19\u0e31\u0e14\u0e2b\u0e21\u0e32\u0e22\u0e23\u0e32\u0e22\u0e27\u0e31\u0e19' %>" style="width:100%;height:100%;overflow:visible;display:block;">
+              <title><%= '\u0e08\u0e33\u0e19\u0e27\u0e19\u0e19\u0e31\u0e14\u0e2b\u0e21\u0e32\u0e22\u0e23\u0e32\u0e22\u0e27\u0e31\u0e19' %></title>
+              <line x1="0" y1="170" x2="640" y2="170" stroke="#cbd5e1" stroke-width="1" />
+              <line x1="0" y1="113" x2="640" y2="113" stroke="#e2e8f0" stroke-width="1" stroke-dasharray="4 6" />
+              <line x1="0" y1="56" x2="640" y2="56" stroke="#e2e8f0" stroke-width="1" stroke-dasharray="4 6" />
+              <polyline class="daily-appointment-line" fill="none" stroke="#05967e" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" points="<%= dailyPolyline %>"></polyline>
+              <% dailyPoints.forEach(point => { %>
+                <circle class="daily-appointment-point" cx="<%= point.x %>" cy="<%= point.y %>" r="<%= point.count ? 4.5 : 3 %>" fill="#fff" stroke="#05967e" stroke-width="2">
+                  <title><%= point.date %>: <%= point.count %> <%= '\u0e23\u0e32\u0e22\u0e01\u0e32\u0e23' %></title>
+                </circle>
+              <% }) %>
+            </svg>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-top:8px;font-size:11px;color:#94a3b8;">
+            <span><%= filters.from %></span>
+            <span><%= filters.to %></span>
+          </div>
+        <% } else { %>
+          <div style="height:210px;display:flex;align-items:center;justify-content:center;color:#94a3b8;font-size:13px;"><%= '\u0e44\u0e21\u0e48\u0e21\u0e35\u0e02\u0e49\u0e2d\u0e21\u0e39\u0e25\u0e43\u0e19\u0e0a\u0e48\u0e27\u0e07\u0e27\u0e31\u0e19\u0e17\u0e35\u0e48\u0e19\u0e35\u0e49' %></div>
+        <% } %>
+      </div>
+      <div class="report-card" style="padding:18px;">
+        <h3 style="font-size:15px;font-weight:800;color:#1e293b;margin:0 0 16px;">ช่องทางบริการ</h3>
+        <% if (stats.serviceUsage.length) { %>
+          <% stats.serviceUsage.forEach(item => { %>
+            <div style="margin-bottom:14px;">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:7px;">
+                <span style="font-size:13px;font-weight:700;color:#334155;"><%= item.label %></span>
+                <span style="font-size:13px;color:#64748b;"><%= item.count %> ครั้ง</span>
+              </div>
+              <div class="bar-track"><div class="bar-fill" style="width:<%= item.percent %>%;"></div></div>
+            </div>
+          <% }) %>
+        <% } else { %>
+          <p style="font-size:13px;color:#94a3b8;margin:0;">ไม่มีข้อมูลช่องทางบริการในช่วงวันที่นี้</p>
+        <% } %>
+
+        <h3 style="font-size:15px;font-weight:800;color:#1e293b;margin:22px 0 16px;">สถานะนัดหมาย</h3>
+        <% if (stats.statusBreakdown.length) { %>
+          <% stats.statusBreakdown.forEach(item => { %>
+            <div style="margin-bottom:12px;">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+                <span style="font-size:13px;font-weight:700;color:#334155;"><%= item.label %></span>
+                <span style="font-size:13px;color:#64748b;"><%= item.count %></span>
+              </div>
+              <div class="bar-track"><div class="bar-fill" style="width:<%= item.percent %>%;background:#0284c7;"></div></div>
+            </div>
+          <% }) %>
+        <% } %>
+      </div>
+    </section>
+
+    <section class="report-card" style="padding:18px;margin-bottom:18px;">
+      <h3 style="font-size:15px;font-weight:800;color:#1e293b;margin:0 0 16px;">ผลประเมินความพึงพอใจ</h3>
+      <div style="display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;">
+        <% stats.ratingCounts.forEach(item => {
+             const pct = stats.surveyCount ? Math.round(item.count / stats.surveyCount * 100) : 0
+        %>
+          <div style="border:1px solid #e2e8f0;border-radius:8px;padding:12px;background:#f8fafc;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+              <span style="font-size:13px;font-weight:800;color:#334155;"><%= item.rating %> ดาว</span>
+              <span style="font-size:12px;color:#64748b;"><%= item.count %></span>
+            </div>
+            <div class="bar-track"><div class="bar-fill" style="width:<%= pct %>%;background:#f59e0b;"></div></div>
+            <p style="font-size:11px;color:#94a3b8;margin:7px 0 0;"><%= pct %>%</p>
+          </div>
+        <% }) %>
+      </div>
+    </section>
+
+    <section class="report-card" data-counselor-satisfaction="summary" style="padding:18px;margin-bottom:18px;">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:16px;">
+        <div>
+          <h3 style="font-size:15px;font-weight:800;color:#1e293b;margin:0;">ผลประเมินรายบุคคลนักจิตวิทยา</h3>
+          <p style="font-size:12px;color:#64748b;margin:5px 0 0;">สรุปคะแนนความพึงพอใจแยกตามนักจิตวิทยาในช่วงวันที่ที่เลือก</p>
+        </div>
+        <span style="display:inline-flex;align-items:center;gap:6px;border-radius:999px;background:#ecfdf5;color:#047857;padding:6px 10px;font-size:12px;font-weight:800;">
+          <i data-lucide="users-round" style="width:14px;height:14px;"></i>
+          <%= stats.counselorSatisfaction.length %> คน
+        </span>
+      </div>
+      <% if (stats.counselorSatisfaction.length) { %>
+        <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;">
+          <% stats.counselorSatisfaction.forEach(item => { %>
+            <div data-counselor-satisfaction-row="<%= item.id %>" style="border:1px solid #e2e8f0;border-radius:8px;padding:14px;background:#f8fafc;">
+              <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:10px;">
+                <div style="display:flex;align-items:center;gap:10px;min-width:0;">
+                  <div style="width:42px;height:42px;border-radius:12px;overflow:hidden;flex-shrink:0;background:linear-gradient(135deg,#2dd4b4,#06b6d4);display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:800;">
+                    <% if (item.photo) { %>
+                      <img data-counselor-profile-photo="<%= item.id %>" src="<%= item.photo %>" alt="<%= item.name %>" style="width:100%;height:100%;object-fit:cover;">
+                    <% } else { %>
+                      <%= item.avatar || item.name.slice(0, 2) %>
+                    <% } %>
+                  </div>
+                  <div style="min-width:0;">
+                    <p style="font-size:14px;font-weight:800;color:#0f172a;margin:0;"><%= item.name %></p>
+                    <p style="font-size:12px;color:#64748b;margin:4px 0 0;"><%= item.title || 'นักจิตวิทยาให้คำปรึกษา' %></p>
+                  </div>
+                </div>
+                <div style="text-align:right;white-space:nowrap;">
+                  <p style="font-size:22px;font-weight:900;color:#0f172a;margin:0;"><%= item.avgRating %><span style="font-size:12px;color:#64748b;font-weight:700;"> / 5</span></p>
+                  <p style="font-size:11px;color:#f59e0b;font-weight:800;margin:2px 0 0;">คะแนนเฉลี่ย</p>
+                </div>
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+                <div>
+                  <p style="font-size:11px;color:#64748b;margin:0 0 3px;">จำนวนแบบประเมิน</p>
+                  <p style="font-size:13px;font-weight:800;color:#334155;margin:0;">แบบประเมิน <%= item.count %> รายการ</p>
+                </div>
+                <div>
+                  <p style="font-size:11px;color:#64748b;margin:0 0 3px;">สัดส่วน 5 ดาว</p>
+                  <p style="font-size:13px;font-weight:800;color:#334155;margin:0;"><%= item.fiveStarPercent %>%</p>
+                </div>
+              </div>
+              <div class="bar-track" aria-hidden="true"><div class="bar-fill" style="width:<%= item.countPercent %>%;background:#05967e;"></div></div>
+              <% if (item.latestComment) { %>
+                <p style="font-size:12px;color:#64748b;margin:10px 0 0;line-height:1.5;">ความคิดเห็นล่าสุด: <%= item.latestComment %></p>
+              <% } %>
+            </div>
+          <% }) %>
+        </div>
+      <% } else { %>
+        <p style="font-size:13px;color:#94a3b8;margin:0;">ไม่มีผลประเมินรายบุคคลนักจิตวิทยาในช่วงวันที่นี้</p>
+      <% } %>
+    </section>
+    <section class="report-card" style="overflow:hidden;">
+      <div style="padding:18px 20px;border-bottom:1px solid #e2e8f0;display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;">
+        <div>
+          <h3 style="font-size:15px;font-weight:800;color:#1e293b;margin:0;">ค้นหารายงาน</h3>
+          <p style="font-size:12px;color:#64748b;margin:5px 0 0;">เลือกประเภทรายงานและช่วงวันที่เพื่อดูรายการเฉพาะส่วน</p>
+        </div>
+        <form method="GET" action="/admin/reports" style="display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap;margin:0;">
+          <div>
+            <label class="report-label" for="report-type">ประเภทรายงาน</label>
+            <select class="report-input" id="report-type" name="type">
+              <% Object.entries(reportTypes).forEach(([value, label]) => { %>
+                <option value="<%= value %>" <%= filters.type === value ? 'selected' : '' %>><%= label %></option>
+              <% }) %>
+            </select>
+          </div>
+          
+          <div>
+            <label class="report-label" for="report-from">วันที่ตั้งต้น</label>
+            <input class="report-input" id="report-from" name="from" type="date" value="<%= filters.from %>">
+          </div>
+          <div>
+            <label class="report-label" for="report-to">วันที่ที่ต้องการ</label>
+            <input class="report-input" id="report-to" name="to" type="date" value="<%= filters.to %>">
+          </div>
+          <button class="report-button" type="submit" style="background:#0f172a;color:#fff;">
+            <i data-lucide="search" style="width:15px;height:15px;"></i>
+            ค้นหา
+          </button>
+          <a class="report-button" href="<%= exportUrl %>" style="background:#05967e;color:#fff;">
+            <i data-lucide="download" style="width:15px;height:15px;"></i>
+            Export CSV
+          </a>
+        </form>
+      </div>
+
+      <div style="overflow:auto;">
+        <table data-table-pagination="server" style="width:100%;border-collapse:collapse;min-width:900px;">
+          <thead>
+            <tr style="background:#f8fafc;">
+              <th class="table-cell" style="text-align:left;color:#64748b;font-size:12px;font-weight:800;">ประเภท</th>
+              <th class="table-cell" style="text-align:left;color:#64748b;font-size:12px;font-weight:800;">วันที่</th>
+              <th class="table-cell" style="text-align:left;color:#64748b;font-size:12px;font-weight:800;">รหัส</th>
+              <th class="table-cell" style="text-align:left;color:#64748b;font-size:12px;font-weight:800;">ชื่อ</th>
+              <th class="table-cell" style="text-align:left;color:#64748b;font-size:12px;font-weight:800;">รายละเอียด</th>
+              <th class="table-cell" style="text-align:left;color:#64748b;font-size:12px;font-weight:800;">สถานะ</th>
+              <th class="table-cell" style="text-align:left;color:#64748b;font-size:12px;font-weight:800;">คะแนน</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% if (reportRows.length) { %>
+              <% reportRows.forEach(row => { %>
+                <tr>
+                  <td class="table-cell"><%= row.type %></td>
+                  <td class="table-cell"><%= row.date || '-' %></td>
+                  <td class="table-cell"><%= row.id || '-' %></td>
+                  <td class="table-cell" style="font-weight:700;color:#1e293b;"><%= row.name || '-' %></td>
+                  <td class="table-cell"><%= row.detail || '-' %></td>
+                  <td class="table-cell"><span class="status-pill"><%= row.status || '-' %></span></td>
+                  <td class="table-cell"><%= row.score || '-' %></td>
+                </tr>
+              <% }) %>
+            <% } else { %>
+              <tr>
+                <td class="table-cell" colspan="7" style="text-align:center;color:#94a3b8;padding:32px;">ไม่มีรายงานในเงื่อนไขที่เลือก</td>
+              </tr>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+      <% if (pagination && pagination.totalRows > pagination.pageSize) { %>
+        <div data-report-pagination="table-bottom" class="pagination-shell">
+          <div class="pagination-results">
+            <span>Results: <%= pagination.startRow %> - <%= pagination.endRow %> of <%= pagination.totalRows %></span>
+            <form method="GET" action="/admin/reports" class="pagination-size-form">
+              <input type="hidden" name="from" value="<%= filters.from %>">
+              <input type="hidden" name="to" value="<%= filters.to %>">
+              <input type="hidden" name="type" value="<%= filters.type %>">
+              <input type="hidden" name="page" value="1">
+              <select class="pagination-size-select" name="pageSize" aria-label="Rows per page" onchange="this.form.submit()">
+                <% pagination.pageSizeOptions.forEach(size => { %>
+                  <option value="<%= size %>" <%= pagination.pageSize === size ? 'selected' : '' %>><%= size %></option>
+                <% }) %>
+              </select>
+            </form>
+          </div>
+          <nav class="pagination-nav" aria-label="Report table pagination">
+            <a class="pagination-link <%= pagination.prevUrl ? '' : 'disabled' %>" href="<%= pagination.prevUrl || '#' %>" aria-label="Previous page" aria-disabled="<%= pagination.prevUrl ? 'false' : 'true' %>">
+              <i data-lucide="chevron-left" style="width:16px;height:16px;"></i>
+            </a>
+            <% pagination.pages.forEach(item => { %>
+              <% if (item.type === 'ellipsis') { %>
+                <span class="pagination-ellipsis">...</span>
+              <% } else { %>
+                <a class="pagination-link <%= item.current ? 'active' : '' %>" href="<%= item.url %>" <%- item.current ? 'aria-current="page"' : '' %>><%= item.page %></a>
+              <% } %>
+            <% }) %>
+            <a class="pagination-link <%= pagination.nextUrl ? '' : 'disabled' %>" href="<%= pagination.nextUrl || '#' %>" aria-label="Next page" aria-disabled="<%= pagination.nextUrl ? 'false' : 'true' %>">
+              <i data-lucide="chevron-right" style="width:16px;height:16px;"></i>
+            </a>
+          </nav>
+        </div>
+      <% } %>
+    </section>
+  </main>
+</div>
+
+<script>lucide.createIcons();</script>
+</body>
+</html>
+
+

@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ขอบคุณสำหรับการประเมิน - MindCare</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Noto Sans Thai', 'Segoe UI', Arial, sans-serif;
+      min-height: 100vh;
+      background: linear-gradient(135deg, #ecfdf5 0%, #e0f2fe 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 16px;
+    }
+    .card {
+      background: #fff;
+      border-radius: 24px;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.10);
+      max-width: 480px;
+      width: 100%;
+      overflow: hidden;
+      text-align: center;
+    }
+    .card-header { background: linear-gradient(135deg, #05967e, #06b6d4); padding: 32px 40px 28px; }
+    .card-header .logo {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255,255,255,0.2);
+      border-radius: 12px;
+      padding: 6px 14px;
+      margin-bottom: 20px;
+    }
+    .card-header .logo span { color:#fff; font-size:13px; font-weight:700; letter-spacing:1px; }
+    .card-header h1 { color:#fff; font-size:20px; font-weight:700; }
+    .card-body { padding: 44px 40px 48px; }
+    .success-icon {
+      width: 78px;
+      height: 78px;
+      margin: 0 auto 20px;
+      border-radius: 24px;
+      background: #ecfdf5;
+      border: 1px solid #a7f3d0;
+      color: #05967e;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .success-icon i { width: 42px; height: 42px; }
+    .title { font-size: 22px; font-weight: 700; color: #1e293b; margin-bottom: 12px; }
+    .desc { font-size: 14px; color: #64748b; line-height: 1.8; }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      background: #ecfdf5;
+      color: #05967e;
+      border: 1px solid #a7f3d0;
+      border-radius: 99px;
+      padding: 6px 20px;
+      font-size: 13px;
+      font-weight: 600;
+      margin-top: 20px;
+    }
+    .badge i { width: 15px; height: 15px; }
+  </style>
+</head>
+<body>
+<div class="card">
+  <div class="card-header">
+    <div class="logo">
+      <div style="width:28px;height:28px;background:rgba(255,255,255,0.25);border-radius:8px;display:flex;align-items:center;justify-content:center;">
+        <i data-lucide="heart-handshake" style="width:16px;height:16px;color:#fff;"></i>
+      </div>
+      <span>MindCare</span>
+    </div>
+    <h1>ขอบคุณสำหรับการประเมิน</h1>
+  </div>
+  <div class="card-body">
+    <div class="success-icon"><i data-lucide="circle-check-big"></i></div>
+    <div class="title">ขอบคุณที่ให้คะแนน!</div>
+    <div class="desc">
+      ความคิดเห็นของคุณมีคุณค่าอย่างยิ่งต่อการพัฒนาบริการ<br>
+      ของ MindCare ให้ดียิ่งขึ้นในอนาคต<br><br>
+      หากต้องการรับคำปรึกษาในครั้งต่อไป<br>
+      สามารถติดต่อได้ผ่านช่องทางเดิม
+    </div>
+    <div class="badge"><i data-lucide="badge-check"></i> บันทึกความคิดเห็นแล้ว</div>
+  </div>
+</div>
+<script>lucide.createIcons()</script>
+</body>
+</html>

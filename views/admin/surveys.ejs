@@ -1,0 +1,298 @@
+﻿<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %> - MindCare Admin</title>
+  <%- include('../partials/head') %>
+  <style>
+    .filter-btn{padding:5px 12px;border-radius:8px;font-size:12px;font-weight:600;text-decoration:none;transition:all .15s;display:inline-flex;align-items:center;gap:5px;white-space:nowrap;}
+    .filter-btn:hover{opacity:.85;}
+    .report-button{height:38px;border-radius:8px;padding:0 14px;font-size:13px;font-weight:700;display:inline-flex;align-items:center;gap:7px;text-decoration:none;border:0;cursor:pointer;}
+    .rating-filter-icon{width:14px;height:14px;}
+    .rating-inline-icon{width:15px;height:15px;display:inline-block;vertical-align:-2px;}
+    .rating-icon-box{width:28px;height:28px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;background:#ecfdf5;color:#05967e;border:1px solid #a7f3d0;margin-right:7px;}
+    .rating-icon-box i{width:15px;height:15px;}
+    .empty-icon{width:48px;height:48px;margin:0 auto 12px;border-radius:16px;background:#ecfdf5;color:#05967e;border:1px solid #a7f3d0;display:flex;align-items:center;justify-content:center;}
+    .empty-icon i{width:26px;height:26px;}
+  </style>
+</head>
+<body class="bg-slate-50">
+
+<%- include('../partials/admin-sidebar') %>
+
+<div style="margin-left:256px;min-height:100vh;display:flex;flex-direction:column;">
+<% const selectedCounselor = typeof selectedCounselorId !== 'undefined' ? selectedCounselorId : 'all' %>
+<% const counselorRows = typeof counselorSummaries !== 'undefined' ? counselorSummaries : [] %>
+<% const counselorOptions = typeof counselors !== 'undefined' ? counselors : [] %>
+<% const counselorQuerySuffix = !isCounselorUser && selectedCounselor !== 'all' ? '&counselorId=' + encodeURIComponent(selectedCounselor) : '' %>
+<% const surveyExportUrl = '/admin/surveys/export.csv?rating=' + encodeURIComponent(query.rating || 'all') + counselorQuerySuffix %>
+
+  <div style="height:56px;background:#fff;border-bottom:1px solid #f1f5f9;padding:0 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:20;">
+    <h1 style="font-size:15px;font-weight:600;color:#1e293b;margin:0;"><%= title %></h1>
+    <div style="display:flex;align-items:center;gap:12px;">
+      <span style="font-size:12px;color:#94a3b8;">
+        <% const _hd = new Date(); %><%= _hd.toLocaleDateString('th-TH',{weekday:'short',year:'numeric',month:'short',day:'numeric'}) %>
+      </span>
+      <a href="/" target="_blank" style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:8px;border:1px solid #e2e8f0;background:#fff;font-size:12px;font-weight:500;color:#475569;text-decoration:none;">
+        <i data-lucide="external-link" style="width:13px;height:13px;"></i>
+        ดูหน้าเว็บหลัก
+      </a>
+    </div>
+  </div>
+
+  <div style="padding:12px 24px;background:#fff;border-bottom:2px solid #f1f5f9;display:flex;align-items:center;justify-content:space-between;gap:16px;">
+    <p style="font-size:13px;color:#64748b;margin:0;white-space:nowrap;">
+      <%= isCounselorUser ? 'เฉพาะของคุณ' : 'นักจิตวิทยาทั้งหมด' %> · <strong style="color:#1e293b;"><%= total %></strong> รายการ
+    </p>
+    <div style="display:flex;gap:6px;align-items:center;overflow-x:auto;padding-bottom:2px;">
+      <span style="font-size:12px;color:#64748b;font-weight:600;margin-right:4px;white-space:nowrap;">กรองตาม:</span>
+      <% const rOpts = [
+        { val:'all', label:'ทั้งหมด', icon:'list-filter' },
+        { val:'5',   label:'มากที่สุด', icon:'smile-plus' },
+        { val:'4',   label:'มาก', icon:'smile' },
+        { val:'3',   label:'ปานกลาง', icon:'meh' },
+        { val:'2',   label:'น้อย', icon:'frown' },
+        { val:'1',   label:'น้อยที่สุด', icon:'circle-alert' },
+      ] %>
+      <% rOpts.forEach(o => {
+           const active = (query.rating || 'all') === o.val
+      %>
+        <a href="/admin/surveys?rating=<%= o.val %><%= counselorQuerySuffix %>" class="filter-btn"
+           style="background:<%= active ? '#05967e' : '#f1f5f9' %>;color:<%= active ? '#fff' : '#64748b' %>;">
+          <i data-lucide="<%= o.icon %>" class="rating-filter-icon"></i>
+          <%= o.label %>
+        </a>
+      <% }) %>
+    </div>
+  </div>
+
+  <div style="padding:28px 32px;">
+    <%
+      const RATING_ICONS = {5:'smile-plus',4:'smile',3:'meh',2:'frown',1:'circle-alert'}
+      const RATING_LABELS = {5:'มากที่สุด',4:'มาก',3:'ปานกลาง',2:'น้อย',1:'น้อยที่สุด'}
+      const BADGE_BG  = {5:'#ecfdf5',4:'#f0fdf4',3:'#fefce8',2:'#fff7ed',1:'#fef2f2'}
+      const BADGE_CLR = {5:'#05967e',4:'#16a34a',3:'#ca8a04',2:'#ea580c',1:'#dc2626'}
+      const MONTHS    = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.']
+      function fmtDate(d) {
+        if (!d || Number.isNaN(d.getTime())) return '-'
+        return d.getDate() + ' ' + MONTHS[d.getMonth()] + ' ' + (d.getFullYear() + 543)
+      }
+    %>
+
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:28px;">
+      <div style="background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:20px 24px;">
+        <p style="font-size:16px;font-weight:400;color:#1e293b;margin:0 0 8px;">คะแนนเฉลี่ย</p>
+        <div style="display:flex;align-items:baseline;gap:6px;">
+          <span style="font-size:32px;font-weight:800;color:#05967e;"><%= avgRating || '-' %></span>
+          <% if (avgRating) { %><span style="font-size:14px;color:#64748b;">/ 5</span><% } %>
+        </div>
+        <% if (avgRating) { %>
+          <div style="margin-top:8px;display:flex;gap:3px;">
+            <% const avg = parseFloat(avgRating); %>
+            <% for (let i = 1; i <= 5; i++) { %>
+              <i data-lucide="star" style="width:15px;height:15px;color:<%= i<=Math.round(avg) ? '#f59e0b' : '#e2e8f0' %>;fill:<%= i<=Math.round(avg) ? '#fef3c7' : 'none' %>;"></i>
+            <% } %>
+          </div>
+        <% } %>
+      </div>
+
+      <div style="background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:20px 24px;">
+        <p style="font-size:16px;font-weight:400;color:#1e293b;margin:0 0 8px;">รับประเมินทั้งหมด</p>
+        <span style="font-size:32px;font-weight:800;color:#1e293b;"><%= total %></span>
+        <p style="font-size:12px;color:#94a3b8;margin:4px 0 0;">รายการ</p>
+      </div>
+
+      <div style="background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:20px 24px;">
+        <p style="font-size:16px;font-weight:400;color:#1e293b;margin:0 0 8px;display:flex;align-items:center;"><span class="rating-icon-box"><i data-lucide="smile-plus"></i></span>มากที่สุด</p>
+        <span style="font-size:32px;font-weight:800;color:#05967e;"><%= ratingCounts[0].count %></span>
+        <p style="font-size:12px;color:#94a3b8;margin:4px 0 0;"><%= total ? Math.round(ratingCounts[0].count / total * 100) : 0 %>%</p>
+      </div>
+
+      <div style="background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:20px 24px;">
+        <p style="font-size:16px;font-weight:400;color:#1e293b;margin:0 0 10px;">สัดส่วนคะแนน</p>
+        <% const barColors = ['','#ef4444','#f97316','#f59e0b','#84cc16','#05967e'] %>
+        <% [5,4,3,2,1].forEach(r => {
+             const rc  = ratingCounts.find(x => x.rating === r)
+             const pct = total ? Math.round(rc.count / total * 100) : 0
+        %>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+            <span style="width:20px;text-align:center;color:<%= barColors[r] %>;"><i data-lucide="<%= RATING_ICONS[r] %>" class="rating-inline-icon"></i></span>
+            <div style="flex:1;height:6px;background:#f1f5f9;border-radius:99px;overflow:hidden;">
+              <div style="width:<%= pct %>%;height:100%;background:<%= barColors[r] %>;border-radius:99px;"></div>
+            </div>
+            <span style="font-size:11px;color:#94a3b8;width:22px;text-align:right;"><%= pct %>%</span>
+          </div>
+        <% }) %>
+      </div>
+    </div>
+
+
+    <section data-counselor-survey-summary="true" style="background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:20px 24px;margin-bottom:24px;">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:16px;">
+        <div>
+          <h2 style="font-size:15px;font-weight:800;color:#1e293b;margin:0;">ผลประเมินรายบุคคลนักจิตวิทยา</h2>
+          <p style="font-size:12px;color:#64748b;margin:5px 0 0;">สรุปคะแนนความพึงพอใจแยกตามนักจิตวิทยาให้คำปรึกษา</p>
+        </div>
+        <span style="display:inline-flex;align-items:center;gap:6px;border-radius:999px;background:#ecfdf5;color:#047857;padding:6px 10px;font-size:12px;font-weight:800;">
+          <i data-lucide="users-round" style="width:14px;height:14px;"></i>
+          <%= counselorRows.length %> คน
+        </span>
+      </div>
+      <% if (counselorRows.length) { %>
+        <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;">
+          <% counselorRows.forEach(item => { %>
+            <div data-counselor-survey-row="<%= item.id %>" style="border:1px solid #e2e8f0;border-radius:12px;padding:14px;background:#f8fafc;">
+              <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:10px;">
+                <div style="display:flex;align-items:center;gap:10px;min-width:0;">
+                  <div style="width:42px;height:42px;border-radius:12px;overflow:hidden;flex-shrink:0;background:linear-gradient(135deg,#2dd4b4,#06b6d4);display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:800;">
+                    <% if (item.photo) { %>
+                      <img data-counselor-profile-photo="<%= item.id %>" src="<%= item.photo %>" alt="<%= item.name %>" style="width:100%;height:100%;object-fit:cover;">
+                    <% } else { %>
+                      <%= item.avatar || item.name.slice(0, 2) %>
+                    <% } %>
+                  </div>
+                  <div style="min-width:0;">
+                    <p style="font-size:14px;font-weight:800;color:#0f172a;margin:0;"><%= item.name %></p>
+                    <p style="font-size:12px;color:#64748b;margin:4px 0 0;"><%= item.title || 'นักจิตวิทยาให้คำปรึกษา' %></p>
+                  </div>
+                </div>
+                <div style="text-align:right;white-space:nowrap;">
+                  <p style="font-size:22px;font-weight:900;color:#05967e;margin:0;"><%= item.avgRating %><span style="font-size:12px;color:#64748b;font-weight:700;"> / 5</span></p>
+                  <p style="font-size:11px;color:#94a3b8;font-weight:700;margin:2px 0 0;">คะแนนเฉลี่ย</p>
+                </div>
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+                <div>
+                  <p style="font-size:11px;color:#64748b;margin:0 0 3px;">จำนวนแบบประเมิน</p>
+                  <p style="font-size:13px;font-weight:800;color:#334155;margin:0;">แบบประเมิน <%= item.count %> รายการ</p>
+                </div>
+                <div>
+                  <p style="font-size:11px;color:#64748b;margin:0 0 3px;">สัดส่วนมากที่สุด</p>
+                  <p style="font-size:13px;font-weight:800;color:#334155;margin:0;"><%= item.fiveStarPercent %>%</p>
+                </div>
+              </div>
+              <div style="height:8px;background:#f1f5f9;border-radius:999px;overflow:hidden;" aria-hidden="true"><div style="width:<%= item.countPercent %>%;height:100%;background:#05967e;border-radius:999px;"></div></div>
+              <% if (item.latestComment) { %>
+                <p style="font-size:12px;color:#64748b;margin:10px 0 0;line-height:1.5;">ความคิดเห็นล่าสุด: <%= item.latestComment %></p>
+              <% } %>
+            </div>
+          <% }) %>
+        </div>
+      <% } else { %>
+        <p style="font-size:13px;color:#94a3b8;margin:0;">ยังไม่มีผลประเมินรายบุคคลนักจิตวิทยา</p>
+      <% } %>
+    </section>    <div style="background:#fff;border:1px solid #e2e8f0;border-radius:16px;overflow:hidden;">
+      <div style="padding:18px 24px;border-bottom:1px solid #f1f5f9;display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;">
+        <div>
+          <h2 style="font-size:14px;font-weight:700;color:#1e293b;margin:0;">รายการประเมิน</h2>
+          <p style="font-size:12px;color:#94a3b8;margin:5px 0 0;">แสดง <%= surveys.length %> รายการตามเงื่อนไขที่เลือก</p>
+        </div>
+        <% if (!isCounselorUser) { %>
+          <form method="GET" action="/admin/surveys" style="display:flex;align-items:flex-end;gap:8px;flex-wrap:wrap;margin:0;">
+            <input type="hidden" name="rating" value="<%= query.rating || 'all' %>">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <label for="survey-counselor-filter" style="font-size:12px;color:#64748b;font-weight:700;white-space:nowrap;">นักจิตวิทยา</label>
+              <select id="survey-counselor-filter" name="counselorId" onchange="this.form.submit()" style="height:38px;border:1px solid #cbd5e1;border-radius:8px;background:#fff;color:#1e293b;padding:0 36px 0 10px;font-size:13px;font-weight:700;min-width:220px;">
+                <option value="all" <%= selectedCounselor === 'all' ? 'selected' : '' %>>นักจิตวิทยาทั้งหมด</option>
+                <% counselorOptions.forEach(c => { %>
+                  <option value="<%= c.id %>" <%= selectedCounselor === c.id ? 'selected' : '' %>><%= c.name %></option>
+                <% }) %>
+              </select>
+            </div>
+            <button class="report-button" type="submit" style="background:#05967e;color:#fff;">
+              <i data-lucide="filter" style="width:15px;height:15px;"></i>
+              แสดงผล
+            </button>
+            <a class="report-button" href="<%= surveyExportUrl %>" style="background:#05967e;color:#fff;">
+              <i data-lucide="download" style="width:15px;height:15px;"></i>
+              Export CSV
+            </a>
+          </form>
+        <% } %>
+      </div>
+
+      <% if (!surveys.length) { %>
+        <div style="padding:64px;text-align:center;">
+          <div class="empty-icon"><i data-lucide="bar-chart-3"></i></div>
+          <p style="font-size:15px;font-weight:600;color:#1e293b;margin:0 0 6px;">ยังไม่มีแบบประเมิน</p>
+          <p style="font-size:13px;color:#94a3b8;margin:0;">แบบประเมินจะปรากฏที่นี่หลังจากผู้รับบริการกรอกข้อมูล</p>
+        </div>
+      <% } else { %>
+        <div style="overflow-x:auto;">
+          <table style="width:100%;border-collapse:collapse;font-size:13px;">
+            <thead>
+              <tr style="background:#f8fafc;">
+                <th style="padding:12px 16px;text-align:left;font-weight:600;color:#64748b;font-size:11px;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap;">วันที่ประเมิน</th>
+                <th style="padding:12px 16px;text-align:left;font-weight:600;color:#64748b;font-size:11px;text-transform:uppercase;letter-spacing:.05em;">ผู้รับบริการ</th>
+                <% if (!isCounselorUser) { %>
+                <th style="padding:12px 16px;text-align:left;font-weight:600;color:#64748b;font-size:11px;text-transform:uppercase;letter-spacing:.05em;">นักจิตวิทยา</th>
+                <% } %>
+                <th style="padding:12px 16px;text-align:left;font-weight:600;color:#64748b;font-size:11px;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap;">วันที่นัดหมาย</th>
+                <th style="padding:12px 16px;text-align:center;font-weight:600;color:#64748b;font-size:11px;text-transform:uppercase;letter-spacing:.05em;">ระดับ</th>
+                <th style="padding:12px 16px;text-align:left;font-weight:600;color:#64748b;font-size:11px;text-transform:uppercase;letter-spacing:.05em;">ข้อเสนอแนะ</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% surveys.forEach((s, i) => { %>
+              <tr style="border-top:1px solid #f1f5f9;<%= i % 2 === 1 ? 'background:#fafafa;' : '' %>"
+                  onmouseover="this.style.background='#f0fdf4'"
+                  onmouseout="this.style.background='<%= i % 2 === 1 ? "#fafafa" : "" %>'">
+                <td style="padding:14px 16px;color:#64748b;white-space:nowrap;"><%= fmtDate(new Date(s.submittedAt)) %></td>
+                <td style="padding:14px 16px;font-weight:600;color:#1e293b;"><%= s.clientName || '-' %></td>
+                <% if (!isCounselorUser) { %>
+                                <td style="padding:14px 16px;color:#334155;">
+                  <% const rowCounselor = counselorOptions.find(c => c.id === s.counselorId) %>
+                  <div style="display:flex;align-items:center;gap:8px;white-space:nowrap;">
+                    <div style="width:28px;height:28px;border-radius:8px;overflow:hidden;flex-shrink:0;background:linear-gradient(135deg,#2dd4b4,#06b6d4);display:flex;align-items:center;justify-content:center;color:#fff;font-size:10px;font-weight:800;">
+                      <% if (rowCounselor && rowCounselor.photo) { %>
+                        <img data-counselor-table-photo="<%= rowCounselor.id %>" src="<%= rowCounselor.photo %>" alt="<%= rowCounselor.name %>" style="width:100%;height:100%;object-fit:cover;">
+                      <% } else { %>
+                        <%= rowCounselor ? (rowCounselor.avatar || rowCounselor.name.slice(0, 2)) : '?' %>
+                      <% } %>
+                    </div>
+                    <span><%= s.counselorName || '-' %></span>
+                  </div>
+                </td>
+                <% } %>
+                <td style="padding:14px 16px;color:#64748b;white-space:nowrap;"><%= fmtDate(new Date(s.appointmentDate)) %></td>
+                <td style="padding:14px 16px;text-align:center;">
+                  <span style="display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border-radius:99px;font-size:12px;font-weight:700;background:<%= BADGE_BG[s.rating] %>;color:<%= BADGE_CLR[s.rating] %>;">
+                    <i data-lucide="<%= RATING_ICONS[s.rating] %>" class="rating-inline-icon"></i> <%= RATING_LABELS[s.rating] %>
+                  </span>
+                </td>
+                <td style="padding:14px 16px;color:#64748b;max-width:280px;">
+                  <% if (s.comment) { %>
+                    <span title="<%= s.comment %>"><%= s.comment %></span>
+                  <% } else { %>
+                    <span style="color:#cbd5e1;font-style:italic;">ไม่มีข้อเสนอแนะ</span>
+                  <% } %>
+                </td>
+              </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      <% } %>
+    </div>
+
+  </div>
+</div>
+
+<script>lucide.createIcons()</script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+

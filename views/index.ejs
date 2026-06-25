@@ -3,24 +3,78 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MindWell — ระบบจองนัดหมายการให้คำปรึกษาทางจิตใจ</title>
+  <title>MindCare — ระบบจองนัดหมายการให้คำปรึกษาทางจิตใจ</title>
   <%- include('./partials/head') %>
+  <style>
+    [data-animate]{opacity:0;transition:opacity .7s cubic-bezier(.22,1,.36,1),transform .7s cubic-bezier(.22,1,.36,1);}
+    [data-animate="fade-up"]   {transform:translateY(36px);}
+    [data-animate="fade-down"] {transform:translateY(-22px);}
+    [data-animate="fade-right"]{transform:translateX(-44px);}
+    [data-animate="fade-left"] {transform:translateX(44px);}
+    [data-animate="zoom-in"]   {transform:scale(.86);}
+    [data-animate].is-visible  {opacity:1;transform:none;}
+    .section-bg-motion { animation:section-bg-zoom var(--bg-zoom-duration,38s) ease-in-out infinite alternate; transform-origin:center; will-change:transform; }
+    @keyframes section-bg-zoom {
+      from { transform:scale(1); }
+      to { transform:scale(var(--bg-zoom-scale,1.12)); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .section-bg-motion { animation:none; transform:none; }
+    }
+  </style>
 </head>
 <body class="bg-white">
+<%
+const _bgs = content.backgrounds || {}
+function _hexToRgba(hex, a) {
+  if (!hex || !/^#[0-9A-Fa-f]{6}$/.test(hex)) return null
+  const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16)
+  return 'rgba('+r+','+g+','+b+','+a+')'
+}
+// Returns inline color style for a specific text element in a section
+function _tc(sec, field) {
+  const bg = _bgs[sec] || {}
+  const c = (bg.textColors || {})[field]
+  return (c && /^#[0-9A-Fa-f]{6}$/.test(c)) ? 'color:' + c + ';' : ''
+}
+// Generates HTML for absolutely-positioned bg layer divs inside a section
+// Layer order (bottom→top): image → color overlay → content (z-index:2 on content wrapper)
+function _bgLayers(sec) {
+  const bg = _bgs[sec] || {}
+  if (!bg.image && !bg.color) return ''
+  const colorOp = typeof bg.opacity    === 'number' ? bg.opacity    : 1
+  const imgOp   = typeof bg.imgOpacity === 'number' ? bg.imgOpacity : 1
+  const motionEnabled = bg.motionEnabled !== false
+  const motionDuration = typeof bg.motionDuration === 'number' ? bg.motionDuration : 38
+  const motionScale = typeof bg.motionScale === 'number' ? bg.motionScale : 1.12
+  let html = ''
+  if (bg.image) {
+    const motionClass = motionEnabled ? ' class="section-bg-motion"' : ''
+    const motionVars = motionEnabled ? '--bg-zoom-duration:'+motionDuration+'s;--bg-zoom-scale:'+motionScale+';' : ''
+    html += '<div aria-hidden="true"'+motionClass+' style="position:absolute;inset:0;background-image:url(\''+bg.image+'\');background-size:cover;background-position:center;background-repeat:no-repeat;opacity:'+imgOp+';'+motionVars+'pointer-events:none;z-index:0;"></div>'
+  }
+  if (bg.color) {
+    const rgba = _hexToRgba(bg.color, colorOp) || bg.color
+    html += '<div aria-hidden="true" style="position:absolute;inset:0;background-color:'+rgba+';pointer-events:none;z-index:1;"></div>'
+  }
+  return html
+}
+%>
 
   <!-- Navbar -->
   <nav class="fixed top-0 inset-x-0 z-50 bg-white/80 backdrop-blur border-b border-slate-100">
     <div class="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-      <div class="flex items-center gap-2.5">
+      <a href="#home" class="flex items-center gap-2.5 rounded-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-300 focus-visible:ring-offset-2" aria-label="MindCare home">
         <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-brand-500 to-ocean-500 flex items-center justify-center">
           <i data-lucide="heart-handshake" class="w-4.5 h-4.5 text-white"></i>
         </div>
-        <span class="font-bold text-slate-800 text-lg">MindWell</span>
-      </div>
-      <div class="hidden md:flex items-center gap-1">
-        <a href="#book" class="btn-ghost text-sm" data-i18n="nav-register">ลงทะเบียนเพื่อขอรับบริการ</a>
-        <a href="#counselors" class="btn-ghost text-sm" data-i18n="nav-counselors">นักให้คำปรึกษา</a>
-        <a href="#faq" class="btn-ghost text-sm" data-i18n="nav-faq">คำถามที่พบบ่อย</a>
+        <span class="font-bold text-slate-800 text-lg">MindCare</span>
+      </a>
+      <div id="main-nav-links" class="hidden md:flex items-center gap-1 relative rounded-full p-0.5">
+        <span id="main-nav-indicator" class="pointer-events-none absolute left-0 top-0.5 h-[calc(100%-4px)] rounded-full bg-brand-50 shadow-sm opacity-0 transition-all duration-300 ease-out"></span>
+        <a href="#book" class="btn-ghost text-sm relative z-10" data-i18n="nav-register">ลงทะเบียนเพื่อขอรับบริการ</a>
+        <a href="#counselors" class="btn-ghost text-sm relative z-10" data-i18n="nav-counselors">นักให้คำปรึกษา</a>
+        <a href="#faq" class="btn-ghost text-sm relative z-10" data-i18n="nav-faq">คำถามที่พบบ่อย</a>
       </div>
       <div class="hidden md:flex items-center gap-2">
         <!-- Language toggle -->
@@ -82,7 +136,7 @@
         </div>
 
         <div class="flex flex-col text-slate-800">
-          <a href="#" onclick="closeMobileMenu()" class="flex items-center justify-between py-4 text-base font-medium">
+          <a href="#home" onclick="closeMobileMenu()" class="flex items-center justify-between py-4 text-base font-medium">
             <span data-i18n="mobile-home">หน้าแรก</span>
           </a>
           <a href="#book" onclick="closeMobileMenu()" class="flex items-center justify-between py-4 text-base font-medium">
@@ -109,21 +163,22 @@
   </div>
 
   <!-- Hero -->
-  <section class="pt-32 pb-24 bg-gradient-to-br from-brand-50 via-ocean-50 to-white">
-    <div class="max-w-6xl mx-auto px-6 grid md:grid-cols-2 gap-16 items-center">
+  <section id="home" class="pt-32 pb-24 bg-gradient-to-br from-brand-50 via-ocean-50 to-white" style="position:relative;overflow:hidden;">
+    <%- _bgLayers('hero') %>
+    <div class="max-w-6xl mx-auto px-6 grid md:grid-cols-2 gap-16 items-center" style="position:relative;z-index:2;">
       <div>
-        <span class="inline-flex items-center gap-2 px-3 py-1 bg-brand-100 text-brand-700 text-sm font-medium rounded-full mb-6">
+        <span data-animate="fade-down" class="inline-flex items-center gap-2 px-3 py-1 bg-brand-100 text-brand-700 text-sm font-medium rounded-full mb-6">
           <i data-lucide="shield-check" class="w-3.5 h-3.5"></i>
           <span data-i18n="hero-badge"><%= content.hero.badge %></span>
         </span>
-        <h1 class="text-4xl md:text-5xl font-bold text-slate-800 leading-tight mb-6">
+        <h1 data-animate="fade-up" data-delay="120ms" class="text-4xl md:text-5xl font-bold text-slate-800 leading-tight mb-6" style="<%- _tc('hero','heading') %>">
           <span data-i18n="hero-h1"><%= content.hero.heading1 %></span><br>
           <span class="text-transparent bg-clip-text bg-gradient-to-r from-brand-600 to-ocean-500" data-i18n="hero-h2"><%= content.hero.heading2 %></span>
         </h1>
-        <p class="text-slate-500 text-lg leading-relaxed mb-8" data-i18n="hero-subtext">
+        <p data-animate="fade-up" data-delay="240ms" class="text-slate-500 text-lg leading-relaxed mb-8" data-i18n="hero-subtext" style="<%- _tc('hero','subtext') %>">
           <%= content.hero.subtext %>
         </p>
-        <div class="flex flex-wrap gap-3">
+        <div data-animate="fade-up" data-delay="360ms" class="flex flex-wrap gap-3">
           <a href="#book" class="btn-primary px-7 py-3 text-base">
             <i data-lucide="calendar-plus" class="w-5 h-5"></i>
             <span data-i18n="hero-cta-main"><%= content.hero.ctaMain %></span>
@@ -136,13 +191,13 @@
       </div>
 
       <!-- Hero visual -->
-      <div class="hidden md:block">
+      <div data-animate="fade-left" data-delay="180ms" class="hidden md:block">
         <div class="relative">
           <div class="w-80 h-80 mx-auto rounded-3xl bg-gradient-to-br from-brand-400 to-ocean-500 flex items-center justify-center shadow-xl">
             <i data-lucide="heart-handshake" class="w-40 h-40 text-white/80"></i>
           </div>
           <!-- Floating cards -->
-          <div class="absolute -top-4 -left-6 card shadow-lg max-w-[200px]">
+          <div data-animate="zoom-in" data-delay="500ms" class="absolute -top-4 -left-6 card shadow-lg max-w-[200px]">
             <div class="flex items-center gap-2 mb-1">
               <i data-lucide="check-circle" class="w-4 h-4 text-brand-500"></i>
               <span class="text-xs font-semibold text-slate-700" data-i18n="hero-card-confirmed">ยืนยันนัดแล้ว</span>
@@ -150,7 +205,7 @@
             <p class="text-xs text-slate-500" data-i18n="hero-card-date">พุธ 18 มิ.ย. — 10:00 น.</p>
             <p class="text-xs text-brand-600 font-medium mt-0.5" data-i18n="hero-card-name">ดร.สุภาพร เมธาวี</p>
           </div>
-          <div class="absolute -bottom-4 -right-6 card shadow-lg max-w-[180px]">
+          <div data-animate="zoom-in" data-delay="640ms" class="absolute -bottom-4 -right-6 card shadow-lg max-w-[180px]">
             <div class="flex items-center gap-1 mb-1">
               <i data-lucide="star" class="w-3.5 h-3.5 text-amber-400 fill-amber-400"></i>
               <i data-lucide="star" class="w-3.5 h-3.5 text-amber-400 fill-amber-400"></i>
@@ -167,29 +222,59 @@
 
 
   <!-- Counselors -->
-  <section id="counselors" class="py-20" style="background:#eef1ff;">
-    <div class="max-w-6xl mx-auto px-6">
-      <div class="text-center mb-12">
-        <h2 class="text-3xl font-bold text-slate-800 mb-2" data-i18n="counselors-heading"><%= content.counselors.heading %></h2>
-        <p class="text-slate-500" data-i18n="counselors-subtext"><%= content.counselors.subtext %></p>
+  <section id="counselors" class="py-20" style="position:relative;overflow:hidden;background:#eef1ff;">
+    <%- _bgLayers('counselors') %>
+    <div class="max-w-6xl mx-auto px-6" style="position:relative;z-index:2;">
+      <div data-animate="fade-up" class="text-center mb-12">
+        <h2 class="text-3xl font-bold text-slate-800 mb-2" data-i18n="counselors-heading" style="<%- _tc('counselors','heading') %>"><%= content.counselors.heading %></h2>
+        <p class="text-slate-500" data-i18n="counselors-subtext" style="<%- _tc('counselors','subtext') %>"><%= content.counselors.subtext %></p>
       </div>
 
-      <div class="relative">
+      <div data-animate="fade-up" data-delay="120ms" class="relative">
         <button id="c-prev" class="absolute -left-5 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white shadow-md border border-slate-200 flex items-center justify-center text-slate-500 hover:text-brand-600 hover:border-brand-300 transition-colors">
           <i data-lucide="chevron-left" class="w-5 h-5"></i>
         </button>
 
-        <div id="c-track" class="overflow-hidden rounded-3xl">
+        <div id="c-track" class="overflow-hidden rounded-3xl pb-8">
           <div id="c-inner" class="flex gap-6" style="transition:transform 0.45s cubic-bezier(.4,0,.2,1);">
             <% counselors.forEach(c => { %>
             <div class="c-slide flex-none">
-              <div class="relative rounded-3xl overflow-hidden shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-300" style="height:440px;">
+              <div class="relative rounded-[28px] overflow-hidden shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-300 bg-[#f4f6fb]" style="height:460px;">
+
+                <% const cardLangs = (c.languages || []).map(l => String(l || '').trim().toLowerCase()) %>
+                <% const hasThai = cardLangs.some(l => l === 'ไทย' || l === 'thai' || l === 'th') %>
+                <% const hasEnglish = cardLangs.some(l => l === 'อังกฤษ' || l === 'english' || l === 'en') %>
+                <% if (hasThai || hasEnglish) { %>
+                <div class="absolute right-5 top-5 z-10 flex items-center gap-2">
+                  <% if (hasThai) { %>
+                  <span class="lang-flag-display inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/90 shadow-md ring-1 ring-slate-200" title="ไทย" aria-label="ไทย">
+                    <svg viewBox="0 0 24 24" width="36" height="36" style="border-radius:999px;box-shadow:0 0 0 1px rgba(148,163,184,.35);clip-path:circle(50%);" aria-hidden="true">
+                      <rect width="24" height="24" fill="#da291c"></rect>
+                      <rect y="4" width="24" height="16" fill="#fff"></rect>
+                      <rect y="8" width="24" height="8" fill="#2d2a4a"></rect>
+                    </svg>
+                  </span>
+                  <% } %>
+                  <% if (hasEnglish) { %>
+                  <span class="lang-flag-display inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/90 shadow-md ring-1 ring-slate-200" title="อังกฤษ" aria-label="อังกฤษ">
+                    <svg viewBox="0 0 60 60" width="36" height="36" style="border-radius:999px;box-shadow:0 0 0 1px rgba(148,163,184,.35);clip-path:circle(50%);" aria-hidden="true">
+                      <rect width="60" height="36" fill="#012169"></rect>
+                      <rect y="36" width="60" height="24" fill="#012169"></rect>
+                      <path d="M0 0l60 60M60 0L0 60" stroke="#fff" stroke-width="12"></path>
+                      <path d="M0 0l60 60M60 0L0 60" stroke="#c8102e" stroke-width="7"></path>
+                      <path d="M30 0v60M0 30h60" stroke="#fff" stroke-width="20"></path>
+                      <path d="M30 0v60M0 30h60" stroke="#c8102e" stroke-width="12"></path>
+                    </svg>
+                  </span>
+                  <% } %>
+                </div>
+                <% } %>
 
                 <!-- Photo / Avatar background -->
                 <% if (c.photo) { %>
-                <img src="<%= c.photo %>" alt="<%= c.name %>" class="absolute inset-0 w-full h-full object-cover object-top">
+                <img src="<%= c.photo %>" alt="<%= c.name %>" class="absolute inset-0 h-full w-full object-cover object-top">
                 <% } else { %>
-                <div class="absolute inset-0 flex items-center justify-center" style="background:linear-gradient(145deg,#e0e7ff 0%,#c7d2fe 50%,#ddd6fe 100%); padding-bottom:160px;">
+                <div class="absolute inset-0 flex items-center justify-center">
                   <div class="w-36 h-36 rounded-full flex items-center justify-center text-white font-bold text-5xl shadow-xl" style="background:linear-gradient(135deg,#6366f1,#06b6d4);">
                     <%= c.avatar %>
                   </div>
@@ -197,9 +282,9 @@
                 <% } %>
 
                 <!-- White info panel -->
-                <div class="absolute left-4 right-4 bottom-4 bg-white rounded-2xl p-6 shadow-lg">
-                  <p class="font-semibold text-sm mb-1" style="color:#6366f1;"><%= c.title %></p>
-                  <h3 class="font-bold text-slate-800 text-xl leading-tight mb-2"><%= c.name %></h3>
+                <div class="absolute left-6 right-6 bottom-6 bg-white/80 backdrop-blur-md rounded-[22px] px-7 py-4 shadow-[0_18px_40px_rgba(15,23,42,0.14)] ring-1 ring-white/70">
+                  <p class="font-semibold text-sm mb-2" style="color:#334155;"><%= c.title %></p>
+                  <h3 class="font-bold text-slate-800 text-2xl leading-tight mb-3"><%= c.name %></h3>
                   <p class="text-slate-500 text-sm leading-relaxed" style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;"><%= c.bio || c.specialties.join(' · ') %></p>
                 </div>
               </div>
@@ -218,12 +303,13 @@
   </section>
 
   <!-- Features -->
-  <section class="py-20 bg-gradient-to-r from-brand-600 to-ocean-600">
-    <div class="max-w-6xl mx-auto px-6">
+  <section id="features" class="py-20 bg-gradient-to-r from-brand-600 to-ocean-600" style="position:relative;overflow:hidden;">
+    <%- _bgLayers('features') %>
+    <div class="max-w-6xl mx-auto px-6" style="position:relative;z-index:2;">
       <div class="grid md:grid-cols-2 gap-12 items-center">
-        <div class="text-white">
-          <h2 class="text-3xl font-bold mb-4" data-i18n="features-heading">ทำไมต้องเลือก MindWell?</h2>
-          <p class="text-brand-100 mb-8 leading-relaxed" data-i18n="features-subtext">เราเชื่อว่าทุกคนมีสิทธิ์ได้รับการดูแลสุขภาพจิตที่ดี ในสภาพแวดล้อมที่ปลอดภัยและไว้วางใจได้</p>
+        <div data-animate="fade-right" class="text-white">
+          <h2 class="text-3xl font-bold mb-4" data-i18n="features-heading" style="<%- _tc('features','heading') %>">ทำไมต้องเลือก MindCare?</h2>
+          <p class="text-brand-100 mb-8 leading-relaxed" data-i18n="features-subtext" style="<%- _tc('features','subtext') %>">เราเชื่อว่าทุกคนมีสิทธิ์ได้รับการดูแลสุขภาพจิตที่ดี ในสภาพแวดล้อมที่ปลอดภัยและไว้วางใจได้</p>
           <% const features = [
             { icon:'shield-check', text:'นักให้คำปรึกษาผ่านการตรวจสอบและรับรองคุณสมบัติ' },
             { icon:'lock', text:'ข้อมูลทุกอย่างเป็นความลับตาม PDPA' },
@@ -233,11 +319,11 @@
           ] %>
           <ul class="space-y-3">
             <% features.forEach((f, idx) => { %>
-            <li class="flex items-center gap-3 text-brand-50">
+            <li data-animate="fade-right" data-delay="<%= idx * 90 %>ms" class="flex items-center gap-3 text-brand-50">
               <div class="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center flex-shrink-0">
                 <i data-lucide="<%= f.icon %>" class="w-4 h-4"></i>
               </div>
-              <span class="text-sm" data-i18n="feature-<%= idx %>"><%= f.text %></span>
+              <span class="text-sm" data-i18n="feature-<%= idx %>" style="<%- _tc('features','subtext') %>"><%= f.text %></span>
             </li>
             <% }) %>
           </ul>
@@ -250,7 +336,7 @@
             { icon:'star', num:'4.8', label:'คะแนนเฉลี่ย' },
           ] %>
           <% metrics.forEach((m, idx) => { %>
-          <div class="bg-white/10 backdrop-blur rounded-2xl p-6 text-white text-center">
+          <div data-animate="zoom-in" data-delay="<%= idx * 80 %>ms" class="bg-white/10 backdrop-blur rounded-2xl p-6 text-white text-center">
             <i data-lucide="<%= m.icon %>" class="w-7 h-7 mx-auto mb-3 text-brand-200"></i>
             <p class="text-3xl font-bold"><%= m.num %></p>
             <p class="text-sm text-brand-200 mt-1" data-i18n="metric-<%= idx %>"><%= m.label %></p>
@@ -262,26 +348,27 @@
   </section>
 
   <!-- CTA / Book -->
-  <section id="book" class="py-20 bg-white">
-    <div class="max-w-2xl mx-auto px-6 text-center">
-      <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-brand-400 to-ocean-500 flex items-center justify-center mx-auto mb-6">
+  <section id="book" class="py-20 bg-white" style="position:relative;overflow:hidden;">
+    <%- _bgLayers('book') %>
+    <div class="max-w-2xl mx-auto px-6 text-center" style="position:relative;z-index:2;">
+      <div data-animate="zoom-in" class="w-16 h-16 rounded-2xl bg-gradient-to-br from-brand-400 to-ocean-500 flex items-center justify-center mx-auto mb-6">
         <i data-lucide="calendar-heart" class="w-8 h-8 text-white"></i>
       </div>
-      <h2 class="text-3xl font-bold text-slate-800 mb-4" data-i18n="book-heading"><%= content.book.heading %></h2>
-      <p class="text-slate-500 mb-8 leading-relaxed" data-i18n="book-subtext"><%= content.book.subtext %></p>
+      <h2 data-animate="fade-up" data-delay="100ms" class="text-3xl font-bold text-slate-800 mb-4" data-i18n="book-heading" style="<%- _tc('book','heading') %>"><%= content.book.heading %></h2>
+      <p data-animate="fade-up" data-delay="200ms" class="text-slate-500 mb-8 leading-relaxed" data-i18n="book-subtext" style="<%- _tc('book','subtext') %>"><%= content.book.subtext %></p>
       <% if (query && query.sent) { %>
-      <div class="card border-2 border-brand-100 text-center py-10">
+      <div data-animate="fade-up" data-delay="300ms" class="card border-2 border-brand-100 text-center py-10">
         <div class="w-16 h-16 rounded-full bg-brand-50 flex items-center justify-center mx-auto mb-4">
           <i data-lucide="circle-check" class="w-8 h-8 text-brand-500"></i>
         </div>
         <h3 class="font-semibold text-slate-800 text-lg mb-2" data-i18n="book-success-heading">ส่งคำขอสำเร็จแล้ว!</h3>
-        <p class="text-slate-500 text-sm leading-relaxed" data-i18n-html="book-success-text">ทีมงานจะติดต่อกลับหาคุณภายใน 1 วันทำการ<br>ขอบคุณที่ไว้วางใจ MindWell</p>
+        <p class="text-slate-500 text-sm leading-relaxed" data-i18n-html="book-success-text">ทีมงานจะติดต่อกลับหาคุณภายใน 1 วันทำการ<br>ขอบคุณที่ไว้วางใจ MindCare</p>
       </div>
       <% } else { %>
-      <div class="card border-2 border-brand-100 text-left">
+      <div data-animate="fade-up" data-delay="300ms" class="card border-2 border-brand-100 text-left">
         <h3 class="font-semibold text-slate-700 mb-4 flex items-center gap-2">
           <i data-lucide="send" class="w-4 h-4 text-brand-500"></i>
-          <span data-i18n="form-heading"><%= content.book.formHeading %></span>
+          <span data-i18n="form-heading" style="<%- _tc('book','formHeading') %>"><%= content.book.formHeading %></span>
         </h3>
         <% if (query && query.error === 'missing') { %>
         <div class="flex items-center gap-2 mb-4 px-4 py-3 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm">
@@ -361,17 +448,18 @@
   </section>
 
   <!-- FAQ -->
-  <section id="faq" class="py-20 bg-slate-50">
-    <div class="max-w-3xl mx-auto px-6">
-      <h2 class="text-3xl font-bold text-slate-800 text-center mb-10" data-i18n="faq-heading">คำถามที่พบบ่อย</h2>
+  <section id="faq" class="py-20 bg-slate-50" style="position:relative;overflow:hidden;">
+    <%- _bgLayers('faq') %>
+    <div class="max-w-3xl mx-auto px-6" style="position:relative;z-index:2;">
+      <h2 data-animate="fade-up" class="text-3xl font-bold text-slate-800 text-center mb-10" data-i18n="faq-heading" style="<%- _tc('faq','heading') %>">คำถามที่พบบ่อย</h2>
       <div class="space-y-3">
         <% content.faqs.forEach((f, i) => { %>
-        <details class="card group cursor-pointer" data-faq-idx="<%= i %>" open="<%= i===0 %>">
+        <details data-animate="fade-up" data-delay="<%= i * 90 %>ms" class="card group cursor-pointer" data-faq-idx="<%= i %>" open="<%= i===0 %>">
           <summary class="font-medium text-slate-700 flex items-center justify-between list-none">
-            <span data-faq-q><%= f.q %></span>
+            <span data-faq-q style="<%- _tc('faq','questions') %>"><%= f.q %></span>
             <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 flex-shrink-0 group-open:rotate-180 transition-transform"></i>
           </summary>
-          <p class="mt-3 text-sm text-slate-500 leading-relaxed" data-faq-a><%- f.a %></p>
+          <p class="mt-3 text-sm text-slate-500 leading-relaxed" data-faq-a style="<%- _tc('faq','answers') %>"><%- f.a %></p>
         </details>
         <% }) %>
       </div>
@@ -387,7 +475,7 @@
             <div class="w-7 h-7 rounded-lg bg-gradient-to-br from-brand-500 to-ocean-500 flex items-center justify-center">
               <i data-lucide="heart-handshake" class="w-4 h-4 text-white"></i>
             </div>
-            <span class="font-bold text-white">MindWell</span>
+            <span class="font-bold text-white">MindCare</span>
           </div>
           <p class="text-sm leading-relaxed" data-i18n="footer-desc">ระบบจองนัดหมายการให้คำปรึกษาทางสุขภาพจิต เชื่อมต่อผู้ที่ต้องการความช่วยเหลือกับผู้เชี่ยวชาญที่ไว้วางใจได้</p>
         </div>
@@ -407,13 +495,13 @@
             </li>
             <li class="flex items-start gap-2">
               <i data-lucide="clock" class="w-3.5 h-3.5 shrink-0 mt-0.5"></i>
-              <span data-i18n="footer-hours">จันทร์-เสาร์ 08.30 – 17.00 น. (ยกเว้นวันหยุดนักขัตฤกษ์)</span>
+              <span data-i18n-html="footer-hours">จันทร์-เสาร์ 08.30 – 17.00 น.<br>(ยกเว้นวันหยุดนักขัตฤกษ์)</span>
             </li>
           </ul>
         </div>
       </div>
       <div class="border-t border-slate-700 pt-6 text-center text-xs">
-        <p data-i18n="footer-copyright">© 2024 MindWell · ข้อมูลทุกอย่างได้รับการคุ้มครองตาม PDPA</p>
+        <p data-i18n="footer-copyright">© 2024 MindCare · ข้อมูลทุกอย่างได้รับการคุ้มครองตาม PDPA</p>
       </div>
     </div>
   </footer>
@@ -426,13 +514,39 @@
       const prevBtn = document.getElementById('c-prev');
       const nextBtn = document.getElementById('c-next');
       const dotsEl  = document.getElementById('c-dots');
+      const trackEl = document.getElementById('c-track');
       if (!slides.length) return;
       let current = 0;
+      let moving = false;
+      let autoplayTimer = null;
       const GAP = 24;
+      const ANIM_MS = 650;
+      const AUTOPLAY_MS = 4200;
 
       function pv()     { return window.innerWidth >= 768 ? 3 : 1; }
-      function maxIdx() { return Math.max(0, slides.length - pv()); }
+      function maxIdx() { return Math.max(0, slides.length - 1); }
       function sw()     { return slides[0].offsetWidth + GAP; }
+      function loopIdx(i) {
+        const max = maxIdx();
+        if (max === 0) return 0;
+        if (i < 0) return max;
+        if (i > max) return 0;
+        return i;
+      }
+      function renderSlides() {
+        const ordered = [];
+        for (let i = 0; i < slides.length; i++) {
+          ordered.push(slides[(current + i) % slides.length]);
+        }
+        ordered.forEach(slide => inner.appendChild(slide));
+        inner.style.transform = 'translateX(0)';
+      }
+      function resetTrack() {
+        inner.style.transition = 'none';
+        inner.style.transform = 'translateX(0)';
+        inner.offsetHeight;
+        inner.style.transition = 'transform ' + ANIM_MS + 'ms cubic-bezier(.4,0,.2,1)';
+      }
 
       function buildDots() {
         dotsEl.innerHTML = '';
@@ -441,7 +555,7 @@
         for (let i = 0; i < total; i++) {
           const d = document.createElement('button');
           d.className = 'transition-all duration-300 rounded-full ' + (i === current ? 'w-6 h-2 bg-brand-500' : 'w-2 h-2 bg-slate-300');
-          d.addEventListener('click', () => goTo(i));
+          d.addEventListener('click', () => jumpTo(i));
           dotsEl.appendChild(d);
         }
       }
@@ -453,28 +567,186 @@
       }
 
       function goTo(i) {
-        current = Math.max(0, Math.min(i, maxIdx()));
-        inner.style.transform = 'translateX(-' + (current * sw()) + 'px)';
-        prevBtn.style.opacity = current === 0 ? '0.4' : '1';
-        nextBtn.style.opacity = current >= maxIdx() ? '0.4' : '1';
+        if (moving) return;
+        const dir = i > current ? 1 : -1;
+        moving = true;
+        if (dir < 0) {
+          current = loopIdx(current - 1);
+          renderSlides();
+          inner.style.transition = 'none';
+          inner.style.transform = 'translateX(-' + sw() + 'px)';
+          inner.offsetHeight;
+          inner.style.transition = 'transform ' + ANIM_MS + 'ms cubic-bezier(.4,0,.2,1)';
+          inner.style.transform = 'translateX(0)';
+        } else {
+          inner.style.transform = 'translateX(-' + sw() + 'px)';
+        }
+        window.setTimeout(() => {
+          if (dir > 0) current = loopIdx(current + 1);
+          renderSlides();
+          resetTrack();
+          updateDots();
+          moving = false;
+        }, ANIM_MS + 20);
+      }
+
+      function jumpTo(i) {
+        current = loopIdx(i);
+        renderSlides();
+        resetTrack();
         updateDots();
       }
 
       function setWidths() {
-        const w = (document.getElementById('c-track').offsetWidth - (pv() - 1) * GAP) / pv();
+        const w = (trackEl.offsetWidth - (pv() - 1) * GAP) / pv();
         slides.forEach(s => { s.style.width = w + 'px'; });
-        current = Math.min(current, maxIdx());
-        goTo(current);
+        current = loopIdx(current);
+        jumpTo(current);
         buildDots();
       }
 
-      prevBtn.addEventListener('click', () => goTo(current - 1));
-      nextBtn.addEventListener('click', () => goTo(current + 1));
+      function stopAutoplay() {
+        if (autoplayTimer) window.clearInterval(autoplayTimer);
+        autoplayTimer = null;
+      }
+
+      function startAutoplay() {
+        stopAutoplay();
+        if (slides.length <= 1 || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+        autoplayTimer = window.setInterval(() => {
+          if (!moving) goTo(current + 1);
+        }, AUTOPLAY_MS);
+      }
+
+      function restartAutoplay() {
+        stopAutoplay();
+        startAutoplay();
+      }
+
+      prevBtn.addEventListener('click', () => {
+        goTo(current - 1);
+        restartAutoplay();
+      });
+      nextBtn.addEventListener('click', () => {
+        goTo(current + 1);
+        restartAutoplay();
+      });
+      if (trackEl) {
+        trackEl.addEventListener('mouseenter', stopAutoplay);
+        trackEl.addEventListener('mouseleave', startAutoplay);
+        trackEl.addEventListener('focusin', stopAutoplay);
+        trackEl.addEventListener('focusout', startAutoplay);
+      }
+      document.addEventListener('visibilitychange', () => {
+        if (document.hidden) stopAutoplay();
+        else startAutoplay();
+      });
       window.addEventListener('resize', setWidths);
       setWidths();
+      startAutoplay();
     })();
 
     lucide.createIcons();
+
+    // Smooth section navigation
+    (function () {
+      const nav = document.getElementById('main-nav-links');
+      const indicator = document.getElementById('main-nav-indicator');
+      const navLinks = nav ? Array.from(nav.querySelectorAll('a[href^="#"]')) : [];
+      const sections = Array.from(document.querySelectorAll('#home, #counselors, #book, #faq'));
+      let activeLock = '';
+      let activeLockTimer = null;
+      let ticking = false;
+
+      function navOffset() {
+        const bar = document.querySelector('nav');
+        return (bar ? bar.offsetHeight : 0) + 14;
+      }
+
+      function getTarget(hash) {
+        const id = String(hash || '').replace('#', '');
+        return id ? document.getElementById(id) : null;
+      }
+
+      function moveIndicator(link) {
+        if (!nav || !indicator || !link) {
+          if (indicator) indicator.style.opacity = '0';
+          return;
+        }
+        const navRect = nav.getBoundingClientRect();
+        const linkRect = link.getBoundingClientRect();
+        indicator.style.width = linkRect.width + 'px';
+        indicator.style.transform = 'translateX(' + (linkRect.left - navRect.left) + 'px)';
+        indicator.style.opacity = '1';
+      }
+
+      function setActive(hash) {
+        const active = navLinks.find(link => link.getAttribute('href') === hash);
+        navLinks.forEach(link => {
+          const isActive = link === active;
+          link.classList.toggle('is-active', isActive);
+          link.setAttribute('aria-current', isActive ? 'page' : 'false');
+        });
+        moveIndicator(active);
+      }
+
+      function scrollToSection(hash) {
+        const target = getTarget(hash);
+        if (!target) return;
+        const top = Math.max(0, window.scrollY + target.getBoundingClientRect().top - navOffset());
+        activeLock = hash;
+        if (activeLockTimer) window.clearTimeout(activeLockTimer);
+        activeLockTimer = window.setTimeout(() => {
+          activeLock = '';
+          requestSync();
+        }, 1200);
+        window.scrollTo({ top, behavior: 'smooth' });
+        if (history.pushState) history.pushState(null, '', hash);
+        setActive(hash);
+      }
+
+      document.querySelectorAll('a[href^="#"]').forEach(link => {
+        link.addEventListener('click', event => {
+          const hash = link.getAttribute('href');
+          if (!hash || hash === '#') return;
+          if (!getTarget(hash)) return;
+          event.preventDefault();
+          scrollToSection(hash);
+        });
+      });
+
+      function syncActiveFromScroll() {
+        ticking = false;
+        if (activeLock) {
+          const target = getTarget(activeLock);
+          const distance = target ? Math.abs(target.getBoundingClientRect().top - navOffset()) : 0;
+          if (target && distance > 16) return;
+          activeLock = '';
+          if (activeLockTimer) window.clearTimeout(activeLockTimer);
+          activeLockTimer = null;
+        }
+        const scanY = window.scrollY + navOffset() + 70;
+        let current = sections[0];
+        sections.forEach(section => {
+          if (section.offsetTop <= scanY) current = section;
+        });
+        setActive(current && current.id !== 'home' ? '#' + current.id : '');
+      }
+
+      function requestSync() {
+        if (ticking) return;
+        ticking = true;
+        window.requestAnimationFrame(syncActiveFromScroll);
+      }
+
+      window.addEventListener('scroll', requestSync, { passive: true });
+      window.addEventListener('resize', requestSync);
+      if (window.location.hash && getTarget(window.location.hash)) {
+        window.setTimeout(() => scrollToSection(window.location.hash), 80);
+      } else {
+        requestSync();
+      }
+    })();
 
     // ─── i18n ────────────────────────────────────────────────────────────────
     const LANG_KEY = 'mw-lang';
@@ -482,9 +754,21 @@
       th: `<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 64 64" style="font-size:24px" aria-hidden="true"><path fill="#ed4c5c" d="M52.4 10C47 5 39.9 2 32 2s-15 3-20.4 8zM11.6 54c5.4 5 12.5 8 20.4 8s15-3 20.4-8z"/><path fill="#2a5f9e" d="M2 32c0 4.3.9 8.3 2.5 12h55c1.6-3.7 2.5-7.7 2.5-12s-.9-8.3-2.5-12h-55C2.9 23.7 2 27.7 2 32"/><path fill="#f9f9f9" d="M11.6 54h40.7c3-2.8 5.5-6.2 7.1-10h-55c1.8 3.8 4.2 7.2 7.2 10m40.8-44H11.6c-3 2.8-5.5 6.2-7.1 10h55c-1.7-3.8-4.1-7.2-7.1-10"/></svg>`,
       en: `<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 64 64" style="font-size:24px" aria-hidden="true"><path fill="#ed4c5c" d="M48 6.6C43.3 3.7 37.9 2 32 2v4.6z"/><path fill="#fff" d="M32 11.2h21.6C51.9 9.5 50 7.9 48 6.6H32z"/><path fill="#ed4c5c" d="M32 15.8h25.3c-1.1-1.7-2.3-3.2-3.6-4.6H32z"/><path fill="#fff" d="M32 20.4h27.7c-.7-1.6-1.5-3.2-2.4-4.6H32z"/><path fill="#ed4c5c" d="M32 25h29.2c-.4-1.6-.9-3.1-1.5-4.6H32z"/><path fill="#fff" d="M32 29.7h29.9c-.1-1.6-.4-3.1-.7-4.6H32z"/><path fill="#ed4c5c" d="M61.9 29.7H32V32H2c0 .8 0 1.5.1 2.3h59.8c.1-.8.1-1.5.1-2.3s0-1.6-.1-2.3"/><path fill="#fff" d="M2.8 38.9h58.4c.4-1.5.6-3 .7-4.6H2.1c.1 1.5.4 3.1.7 4.6"/><path fill="#ed4c5c" d="M4.3 43.5h55.4c.6-1.5 1.1-3 1.5-4.6H2.8c.4 1.6.9 3.1 1.5 4.6"/><path fill="#fff" d="M6.7 48.1h50.6c.9-1.5 1.7-3 2.4-4.6H4.3c.7 1.6 1.5 3.1 2.4 4.6"/><path fill="#ed4c5c" d="M10.3 52.7h43.4c1.3-1.4 2.6-3 3.6-4.6H6.7c1 1.7 2.3 3.2 3.6 4.6"/><path fill="#fff" d="M15.9 57.3h32.2c2.1-1.3 3.9-2.9 5.6-4.6H10.3c1.7 1.8 3.6 3.3 5.6 4.6"/><path fill="#ed4c5c" d="M32 62c5.9 0 11.4-1.7 16.1-4.7H15.9c4.7 3 10.2 4.7 16.1 4.7"/><path fill="#428bc1" d="M16 6.6c-2.1 1.3-4 2.9-5.7 4.6c-1.4 1.4-2.6 3-3.6 4.6c-.9 1.5-1.8 3-2.4 4.6c-.6 1.5-1.1 3-1.5 4.6c-.4 1.5-.6 3-.7 4.6c-.1.8-.1 1.6-.1 2.4h30V2c-5.9 0-11.3 1.7-16 4.6"/><path fill="#fff" d="m25 3l.5 1.5H27l-1.2 1l.4 1.5l-1.2-.9l-1.2.9l.4-1.5l-1.2-1h1.5zm4 6l.5 1.5H31l-1.2 1l.4 1.5l-1.2-.9l-1.2.9l.4-1.5l-1.2-1h1.5zm-8 0l.5 1.5H23l-1.2 1l.4 1.5l-1.2-.9l-1.2.9l.4-1.5l-1.2-1h1.5zm4 6l.5 1.5H27l-1.2 1l.4 1.5l-1.2-.9l-1.2.9l.4-1.5l-1.2-1h1.5zm-8 0l.5 1.5H19l-1.2 1l.4 1.5l-1.2-.9l-1.2.9l.4-1.5l-1.2-1h1.5zm-8 0l.5 1.5H11l-1.2 1l.4 1.5l-1.2-.9l-1.2.9l.4-1.5l-1.2-1h1.5zm20 6l.5 1.5H31l-1.2 1l.4 1.5l-1.2-.9l-1.2.9l.4-1.5l-1.2-1h1.5zm-8 0l.5 1.5H23l-1.2 1l.4 1.5l-1.2-.9l-1.2.9l.4-1.5l-1.2-1h1.5zm-8 0l.5 1.5H15l-1.2 1l.4 1.5l-1.2-.9l-1.2.9l.4-1.5l-1.2-1h1.5zm12 6l.5 1.5H27l-1.2 1l.4 1.5l-1.2-.9l-1.2.9l.4-1.5l-1.2-1h1.5zm-8 0l.5 1.5H19l-1.2 1l.4 1.5l-1.2-.9l-1.2.9l.4-1.5l-1.2-1h1.5zm-8 0l.5 1.5H11l-1.2 1l.4 1.5l-1.2-.9l-1.2.9l.4-1.5l-1.2-1h1.5zm2.8-14l1.2-.9l1.2.9l-.5-1.5l1.2-1h-1.5L13 9l-.5 1.5h-1.4l1.2.9zm-8 12l1.2-.9l1.2.9l-.5-1.5l1.2-1H5.5L5 21l-.5 1.5h-1c0 .1-.1.2-.1.3l.8.6z"/></svg>`
     };
+    FLAGS.en = `<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 64 64" style="font-size:24px;border-radius:999px;box-shadow:0 0 0 1px rgba(148,163,184,.35);clip-path:circle(50%);" aria-hidden="true"><rect width="64" height="64" fill="#012169"/><path d="M0 0l64 64M64 0L0 64" stroke="#fff" stroke-width="13"/><path d="M0 0l64 64M64 0L0 64" stroke="#c8102e" stroke-width="7"/><path d="M32 0v64M0 32h64" stroke="#fff" stroke-width="21"/><path d="M32 0v64M0 32h64" stroke="#c8102e" stroke-width="12"/></svg>`;
+    const MENU_FLAGS = {
+      th: FLAGS.th.replace('font-size:24px', 'font-size:20px'),
+      en: FLAGS.en.replace('font-size:24px', 'font-size:20px')
+    };
+    const langOptionFlags = {
+      th: document.querySelector('#lang-option-th svg'),
+      en: document.querySelector('#lang-option-en svg')
+    };
+    Object.entries(langOptionFlags).forEach(([lang, flag]) => {
+      if (flag) flag.outerHTML = MENU_FLAGS[lang];
+    });
     const TRANSLATIONS = {
       th: {
-        'page-title': 'MindWell — ระบบจองนัดหมายการให้คำปรึกษาทางจิตใจ',
+        'page-title': 'MindCare — ระบบจองนัดหมายการให้คำปรึกษาทางจิตใจ',
         'nav-register': 'ลงทะเบียนเพื่อขอรับบริการ',
         'nav-counselors': 'นักให้คำปรึกษา',
         'nav-faq': 'คำถามที่พบบ่อย',
@@ -492,19 +776,19 @@
         'nav-staff': 'สำหรับเจ้าหน้าที่',
         'mobile-home': 'หน้าแรก',
         'mobile-services': 'บริการของเรา',
-        'hero-badge': 'ปลอดภัย · เป็นส่วนตัว · เชื่อถือได้',
-        'hero-h1': 'ดูแลใจของคุณ',
-        'hero-h2': 'อย่างที่ควรได้รับ',
-        'hero-subtext': 'เชื่อมต่อกับนักจิตวิทยาและนักให้คำปรึกษาที่ผ่านการรับรอง จองนัดหมายได้ง่ายๆ ทั้งแบบออนไลน์และเข้ารับบริการด้วยตนเอง',
-        'hero-cta-main': 'ลงทะเบียนเพื่อขอรับบริการ',
-        'hero-cta-sub': 'ดูนักให้คำปรึกษา',
+        'hero-badge': <%- JSON.stringify(content.hero && content.hero.badge || 'ปลอดภัย · เป็นส่วนตัว · เชื่อถือได้') %>,
+        'hero-h1': <%- JSON.stringify(content.hero && content.hero.heading1 || 'ดูแลใจของคุณ') %>,
+        'hero-h2': <%- JSON.stringify(content.hero && content.hero.heading2 || 'อย่างที่ควรได้รับ') %>,
+        'hero-subtext': <%- JSON.stringify(content.hero && content.hero.subtext || '') %>,
+        'hero-cta-main': <%- JSON.stringify(content.hero && content.hero.ctaMain || 'ลงทะเบียนเพื่อขอรับบริการ') %>,
+        'hero-cta-sub': <%- JSON.stringify(content.hero && content.hero.ctaSub || 'ดูนักให้คำปรึกษา') %>,
         'hero-card-confirmed': 'ยืนยันนัดแล้ว',
         'hero-card-date': 'พุธ 18 มิ.ย. — 10:00 น.',
         'hero-card-name': 'ดร.สุภาพร เมธาวี',
         'hero-card-review': '"รู้สึกดีขึ้นมากหลังจากได้คุย ขอบคุณมากครับ"',
-        'counselors-heading': 'นักให้คำปรึกษาของเรา',
-        'counselors-subtext': 'ทีมผู้เชี่ยวชาญที่ผ่านการคัดกรองและรับรองคุณภาพ',
-        'features-heading': 'ทำไมต้องเลือก MindWell?',
+        'counselors-heading': <%- JSON.stringify(content.counselors && content.counselors.heading || 'นักจิตวิทยาให้คำปรึกษาของเรา') %>,
+        'counselors-subtext': <%- JSON.stringify(content.counselors && content.counselors.subtext || '') %>,
+        'features-heading': 'ทำไมต้องเลือก MindCare?',
         'features-subtext': 'เราเชื่อว่าทุกคนมีสิทธิ์ได้รับการดูแลสุขภาพจิตที่ดี ในสภาพแวดล้อมที่ปลอดภัยและไว้วางใจได้',
         'feature-0': 'นักให้คำปรึกษาผ่านการตรวจสอบและรับรองคุณสมบัติ',
         'feature-1': 'ข้อมูลทุกอย่างเป็นความลับตาม PDPA',
@@ -515,11 +799,11 @@
         'metric-1': 'นักให้คำปรึกษา',
         'metric-2': 'นัดหมายสำเร็จ',
         'metric-3': 'คะแนนเฉลี่ย',
-        'book-heading': 'ลงทะเบียนเพื่อขอรับบริการให้คำปรึกษา',
-        'book-subtext': 'การขอความช่วยเหลือไม่ใช่เรื่องอ่อนแอ มันคือความกล้าหาญ เริ่มต้นดูแลใจของคุณวันนี้เลย',
+        'book-heading': <%- JSON.stringify(content.book && content.book.heading || 'ลงทะเบียนเพื่อขอรับบริการให้คำปรึกษา') %>,
+        'book-subtext': <%- JSON.stringify(content.book && content.book.subtext || '') %>,
         'book-success-heading': 'ส่งคำขอสำเร็จแล้ว!',
-        'book-success-text': 'ทีมงานจะติดต่อกลับหาคุณภายใน 1 วันทำการ<br>ขอบคุณที่ไว้วางใจ MindWell',
-        'form-heading': 'กรุณาฝากข้อมูลของท่าน เพื่อให้เจ้าหน้าที่ติดต่อกลับสำหรับการนัดหมายรับคำปรึกษา',
+        'book-success-text': 'ทีมงานจะติดต่อกลับหาคุณภายใน 1 วันทำการ<br>ขอบคุณที่ไว้วางใจ MindCare',
+        'form-heading': <%- JSON.stringify(content.book && content.book.formHeading || 'กรุณาฝากข้อมูลของท่าน เพื่อให้เจ้าหน้าที่ติดต่อกลับสำหรับการนัดหมายรับคำปรึกษา') %>,
         'form-error': 'กรุณากรอกข้อมูลที่จำเป็นให้ครบทุกช่อง',
         'form-label-name': 'ชื่อ-นามสกุล',
         'form-label-studentid': 'รหัสนักศึกษา',
@@ -543,21 +827,17 @@
         'pdpa-checkbox': 'ข้าพเจ้าได้อ่านและยอมรับการยินยอมเปิดเผยข้อมูลแล้ว',
         'form-submit': 'ส่งคำขอจองนัดหมาย',
         'faq-heading': 'คำถามที่พบบ่อย',
-        'faq-items': [
-          { q: 'ข้อมูลที่ฉันแชร์จะถูกเก็บเป็นความลับไหม?', a: 'ใช่ ข้อมูลทั้งหมดถูกเข้ารหัสและเก็บรักษาตาม พ.ร.บ.คุ้มครองข้อมูลส่วนบุคคล (PDPA) นักให้คำปรึกษาของเราผูกพันด้วยจรรยาบรรณวิชาชีพ' },
-          { q: 'ถ้าฉันต้องการยกเลิกหรือเลื่อนนัด ทำอย่างไร?', a: 'คุณสามารถยกเลิกหรือเลื่อนนัดได้ก่อน 24 ชั่วโมง ผ่าน <a href="https://page.line.me/bucare?openQrModal=true" target="_blank" rel="noopener" class="text-brand-600 font-medium hover:underline">LINE @bucare</a>' },
-          { q: 'การให้คำปรึกษาออนไลน์มีประสิทธิภาพเท่าการเข้ารับบริการด้วยตนเองไหม?', a: 'งานวิจัยพบว่าการให้คำปรึกษาออนไลน์มีประสิทธิภาพใกล้เคียงกัน และสะดวกกว่าสำหรับหลายคน นักให้คำปรึกษาของเราผ่านการฝึกอบรมเฉพาะสำหรับรูปแบบออนไลน์' }
-        ],
+        'faq-items': <%- JSON.stringify(content.faqs || []) %>,
         'footer-desc': 'ระบบจองนัดหมายการให้คำปรึกษาทางสุขภาพจิต เชื่อมต่อผู้ที่ต้องการความช่วยเหลือกับผู้เชี่ยวชาญที่ไว้วางใจได้',
         'footer-services': 'บริการ',
         'footer-link-1': 'นักให้คำปรึกษาของเรา',
         'footer-link-2': 'ลงทะเบียนเพื่อขอรับบริการ',
         'footer-contact': 'ติดต่อ',
-        'footer-hours': 'จันทร์-เสาร์ 08.30 – 17.00 น. (ยกเว้นวันหยุดนักขัตฤกษ์)',
-        'footer-copyright': '© 2024 MindWell · ข้อมูลทุกอย่างได้รับการคุ้มครองตาม PDPA',
+        'footer-hours': <%- JSON.stringify(content.contact && content.contact.hours || 'จันทร์-เสาร์ 08.30 – 17.00 น.<br>(ยกเว้นวันหยุดนักขัตฤกษ์)') %>,
+        'footer-copyright': '© 2024 MindCare · ข้อมูลทุกอย่างได้รับการคุ้มครองตาม PDPA',
       },
       en: {
-        'page-title': 'MindWell — Mental Health Counseling Appointment System',
+        'page-title': 'MindCare — Mental Health Counseling Appointment System',
         'nav-register': 'Register for Services',
         'nav-counselors': 'Counselors',
         'nav-faq': 'FAQ',
@@ -577,7 +857,7 @@
         'hero-card-review': '"Feeling much better after our talk. Thank you so much!"',
         'counselors-heading': <%- JSON.stringify((content.en && content.en.counselors && content.en.counselors.heading) || 'Our Counselors') %>,
         'counselors-subtext': <%- JSON.stringify((content.en && content.en.counselors && content.en.counselors.subtext) || 'A team of experts who have been screened and quality-certified') %>,
-        'features-heading': 'Why Choose MindWell?',
+        'features-heading': 'Why Choose MindCare?',
         'features-subtext': 'We believe everyone deserves good mental health care in a safe and trustworthy environment.',
         'feature-0': 'Counselors verified and certified',
         'feature-1': 'All information is confidential under PDPA',
@@ -591,7 +871,7 @@
         'book-heading': <%- JSON.stringify((content.en && content.en.book && content.en.book.heading) || 'Register for Counseling Services') %>,
         'book-subtext': <%- JSON.stringify((content.en && content.en.book && content.en.book.subtext) || 'Seeking help is not weakness — it takes courage. Start taking care of your mind today.') %>,
         'book-success-heading': 'Request Sent Successfully!',
-        'book-success-text': 'Our team will contact you within 1 business day.<br>Thank you for trusting MindWell.',
+        'book-success-text': 'Our team will contact you within 1 business day.<br>Thank you for trusting MindCare.',
         'form-heading': 'Please leave your information so our staff can contact you to schedule a counseling appointment.',
         'form-error': 'Please fill in all required fields.',
         'form-label-name': 'Full Name',
@@ -622,8 +902,8 @@
         'footer-link-1': 'Our Counselors',
         'footer-link-2': 'Register for Services',
         'footer-contact': 'Contact',
-        'footer-hours': 'Mon–Sat 08:30–17:00 (excl. public holidays)',
-        'footer-copyright': '© 2024 MindWell · All information is protected under PDPA',
+        'footer-hours': <%- JSON.stringify((content.en && content.en.contact && content.en.contact.hours) || 'Mon–Sat 08:30–17:00 (excl. public holidays)') %>,
+        'footer-copyright': '© 2024 MindCare · All information is protected under PDPA',
       }
     };
 
@@ -743,6 +1023,36 @@
     (function () {
       const saved = localStorage.getItem(LANG_KEY) || 'th';
       setLang(saved);
+    })();
+
+    // ── Scroll animations ────────────────────────────────────────────────────
+    ;(function(){
+      // Apply per-element transition delays from data-delay attribute
+      document.querySelectorAll('[data-animate]').forEach(function(el){
+        if(el.dataset.delay) el.style.transitionDelay = el.dataset.delay;
+      });
+
+      function reveal(el){ el.classList.add('is-visible'); }
+
+      // Hero: trigger on page load (already in viewport)
+      requestAnimationFrame(function(){
+        requestAnimationFrame(function(){
+          document.querySelectorAll('#home [data-animate]').forEach(reveal);
+        });
+      });
+
+      // All other sections: trigger when element enters viewport
+      if('IntersectionObserver' in window){
+        var io = new IntersectionObserver(function(entries){
+          entries.forEach(function(e){
+            if(e.isIntersecting){ reveal(e.target); io.unobserve(e.target); }
+          });
+        },{ threshold: 0.12, rootMargin: '0px 0px -48px 0px' });
+
+        document.querySelectorAll('[data-animate]').forEach(function(el){
+          if(!el.closest('#home')) io.observe(el);
+        });
+      }
     })();
   </script>
 </body>

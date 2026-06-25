@@ -1,4 +1,4 @@
-const express = require('express')
+﻿const express = require('express')
 const router  = express.Router()
 const fs      = require('fs')
 const path    = require('path')
@@ -35,12 +35,14 @@ router.post('/login', async (req, res) => {
 
   req.session.adminId     = user.id
   req.session.adminName   = user.name
-  req.session.adminRole   = userType === 'counselor' ? 'นักจิตวิทยา' : (user.role || 'admin')
+  req.session.adminRole   = userType === 'counselor' ? 'เธเธฑเธเธเธดเธ•เธงเธดเธ—เธขเธฒ' : (user.role || 'admin')
   req.session.adminEmail  = user.email
+  req.session.adminPhoto  = userType === 'counselor' ? (user.photo || '') : ''
+  req.session.adminAvatar = userType === 'counselor' ? (user.avatar || '') : ''
   req.session.userType    = userType
   req.session.counselorId = userType === 'counselor' ? user.id : null
 
-  res.redirect(userType === 'counselor' ? '/admin/appointments' : '/admin')
+  res.redirect('/admin')
 })
 
 router.post('/logout', (req, res) => {

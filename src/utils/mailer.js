@@ -1,4 +1,4 @@
-require('dotenv').config()
+﻿require('dotenv').config()
 const nodemailer = require('nodemailer')
 
 // ── Transporter ───────────────────────────────────────────────────────────────
@@ -51,7 +51,7 @@ function emailWrapper(title, accentColor, bodyHtml) {
             <tr>
               <td>
                 <div style="display:inline-block;background:rgba(255,255,255,0.2);border-radius:10px;padding:6px 14px;margin-bottom:16px;">
-                  <span style="color:#ffffff;font-size:13px;font-weight:600;letter-spacing:1px;">MINDWELL</span>
+                  <span style="color:#ffffff;font-size:13px;font-weight:600;letter-spacing:1px;">MindCare</span>
                 </div>
                 <h1 style="color:#ffffff;margin:0;font-size:22px;font-weight:700;line-height:1.3;">${title}</h1>
               </td>
@@ -71,10 +71,10 @@ function emailWrapper(title, accentColor, bodyHtml) {
       <tr>
         <td style="padding:20px 40px 28px;border-top:1px solid #f1f5f9;">
           <p style="margin:0 0 8px;font-size:12px;color:#94a3b8;line-height:1.6;">
-            อีเมลนี้ถูกส่งโดยระบบอัตโนมัติจาก MindWell · ข้อมูลทุกอย่างได้รับการคุ้มครองตาม พ.ร.บ. PDPA<br>
-            กรุณาอย่าตอบกลับอีเมลนี้โดยตรง หากมีคำถามติดต่อ <a href="mailto:${process.env.SMTP_FROM_EMAIL || 'hello@mindwell.th'}" style="color:#05967e;text-decoration:none;">${process.env.SMTP_FROM_EMAIL || 'hello@mindwell.th'}</a>
+            อีเมลนี้ถูกส่งโดยระบบอัตโนมัติจาก MindCare · ข้อมูลทุกอย่างได้รับการคุ้มครองตาม พ.ร.บ. PDPA<br>
+            กรุณาอย่าตอบกลับอีเมลนี้โดยตรง หากมีคำถามติดต่อ <a href="mailto:${process.env.SMTP_FROM_EMAIL || 'hello@MindCare.th'}" style="color:#05967e;text-decoration:none;">${process.env.SMTP_FROM_EMAIL || 'hello@MindCare.th'}</a>
           </p>
-          <p style="margin:0;font-size:11px;color:#cbd5e1;">© ${new Date().getFullYear()} MindWell · ระบบจองนัดหมายการให้คำปรึกษาทางสุขภาพจิต</p>
+          <p style="margin:0;font-size:11px;color:#cbd5e1;">© ${new Date().getFullYear()} MindCare · ระบบจองนัดหมายการให้คำปรึกษาทางสุขภาพจิต</p>
         </td>
       </tr>
 
@@ -161,8 +161,8 @@ function clientEmailHtml({ appointment, client, counselor, concern }) {
     </div>
 
     <p style="margin:0;font-size:13px;color:#64748b;line-height:1.7;">
-      ขอบคุณที่ไว้วางใจ MindWell ในการดูแลสุขภาพจิตของคุณ 💚<br>
-      หากมีคำถามใด กรุณาติดต่อทีมงานผ่านอีเมล ${process.env.SMTP_FROM_EMAIL || 'hello@mindwell.th'}
+      ขอบคุณที่ไว้วางใจ MindCare ในการดูแลสุขภาพจิตของคุณ 💚<br>
+      หากมีคำถามใด กรุณาติดต่อทีมงานผ่านอีเมล ${process.env.SMTP_FROM_EMAIL || 'hello@MindCare.th'}
     </p>`
 
   return emailWrapper(
@@ -180,7 +180,7 @@ function counselorEmailHtml({ appointment, client, counselor, concern }) {
   const body = `
     <p style="margin:0 0 24px;font-size:15px;color:#334155;line-height:1.7;">
       สวัสดี <strong style="color:#1e293b;">${counselor.name}</strong><br>
-      คุณมีนัดหมายใหม่จากระบบ MindWell กรุณาตรวจสอบรายละเอียดด้านล่าง
+      คุณมีนัดหมายใหม่จากระบบ MindCare กรุณาตรวจสอบรายละเอียดด้านล่าง
     </p>
 
     <!-- Alert Badge -->
@@ -215,8 +215,8 @@ function counselorEmailHtml({ appointment, client, counselor, concern }) {
     </div>
 
     <p style="margin:0;font-size:13px;color:#64748b;line-height:1.7;">
-      ขอบคุณสำหรับการให้บริการผ่านระบบ MindWell 💚<br>
-      หากมีคำถามใด กรุณาติดต่อทีมงานผ่านอีเมล ${process.env.SMTP_FROM_EMAIL || 'hello@mindwell.th'}
+      ขอบคุณสำหรับการให้บริการผ่านระบบ MindCare 💚<br>
+      หากมีคำถามใด กรุณาติดต่อทีมงานผ่านอีเมล ${process.env.SMTP_FROM_EMAIL || 'hello@MindCare.th'}
     </p>`
 
   return emailWrapper(
@@ -226,7 +226,71 @@ function counselorEmailHtml({ appointment, client, counselor, concern }) {
   )
 }
 
+// ── Template: แบบประเมินความพึงพอใจ → ส่งให้ผู้รับบริการ ──────────────────────
+
+function surveyEmailHtml({ appointment, client, counselor, surveyUrl }) {
+  const dateStr = formatDate(appointment.date)
+
+  const body = `
+    <p style="margin:0 0 24px;font-size:15px;color:#334155;line-height:1.7;">
+      สวัสดี <strong style="color:#1e293b;">${client.name}</strong><br>
+      ขอขอบคุณที่ไว้วางใจและใช้บริการ MindCare กับ <strong>${counselor.name}</strong> เมื่อวันที่ ${dateStr}
+    </p>
+
+    <div style="background:linear-gradient(135deg,#fffbeb,#fff7ed);border:1px solid #fde68a;border-radius:12px;padding:20px 24px;margin-bottom:24px;text-align:center;">
+      <p style="margin:0 0 6px;font-size:32px;">📝</p>
+      <p style="margin:0 0 4px;font-size:15px;font-weight:700;color:#92400e;">ขอความกรุณาประเมินความพึงพอใจ</p>
+      <p style="margin:0 0 16px;font-size:13px;color:#b45309;line-height:1.6;">ใช้เวลาเพียง 1 นาที — ความคิดเห็นของท่านช่วยให้เราพัฒนาบริการให้ดียิ่งขึ้น</p>
+      <div style="font-size:28px;letter-spacing:4px;margin-bottom:16px;">😡 😕 😐 😊 😁</div>
+      <a href="${surveyUrl}" style="display:inline-block;background:linear-gradient(135deg,#f59e0b,#f97316);color:#fff;padding:14px 36px;border-radius:12px;text-decoration:none;font-size:15px;font-weight:700;box-shadow:0 4px 12px rgba(245,158,11,0.4);">
+        ทำแบบประเมิน
+      </a>
+    </div>
+
+    <p style="margin:0;font-size:13px;color:#64748b;line-height:1.7;">
+      ลิงก์แบบประเมินนี้สามารถใช้ได้เพียงครั้งเดียว<br>
+      ขอบคุณที่ช่วยพัฒนาบริการ MindCare 💚
+    </p>`
+
+  return emailWrapper(
+    'ขอความกรุณาประเมินความพึงพอใจ',
+    { from: '#f59e0b', to: '#f97316' },
+    body
+  )
+}
+
 // ── Main Export ───────────────────────────────────────────────────────────────
+
+async function sendSurveyEmail({ appointment, client, counselor, surveyUrl }) {
+  const transporter = getTransporter()
+  if (!transporter) {
+    console.log('[Email] SMTP ยังไม่ได้ตั้งค่า — ข้ามการส่งแบบประเมิน')
+    return { skipped: true }
+  }
+  if (!client.email) {
+    console.log(`[Email] ⚠️  ผู้รับบริการ "${client.name}" ไม่มีอีเมล — ข้ามการส่งแบบประเมิน`)
+    return { skipped: true }
+  }
+
+  const fromName  = process.env.SMTP_FROM_NAME  || 'MindCare'
+  const fromEmail = process.env.SMTP_FROM_EMAIL || process.env.SMTP_USER
+  const from      = `"${fromName}" <${fromEmail}>`
+  const dateStr   = formatDate(appointment.date)
+
+  try {
+    const info = await transporter.sendMail({
+      from,
+      to:      client.email,
+      subject: `[MindCare] 📝 ขอความกรุณาประเมินความพึงพอใจ — ${dateStr}`,
+      html:    surveyEmailHtml({ appointment, client, counselor, surveyUrl }),
+    })
+    console.log(`[Email] ✅ ส่งแบบประเมินให้ ${client.email} — ${info.messageId}`)
+    return { sent: true }
+  } catch (err) {
+    console.error(`[Email] ❌ ส่งแบบประเมินล้มเหลว: ${err.message}`)
+    return { error: err.message }
+  }
+}
 
 async function sendAppointmentEmails({ appointment, client, counselor, concern }) {
   const transporter = getTransporter()
@@ -235,7 +299,7 @@ async function sendAppointmentEmails({ appointment, client, counselor, concern }
     return { skipped: true }
   }
 
-  const fromName  = process.env.SMTP_FROM_NAME  || 'MindWell'
+  const fromName  = process.env.SMTP_FROM_NAME  || 'MindCare'
   const fromEmail = process.env.SMTP_FROM_EMAIL || process.env.SMTP_USER
   const from      = `"${fromName}" <${fromEmail}>`
   const bcc       = process.env.SMTP_BCC || undefined
@@ -250,7 +314,7 @@ async function sendAppointmentEmails({ appointment, client, counselor, concern }
         from,
         to:      client.email,
         bcc,
-        subject: `[MindWell] ✅ ยืนยันการนัดหมาย — ${dateStr} เวลา ${appointment.time} น.`,
+        subject: `[MindCare] ✅ ยืนยันการนัดหมาย — ${dateStr} เวลา ${appointment.time} น.`,
         html:    clientEmailHtml({ appointment, client, counselor, concern }),
       })
       console.log(`[Email] ✅ ส่งให้ผู้รับบริการ ${client.email} — ${info.messageId}`)
@@ -270,7 +334,7 @@ async function sendAppointmentEmails({ appointment, client, counselor, concern }
         from,
         to:      counselor.email,
         bcc,
-        subject: `[MindWell] 📅 นัดหมายใหม่ — ${client.name} ${dateStr} เวลา ${appointment.time} น.`,
+        subject: `[MindCare] 📅 นัดหมายใหม่ — ${client.name} ${dateStr} เวลา ${appointment.time} น.`,
         html:    counselorEmailHtml({ appointment, client, counselor, concern }),
       })
       console.log(`[Email] ✅ ส่งให้นักจิตวิทยา ${counselor.email} — ${info.messageId}`)
@@ -286,4 +350,4 @@ async function sendAppointmentEmails({ appointment, client, counselor, concern }
   return { sent: results }
 }
 
-module.exports = { sendAppointmentEmails }
+module.exports = { sendAppointmentEmails, sendSurveyEmail }

@@ -1,0 +1,310 @@
+﻿<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %> — MindCare Admin</title>
+  <%- include('../partials/head') %>
+  <style>
+    .act-btn{display:inline-flex;align-items:center;gap:6px;padding:8px 18px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .15s;text-decoration:none;white-space:nowrap}
+    .ab-primary{background:#05967e;color:#fff}.ab-primary:hover{background:#067866}
+    .ab-secondary{background:#fff;color:#05967e;border:1.5px solid #a0f3e1}.ab-secondary:hover{background:#ecfdf9}
+    .sect{background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:24px;margin-bottom:16px}
+    .sect-title{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600;color:#1e293b;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid #f1f5f9}
+    .step-bar{display:flex;align-items:flex-start;gap:0;margin-bottom:24px}
+    .step-item{flex:1;display:flex;align-items:flex-start;gap:0;position:relative}
+    .step-item:not(:last-child)::after{content:'';position:absolute;top:20px;left:calc(50% + 22px);right:calc(-50% + 22px);height:2px;background:#e2e8f0;z-index:0}
+    .step-circle{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;flex-shrink:0;position:relative;z-index:1}
+    .step-active .step-circle{background:#05967e;color:#fff}
+    .step-done   .step-circle{background:#d0fae5;color:#05967e}
+    .step-idle   .step-circle{background:#f1f5f9;color:#94a3b8}
+    .step-content{flex:1;padding:0 12px;min-width:0}
+    .step-label{font-size:13px;font-weight:600;color:#1e293b;margin-top:10px}
+    .step-sub{font-size:11px;color:#94a3b8;margin-top:2px}
+    .col-badge{display:inline-flex;align-items:center;justify-content:space-between;gap:6px;padding:7px 12px;border-radius:8px;font-size:12px;font-weight:500;margin:4px}
+    .col-required{background:#fff0f0;border:1px solid #fecaca;color:#dc2626}
+    .col-optional{background:#f8fafc;border:1px solid #e2e8f0;color:#475569}
+    .col-req-tag{font-size:10px;font-weight:600;color:#ef4444;background:#fee2e2;padding:1px 6px;border-radius:4px;margin-left:4px}
+    .col-opt-tag{font-size:10px;font-weight:600;color:#94a3b8;background:#f1f5f9;padding:1px 6px;border-radius:4px;margin-left:4px}
+    .drop-zone{border:2px dashed #a0f3e1;border-radius:14px;padding:48px 24px;text-align:center;cursor:pointer;transition:all .2s;background:#f8fffe;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+    .drop-zone:hover,.drop-zone.dragover{border-color:#05967e;background:#ecfdf9}
+    .drop-zone input[type=file]{display:none}
+    .type-tab{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap}
+    .type-btn{padding:7px 16px;border-radius:20px;font-size:13px;font-weight:500;cursor:pointer;border:1.5px solid #e2e8f0;background:#fff;color:#475569;transition:all .15s;text-decoration:none}
+    .type-btn.active{border-color:#05967e;background:#ecfdf9;color:#05967e;font-weight:600}
+    .type-btn:hover:not(.active){border-color:#a0f3e1;background:#f8fffe}
+    .export-card{border:1px solid #e2e8f0;border-radius:12px;padding:18px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;transition:border-color .15s}
+    .export-card:hover{border-color:#a0f3e1}
+    .inp{width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:13px;color:#334155;outline:none;font-family:inherit;box-sizing:border-box}
+    .inp:focus{border-color:#2dd4b4;box-shadow:0 0 0 3px rgba(45,212,180,.15)}
+    .alert-success{background:#ecfdf9;border:1px solid #a0f3e1;border-radius:10px;padding:12px 16px;display:flex;align-items:center;gap:10px;margin-bottom:16px}
+    .alert-error{background:#fff0f0;border:1px solid #fecaca;border-radius:10px;padding:12px 16px;display:flex;align-items:center;gap:10px;margin-bottom:16px}
+  </style>
+</head>
+<body style="background:#f8fafc;margin:0;">
+<%- include('../partials/admin-sidebar') %>
+
+<div style="margin-left:256px;min-height:100vh;display:flex;flex-direction:column;">
+
+  <!-- Header -->
+  <div style="height:56px;background:#fff;border-bottom:1px solid #f1f5f9;padding:0 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:20;">
+    <h1 style="font-size:15px;font-weight:600;color:#1e293b;margin:0;"><%= title %></h1>
+    <a href="/" target="_blank" style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:8px;border:1px solid #e2e8f0;background:#fff;font-size:12px;font-weight:500;color:#475569;text-decoration:none;">
+      <i data-lucide="external-link" style="width:13px;height:13px;"></i>
+      ดูหน้าเว็บหลัก
+    </a>
+  </div>
+
+  <!-- Action Bar -->
+  <div style="padding:14px 24px;background:#fff;border-bottom:2px solid #f1f5f9;display:flex;align-items:center;justify-content:flex-end;gap:12px;">
+    <div style="display:flex;gap:8px;">
+      <button onclick="switchTab('import')" id="btn-import"
+        style="display:inline-flex;align-items:center;gap:6px;padding:9px 20px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;transition:all .15s;border:none;background:<%= tab==='import'?'#05967e':'#fff' %>;color:<%= tab==='import'?'#fff':'#05967e' %>;border:1.5px solid <%= tab==='import'?'#05967e':'#a0f3e1' %>;">
+        <i data-lucide="upload" style="width:15px;height:15px;"></i>
+        นำเข้าข้อมูล
+      </button>
+      <button onclick="switchTab('export')" id="btn-export"
+        style="display:inline-flex;align-items:center;gap:6px;padding:9px 20px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;transition:all .15s;border:none;background:<%= tab==='export'?'#05967e':'#fff' %>;color:<%= tab==='export'?'#fff':'#05967e' %>;border:1.5px solid <%= tab==='export'?'#05967e':'#a0f3e1' %>;">
+        <i data-lucide="download" style="width:15px;height:15px;"></i>
+        ส่งออกข้อมูล
+      </button>
+    </div>
+  </div>
+
+  <div style="padding:24px;">
+
+    <!-- Alerts -->
+    <% if (result === 'success') { %>
+    <div class="alert-success">
+      <i data-lucide="check-circle-2" style="width:18px;height:18px;color:#05967e;flex-shrink:0;"></i>
+      <span style="font-size:13px;color:#065f46;font-weight:500;">นำเข้าข้อมูลสำเร็จ <strong><%= count %></strong> รายการ</span>
+    </div>
+    <% } %>
+    <% if (error === 'no_file') { %>
+    <div class="alert-error">
+      <i data-lucide="alert-circle" style="width:18px;height:18px;color:#dc2626;flex-shrink:0;"></i>
+      <span style="font-size:13px;color:#991b1b;">กรุณาเลือกไฟล์ CSV ก่อนนำเข้า</span>
+    </div>
+    <% } %>
+    <% if (error === 'parse_error') { %>
+    <div class="alert-error">
+      <i data-lucide="alert-circle" style="width:18px;height:18px;color:#dc2626;flex-shrink:0;"></i>
+      <span style="font-size:13px;color:#991b1b;">ไม่สามารถอ่านไฟล์ได้ กรุณาตรวจสอบรูปแบบไฟล์และลองใหม่</span>
+    </div>
+    <% } %>
+
+    <!-- ══ IMPORT TAB ══════════════════════════════════════════════ -->
+    <div id="tab-import" style="display:<%= tab==='import'?'block':'none' %>;">
+
+      <!-- Data type selector -->
+      <div class="type-tab">
+        <% Object.entries(SCHEMAS).forEach(([k, s]) => { %>
+        <a href="/admin/import-export?tab=import&type=<%= k %>"
+           class="type-btn <%= type===k ? 'active' : '' %>">
+          <i data-lucide="<%= s.icon %>" style="width:13px;height:13px;display:inline-block;vertical-align:-2px;margin-right:4px;"></i>
+          <%= s.label %>
+        </a>
+        <% }) %>
+      </div>
+
+      <!-- Step progress bar -->
+      <div class="step-bar">
+        <div class="step-item step-active" style="flex-direction:column;align-items:center;text-align:center;">
+          <div class="step-circle">1</div>
+          <div class="step-label">ดาวน์โหลด Template</div>
+          <div class="step-sub">ดาวน์โหลดไฟล์ CSV สำหรับกรอกข้อมูล</div>
+        </div>
+        <div style="flex:0 0 40px;height:2px;background:#e2e8f0;margin-top:20px;"></div>
+        <div class="step-item step-idle" style="flex-direction:column;align-items:center;text-align:center;">
+          <div class="step-circle">2</div>
+          <div class="step-label">กรอกข้อมูล</div>
+          <div class="step-sub">เปิดไฟล์และกรอกข้อมูลตามรูปแบบ</div>
+        </div>
+        <div style="flex:0 0 40px;height:2px;background:#e2e8f0;margin-top:20px;"></div>
+        <div class="step-item step-idle" style="flex-direction:column;align-items:center;text-align:center;">
+          <div class="step-circle">3</div>
+          <div class="step-label">อัปโหลดและนำเข้า</div>
+          <div class="step-sub">อัปโหลดไฟล์ที่กรอกเสร็จแล้วเข้าสู่ระบบ</div>
+        </div>
+      </div>
+
+      <!-- Section 1: Template download -->
+      <div class="sect">
+        <div class="sect-title">
+          <i data-lucide="download" style="width:16px;height:16px;color:#05967e;"></i>
+          ขั้นตอนที่ 1: ดาวน์โหลด Template
+        </div>
+        <p style="font-size:13px;color:#64748b;margin:0 0 12px;">ดาวน์โหลดไฟล์ Template สำหรับกรอกข้อมูล <strong><%= schema.label %></strong> ไฟล์จะมี 1 แถวตัวอย่างพร้อมคำอธิบาย</p>
+        <div style="background:#f8fafc;border:1px solid #f1f5f9;border-radius:10px;padding:14px 16px;margin-bottom:16px;">
+          <p style="font-size:12px;color:#64748b;margin:0 0 10px;font-weight:600;">คอลัมน์ที่ต้องกรอก:</p>
+          <div style="display:flex;flex-wrap:wrap;gap:2px;">
+            <% schema.headers.forEach(h => { %>
+            <span class="col-badge <%= h.required ? 'col-required' : 'col-optional' %>">
+              <%= h.label %>
+              <span class="<%= h.required ? 'col-req-tag' : 'col-opt-tag' %>"><%= h.required ? 'จำเป็น' : 'ไม่บังคับ' %></span>
+            </span>
+            <% }) %>
+          </div>
+        </div>
+        <% if (type === 'counselors') { %>
+        <div style="background:#ecfdf9;border:1px solid #a0f3e1;border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:#065f46;">
+          <i data-lucide="info" style="width:13px;height:13px;display:inline-block;vertical-align:-2px;margin-right:4px;"></i>
+          ความเชี่ยวชาญและภาษา ให้คั่นด้วย <strong>|</strong> เช่น <code>ความวิตกกังวล|ภาวะซึมเศร้า</code>
+        </div>
+        <% } %>
+        <% if (type === 'appointments') { %>
+        <div style="background:#ecfdf9;border:1px solid #a0f3e1;border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:#065f46;">
+          <i data-lucide="info" style="width:13px;height:13px;display:inline-block;vertical-align:-2px;margin-right:4px;"></i>
+          รหัสผู้รับบริการและรหัสนักจิตวิทยา ต้องตรงกับข้อมูลในระบบ เช่น <code>u001</code>, <code>c001</code>
+        </div>
+        <% } %>
+        <a href="/admin/import-export/template/<%= type %>"
+           style="display:inline-flex;align-items:center;gap:8px;padding:10px 20px;background:linear-gradient(135deg,#05967e,#06b6d4);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;text-decoration:none;box-shadow:0 2px 8px rgba(5,150,126,.25);transition:all .15s;"
+           onmouseover="this.style.boxShadow='0 4px 14px rgba(5,150,126,.4)';this.style.transform='translateY(-1px)'"
+           onmouseout="this.style.boxShadow='0 2px 8px rgba(5,150,126,.25)';this.style.transform='translateY(0)'">
+          <i data-lucide="file-down" style="width:16px;height:16px;"></i>
+          ดาวน์โหลด Template CSV
+        </a>
+      </div>
+
+      <!-- Section 2-3: Upload -->
+      <div class="sect">
+        <div class="sect-title">
+          <i data-lucide="upload-cloud" style="width:16px;height:16px;color:#05967e;"></i>
+          ขั้นตอนที่ 2-3: อัปโหลดและนำเข้าข้อมูล
+        </div>
+        <form id="importForm" action="/admin/import-export/import" method="POST" enctype="multipart/form-data">
+          <input type="hidden" name="type" value="<%= type %>">
+          <div class="drop-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
+            <input type="file" name="file" id="fileInput" accept=".csv" onchange="handleFileSelect(this)">
+            <i data-lucide="upload-cloud" style="width:44px;height:44px;color:#a0f3e1;margin-bottom:12px;"></i>
+            <p style="font-size:14px;font-weight:600;color:#334155;margin:0 0 6px;" id="dropText">ลากไฟล์มาวางที่นี่ หรือคลิกเพื่อเลือกไฟล์</p>
+            <p style="font-size:12px;color:#94a3b8;margin:0;">รองรับไฟล์ .csv (UTF-8) เท่านั้น</p>
+          </div>
+          <div id="filePreview" style="display:none;margin-top:12px;padding:12px 16px;background:#ecfdf9;border:1px solid #a0f3e1;border-radius:10px;display:none;align-items:center;justify-content:space-between;">
+            <div style="display:flex;align-items:center;gap:10px;">
+              <i data-lucide="file-text" style="width:18px;height:18px;color:#05967e;"></i>
+              <span id="fileName" style="font-size:13px;font-weight:500;color:#065f46;"></span>
+            </div>
+            <button type="button" onclick="clearFile()" style="background:none;border:none;cursor:pointer;color:#94a3b8;font-size:18px;line-height:1;">×</button>
+          </div>
+          <div style="margin-top:16px;display:flex;align-items:center;gap:10px;">
+            <button type="submit" id="importBtn" disabled
+              style="display:inline-flex;align-items:center;gap:8px;padding:10px 24px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .15s;background:#cbd5e1;color:#fff;"
+              onmouseover="if(!this.disabled){this.style.boxShadow='0 4px 14px rgba(5,150,126,.4)';this.style.transform='translateY(-1px)'}"
+              onmouseout="this.style.boxShadow='';this.style.transform='translateY(0)'">
+              <i data-lucide="upload" style="width:15px;height:15px;"></i>
+              นำเข้าข้อมูล
+            </button>
+            <span style="font-size:12px;color:#94a3b8;">ข้อมูลที่ซ้ำกับรายการในระบบจะถูกข้าม (ตรวจจากอีเมล)</span>
+          </div>
+        </form>
+      </div>
+
+    </div><!-- /tab-import -->
+
+    <!-- ══ EXPORT TAB ══════════════════════════════════════════════ -->
+    <div id="tab-export" style="display:<%= tab==='export'?'block':'none' %>;">
+
+      <div class="sect">
+        <div class="sect-title">
+          <i data-lucide="download-cloud" style="width:16px;height:16px;color:#05967e;"></i>
+          ส่งออกข้อมูลเป็น CSV
+        </div>
+        <p style="font-size:13px;color:#64748b;margin:0 0 20px;">ดาวน์โหลดข้อมูลปัจจุบันในระบบเป็นไฟล์ CSV ที่เปิดได้ใน Excel</p>
+        <div style="display:flex;flex-direction:column;gap:12px;">
+          <% Object.entries(SCHEMAS).forEach(([k, s]) => { %>
+          <div class="export-card">
+            <div style="display:flex;align-items:center;gap:14px;">
+              <div style="width:42px;height:42px;border-radius:10px;background:#ecfdf9;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                <i data-lucide="<%= s.icon %>" style="width:20px;height:20px;color:#05967e;"></i>
+              </div>
+              <div>
+                <p style="font-size:14px;font-weight:600;color:#1e293b;margin:0;"><%= s.label %></p>
+                <p style="font-size:12px;color:#94a3b8;margin:3px 0 0;"><%= counts[k] %> รายการในระบบ • <%= s.headers.length %> คอลัมน์</p>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <a href="/admin/import-export/export/<%= k %>"
+                 style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;background:#05967e;color:#fff;border-radius:8px;font-size:12px;font-weight:600;text-decoration:none;transition:all .15s;"
+                 onmouseover="this.style.background='#067866'" onmouseout="this.style.background='#05967e'">
+                <i data-lucide="download" style="width:14px;height:14px;"></i>
+                ดาวน์โหลด CSV
+              </a>
+            </div>
+          </div>
+          <% }) %>
+        </div>
+      </div>
+
+      <!-- Export note -->
+      <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:16px 20px;">
+        <p style="font-size:13px;font-weight:600;color:#475569;margin:0 0 8px;display:flex;align-items:center;gap:6px;">
+          <i data-lucide="info" style="width:14px;height:14px;color:#94a3b8;"></i>
+          หมายเหตุการส่งออก
+        </p>
+        <ul style="font-size:12px;color:#64748b;margin:0;padding-left:16px;line-height:2;">
+          <li>ไฟล์ที่ส่งออกเป็น CSV รองรับ Excel และ Google Sheets</li>
+          <li>ข้อมูลรหัสผ่านของนักจิตวิทยาจะไม่ถูกส่งออกเพื่อความปลอดภัย</li>
+          <li>ไฟล์ใช้ encoding UTF-8 with BOM สำหรับรองรับภาษาไทยใน Excel</li>
+        </ul>
+      </div>
+
+    </div><!-- /tab-export -->
+
+  </div><!-- /padding -->
+</div>
+
+<script>
+  function switchTab(tab) {
+    document.getElementById('tab-import').style.display = tab === 'import' ? 'block' : 'none'
+    document.getElementById('tab-export').style.display = tab === 'export' ? 'block' : 'none'
+    const actStyle  = 'background:#05967e;color:#fff;border:1.5px solid #05967e;'
+    const idleStyle = 'background:#fff;color:#05967e;border:1.5px solid #a0f3e1;'
+    document.getElementById('btn-import').style.cssText += tab === 'import' ? actStyle : idleStyle
+    document.getElementById('btn-export').style.cssText += tab === 'export' ? actStyle : idleStyle
+  }
+
+  function handleFileSelect(input) {
+    if (!input.files || !input.files[0]) return
+    const f = input.files[0]
+    document.getElementById('dropText').textContent = 'ไฟล์ที่เลือก:'
+    const preview = document.getElementById('filePreview')
+    preview.style.display = 'flex'
+    document.getElementById('fileName').textContent = f.name + ' (' + (f.size / 1024).toFixed(1) + ' KB)'
+    const btn = document.getElementById('importBtn')
+    btn.disabled = false
+    btn.style.background = 'linear-gradient(135deg,#05967e,#06b6d4)'
+    btn.style.boxShadow   = '0 2px 8px rgba(5,150,126,.25)'
+  }
+
+  function clearFile() {
+    document.getElementById('fileInput').value = ''
+    document.getElementById('filePreview').style.display = 'none'
+    document.getElementById('dropText').textContent = 'ลากไฟล์มาวางที่นี่ หรือคลิกเพื่อเลือกไฟล์'
+    const btn = document.getElementById('importBtn')
+    btn.disabled = true
+    btn.style.background = '#cbd5e1'
+    btn.style.boxShadow   = ''
+  }
+
+  // Drag and drop
+  const dz = document.getElementById('dropZone')
+  if (dz) {
+    dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('dragover') })
+    dz.addEventListener('dragleave', () => dz.classList.remove('dragover'))
+    dz.addEventListener('drop', e => {
+      e.preventDefault(); dz.classList.remove('dragover')
+      const fi = document.getElementById('fileInput')
+      if (e.dataTransfer.files[0]) {
+        const dt = new DataTransfer(); dt.items.add(e.dataTransfer.files[0])
+        fi.files = dt.files
+        handleFileSelect(fi)
+      }
+    })
+  }
+
+  lucide.createIcons()
+</script>
+</body>
+</html>

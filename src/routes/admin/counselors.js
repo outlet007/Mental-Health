@@ -46,9 +46,20 @@ router.get('/', (req, res) => {
   if (search) filtered = filtered.filter(c =>
     c.name.includes(search) || c.email.includes(search) || c.specialties.some(s => s.includes(search))
   )
+
+  // คำนวณค่าเฉลี่ยความพึงพอใจแต่ละนักจิตวิทยาจาก surveys.json
+  const surveysFile = path.join(__dirname, '../../../data/surveys.json')
+  const surveys = fs.existsSync(surveysFile) ? JSON.parse(fs.readFileSync(surveysFile, 'utf8')) : []
+  const surveyStats = {}
+  surveys.forEach(s => {
+    if (!surveyStats[s.counselorId]) surveyStats[s.counselorId] = { sum: 0, count: 0 }
+    surveyStats[s.counselorId].sum   += s.rating
+    surveyStats[s.counselorId].count += 1
+  })
+
   res.render('admin/counselors', {
-    page: 'counselors', title: 'จัดการนักให้คำปรึกษา',
-    counselors: filtered, allCounselors: readData(), query: req.query,
+    page: 'counselors', title: 'จัดการนักจิตวิทยาให้คำปรึกษา',
+    counselors: filtered, allCounselors: readData(), query: req.query, surveyStats,
   })
 })
 

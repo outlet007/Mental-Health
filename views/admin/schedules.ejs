@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title><%= title %> — MindWell Admin</title>
+  <title><%= title %> — MindCare Admin</title>
   <%- include('../partials/head') %>
   <style>
     .tbl { width:100%; border-collapse:collapse; }
@@ -14,13 +14,13 @@
     .tbl tbody tr:last-child td { border-bottom:none; }
     .act-btn { display:inline-flex; align-items:center; gap:4px; padding:5px 10px; border-radius:8px; font-size:12px; font-weight:500; cursor:pointer; border:none; transition:all .15s; text-decoration:none; white-space:nowrap; }
     .ab-primary   { background:#05967e; color:#fff; }
-    .ab-primary:hover   { background:#067866; }
+    .ab-primary:hover { background:#067866; }
     .ab-secondary { background:#fff; color:#05967e; border:1px solid #a0f3e1; }
     .ab-secondary:hover { background:#ecfdf9; }
     .ab-ghost     { background:transparent; color:#64748b; }
-    .ab-ghost:hover     { background:#f1f5f9; }
+    .ab-ghost:hover { background:#f1f5f9; }
     .ab-danger    { background:#ef4444; color:#fff; }
-    .ab-danger:hover    { background:#dc2626; }
+    .ab-danger:hover { background:#dc2626; }
     .panel-overlay { position:fixed; inset:0; background:rgba(15,23,42,.45); z-index:40; display:none; backdrop-filter:blur(2px); opacity:0; transition:opacity .2s ease; }
     .panel-overlay.open { opacity:1; }
     .panel-drawer  { position:fixed; top:50%; left:50%; width:calc(100% - 48px); max-width:480px; max-height:90vh; background:#fff; border-radius:20px; box-shadow:0 20px 60px rgba(0,0,0,.18); z-index:50; display:flex; flex-direction:column; transform:translate(-50%,-50%) scale(.94); opacity:0; transition:transform .22s cubic-bezier(.34,1.56,.64,1), opacity .18s ease; pointer-events:none; }
@@ -28,9 +28,18 @@
     .inp { width:100%; padding:9px 12px; border:1.5px solid #e2e8f0; border-radius:10px; font-size:13px; color:#334155; outline:none; font-family:inherit; box-sizing:border-box; }
     .inp:focus { border-color:#2dd4b4; box-shadow:0 0 0 3px rgba(45,212,180,.15); }
     .lbl { display:block; font-size:12px; font-weight:500; color:#64748b; margin-bottom:5px; }
-    .counselor-tab { display:flex; align-items:center; gap:8px; padding:8px 14px; border-radius:10px; border:1.5px solid #e2e8f0; font-size:13px; font-weight:500; color:#64748b; text-decoration:none; transition:all .15s; }
-    .counselor-tab:hover { border-color:#2dd4b4; color:#05967e; background:#ecfdf9; }
-    .counselor-tab.active { border-color:#05967e; background:#ecfdf9; color:#05967e; }
+    input[type="time"]::-webkit-datetime-edit-ampm-field { display:none; }
+    .view-btn { display:inline-flex; align-items:center; gap:5px; padding:6px 14px; border-radius:8px; font-size:12px; font-weight:500; cursor:pointer; border:1.5px solid #e2e8f0; background:#fff; color:#64748b; text-decoration:none; transition:all .15s; }
+    .view-btn:hover { border-color:#2dd4b4; color:#05967e; }
+    .view-btn.active { border-color:#05967e; background:#ecfdf9; color:#05967e; }
+    .day-tab { display:inline-flex; align-items:center; padding:6px 14px; border-radius:8px; font-size:12px; font-weight:500; cursor:pointer; border:1.5px solid #e2e8f0; background:#fff; color:#64748b; text-decoration:none; transition:all .15s; }
+    .day-tab:hover { border-color:#2dd4b4; color:#05967e; }
+    .day-tab.active { border-color:#6366f1; background:#eef2ff; color:#4338ca; }
+    .cal-cell { border:1px solid #f1f5f9; padding:6px; min-height:72px; vertical-align:top; font-size:12px; }
+    .cal-cell.today { background:#eff6ff; }
+    .cal-cell.other { background:#fafafa; }
+    .c-dot { display:inline-block; width:8px; height:8px; border-radius:50%; margin:1px 2px; }
+    .c-chip { display:inline-flex; align-items:center; gap:4px; padding:2px 7px; border-radius:99px; font-size:10px; font-weight:500; margin:1px; white-space:nowrap; }
   </style>
 </head>
 <body style="background:#f8fafc; margin:0;">
@@ -73,25 +82,66 @@
     </div>
     <% } %>
 
-    <!-- Counselor tabs -->
-    <div style="background:#fff; border:1px solid #f1f5f9; border-radius:16px; padding:16px; margin-bottom:16px;">
-      <div style="font-size:12px; font-weight:500; color:#64748b; margin-bottom:12px;">เลือกนักให้คำปรึกษา</div>
-      <div style="display:flex; flex-wrap:wrap; gap:8px;">
-        <% counselors.forEach(c => { %>
-        <a href="/admin/schedules?counselorId=<%= c.id %>"
-           class="counselor-tab <%= selected===c.id ? 'active' : '' %>">
-          <div style="width:26px; height:26px; border-radius:7px; background:linear-gradient(135deg,#2dd4b4,#06b6d4); display:flex; align-items:center; justify-content:center; color:#fff; font-size:11px; font-weight:700; flex-shrink:0;"><%= c.avatar %></div>
-          <%= c.name %>
-          <span style="padding:1px 6px; border-radius:99px; font-size:10px; font-weight:600; background:<%= selected===c.id?'#05967e':'#f1f5f9' %>; color:<%= selected===c.id?'#fff':'#64748b' %>;">
-            <%= mySchedules.filter(s=>s.counselorId===c.id).length || (selected===c.id?mySchedules.length:0) %> วัน
-          </span>
-        </a>
-        <% }) %>
+    <!-- ── Filter Bar ───────────────────────────────────────────────── -->
+    <div style="background:#fff; border:1px solid #f1f5f9; border-radius:16px; padding:14px 16px; margin-bottom:16px; display:flex; flex-wrap:wrap; align-items:center; gap:12px;">
+
+      <!-- Counselor filter -->
+      <div style="display:flex; align-items:center; gap:8px; flex:1; min-width:200px;">
+        <i data-lucide="user" style="width:14px;height:14px;color:#94a3b8;flex-shrink:0;"></i>
+        <select id="filterCounselor" class="inp" style="max-width:260px;" onchange="applyFilter()">
+          <% if (!isCounselorUser) { %>
+          <option value="" <%=filterCId===''?'selected':''%>>นักจิตวิทยาให้คำปรึกษาทั้งหมด</option>
+          <% } %>
+          <% counselors.forEach(c => { %>
+          <option value="<%= c.id %>" <%=filterCId===c.id?'selected':''%>><%= c.name %></option>
+          <% }) %>
+        </select>
       </div>
+
+      <!-- View toggle -->
+      <div style="display:flex; align-items:center; gap:6px; flex-shrink:0;">
+        <a href="<%= buildUrl({view:'week'}) %>" class="view-btn <%= view==='week'?'active':'' %>">
+          <i data-lucide="layout-list" style="width:13px;height:13px;"></i> รายสัปดาห์
+        </a>
+        <a href="<%= buildUrl({view:'day'}) %>" class="view-btn <%= view==='day'?'active':'' %>">
+          <i data-lucide="calendar-days" style="width:13px;height:13px;"></i> รายวัน
+        </a>
+        <a href="<%= buildUrl({view:'month'}) %>" class="view-btn <%= view==='month'?'active':'' %>">
+          <i data-lucide="calendar" style="width:13px;height:13px;"></i> รายเดือน
+        </a>
+      </div>
+
     </div>
 
-    <!-- Selected counselor info -->
-    <% const currentCounselor = counselors.find(c=>c.id===selected) %>
+    <%
+      // Helper: build URL preserving current filters
+      function buildUrl(overrides) {
+        const p = {
+          counselorId: filterCId,
+          view,
+          dayOfWeek: selectedDay,
+          year: monthData.year,
+          month: monthData.month,
+        }
+        Object.assign(p, overrides)
+        const qs = Object.entries(p)
+          .filter(([, v]) => v !== '' && v !== null && v !== undefined)
+          .map(([k, v]) => `${k}=${encodeURIComponent(v)}`).join('&')
+        return '/admin/schedules?' + qs
+      }
+      const returnQuery = `counselorId=${encodeURIComponent(filterCId)}&view=${view}&dayOfWeek=${selectedDay}&year=${monthData.year}&month=${monthData.month}`
+    %>
+
+    <!-- ════════════════════════════════════════════════════════════════ -->
+    <!-- VIEW: รายสัปดาห์ (week)                                        -->
+    <!-- ════════════════════════════════════════════════════════════════ -->
+    <% if (view === 'week') { %>
+
+    <% if (filterCId) { %>
+    <!-- Single counselor week view (original table) -->
+    <%
+      const currentCounselor = counselors.find(c => c.id === filterCId)
+    %>
     <% if (currentCounselor) { %>
     <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
       <div style="display:flex; align-items:center; gap:8px;">
@@ -113,78 +163,64 @@
     </div>
     <% } %>
 
-    <!-- Schedule table -->
     <div style="background:#fff; border:1px solid #f1f5f9; border-radius:16px; overflow:hidden;">
       <div style="padding:14px 16px; border-bottom:1px solid #f1f5f9; display:flex; align-items:center; justify-content:space-between;">
-        <span style="font-size:13px; font-weight:600; color:#334155;">ตารางเวลารับนัด</span>
-        <span style="font-size:12px; color:#94a3b8;"><%= mySchedules.length %> วัน / 7 วัน</span>
+        <span style="font-size:13px; font-weight:600; color:#334155;">ตารางเวลารับนัดรายสัปดาห์</span>
+        <span style="font-size:12px; color:#94a3b8;"><%= mySchedules.length %> / 7 วัน</span>
       </div>
       <div style="overflow-x:auto;">
         <table class="tbl">
           <thead>
             <tr>
-              <th>วัน</th>
-              <th>เวลาเริ่ม</th>
-              <th>เวลาสิ้นสุด</th>
-              <th>ช่วงเวลา</th>
-              <th>สถานะ</th>
-              <th>การจัดการ</th>
+              <th>วัน</th><th>เวลาเริ่ม</th><th>เวลาสิ้นสุด</th><th>ช่วงเวลา</th><th>สถานะ</th><th>การจัดการ</th>
             </tr>
           </thead>
           <tbody>
             <% mySchedules.forEach(s => { %>
-            <%
-              const [sh, sm] = s.startTime.split(':').map(Number)
-              const [eh, em] = s.endTime.split(':').map(Number)
-              const totalMin = (eh*60+em) - (sh*60+sm)
-            %>
+            <% const [sh,sm]=s.startTime.split(':').map(Number); const [eh,em]=s.endTime.split(':').map(Number); const totalMin=(eh*60+em)-(sh*60+sm) %>
             <tr>
               <td>
-                <div style="display:flex; align-items:center; gap:8px;">
-                  <div style="width:32px; height:32px; border-radius:8px; background:linear-gradient(135deg,#ecfdf9,#ecfeff); border:1px solid #a0f3e1; display:flex; align-items:center; justify-content:center;">
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <div style="width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,#ecfdf9,#ecfeff);border:1px solid #a0f3e1;display:flex;align-items:center;justify-content:center;">
                     <i data-lucide="calendar-days" style="width:14px;height:14px;color:#05967e;"></i>
                   </div>
-                  <span style="font-weight:600; color:#1e293b; font-size:14px;"><%= s.dayName %></span>
+                  <span style="font-weight:600;color:#1e293b;font-size:14px;"><%= s.dayName %></span>
                 </div>
               </td>
               <td>
-                <div style="display:flex; align-items:center; gap:6px;">
+                <div style="display:flex;align-items:center;gap:6px;">
                   <i data-lucide="clock" style="width:13px;height:13px;color:#2dd4b4;"></i>
-                  <span style="font-weight:500; font-size:14px; color:#1e293b;"><%= s.startTime %></span>
+                  <span style="font-weight:500;font-size:14px;color:#1e293b;"><%= s.startTime %></span>
                 </div>
               </td>
               <td>
-                <div style="display:flex; align-items:center; gap:6px;">
+                <div style="display:flex;align-items:center;gap:6px;">
                   <i data-lucide="clock" style="width:13px;height:13px;color:#64748b;"></i>
-                  <span style="font-weight:500; font-size:14px; color:#1e293b;"><%= s.endTime %></span>
+                  <span style="font-weight:500;font-size:14px;color:#1e293b;"><%= s.endTime %></span>
                 </div>
               </td>
-              <td>
-                <span style="font-size:12px; color:#64748b;">
-                  <% if (totalMin >= 60) { %><%= Math.floor(totalMin/60) %> ชม. <% if(totalMin%60){ %><%= totalMin%60 %> นาที<% } %>
-                  <% } else { %><%= totalMin %> นาที<% } %>
-                </span>
-              </td>
+              <td><span style="font-size:12px;color:#64748b;"><% if(totalMin>=60){%><%= Math.floor(totalMin/60) %> ชม.<% if(totalMin%60){%> <%= totalMin%60 %> นาที<% } %><% }else{%><%= totalMin %> นาที<% } %></span></td>
               <td>
                 <% if (s.isActive) { %>
-                  <span style="display:inline-flex; align-items:center; gap:4px; padding:3px 10px; background:#d1fae5; color:#065f46; border-radius:99px; font-size:11px; font-weight:500;">
-                    <span style="width:6px;height:6px;border-radius:50%;background:#10b981;display:inline-block;"></span> เปิดรับนัด
-                  </span>
+                <span style="display:inline-flex;align-items:center;gap:4px;padding:3px 10px;background:#d1fae5;color:#065f46;border-radius:99px;font-size:11px;font-weight:500;">
+                  <span style="width:6px;height:6px;border-radius:50%;background:#10b981;display:inline-block;"></span> เปิดรับนัด
+                </span>
                 <% } else { %>
-                  <span style="display:inline-flex; align-items:center; gap:4px; padding:3px 10px; background:#f1f5f9; color:#64748b; border-radius:99px; font-size:11px; font-weight:500;">
-                    <span style="width:6px;height:6px;border-radius:50%;background:#94a3b8;display:inline-block;"></span> ปิดพักตัว
-                  </span>
+                <span style="display:inline-flex;align-items:center;gap:4px;padding:3px 10px;background:#f1f5f9;color:#64748b;border-radius:99px;font-size:11px;font-weight:500;">
+                  <span style="width:6px;height:6px;border-radius:50%;background:#94a3b8;display:inline-block;"></span> ปิดพักตัว
+                </span>
                 <% } %>
               </td>
               <td>
-                <div style="display:flex; align-items:center; gap:6px;">
+                <div style="display:flex;align-items:center;gap:6px;">
                   <button class="act-btn ab-secondary edit-btn" data-rec="<%= JSON.stringify(s) %>">
                     <i data-lucide="pencil" style="width:13px;height:13px;"></i> แก้ไข
                   </button>
                   <form method="POST" action="/admin/schedules/delete"
-                        onsubmit="return confirm('ลบตารางเวลา<%= s.dayName %>ของ<%= currentCounselor ? currentCounselor.name : '' %>?')" style="margin:0;">
+                        onsubmit="return confirm('ลบตารางเวลา<%= s.dayName %>?')" style="margin:0;">
                     <input type="hidden" name="counselorId" value="<%= s.counselorId %>">
-                    <input type="hidden" name="dayOfWeek"   value="<%= s.dayOfWeek %>">
+                    <input type="hidden" name="dayOfWeek" value="<%= s.dayOfWeek %>">
+                    <input type="hidden" name="returnQuery" value="<%= returnQuery %>">
                     <button type="submit" class="act-btn ab-danger">
                       <i data-lucide="trash-2" style="width:13px;height:13px;"></i>
                     </button>
@@ -193,11 +229,10 @@
               </td>
             </tr>
             <% }) %>
-
             <% if (mySchedules.length === 0) { %>
-            <tr><td colspan="6" style="text-align:center; padding:48px 16px; color:#94a3b8;">
+            <tr><td colspan="6" style="text-align:center;padding:48px 16px;color:#94a3b8;">
               <i data-lucide="calendar-x" style="width:36px;height:36px;display:block;margin:0 auto 10px;opacity:.3;"></i>
-              <div style="margin-bottom:12px;">ยังไม่มีตารางเวลาสำหรับนักให้คำปรึกษาท่านนี้</div>
+              <div style="margin-bottom:12px;">ยังไม่มีตารางเวลาสำหรับนักจิตวิทยาให้คำปรึกษาท่านนี้</div>
               <button onclick="openPanel('create')" class="act-btn ab-primary" style="margin:0 auto;">
                 <i data-lucide="plus" style="width:14px;height:14px;"></i> เพิ่มตารางเวลาแรก
               </button>
@@ -208,22 +243,263 @@
       </div>
     </div>
 
-    <!-- Days not yet scheduled (quick-add chips) -->
     <% if (availableDays.length > 0 && mySchedules.length > 0) { %>
-    <div style="margin-top:16px; background:#fff; border:1px solid #f1f5f9; border-radius:16px; padding:16px;">
-      <div style="font-size:12px; font-weight:600; color:#94a3b8; text-transform:uppercase; letter-spacing:.05em; margin-bottom:10px;">วันที่ยังไม่ได้กำหนด</div>
-      <div style="display:flex; flex-wrap:wrap; gap:8px;">
+    <div style="margin-top:16px;background:#fff;border:1px solid #f1f5f9;border-radius:16px;padding:16px;">
+      <div style="font-size:12px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">วันที่ยังไม่ได้กำหนด</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;">
         <% availableDays.forEach(day => { %>
-        <button onclick="openPanel('create', {dayOfWeek: <%= day.dayOfWeek %>, dayName: '<%= day.dayName %>'})"
-                class="act-btn ab-ghost"
-                style="border:1.5px dashed #cbd5e1; padding:7px 14px;">
-          <i data-lucide="plus" style="width:12px;height:12px;"></i>
-          <%= day.dayName %>
+        <button onclick="openPanel('create',{dayOfWeek:<%= day.dayOfWeek %>,dayName:'<%= day.dayName %>'})"
+                class="act-btn ab-ghost" style="border:1.5px dashed #cbd5e1;padding:7px 14px;">
+          <i data-lucide="plus" style="width:12px;height:12px;"></i> <%= day.dayName %>
         </button>
         <% }) %>
       </div>
     </div>
     <% } %>
+
+    <% } else { %>
+    <!-- All counselors week grid -->
+    <div style="background:#fff; border:1px solid #f1f5f9; border-radius:16px; overflow:hidden;">
+      <div style="padding:14px 16px; border-bottom:1px solid #f1f5f9;">
+        <span style="font-size:13px; font-weight:600; color:#334155;">ตารางเวลารายสัปดาห์ — นักจิตวิทยาให้คำปรึกษาทั้งหมด</span>
+      </div>
+      <div style="overflow-x:auto;">
+        <table class="tbl">
+          <thead>
+            <tr>
+              <th style="width:110px;">วัน</th>
+              <th>นักจิตวิทยาให้คำปรึกษาและเวลา</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% weekGrid.forEach(row => { %>
+            <tr>
+              <td>
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <div style="width:32px;height:32px;border-radius:8px;background:#f8fafc;border:1px solid #e2e8f0;display:flex;align-items:center;justify-content:center;">
+                    <i data-lucide="calendar-days" style="width:14px;height:14px;color:#64748b;"></i>
+                  </div>
+                  <span style="font-weight:600;color:#1e293b;font-size:14px;"><%= row.dayName %></span>
+                </div>
+              </td>
+              <td>
+                <% if (row.entries.length === 0) { %>
+                <span style="font-size:12px;color:#cbd5e1;">— ไม่มีตารางเวลา —</span>
+                <% } else { %>
+                <div style="display:flex;flex-wrap:wrap;gap:6px;">
+                  <% row.entries.forEach(e => { %>
+                  <%
+                    const col = counselorColors[e.counselorId] || '#64748b'
+                    const cInfo = e.counselor
+                  %>
+                  <div style="display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border-radius:10px;border:1.5px solid <%= col %>20;background:<%= col %>10;">
+                    <div style="width:20px;height:20px;border-radius:5px;background:<%= col %>;display:flex;align-items:center;justify-content:center;color:#fff;font-size:9px;font-weight:700;flex-shrink:0;overflow:hidden;">
+                      <% if (cInfo && cInfo.photo) { %>
+                        <img data-counselor-profile-photo="<%= cInfo.id %>" src="<%= cInfo.photo %>" alt="<%= cInfo.name %>" style="width:100%;height:100%;object-fit:cover;">
+                      <% } else { %>
+                        <%= cInfo ? cInfo.avatar : '?' %>
+                      <% } %>
+                    </div>
+                    <div>
+                      <div style="font-size:11px;font-weight:600;color:<%= col %>;line-height:1.2;"><%= cInfo ? cInfo.name : e.counselorId %></div>
+                      <div style="font-size:10px;color:#64748b;"><%= e.startTime %>–<%= e.endTime %>
+                        <% if (!e.isActive) { %><span style="color:#f59e0b;"> (ปิด)</span><% } %>
+                      </div>
+                    </div>
+                  </div>
+                  <% }) %>
+                </div>
+                <% } %>
+              </td>
+            </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <% } %> <!-- end week filterCId branch -->
+
+    <!-- ════════════════════════════════════════════════════════════════ -->
+    <!-- VIEW: รายวัน (day)                                             -->
+    <!-- ════════════════════════════════════════════════════════════════ -->
+    <% } else if (view === 'day') { %>
+
+    <!-- Day selector tabs -->
+    <div style="background:#fff;border:1px solid #f1f5f9;border-radius:16px;padding:14px 16px;margin-bottom:16px;display:flex;flex-wrap:wrap;gap:8px;">
+      <% ['อาทิตย์','จันทร์','อังคาร','พุธ','พฤหัสบดี','ศุกร์','เสาร์'].forEach((name, i) => { %>
+      <a href="<%= buildUrl({view:'day', dayOfWeek: i}) %>"
+         class="day-tab <%= selectedDay === i ? 'active' : '' %>">
+        <%= name %>
+        <%
+          const cnt = weekGrid[i].entries.length
+          if (cnt > 0) {
+        %>
+        <span style="padding:1px 6px;border-radius:99px;font-size:10px;font-weight:600;background:<%= selectedDay===i?'#6366f1':'#f1f5f9' %>;color:<%= selectedDay===i?'#fff':'#64748b' %>;"><%= cnt %></span>
+        <% } %>
+      </a>
+      <% }) %>
+    </div>
+
+    <!-- Day schedule table -->
+    <div style="background:#fff;border:1px solid #f1f5f9;border-radius:16px;overflow:hidden;">
+      <div style="padding:14px 16px;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;justify-content:space-between;">
+        <span style="font-size:13px;font-weight:600;color:#334155;">
+          วัน<%= ['อาทิตย์','จันทร์','อังคาร','พุธ','พฤหัสบดี','ศุกร์','เสาร์'][selectedDay] %>
+          — นักจิตวิทยาให้คำปรึกษาที่มีตาราง
+        </span>
+        <span style="font-size:12px;color:#94a3b8;"><%= daySchedules.length %> คน</span>
+      </div>
+      <div style="overflow-x:auto;">
+        <table class="tbl">
+          <thead>
+            <tr>
+              <th>นักจิตวิทยาให้คำปรึกษา</th><th>เวลาเริ่ม</th><th>เวลาสิ้นสุด</th><th>ช่วงเวลา</th><th>สถานะ</th>
+              <% if (!isCounselorUser) { %><th>การจัดการ</th><% } %>
+            </tr>
+          </thead>
+          <tbody>
+            <% daySchedules.forEach(s => { %>
+            <% const [sh,sm]=s.startTime.split(':').map(Number); const [eh,em]=s.endTime.split(':').map(Number); const totalMin=(eh*60+em)-(sh*60+sm) %>
+            <% const col = counselorColors[s.counselorId] || '#64748b' %>
+            <tr>
+              <td>
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <div style="width:32px;height:32px;border-radius:8px;background:<%= col %>20;display:flex;align-items:center;justify-content:center;color:<%= col %>;font-size:11px;font-weight:700;overflow:hidden;">
+                    <% if (s.counselor && s.counselor.photo) { %>
+                      <img data-counselor-profile-photo="<%= s.counselor.id %>" src="<%= s.counselor.photo %>" alt="<%= s.counselor.name %>" style="width:100%;height:100%;object-fit:cover;">
+                    <% } else { %>
+                      <%= s.counselor ? s.counselor.avatar : '?' %>
+                    <% } %>
+                  </div>
+                  <div>
+                    <div style="font-size:14px;font-weight:600;color:#1e293b;"><%= s.counselor ? s.counselor.name : s.counselorId %></div>
+                    <div style="font-size:11px;color:#94a3b8;"><%= s.counselor ? s.counselor.title : '' %></div>
+                  </div>
+                </div>
+              </td>
+              <td><span style="font-weight:500;font-size:14px;color:#1e293b;"><%= s.startTime %></span></td>
+              <td><span style="font-weight:500;font-size:14px;color:#1e293b;"><%= s.endTime %></span></td>
+              <td><span style="font-size:12px;color:#64748b;"><% if(totalMin>=60){%><%= Math.floor(totalMin/60) %> ชม.<% if(totalMin%60){%> <%= totalMin%60 %> นาที<% } %><% }else{%><%= totalMin %> นาที<% } %></span></td>
+              <td>
+                <% if (s.isActive) { %>
+                <span style="display:inline-flex;align-items:center;gap:4px;padding:3px 10px;background:#d1fae5;color:#065f46;border-radius:99px;font-size:11px;font-weight:500;">
+                  <span style="width:6px;height:6px;border-radius:50%;background:#10b981;display:inline-block;"></span> เปิดรับนัด
+                </span>
+                <% } else { %>
+                <span style="display:inline-flex;align-items:center;gap:4px;padding:3px 10px;background:#f1f5f9;color:#64748b;border-radius:99px;font-size:11px;font-weight:500;">
+                  <span style="width:6px;height:6px;border-radius:50%;background:#94a3b8;display:inline-block;"></span> ปิดพักตัว
+                </span>
+                <% } %>
+              </td>
+              <% if (!isCounselorUser) { %>
+              <td>
+                <div style="display:flex;align-items:center;gap:6px;">
+                  <button class="act-btn ab-secondary edit-btn" data-rec="<%= JSON.stringify(s) %>">
+                    <i data-lucide="pencil" style="width:13px;height:13px;"></i> แก้ไข
+                  </button>
+                  <form method="POST" action="/admin/schedules/delete"
+                        onsubmit="return confirm('ลบตาราง<%= s.dayName %>ของ<%= s.counselor ? s.counselor.name : '' %>?')" style="margin:0;">
+                    <input type="hidden" name="counselorId" value="<%= s.counselorId %>">
+                    <input type="hidden" name="dayOfWeek" value="<%= s.dayOfWeek %>">
+                    <input type="hidden" name="returnQuery" value="<%= returnQuery %>">
+                    <button type="submit" class="act-btn ab-danger">
+                      <i data-lucide="trash-2" style="width:13px;height:13px;"></i>
+                    </button>
+                  </form>
+                </div>
+              </td>
+              <% } %>
+            </tr>
+            <% }) %>
+            <% if (daySchedules.length === 0) { %>
+            <tr><td colspan="6" style="text-align:center;padding:48px 16px;color:#94a3b8;">
+              <i data-lucide="calendar-x" style="width:36px;height:36px;display:block;margin:0 auto 10px;opacity:.3;"></i>
+              ไม่มีนักจิตวิทยาให้คำปรึกษาที่มีตารางเวลาในวันนี้
+            </td></tr>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ════════════════════════════════════════════════════════════════ -->
+    <!-- VIEW: รายเดือน (month)                                         -->
+    <!-- ════════════════════════════════════════════════════════════════ -->
+    <% } else if (view === 'month') { %>
+
+    <!-- Month navigation -->
+    <div style="background:#fff;border:1px solid #f1f5f9;border-radius:16px;padding:14px 20px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;">
+      <a href="<%= buildUrl({view:'month', year:monthData.prevYear, month:monthData.prevMonth}) %>"
+         class="act-btn ab-ghost" style="border:1px solid #e2e8f0;">
+        <i data-lucide="chevron-left" style="width:14px;height:14px;"></i> ก่อนหน้า
+      </a>
+      <span style="font-size:14px;font-weight:600;color:#1e293b;">
+        <%= monthData.monthName %> <%= monthData.year + 543 %>
+      </span>
+      <a href="<%= buildUrl({view:'month', year:monthData.nextYear, month:monthData.nextMonth}) %>"
+         class="act-btn ab-ghost" style="border:1px solid #e2e8f0;">
+        ถัดไป <i data-lucide="chevron-right" style="width:14px;height:14px;"></i>
+      </a>
+    </div>
+
+    <!-- Color legend -->
+    <% if (counselors.length > 0) { %>
+    <div style="background:#fff;border:1px solid #f1f5f9;border-radius:16px;padding:12px 16px;margin-bottom:16px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;">
+      <span style="font-size:11px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;">นักจิตวิทยาให้คำปรึกษา:</span>
+      <% counselors.forEach(c => { %>
+      <% const col = counselorColors[c.id] || '#64748b' %>
+      <div style="display:inline-flex;align-items:center;gap:5px;">
+        <span style="width:10px;height:10px;border-radius:50%;background:<%= col %>;display:inline-block;flex-shrink:0;"></span>
+        <span style="font-size:12px;color:#334155;"><%= c.name %></span>
+      </div>
+      <% }) %>
+    </div>
+    <% } %>
+
+    <!-- Calendar grid -->
+    <div style="background:#fff;border:1px solid #f1f5f9;border-radius:16px;overflow:hidden;">
+      <table style="width:100%;border-collapse:collapse;">
+        <thead>
+          <tr>
+            <% ['อาทิตย์','จันทร์','อังคาร','พุธ','พฤหัสบดี','ศุกร์','เสาร์'].forEach(d => { %>
+            <th style="padding:10px 6px;font-size:11px;font-weight:600;color:#64748b;text-align:center;border-bottom:1px solid #f1f5f9;text-transform:uppercase;letter-spacing:.05em;"><%= d %></th>
+            <% }) %>
+          </tr>
+        </thead>
+        <tbody>
+          <% monthData.weeks.forEach(week => { %>
+          <tr>
+            <% week.forEach(cell => { %>
+            <td class="cal-cell <%= cell && cell.isToday ? 'today' : '' %> <%= !cell ? 'other' : '' %>" style="width:14.28%;">
+              <% if (cell) { %>
+              <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px;">
+                <span style="font-size:12px;font-weight:<%= cell.isToday?'700':'500' %>;color:<%= cell.isToday?'#fff':'#334155' %>;background:<%= cell.isToday?'#3b82f6':'transparent' %>;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                  <%= cell.day %>
+                </span>
+              </div>
+              <div style="display:flex;flex-wrap:wrap;gap:2px;">
+                <% cell.entries.forEach(e => { %>
+                <% const col = counselorColors[e.counselorId] || '#64748b' %>
+                <span class="c-chip" style="background:<%= col %>18;color:<%= col %>;">
+                  <% if (e.counselor && e.counselor.photo) { %>
+                    <img data-counselor-profile-photo="<%= e.counselor.id %>" src="<%= e.counselor.photo %>" alt="<%= e.counselor.name %>" style="width:14px;height:14px;border-radius:50%;object-fit:cover;">
+                  <% } else { %>
+                    <span class="c-dot" style="background:<%= col %>;width:6px;height:6px;border-radius:50%;"></span>
+                    <%= e.counselor ? e.counselor.avatar : '?' %>
+                  <% } %>
+                </span>
+                <% }) %>
+              </div>
+              <% } %>
+            </td>
+            <% }) %>
+          </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+
+    <% } %> <!-- end view branch -->
 
   </div>
 </div>
@@ -231,7 +507,7 @@
 <!-- Overlay -->
 <div id="overlay" class="panel-overlay" onclick="closePanel()"></div>
 
-<!-- Slide-over Panel -->
+<!-- Panel Modal -->
 <div id="panel" class="panel-drawer">
   <div style="padding:16px 20px; border-bottom:1px solid #f1f5f9; display:flex; align-items:center; justify-content:space-between;">
     <div style="display:flex; align-items:center; gap:10px;">
@@ -250,11 +526,11 @@
 
   <div style="flex:1; overflow-y:auto; padding:24px;">
     <form id="panelForm" method="POST" action="/admin/schedules/save">
+      <input type="hidden" name="returnQuery" value="<%= returnQuery %>">
       <div style="display:grid; gap:18px;">
 
-        <!-- นักให้คำปรึกษา -->
         <div>
-          <label class="lbl">นักให้คำปรึกษา *</label>
+          <label class="lbl">นักจิตวิทยาให้คำปรึกษา *</label>
           <select name="counselorId" id="f_counselorId" class="inp" required>
             <% counselors.forEach(c => { %>
             <option value="<%= c.id %>" <%=c.id===selected?'selected':''%>><%= c.name %></option>
@@ -262,12 +538,11 @@
           </select>
         </div>
 
-        <!-- วัน -->
         <div>
           <label class="lbl">วัน *</label>
           <select name="dayOfWeek" id="f_dayOfWeek" class="inp" required>
             <option value="">— เลือกวัน —</option>
-            <% ['อาทิตย์','จันทร์','อังคาร','พุธ','พฤหัสบดี','ศุกร์','เสาร์'].forEach((name, i) => { %>
+            <% ['อาทิตย์','จันทร์','อังคาร','พุธ','พฤหัสบดี','ศุกร์','เสาร์'].forEach((name,i) => { %>
             <option value="<%= i %>"><%= name %></option>
             <% }) %>
           </select>
@@ -277,7 +552,6 @@
           </div>
         </div>
 
-        <!-- เวลา -->
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
           <div>
             <label class="lbl">เวลาเริ่ม *</label>
@@ -289,16 +563,14 @@
           </div>
         </div>
 
-        <!-- Duration preview -->
         <div id="durationPreview" style="padding:12px 16px; background:#f8fafc; border-radius:10px; border:1px solid #f1f5f9; display:flex; align-items:center; gap:10px;">
-          <i data-lucide="clock" style="width:16px;height:16px;color:#2dd4b4; flex-shrink:0;"></i>
+          <i data-lucide="clock" style="width:16px;height:16px;color:#2dd4b4;flex-shrink:0;"></i>
           <div>
             <div style="font-size:11px; color:#94a3b8; margin-bottom:2px;">ระยะเวลาทำงานรวม</div>
             <div id="durationText" style="font-size:14px; font-weight:600; color:#1e293b;">8 ชั่วโมง</div>
           </div>
         </div>
 
-        <!-- สถานะ -->
         <div>
           <label class="lbl">สถานะการรับนัด</label>
           <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
@@ -324,8 +596,8 @@
   </div>
 
   <div style="padding:16px 20px; border-top:1px solid #f1f5f9; display:flex; gap:10px;">
-    <button onclick="closePanel()" class="act-btn ab-ghost" style="flex:1; justify-content:center; border:1px solid #e2e8f0;">ยกเลิก</button>
-    <button onclick="submitPanel()" class="act-btn ab-primary" style="flex:1; justify-content:center;">
+    <button onclick="closePanel()" class="act-btn ab-ghost" style="flex:1;justify-content:center;border:1px solid #e2e8f0;">ยกเลิก</button>
+    <button onclick="submitPanel()" class="act-btn ab-primary" style="flex:1;justify-content:center;">
       <i data-lucide="save" style="width:14px;height:14px;"></i>
       <span id="submitLabel">บันทึกตารางเวลา</span>
     </button>
@@ -333,12 +605,25 @@
 </div>
 
 <script>
-  // Pass current schedules to JS so we can warn on duplicate day
-  const MY_SCHEDULES = <%- JSON.stringify(mySchedules) %>
-  const SELECTED_ID  = '<%= selected %>'
+  const MY_SCHEDULES   = <%- JSON.stringify(mySchedules) %>
+  const ALL_SCHEDULES  = <%- JSON.stringify(weekGrid.flatMap(r => r.entries)) %>
+  const SELECTED_ID    = '<%- selected %>'
+  const IS_COUNSELOR   = <%- isCounselorUser ? 'true' : 'false' %>
+
+  // Counselor filter dropdown → reload page
+  function applyFilter() {
+    const cId  = document.getElementById('filterCounselor').value
+    const view = new URLSearchParams(location.search).get('view') || 'week'
+    const dow  = new URLSearchParams(location.search).get('dayOfWeek') || '1'
+    const yr   = new URLSearchParams(location.search).get('year') || ''
+    const mo   = new URLSearchParams(location.search).get('month') || ''
+    let url = `/admin/schedules?view=${view}&counselorId=${encodeURIComponent(cId)}&dayOfWeek=${dow}`
+    if (yr) url += `&year=${yr}`
+    if (mo) url += `&month=${mo}`
+    location.href = url
+  }
 
   function openPanel(mode, data) {
-    // Reset
     document.getElementById('panelForm').reset()
     document.getElementById('dayWarning').style.display = 'none'
     document.getElementById('f_startTime').value = '09:00'
@@ -347,25 +632,24 @@
     updateDuration()
 
     if (mode === 'create') {
-      document.getElementById('panelTitle').textContent = 'เพิ่มตารางเวลา'
-      document.getElementById('panelSub').textContent   = 'กำหนดวันและเวลารับนัด'
+      document.getElementById('panelTitle').textContent   = 'เพิ่มตารางเวลา'
+      document.getElementById('panelSub').textContent     = 'กำหนดวันและเวลารับนัด'
       document.getElementById('panelIcon').setAttribute('data-lucide','calendar-plus')
-      document.getElementById('submitLabel').textContent = 'บันทึกตารางเวลา'
-      document.getElementById('f_counselorId').value    = SELECTED_ID
+      document.getElementById('submitLabel').textContent  = 'บันทึกตารางเวลา'
+      document.getElementById('f_counselorId').value      = SELECTED_ID
       if (data && data.dayOfWeek !== undefined) {
         document.getElementById('f_dayOfWeek').value = data.dayOfWeek
         checkDayConflict()
       }
     } else {
-      // edit mode
-      document.getElementById('panelTitle').textContent = 'แก้ไขตารางเวลา'
-      document.getElementById('panelSub').textContent   = data.dayName
+      document.getElementById('panelTitle').textContent   = 'แก้ไขตารางเวลา'
+      document.getElementById('panelSub').textContent     = data.dayName
       document.getElementById('panelIcon').setAttribute('data-lucide','pencil')
-      document.getElementById('submitLabel').textContent = 'บันทึกการแก้ไข'
-      document.getElementById('f_counselorId').value    = data.counselorId
-      document.getElementById('f_dayOfWeek').value      = data.dayOfWeek
-      document.getElementById('f_startTime').value      = data.startTime
-      document.getElementById('f_endTime').value        = data.endTime
+      document.getElementById('submitLabel').textContent  = 'บันทึกการแก้ไข'
+      document.getElementById('f_counselorId').value      = data.counselorId
+      document.getElementById('f_dayOfWeek').value        = data.dayOfWeek
+      document.getElementById('f_startTime').value = data.startTime
+      document.getElementById('f_endTime').value   = data.endTime
       document.getElementById(data.isActive ? 'r_open' : 'r_close').checked = true
       updateDuration()
     }
@@ -394,11 +678,9 @@
   function checkDayConflict() {
     const counselorId = document.getElementById('f_counselorId').value
     const dayOfWeek   = parseInt(document.getElementById('f_dayOfWeek').value)
-    const conflict    = MY_SCHEDULES.some(
-      s => s.counselorId === counselorId && s.dayOfWeek === dayOfWeek
-    )
+    const conflict    = MY_SCHEDULES.some(s => s.counselorId === counselorId && s.dayOfWeek === dayOfWeek)
     document.getElementById('dayWarning').style.display = conflict ? 'block' : 'none'
-    if(conflict) lucide.createIcons()
+    if (conflict) lucide.createIcons()
   }
 
   function updateDuration() {
@@ -409,7 +691,7 @@
     const [eh,em] = end.split(':').map(Number)
     const total = (eh*60+em) - (sh*60+sm)
     let text = ''
-    if (total <= 0) { text = '⚠ เวลาสิ้นสุดต้องมากกว่าเวลาเริ่ม'; }
+    if (total <= 0) text = '⚠ เวลาสิ้นสุดต้องมากกว่าเวลาเริ่ม'
     else {
       const h = Math.floor(total/60), m = total%60
       text = h ? `${h} ชั่วโมง${m ? ' '+m+' นาที' : ''}` : `${m} นาที`
@@ -417,14 +699,13 @@
     document.getElementById('durationText').textContent = text
   }
 
-  // Event listeners
   document.getElementById('f_startTime').addEventListener('change', updateDuration)
   document.getElementById('f_endTime').addEventListener('change', updateDuration)
   document.getElementById('f_dayOfWeek').addEventListener('change', checkDayConflict)
   document.querySelectorAll('.edit-btn').forEach(btn => {
     btn.addEventListener('click', () => openPanel('edit', JSON.parse(btn.dataset.rec)))
   })
-  document.addEventListener('keydown', e => { if(e.key==='Escape') closePanel() })
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closePanel() })
 
   lucide.createIcons()
 </script>
