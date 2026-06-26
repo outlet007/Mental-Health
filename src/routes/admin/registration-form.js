@@ -1,0 +1,81 @@
+const express = require('express')
+const router = express.Router()
+const fs = require('fs')
+const path = require('path')
+
+const dataFile = path.join(__dirname, '../../../data/content.json')
+
+function readData() { return JSON.parse(fs.readFileSync(dataFile, 'utf8')) }
+function writeData(data) { fs.writeFileSync(dataFile, JSON.stringify(data, null, 2)) }
+
+function readItems(value) {
+  return [].concat(value || []).map(item => item.trim()).filter(Boolean)
+}
+
+const FORM_TEXT_FIELDS = [
+  'successHeading',
+  'successText',
+  'errorText',
+  'nameLabel',
+  'namePlaceholder',
+  'studentIdLabel',
+  'studentIdPlaceholder',
+  'phoneLabel',
+  'emailLabel',
+  'concernLabel',
+  'typeLabel',
+  'onlineLabel',
+  'onsiteLabel',
+  'pdpaHeading',
+  'pdpaText',
+  'pdpaCheckbox',
+  'submitLabel',
+]
+
+function readFormTexts(body, current = {}) {
+  const formTexts = { ...current }
+  FORM_TEXT_FIELDS.forEach(field => {
+    const value = (body['formText_' + field] || '').trim()
+    if (value) formTexts[field] = value
+  })
+  return formTexts
+}
+
+function readBookSettings(body, currentBook, concernField) {
+  return {
+    ...currentBook,
+    heading: (body.bookHeading || '').trim(),
+    subtext: (body.bookSubtext || '').trim(),
+    formHeading: (body.bookFormHeading || '').trim(),
+    concernOptions: readItems(body[concernField]),
+    formTexts: readFormTexts(body, currentBook.formTexts || {}),
+  }
+}
+
+router.get('/', (req, res) => {
+  const content = readData()
+  if (!content.en) content.en = {}
+  res.render('admin/registration-form', {
+    page: 'registration-form',
+    title: 'จัดการฟอร์มลงทะเบียนเพื่อขอรับบริการให้คำปรึกษา',
+    content,
+    query: req.query,
+  })
+})
+
+router.post('/', (req, res) => {
+  const data = readData()
+  data.book = readBookSettings(req.body, data.book || {}, 'bookConcernOption')
+  writeData(data)
+  res.redirect('/admin/registration-form?saved=th')
+})
+
+router.post('/en', (req, res) => {
+  const data = readData()
+  if (!data.en) data.en = {}
+  data.en.book = readBookSettings(req.body, data.en.book || {}, 'bookConcernOptionEn')
+  writeData(data)
+  res.redirect('/admin/registration-form?saved=en')
+})
+
+module.exports = router

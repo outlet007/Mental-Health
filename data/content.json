@@ -14,7 +14,34 @@
   "book": {
     "heading": "ลงทะเบียนเพื่อขอรับบริการให้คำปรึกษา",
     "subtext": "การขอความช่วยเหลือไม่ใช่เรื่องอ่อนแอ มันคือความกล้าหาญ เริ่มต้นดูแลใจของคุณวันนี้เลย",
-    "formHeading": "กรุณาฝากข้อมูลของท่าน เพื่อให้เจ้าหน้าที่ติดต่อกลับสำหรับการนัดหมายรับคำปรึกษา"
+    "formHeading": "กรุณาฝากข้อมูลของท่าน เพื่อให้เจ้าหน้าที่ติดต่อกลับสำหรับการนัดหมายรับคำปรึกษา",
+    "concernOptions": [
+      "ความวิตกกังวล / ความเครียด",
+      "ความเศร้าโศก / การสูญเสีย",
+      "ปัญหาครอบครัว",
+      "ปัญหาความสัมพันธ์",
+      "ภาวะซึมเศร้า",
+      "อื่นๆ"
+    ],
+    "formTexts": {
+      "successHeading": "ส่งคำขอสำเร็จแล้ว!",
+      "successText": "ทีมงานจะติดต่อกลับหาคุณภายใน 1 วันทำการ<br>ขอบคุณที่ไว้วางใจ MindCare",
+      "errorText": "กรุณากรอกข้อมูลที่จำเป็นให้ครบทุกช่อง",
+      "nameLabel": "ชื่อ-นามสกุล",
+      "namePlaceholder": "กรอกชื่อของคุณ",
+      "studentIdLabel": "รหัสนักศึกษา",
+      "studentIdPlaceholder": "เช่น 1680123456",
+      "phoneLabel": "เบอร์โทรศัพท์",
+      "emailLabel": "อีเมล",
+      "concernLabel": "คุณต้องการความช่วยเหลือเรื่องอะไร?",
+      "typeLabel": "รูปแบบที่ต้องการ",
+      "onlineLabel": "ออนไลน์",
+      "onsiteLabel": "เข้ารับบริการด้วยตนเอง",
+      "pdpaHeading": "การยินยอมเปิดเผยข้อมูล",
+      "pdpaText": "ข้าพเจ้า ตกลงและยินยอมให้มหาวิทยาลัยเก็บรวบรวม ใช้ ประมวลผล และเปิดเผยข้อมูลส่วนบุคคลของข้าพเจ้า ทั้งที่ปรากฏในเอกสารฉบับนี้ หรือที่มหาวิทยาลัยรวบรวมจากบุคคลอื่น เพื่อวัตถุประสงค์ในการนัดพบแพทย์ หรือเพื่อใช้ประโยชน์ในกิจการของมหาวิทยาลัย ทั้งนี้ข้าพเจ้ารับทราบ ตกลงและยินยอมว่า มหาวิทยาลัยมีสิทธิ์เก็บรวบรวม ใช้ประมวลผลและเปิดเผยข้อมูลส่วนบุคคลของข้าพเจ้า โดยเป็นไปตามนโยบายคุ้มครองข้อมูลส่วนบุคคลของมหาวิทยาลัย ที่ประกาศใช้ในปัจจุบันหรืออาจเปลี่ยนแปลงแก้ไขในภายหลัง รายละเอียดปรากฏตาม นโยบายคุ้มครองข้อมูลส่วนบุคคล ในเว็บไซต์",
+      "pdpaCheckbox": "ข้าพเจ้าได้อ่านและยอมรับการยินยอมเปิดเผยข้อมูลแล้ว",
+      "submitLabel": "ส่งคำขอจองนัดหมาย"
+    }
   },
   "faqs": [
     {
@@ -31,6 +58,9 @@
     }
   ],
   "contact": {
+    "description": "ระบบจองนัดหมายการให้คำปรึกษาทางสุขภาพจิต เชื่อมต่อผู้ที่ต้องการความช่วยเหลือกับผู้เชี่ยวชาญที่ไว้วางใจได้",
+    "lineLabel": "LINE @bucare",
+    "lineUrl": "https://page.line.me/bucare?openQrModal=true",
     "email": "hello@MindCare.th",
     "phone": "02-XXX-XXXX",
     "hours": "จันทร์-เสาร์ 08.30 – 17.00 น.<br>(ยกเว้นวันหยุดนักขัตฤกษ์)"
@@ -46,8 +76,8 @@
         "subtext": ""
       },
       "motionEnabled": true,
-      "motionDuration": 38,
-      "motionScale": 1.12
+      "motionDuration": 90,
+      "motionScale": 1.35
     },
     "counselors": {
       "color": "#ffffff",
@@ -86,7 +116,7 @@
         "formHeading": "#6a717c"
       },
       "motionEnabled": true,
-      "motionDuration": 70,
+      "motionDuration": 90,
       "motionScale": 1.35
     },
     "faq": {
@@ -120,7 +150,34 @@
     "book": {
       "heading": "Register for Counseling Services",
       "subtext": "Seeking help is not weakness — it takes courage. Start taking care of your mind today.",
-      "formHeading": "Please leave your details for our staff to contact you for a counseling appointment."
+      "formHeading": "Please leave your details for our staff to contact you for a counseling appointment.",
+      "concernOptions": [
+        "Anxiety / Stress",
+        "Depression",
+        "Relationship Issues",
+        "Family Problems",
+        "Grief / Loss",
+        "Other"
+      ],
+      "formTexts": {
+        "successHeading": "Request Sent Successfully!",
+        "successText": "Our team will contact you within 1 business day.<br>Thank you for trusting MindCare.",
+        "errorText": "Please fill in all required fields.",
+        "nameLabel": "Full Name",
+        "namePlaceholder": "Enter your name",
+        "studentIdLabel": "Student ID",
+        "studentIdPlaceholder": "e.g. 1680123456",
+        "phoneLabel": "Phone Number",
+        "emailLabel": "Email",
+        "concernLabel": "What would you like help with?",
+        "typeLabel": "Preferred Format",
+        "onlineLabel": "Online",
+        "onsiteLabel": "In-Person",
+        "pdpaHeading": "Data Disclosure Consent",
+        "pdpaText": "I agree and consent to the University collecting, using, processing, and disclosing my personal information — both appearing in this document and gathered from other persons — for the purpose of scheduling medical appointments or for University operations. I acknowledge that the University has the right to collect, use, process, and disclose my personal data in accordance with the University's Personal Data Protection Policy as currently published or as may be amended in the future. Details are available in the Personal Data Protection Policy on the website.",
+        "pdpaCheckbox": "I have read and accept the data disclosure consent.",
+        "submitLabel": "Submit Registration Request"
+      }
     },
     "faqs": [
       {
@@ -137,9 +194,34 @@
       }
     ],
     "contact": {
+      "description": "Mental health counseling appointment system — connecting those who need help with trusted experts.",
+      "lineLabel": "LINE @bucare",
+      "lineUrl": "https://page.line.me/bucare?openQrModal=true",
       "email": "hello@MindCare.th",
       "phone": "02-XXX-XXXX",
       "hours": "Mon–Sat 08:30 – 17:00 (Except public holidays)"
+    },
+    "features": {
+      "heading": "Why Choose MindCare?",
+      "subtext": "We believe everyone deserves good mental health care in a safe and trustworthy environment.",
+      "items": [
+        "Counselors verified and certified",
+        "All information is confidential under PDPA",
+        "Book appointments 24 hours a day, every day",
+        "Supports both online and in-person sessions",
+        "Appointment reminders so you never miss a session"
+      ]
     }
+  },
+  "features": {
+    "heading": "ทำไมต้องเลือก MindCare?",
+    "subtext": "เราเชื่อว่าทุกคนมีสิทธิ์ได้รับการดูแลสุขภาพจิตที่ดี ในสภาพแวดล้อมที่ปลอดภัยและไว้วางใจได้",
+    "items": [
+      "นักให้คำปรึกษาผ่านการตรวจสอบและรับรองคุณสมบัติ",
+      "ข้อมูลทุกอย่างเป็นความลับตาม PDPA",
+      "จองนัดได้ตลอด 24 ชั่วโมง ทุกวัน",
+      "รองรับทั้งการพบออนไลน์และเข้ารับบริการด้วยตนเอง",
+      "แจ้งเตือนก่อนนัดหมาย ไม่ลืมแน่นอน"
+    ]
   }
 }

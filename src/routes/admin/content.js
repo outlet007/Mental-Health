@@ -37,6 +37,10 @@ function saveTextColors(data, section, fields, body) {
   data.backgrounds[section].textColors = textColors
 }
 
+function readItems(value) {
+  return [].concat(value || []).map(item => item.trim()).filter(Boolean)
+}
+
 function clampNumber(value, fallback, min, max) {
   const n = parseFloat(value)
   if (Number.isNaN(n)) return fallback
@@ -90,6 +94,57 @@ router.post('/sections', (req, res) => {
   res.redirect('/admin/content?saved=sections')
 })
 
+
+router.post('/counselors', (req, res) => {
+  const data = readData()
+  data.counselors = {
+    heading: (req.body.counselorsHeading || '').trim(),
+    subtext: (req.body.counselorsSubtext || '').trim(),
+  }
+  saveTextColors(data, 'counselors', ['heading', 'subtext'], req.body)
+  writeData(data)
+  res.redirect('/admin/content?saved=counselors')
+})
+
+router.post('/features', (req, res) => {
+  const data = readData()
+  data.features = {
+    heading: (req.body.featuresHeading || '').trim(),
+    subtext: (req.body.featuresSubtext || '').trim(),
+    items: readItems(req.body.featureText),
+  }
+  saveTextColors(data, 'features', ['heading', 'subtext'], req.body)
+  writeData(data)
+  res.redirect('/admin/content?saved=features')
+})
+
+router.post('/book', (req, res) => {
+  const data = readData()
+  data.book = {
+    heading:     (req.body.bookHeading     || '').trim(),
+    subtext:     (req.body.bookSubtext     || '').trim(),
+    formHeading: (req.body.bookFormHeading || '').trim(),
+    concernOptions: readItems(req.body.bookConcernOption),
+  }
+  saveTextColors(data, 'book', ['heading', 'subtext', 'formHeading'], req.body)
+  writeData(data)
+  res.redirect('/admin/content?saved=book')
+})
+
+router.post('/contact-info', (req, res) => {
+  const data = readData()
+  const currentContact = data.contact || {}
+  data.contact = {
+    ...currentContact,
+    description: (req.body.contactDescription || '').trim(),
+    lineLabel: (req.body.contactLineLabel || '').trim(),
+    lineUrl: (req.body.contactLineUrl || '').trim(),
+    hours: (req.body.contactHours || '').trim(),
+  }
+  writeData(data)
+  res.redirect('/admin/content?saved=contact')
+})
+
 router.post('/faqs', (req, res) => {
   const data = readData()
   const qs = [].concat(req.body.faq_q || [])
@@ -140,6 +195,61 @@ router.post('/sections-en', (req, res) => {
   }
   writeData(data)
   res.redirect('/admin/content?saved=sections-en')
+})
+
+
+router.post('/counselors-en', (req, res) => {
+  const data = readData()
+  if (!data.en) data.en = {}
+  data.en.counselors = {
+    heading: (req.body.counselorsHeading || '').trim(),
+    subtext: (req.body.counselorsSubtext || '').trim(),
+  }
+  saveTextColors(data, 'counselors', ['heading', 'subtext'], req.body)
+  writeData(data)
+  res.redirect('/admin/content?saved=counselors-en')
+})
+
+router.post('/features-en', (req, res) => {
+  const data = readData()
+  if (!data.en) data.en = {}
+  data.en.features = {
+    heading: (req.body.featuresHeading || '').trim(),
+    subtext: (req.body.featuresSubtext || '').trim(),
+    items: readItems(req.body.featureText),
+  }
+  saveTextColors(data, 'features', ['heading', 'subtext'], req.body)
+  writeData(data)
+  res.redirect('/admin/content?saved=features-en')
+})
+
+router.post('/book-en', (req, res) => {
+  const data = readData()
+  if (!data.en) data.en = {}
+  data.en.book = {
+    heading:     (req.body.bookHeading     || '').trim(),
+    subtext:     (req.body.bookSubtext     || '').trim(),
+    formHeading: (req.body.bookFormHeading || '').trim(),
+    concernOptions: readItems(req.body.bookConcernOptionEn || req.body.bookConcernOption),
+  }
+  saveTextColors(data, 'book', ['heading', 'subtext', 'formHeading'], req.body)
+  writeData(data)
+  res.redirect('/admin/content?saved=book-en')
+})
+
+router.post('/contact-info-en', (req, res) => {
+  const data = readData()
+  if (!data.en) data.en = {}
+  const currentContact = data.en.contact || {}
+  data.en.contact = {
+    ...currentContact,
+    description: (req.body.contactDescription || '').trim(),
+    lineLabel: (req.body.contactLineLabel || '').trim(),
+    lineUrl: (req.body.contactLineUrl || '').trim(),
+    hours: (req.body.contactHours || '').trim(),
+  }
+  writeData(data)
+  res.redirect('/admin/content?saved=contact-en')
 })
 
 router.post('/faqs-en', (req, res) => {

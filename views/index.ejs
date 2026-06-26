@@ -22,6 +22,39 @@
 <body class="bg-white">
 <%
 const _bgs = content.backgrounds || {}
+const featureContent = content.features || {}
+const featureDefaults = [
+  { icon:'shield-check', text:'นักให้คำปรึกษาผ่านการตรวจสอบและรับรองคุณสมบัติ' },
+  { icon:'lock', text:'ข้อมูลทุกอย่างเป็นความลับตาม PDPA' },
+  { icon:'clock', text:'จองนัดได้ตลอด 24 ชั่วโมง ทุกวัน' },
+  { icon:'video', text:'รองรับทั้งการพบออนไลน์และเข้ารับบริการด้วยตนเอง' },
+  { icon:'bell', text:'แจ้งเตือนก่อนนัดหมาย ไม่ลืมแน่นอน' },
+]
+const featureItems = Array.isArray(featureContent.items) && featureContent.items.length
+  ? featureContent.items.map((text, idx) => ({ icon: featureDefaults[idx] ? featureDefaults[idx].icon : 'check-circle', text }))
+  : featureDefaults
+const enFeatureContent = (content.en && content.en.features) || {}
+const enFeatureDefaults = [
+  'Counselors verified and certified',
+  'All information is confidential under PDPA',
+  'Book appointments 24 hours a day, every day',
+  'Supports both online and in-person sessions',
+  'Appointment reminders so you never miss a session',
+]
+const enFeatureItems = Array.isArray(enFeatureContent.items) && enFeatureContent.items.length ? enFeatureContent.items : enFeatureDefaults
+const concernDefaults = ['ความวิตกกังวล / ความเครียด', 'ภาวะซึมเศร้า', 'ปัญหาความสัมพันธ์', 'ปัญหาครอบครัว', 'ความเศร้าโศก / การสูญเสีย', 'อื่นๆ']
+const concernItems = Array.isArray(content.book && content.book.concernOptions) && content.book.concernOptions.length ? content.book.concernOptions : concernDefaults
+const enConcernDefaults = ['Anxiety / Stress', 'Depression', 'Relationship Issues', 'Family Problems', 'Grief / Loss', 'Other']
+const enBookContent = (content.en && content.en.book) || {}
+const enConcernItems = Array.isArray(enBookContent.concernOptions) && enBookContent.concernOptions.length ? enBookContent.concernOptions : enConcernDefaults
+const bookFormTexts = (content.book && content.book.formTexts) || {}
+const enBookFormTexts = enBookContent.formTexts || {}
+function bookText(texts, key, fallback) {
+  return texts[key] || fallback
+}
+function _featureText(items, idx, fallback) {
+  return items[idx] || fallback
+}
 function _hexToRgba(hex, a) {
   if (!hex || !/^#[0-9A-Fa-f]{6}$/.test(hex)) return null
   const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16)
@@ -308,15 +341,9 @@ function _bgLayers(sec) {
     <div class="max-w-6xl mx-auto px-6" style="position:relative;z-index:2;">
       <div class="grid md:grid-cols-2 gap-12 items-center">
         <div data-animate="fade-right" class="text-white">
-          <h2 class="text-3xl font-bold mb-4" data-i18n="features-heading" style="<%- _tc('features','heading') %>">ทำไมต้องเลือก MindCare?</h2>
-          <p class="text-brand-100 mb-8 leading-relaxed" data-i18n="features-subtext" style="<%- _tc('features','subtext') %>">เราเชื่อว่าทุกคนมีสิทธิ์ได้รับการดูแลสุขภาพจิตที่ดี ในสภาพแวดล้อมที่ปลอดภัยและไว้วางใจได้</p>
-          <% const features = [
-            { icon:'shield-check', text:'นักให้คำปรึกษาผ่านการตรวจสอบและรับรองคุณสมบัติ' },
-            { icon:'lock', text:'ข้อมูลทุกอย่างเป็นความลับตาม PDPA' },
-            { icon:'clock', text:'จองนัดได้ตลอด 24 ชั่วโมง ทุกวัน' },
-            { icon:'video', text:'รองรับทั้งการพบออนไลน์และเข้ารับบริการด้วยตนเอง' },
-            { icon:'bell', text:'แจ้งเตือนก่อนนัดหมาย ไม่ลืมแน่นอน' },
-          ] %>
+          <h2 class="text-3xl font-bold mb-4" data-i18n="features-heading" style="<%- _tc('features','heading') %>"><%= featureContent.heading || 'ทำไมต้องเลือก MindCare?' %></h2>
+          <p class="text-brand-100 mb-8 leading-relaxed" data-i18n="features-subtext" style="<%- _tc('features','subtext') %>"><%= featureContent.subtext || 'เราเชื่อว่าทุกคนมีสิทธิ์ได้รับการดูแลสุขภาพจิตที่ดี ในสภาพแวดล้อมที่ปลอดภัยและไว้วางใจได้' %></p>
+          <% const features = featureItems %>
           <ul class="space-y-3">
             <% features.forEach((f, idx) => { %>
             <li data-animate="fade-right" data-delay="<%= idx * 90 %>ms" class="flex items-center gap-3 text-brand-50">
@@ -361,8 +388,8 @@ function _bgLayers(sec) {
         <div class="w-16 h-16 rounded-full bg-brand-50 flex items-center justify-center mx-auto mb-4">
           <i data-lucide="circle-check" class="w-8 h-8 text-brand-500"></i>
         </div>
-        <h3 class="font-semibold text-slate-800 text-lg mb-2" data-i18n="book-success-heading">ส่งคำขอสำเร็จแล้ว!</h3>
-        <p class="text-slate-500 text-sm leading-relaxed" data-i18n-html="book-success-text">ทีมงานจะติดต่อกลับหาคุณภายใน 1 วันทำการ<br>ขอบคุณที่ไว้วางใจ MindCare</p>
+        <h3 class="font-semibold text-slate-800 text-lg mb-2" data-i18n="book-success-heading"><%= bookText(bookFormTexts, 'successHeading', 'ส่งคำขอสำเร็จแล้ว!') %></h3>
+        <p class="text-slate-500 text-sm leading-relaxed" data-i18n-html="book-success-text"><%- bookText(bookFormTexts, 'successText', 'ทีมงานจะติดต่อกลับหาคุณภายใน 1 วันทำการ<br>ขอบคุณที่ไว้วางใจ MindCare') %></p>
       </div>
       <% } else { %>
       <div data-animate="fade-up" data-delay="300ms" class="card border-2 border-brand-100 text-left">
@@ -373,44 +400,41 @@ function _bgLayers(sec) {
         <% if (query && query.error === 'missing') { %>
         <div class="flex items-center gap-2 mb-4 px-4 py-3 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm">
           <i data-lucide="alert-circle" class="w-4 h-4 flex-shrink-0"></i>
-          <span data-i18n="form-error">กรุณากรอกข้อมูลที่จำเป็นให้ครบทุกช่อง</span>
+          <span data-i18n="form-error"><%= bookText(bookFormTexts, 'errorText', 'กรุณากรอกข้อมูลที่จำเป็นให้ครบทุกช่อง') %></span>
         </div>
         <% } %>
         <form method="POST" action="/contact" class="space-y-4">
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label class="form-label"><span data-i18n="form-label-name">ชื่อ-นามสกุล</span> <span class="text-red-400">*</span></label>
-              <input type="text" name="name" class="form-input" placeholder="กรอกชื่อของคุณ" data-i18n-ph="form-ph-name" required>
+              <label class="form-label"><span data-i18n="form-label-name"><%= bookText(bookFormTexts, 'nameLabel', 'ชื่อ-นามสกุล') %></span> <span class="text-red-400">*</span></label>
+              <input type="text" name="name" class="form-input" placeholder="<%= bookText(bookFormTexts, 'namePlaceholder', 'กรอกชื่อของคุณ') %>" data-i18n-ph="form-ph-name" required>
             </div>
             <div>
-              <label class="form-label"><span data-i18n="form-label-studentid">รหัสนักศึกษา</span> <span class="text-red-400">*</span></label>
-              <input type="text" name="studentId" class="form-input" placeholder="เช่น 1680123456" data-i18n-ph="form-ph-studentid" required>
+              <label class="form-label"><span data-i18n="form-label-studentid"><%= bookText(bookFormTexts, 'studentIdLabel', 'รหัสนักศึกษา') %></span> <span class="text-red-400">*</span></label>
+              <input type="text" name="studentId" class="form-input" placeholder="<%= bookText(bookFormTexts, 'studentIdPlaceholder', 'เช่น 1680123456') %>" data-i18n-ph="form-ph-studentid" required>
             </div>
           </div>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label class="form-label"><span data-i18n="form-label-phone">เบอร์โทรศัพท์</span> <span class="text-red-400">*</span></label>
+              <label class="form-label"><span data-i18n="form-label-phone"><%= bookText(bookFormTexts, 'phoneLabel', 'เบอร์โทรศัพท์') %></span> <span class="text-red-400">*</span></label>
               <input type="tel" name="phone" class="form-input" placeholder="08X-XXX-XXXX" required>
             </div>
             <div>
-              <label class="form-label"><span data-i18n="form-label-email">อีเมล</span> <span class="text-red-400">*</span></label>
+              <label class="form-label"><span data-i18n="form-label-email"><%= bookText(bookFormTexts, 'emailLabel', 'อีเมล') %></span> <span class="text-red-400">*</span></label>
               <input type="email" name="email" class="form-input" placeholder="your@email.com" required>
             </div>
           </div>
           <div>
-            <label class="form-label" data-i18n="form-label-concern">คุณต้องการความช่วยเหลือเรื่องอะไร?</label>
+            <label class="form-label" data-i18n="form-label-concern"><%= bookText(bookFormTexts, 'concernLabel', 'คุณต้องการความช่วยเหลือเรื่องอะไร?') %></label>
             <select name="concern" class="form-select">
               <option value="" data-i18n-opt="concern-0">-- เลือกประเภท --</option>
-              <option data-i18n-opt="concern-1">ความวิตกกังวล / ความเครียด</option>
-              <option data-i18n-opt="concern-2">ภาวะซึมเศร้า</option>
-              <option data-i18n-opt="concern-3">ปัญหาความสัมพันธ์</option>
-              <option data-i18n-opt="concern-4">ปัญหาครอบครัว</option>
-              <option data-i18n-opt="concern-5">ความเศร้าโศก / การสูญเสีย</option>
-              <option data-i18n-opt="concern-6">อื่นๆ</option>
+              <% concernItems.forEach((item, idx) => { %>
+              <option data-i18n-opt="concern-<%= idx + 1 %>"><%= item %></option>
+              <% }) %>
             </select>
           </div>
           <div>
-            <label class="form-label"><span data-i18n="form-label-type">รูปแบบที่ต้องการ</span> <span class="text-red-400">*</span></label>
+            <label class="form-label"><span data-i18n="form-label-type"><%= bookText(bookFormTexts, 'typeLabel', 'รูปแบบที่ต้องการ') %></span> <span class="text-red-400">*</span></label>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
               <label class="flex items-center gap-2 p-3 border border-slate-200 rounded-xl cursor-pointer hover:border-brand-300 hover:bg-brand-50 transition-colors">
                 <input type="radio" name="type" value="online" required class="accent-brand-600">
@@ -427,19 +451,19 @@ function _bgLayers(sec) {
           <div class="bg-gradient-to-r from-brand-50 to-emerald-50 rounded-2xl border border-brand-100" style="padding:15px">
             <div class="flex items-center gap-2 mb-3">
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="w-5 h-5 text-brand-500 flex-shrink-0"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"></path><path d="m9 12 2 2 4-4"></path></svg>
-              <h4 class="font-semibold text-slate-800 text-base"><span data-i18n="pdpa-heading">การยินยอมเปิดเผยข้อมูล</span> <span class="text-red-400">*</span></h4>
+              <h4 class="font-semibold text-slate-800 text-base"><span data-i18n="pdpa-heading"><%= bookText(bookFormTexts, 'pdpaHeading', 'การยินยอมเปิดเผยข้อมูล') %></span> <span class="text-red-400">*</span></h4>
             </div>
             <div class="text-sm text-slate-600 leading-relaxed mb-4">
-              <p data-i18n="pdpa-text">ข้าพเจ้า ตกลงและยินยอมให้มหาวิทยาลัยเก็บรวบรวม ใช้ ประมวลผล และเปิดเผยข้อมูลส่วนบุคคลของข้าพเจ้า ทั้งที่ปรากฏในเอกสารฉบับนี้ หรือที่มหาวิทยาลัยรวบรวมจากบุคคลอื่น เพื่อวัตถุประสงค์ในการนัดพบแพทย์ หรือเพื่อใช้ประโยชน์ในกิจการของมหาวิทยาลัย ทั้งนี้ข้าพเจ้ารับทราบ ตกลงและยินยอมว่า มหาวิทยาลัยมีสิทธิ์เก็บรวบรวม ใช้ประมวลผลและเปิดเผยข้อมูลส่วนบุคคลของข้าพเจ้า โดยเป็นไปตามนโยบายคุ้มครองข้อมูลส่วนบุคคลของมหาวิทยาลัย ที่ประกาศใช้ในปัจจุบันหรืออาจเปลี่ยนแปลงแก้ไขในภายหลัง รายละเอียดปรากฏตาม นโยบายคุ้มครองข้อมูลส่วนบุคคล ในเว็บไซต์</p>
+              <p data-i18n="pdpa-text"><%= bookText(bookFormTexts, 'pdpaText', 'ข้าพเจ้า ตกลงและยินยอมให้มหาวิทยาลัยเก็บรวบรวม ใช้ ประมวลผล และเปิดเผยข้อมูลส่วนบุคคลของข้าพเจ้า ทั้งที่ปรากฏในเอกสารฉบับนี้ หรือที่มหาวิทยาลัยรวบรวมจากบุคคลอื่น เพื่อวัตถุประสงค์ในการนัดพบแพทย์ หรือเพื่อใช้ประโยชน์ในกิจการของมหาวิทยาลัย ทั้งนี้ข้าพเจ้ารับทราบ ตกลงและยินยอมว่า มหาวิทยาลัยมีสิทธิ์เก็บรวบรวม ใช้ประมวลผลและเปิดเผยข้อมูลส่วนบุคคลของข้าพเจ้า โดยเป็นไปตามนโยบายคุ้มครองข้อมูลส่วนบุคคลของมหาวิทยาลัย ที่ประกาศใช้ในปัจจุบันหรืออาจเปลี่ยนแปลงแก้ไขในภายหลัง รายละเอียดปรากฏตาม นโยบายคุ้มครองข้อมูลส่วนบุคคล ในเว็บไซต์') %></p>
             </div>
             <label class="flex items-start gap-3 cursor-pointer group">
               <input type="checkbox" name="pdpa_consent" class="mt-0.5 w-4 h-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500 cursor-pointer" required="">
-              <span class="text-sm text-slate-700 group-hover:text-slate-900 transition-colors" data-i18n="pdpa-checkbox">ข้าพเจ้าได้อ่านและยอมรับการยินยอมเปิดเผยข้อมูลแล้ว</span>
+              <span class="text-sm text-slate-700 group-hover:text-slate-900 transition-colors" data-i18n="pdpa-checkbox"><%= bookText(bookFormTexts, 'pdpaCheckbox', 'ข้าพเจ้าได้อ่านและยอมรับการยินยอมเปิดเผยข้อมูลแล้ว') %></span>
             </label>
           </div>
           <button type="submit" class="btn-primary w-full justify-center py-3 text-base">
             <i data-lucide="send" class="w-5 h-5"></i>
-            <span data-i18n="form-submit">ส่งคำขอจองนัดหมาย</span>
+            <span data-i18n="form-submit"><%= bookText(bookFormTexts, 'submitLabel', 'ส่งคำขอจองนัดหมาย') %></span>
           </button>
         </form>
       </div>
@@ -477,7 +501,7 @@ function _bgLayers(sec) {
             </div>
             <span class="font-bold text-white">MindCare</span>
           </div>
-          <p class="text-sm leading-relaxed" data-i18n="footer-desc">ระบบจองนัดหมายการให้คำปรึกษาทางสุขภาพจิต เชื่อมต่อผู้ที่ต้องการความช่วยเหลือกับผู้เชี่ยวชาญที่ไว้วางใจได้</p>
+          <p class="text-sm leading-relaxed" data-i18n="footer-desc"><%= (content.contact && content.contact.description) || 'ระบบจองนัดหมายการให้คำปรึกษาทางสุขภาพจิต เชื่อมต่อผู้ที่ต้องการความช่วยเหลือกับผู้เชี่ยวชาญที่ไว้วางใจได้' %></p>
         </div>
         <div>
           <p class="text-white font-medium mb-3" data-i18n="footer-services">บริการ</p>
@@ -491,7 +515,7 @@ function _bgLayers(sec) {
           <ul class="space-y-2 text-sm">
             <li class="flex items-center gap-2">
               <i data-lucide="message-circle" class="w-3.5 h-3.5 shrink-0"></i>
-              <a href="https://page.line.me/bucare?openQrModal=true" target="_blank" rel="noopener" class="hover:text-brand-400 transition-colors">LINE @bucare</a>
+              <a href="<%= (content.contact && content.contact.lineUrl) || 'https://page.line.me/bucare?openQrModal=true' %>" target="_blank" rel="noopener" class="hover:text-brand-400 transition-colors" data-i18n="footer-line" data-i18n-href="footer-line-url"><%= (content.contact && content.contact.lineLabel) || 'LINE @bucare' %></a>
             </li>
             <li class="flex items-start gap-2">
               <i data-lucide="clock" class="w-3.5 h-3.5 shrink-0 mt-0.5"></i>
@@ -788,51 +812,50 @@ function _bgLayers(sec) {
         'hero-card-review': '"รู้สึกดีขึ้นมากหลังจากได้คุย ขอบคุณมากครับ"',
         'counselors-heading': <%- JSON.stringify(content.counselors && content.counselors.heading || 'นักจิตวิทยาให้คำปรึกษาของเรา') %>,
         'counselors-subtext': <%- JSON.stringify(content.counselors && content.counselors.subtext || '') %>,
-        'features-heading': 'ทำไมต้องเลือก MindCare?',
-        'features-subtext': 'เราเชื่อว่าทุกคนมีสิทธิ์ได้รับการดูแลสุขภาพจิตที่ดี ในสภาพแวดล้อมที่ปลอดภัยและไว้วางใจได้',
-        'feature-0': 'นักให้คำปรึกษาผ่านการตรวจสอบและรับรองคุณสมบัติ',
-        'feature-1': 'ข้อมูลทุกอย่างเป็นความลับตาม PDPA',
-        'feature-2': 'จองนัดได้ตลอด 24 ชั่วโมง ทุกวัน',
-        'feature-3': 'รองรับทั้งการพบออนไลน์และเข้ารับบริการด้วยตนเอง',
-        'feature-4': 'แจ้งเตือนก่อนนัดหมาย ไม่ลืมแน่นอน',
+        'features-heading': <%- JSON.stringify(featureContent.heading || 'ทำไมต้องเลือก MindCare?') %>,
+        'features-subtext': <%- JSON.stringify(featureContent.subtext || 'เราเชื่อว่าทุกคนมีสิทธิ์ได้รับการดูแลสุขภาพจิตที่ดี ในสภาพแวดล้อมที่ปลอดภัยและไว้วางใจได้') %>,
+        'feature-0': <%- JSON.stringify(_featureText((featureContent.items || []), 0, featureDefaults[0].text)) %>,
+        'feature-1': <%- JSON.stringify(_featureText((featureContent.items || []), 1, featureDefaults[1].text)) %>,
+        'feature-2': <%- JSON.stringify(_featureText((featureContent.items || []), 2, featureDefaults[2].text)) %>,
+        'feature-3': <%- JSON.stringify(_featureText((featureContent.items || []), 3, featureDefaults[3].text)) %>,
+        'feature-4': <%- JSON.stringify(_featureText((featureContent.items || []), 4, featureDefaults[4].text)) %>,
         'metric-0': 'ผู้รับบริการ',
         'metric-1': 'นักให้คำปรึกษา',
         'metric-2': 'นัดหมายสำเร็จ',
         'metric-3': 'คะแนนเฉลี่ย',
         'book-heading': <%- JSON.stringify(content.book && content.book.heading || 'ลงทะเบียนเพื่อขอรับบริการให้คำปรึกษา') %>,
         'book-subtext': <%- JSON.stringify(content.book && content.book.subtext || '') %>,
-        'book-success-heading': 'ส่งคำขอสำเร็จแล้ว!',
-        'book-success-text': 'ทีมงานจะติดต่อกลับหาคุณภายใน 1 วันทำการ<br>ขอบคุณที่ไว้วางใจ MindCare',
+        'book-success-heading': <%- JSON.stringify(bookText(bookFormTexts, 'successHeading', 'ส่งคำขอสำเร็จแล้ว!')) %>,
+        'book-success-text': <%- JSON.stringify(bookText(bookFormTexts, 'successText', 'ทีมงานจะติดต่อกลับหาคุณภายใน 1 วันทำการ<br>ขอบคุณที่ไว้วางใจ MindCare')) %>,
         'form-heading': <%- JSON.stringify(content.book && content.book.formHeading || 'กรุณาฝากข้อมูลของท่าน เพื่อให้เจ้าหน้าที่ติดต่อกลับสำหรับการนัดหมายรับคำปรึกษา') %>,
-        'form-error': 'กรุณากรอกข้อมูลที่จำเป็นให้ครบทุกช่อง',
-        'form-label-name': 'ชื่อ-นามสกุล',
-        'form-label-studentid': 'รหัสนักศึกษา',
-        'form-label-phone': 'เบอร์โทรศัพท์',
-        'form-label-email': 'อีเมล',
-        'form-ph-name': 'กรอกชื่อของคุณ',
-        'form-ph-studentid': 'เช่น 1680123456',
-        'form-label-concern': 'คุณต้องการความช่วยเหลือเรื่องอะไร?',
+        'form-error': <%- JSON.stringify(bookText(bookFormTexts, 'errorText', 'กรุณากรอกข้อมูลที่จำเป็นให้ครบทุกช่อง')) %>,
+        'form-label-name': <%- JSON.stringify(bookText(bookFormTexts, 'nameLabel', 'ชื่อ-นามสกุล')) %>,
+        'form-label-studentid': <%- JSON.stringify(bookText(bookFormTexts, 'studentIdLabel', 'รหัสนักศึกษา')) %>,
+        'form-label-phone': <%- JSON.stringify(bookText(bookFormTexts, 'phoneLabel', 'เบอร์โทรศัพท์')) %>,
+        'form-label-email': <%- JSON.stringify(bookText(bookFormTexts, 'emailLabel', 'อีเมล')) %>,
+        'form-ph-name': <%- JSON.stringify(bookText(bookFormTexts, 'namePlaceholder', 'กรอกชื่อของคุณ')) %>,
+        'form-ph-studentid': <%- JSON.stringify(bookText(bookFormTexts, 'studentIdPlaceholder', 'เช่น 1680123456')) %>,
+        'form-label-concern': <%- JSON.stringify(bookText(bookFormTexts, 'concernLabel', 'คุณต้องการความช่วยเหลือเรื่องอะไร?')) %>,
         'concern-0': '-- เลือกประเภท --',
-        'concern-1': 'ความวิตกกังวล / ความเครียด',
-        'concern-2': 'ภาวะซึมเศร้า',
-        'concern-3': 'ปัญหาความสัมพันธ์',
-        'concern-4': 'ปัญหาครอบครัว',
-        'concern-5': 'ความเศร้าโศก / การสูญเสีย',
-        'concern-6': 'อื่นๆ',
-        'form-label-type': 'รูปแบบที่ต้องการ',
-        'form-type-online': 'ออนไลน์',
-        'form-type-onsite': 'เข้ารับบริการด้วยตนเอง',
-        'pdpa-heading': 'การยินยอมเปิดเผยข้อมูล',
-        'pdpa-text': 'ข้าพเจ้า ตกลงและยินยอมให้มหาวิทยาลัยเก็บรวบรวม ใช้ ประมวลผล และเปิดเผยข้อมูลส่วนบุคคลของข้าพเจ้า ทั้งที่ปรากฏในเอกสารฉบับนี้ หรือที่มหาวิทยาลัยรวบรวมจากบุคคลอื่น เพื่อวัตถุประสงค์ในการนัดพบแพทย์ หรือเพื่อใช้ประโยชน์ในกิจการของมหาวิทยาลัย ทั้งนี้ข้าพเจ้ารับทราบ ตกลงและยินยอมว่า มหาวิทยาลัยมีสิทธิ์เก็บรวบรวม ใช้ประมวลผลและเปิดเผยข้อมูลส่วนบุคคลของข้าพเจ้า โดยเป็นไปตามนโยบายคุ้มครองข้อมูลส่วนบุคคลของมหาวิทยาลัย ที่ประกาศใช้ในปัจจุบันหรืออาจเปลี่ยนแปลงแก้ไขในภายหลัง รายละเอียดปรากฏตาม นโยบายคุ้มครองข้อมูลส่วนบุคคล ในเว็บไซต์',
-        'pdpa-checkbox': 'ข้าพเจ้าได้อ่านและยอมรับการยินยอมเปิดเผยข้อมูลแล้ว',
-        'form-submit': 'ส่งคำขอจองนัดหมาย',
+        <% concernItems.forEach((item, idx) => { %>
+        'concern-<%= idx + 1 %>': <%- JSON.stringify(item) %>,
+        <% }) %>
+        'form-label-type': <%- JSON.stringify(bookText(bookFormTexts, 'typeLabel', 'รูปแบบที่ต้องการ')) %>,
+        'form-type-online': <%- JSON.stringify(bookText(bookFormTexts, 'onlineLabel', 'ออนไลน์')) %>,
+        'form-type-onsite': <%- JSON.stringify(bookText(bookFormTexts, 'onsiteLabel', 'เข้ารับบริการด้วยตนเอง')) %>,
+        'pdpa-heading': <%- JSON.stringify(bookText(bookFormTexts, 'pdpaHeading', 'การยินยอมเปิดเผยข้อมูล')) %>,
+        'pdpa-text': <%- JSON.stringify(bookText(bookFormTexts, 'pdpaText', 'ข้าพเจ้า ตกลงและยินยอมให้มหาวิทยาลัยเก็บรวบรวม ใช้ ประมวลผล และเปิดเผยข้อมูลส่วนบุคคลของข้าพเจ้า ทั้งที่ปรากฏในเอกสารฉบับนี้ หรือที่มหาวิทยาลัยรวบรวมจากบุคคลอื่น เพื่อวัตถุประสงค์ในการนัดพบแพทย์ หรือเพื่อใช้ประโยชน์ในกิจการของมหาวิทยาลัย ทั้งนี้ข้าพเจ้ารับทราบ ตกลงและยินยอมว่า มหาวิทยาลัยมีสิทธิ์เก็บรวบรวม ใช้ประมวลผลและเปิดเผยข้อมูลส่วนบุคคลของข้าพเจ้า โดยเป็นไปตามนโยบายคุ้มครองข้อมูลส่วนบุคคลของมหาวิทยาลัย ที่ประกาศใช้ในปัจจุบันหรืออาจเปลี่ยนแปลงแก้ไขในภายหลัง รายละเอียดปรากฏตาม นโยบายคุ้มครองข้อมูลส่วนบุคคล ในเว็บไซต์')) %>,
+        'pdpa-checkbox': <%- JSON.stringify(bookText(bookFormTexts, 'pdpaCheckbox', 'ข้าพเจ้าได้อ่านและยอมรับการยินยอมเปิดเผยข้อมูลแล้ว')) %>,
+        'form-submit': <%- JSON.stringify(bookText(bookFormTexts, 'submitLabel', 'ส่งคำขอจองนัดหมาย')) %>,
         'faq-heading': 'คำถามที่พบบ่อย',
         'faq-items': <%- JSON.stringify(content.faqs || []) %>,
-        'footer-desc': 'ระบบจองนัดหมายการให้คำปรึกษาทางสุขภาพจิต เชื่อมต่อผู้ที่ต้องการความช่วยเหลือกับผู้เชี่ยวชาญที่ไว้วางใจได้',
+        'footer-desc': <%- JSON.stringify(content.contact && content.contact.description || 'ระบบจองนัดหมายการให้คำปรึกษาทางสุขภาพจิต เชื่อมต่อผู้ที่ต้องการความช่วยเหลือกับผู้เชี่ยวชาญที่ไว้วางใจได้') %>,
         'footer-services': 'บริการ',
         'footer-link-1': 'นักให้คำปรึกษาของเรา',
         'footer-link-2': 'ลงทะเบียนเพื่อขอรับบริการ',
         'footer-contact': 'ติดต่อ',
+        'footer-line': <%- JSON.stringify(content.contact && content.contact.lineLabel || 'LINE @bucare') %>,
+        'footer-line-url': <%- JSON.stringify(content.contact && content.contact.lineUrl || 'https://page.line.me/bucare?openQrModal=true') %>,
         'footer-hours': <%- JSON.stringify(content.contact && content.contact.hours || 'จันทร์-เสาร์ 08.30 – 17.00 น.<br>(ยกเว้นวันหยุดนักขัตฤกษ์)') %>,
         'footer-copyright': '© 2024 MindCare · ข้อมูลทุกอย่างได้รับการคุ้มครองตาม PDPA',
       },
@@ -857,51 +880,50 @@ function _bgLayers(sec) {
         'hero-card-review': '"Feeling much better after our talk. Thank you so much!"',
         'counselors-heading': <%- JSON.stringify((content.en && content.en.counselors && content.en.counselors.heading) || 'Our Counselors') %>,
         'counselors-subtext': <%- JSON.stringify((content.en && content.en.counselors && content.en.counselors.subtext) || 'A team of experts who have been screened and quality-certified') %>,
-        'features-heading': 'Why Choose MindCare?',
-        'features-subtext': 'We believe everyone deserves good mental health care in a safe and trustworthy environment.',
-        'feature-0': 'Counselors verified and certified',
-        'feature-1': 'All information is confidential under PDPA',
-        'feature-2': 'Book appointments 24 hours a day, every day',
-        'feature-3': 'Supports both online and in-person sessions',
-        'feature-4': 'Appointment reminders so you never miss a session',
+        'features-heading': <%- JSON.stringify(enFeatureContent.heading || 'Why Choose MindCare?') %>,
+        'features-subtext': <%- JSON.stringify(enFeatureContent.subtext || 'We believe everyone deserves good mental health care in a safe and trustworthy environment.') %>,
+        'feature-0': <%- JSON.stringify(_featureText(enFeatureItems, 0, enFeatureDefaults[0])) %>,
+        'feature-1': <%- JSON.stringify(_featureText(enFeatureItems, 1, enFeatureDefaults[1])) %>,
+        'feature-2': <%- JSON.stringify(_featureText(enFeatureItems, 2, enFeatureDefaults[2])) %>,
+        'feature-3': <%- JSON.stringify(_featureText(enFeatureItems, 3, enFeatureDefaults[3])) %>,
+        'feature-4': <%- JSON.stringify(_featureText(enFeatureItems, 4, enFeatureDefaults[4])) %>,
         'metric-0': 'Service Recipients',
         'metric-1': 'Counselors',
         'metric-2': 'Successful Appointments',
         'metric-3': 'Average Rating',
         'book-heading': <%- JSON.stringify((content.en && content.en.book && content.en.book.heading) || 'Register for Counseling Services') %>,
         'book-subtext': <%- JSON.stringify((content.en && content.en.book && content.en.book.subtext) || 'Seeking help is not weakness — it takes courage. Start taking care of your mind today.') %>,
-        'book-success-heading': 'Request Sent Successfully!',
-        'book-success-text': 'Our team will contact you within 1 business day.<br>Thank you for trusting MindCare.',
-        'form-heading': 'Please leave your information so our staff can contact you to schedule a counseling appointment.',
-        'form-error': 'Please fill in all required fields.',
-        'form-label-name': 'Full Name',
-        'form-label-studentid': 'Student ID',
-        'form-label-phone': 'Phone Number',
-        'form-label-email': 'Email',
-        'form-ph-name': 'Enter your name',
-        'form-ph-studentid': 'e.g. 1680123456',
-        'form-label-concern': 'What would you like help with?',
+        'book-success-heading': <%- JSON.stringify(bookText(enBookFormTexts, 'successHeading', 'Request Sent Successfully!')) %>,
+        'book-success-text': <%- JSON.stringify(bookText(enBookFormTexts, 'successText', 'Our team will contact you within 1 business day.<br>Thank you for trusting MindCare.')) %>,
+        'form-heading': <%- JSON.stringify((content.en && content.en.book && content.en.book.formHeading) || 'Please leave your information so our staff can contact you to schedule a counseling appointment.') %>,
+        'form-error': <%- JSON.stringify(bookText(enBookFormTexts, 'errorText', 'Please fill in all required fields.')) %>,
+        'form-label-name': <%- JSON.stringify(bookText(enBookFormTexts, 'nameLabel', 'Full Name')) %>,
+        'form-label-studentid': <%- JSON.stringify(bookText(enBookFormTexts, 'studentIdLabel', 'Student ID')) %>,
+        'form-label-phone': <%- JSON.stringify(bookText(enBookFormTexts, 'phoneLabel', 'Phone Number')) %>,
+        'form-label-email': <%- JSON.stringify(bookText(enBookFormTexts, 'emailLabel', 'Email')) %>,
+        'form-ph-name': <%- JSON.stringify(bookText(enBookFormTexts, 'namePlaceholder', 'Enter your name')) %>,
+        'form-ph-studentid': <%- JSON.stringify(bookText(enBookFormTexts, 'studentIdPlaceholder', 'e.g. 1680123456')) %>,
+        'form-label-concern': <%- JSON.stringify(bookText(enBookFormTexts, 'concernLabel', 'What would you like help with?')) %>,
         'concern-0': '-- Select Type --',
-        'concern-1': 'Anxiety / Stress',
-        'concern-2': 'Depression',
-        'concern-3': 'Relationship Issues',
-        'concern-4': 'Family Problems',
-        'concern-5': 'Grief / Loss',
-        'concern-6': 'Other',
-        'form-label-type': 'Preferred Format',
-        'form-type-online': 'Online',
-        'form-type-onsite': 'In-Person',
-        'pdpa-heading': 'Data Disclosure Consent',
-        'pdpa-text': "I agree and consent to the University collecting, using, processing, and disclosing my personal information — both appearing in this document and gathered from other persons — for the purpose of scheduling medical appointments or for University operations. I acknowledge that the University has the right to collect, use, process, and disclose my personal data in accordance with the University's Personal Data Protection Policy as currently published or as may be amended in the future. Details are available in the Personal Data Protection Policy on the website.",
-        'pdpa-checkbox': 'I have read and accept the data disclosure consent.',
-        'form-submit': 'Submit Registration Request',
+        <% enConcernItems.forEach((item, idx) => { %>
+        'concern-<%= idx + 1 %>': <%- JSON.stringify(item) %>,
+        <% }) %>
+        'form-label-type': <%- JSON.stringify(bookText(enBookFormTexts, 'typeLabel', 'Preferred Format')) %>,
+        'form-type-online': <%- JSON.stringify(bookText(enBookFormTexts, 'onlineLabel', 'Online')) %>,
+        'form-type-onsite': <%- JSON.stringify(bookText(enBookFormTexts, 'onsiteLabel', 'In-Person')) %>,
+        'pdpa-heading': <%- JSON.stringify(bookText(enBookFormTexts, 'pdpaHeading', 'Data Disclosure Consent')) %>,
+        'pdpa-text': <%- JSON.stringify(bookText(enBookFormTexts, 'pdpaText', "I agree and consent to the University collecting, using, processing, and disclosing my personal information — both appearing in this document and gathered from other persons — for the purpose of scheduling medical appointments or for University operations. I acknowledge that the University has the right to collect, use, process, and disclose my personal data in accordance with the University's Personal Data Protection Policy as currently published or as may be amended in the future. Details are available in the Personal Data Protection Policy on the website.")) %>,
+        'pdpa-checkbox': <%- JSON.stringify(bookText(enBookFormTexts, 'pdpaCheckbox', 'I have read and accept the data disclosure consent.')) %>,
+        'form-submit': <%- JSON.stringify(bookText(enBookFormTexts, 'submitLabel', 'Submit Registration Request')) %>,
         'faq-heading': 'Frequently Asked Questions',
         'faq-items': <%- JSON.stringify((content.en && content.en.faqs) || []) %>,
-        'footer-desc': 'Mental health counseling appointment system — connecting those who need help with trusted experts.',
+        'footer-desc': <%- JSON.stringify((content.en && content.en.contact && content.en.contact.description) || 'Mental health counseling appointment system — connecting those who need help with trusted experts.') %>,
         'footer-services': 'Services',
         'footer-link-1': 'Our Counselors',
         'footer-link-2': 'Register for Services',
         'footer-contact': 'Contact',
+        'footer-line': <%- JSON.stringify((content.en && content.en.contact && content.en.contact.lineLabel) || 'LINE @bucare') %>,
+        'footer-line-url': <%- JSON.stringify((content.en && content.en.contact && content.en.contact.lineUrl) || (content.contact && content.contact.lineUrl) || 'https://page.line.me/bucare?openQrModal=true') %>,
         'footer-hours': <%- JSON.stringify((content.en && content.en.contact && content.en.contact.hours) || 'Mon–Sat 08:30–17:00 (excl. public holidays)') %>,
         'footer-copyright': '© 2024 MindCare · All information is protected under PDPA',
       }
@@ -944,6 +966,12 @@ function _bgLayers(sec) {
       document.querySelectorAll('[data-i18n-html]').forEach(el => {
         const key = el.dataset.i18nHtml;
         if (T[key] !== undefined) el.innerHTML = T[key];
+      });
+
+      // Hrefs
+      document.querySelectorAll('[data-i18n-href]').forEach(el => {
+        const key = el.dataset.i18nHref;
+        if (T[key] !== undefined) el.href = T[key];
       });
 
       // Placeholders

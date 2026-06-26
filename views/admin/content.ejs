@@ -42,6 +42,7 @@
   const en = content.en || {}
   const enHero = en.hero || {}
   const enCounselors = en.counselors || {}
+  const enFeatures = en.features || {}
   const enBook = en.book || {}
   const enFaqs = en.faqs || []
   const enContact = en.contact || {}
@@ -50,6 +51,9 @@
   const savedKey = query.saved || ''
   const autoEnHero     = savedKey === 'hero-en'
   const autoEnSections = savedKey === 'sections-en'
+  const autoEnCounselors = savedKey === 'counselors-en' || savedKey === 'sections-en'
+  const autoEnFeatures = savedKey === 'features-en'
+  const autoEnContact = savedKey === 'contact-info-en' || savedKey === 'contact-en' || savedKey === 'sections-en'
   const autoEnFaqs     = savedKey === 'faqs-en'
   const _contentBgs = content.backgrounds || {}
   function tcVal(section, field) {
@@ -265,167 +269,101 @@ SMTP_BCC=   <span style="color:#94a3b8;"># optional สำเนาทุกอ�
       </div>
     </div>
 
-    <!-- ── Sections + Contact ── -->
+    <!-- Section Copy: Counselors -->
     <div class="section-card">
       <div class="section-title">
-        <div style="width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,#0891b2,#6366f1);display:flex;align-items:center;justify-content:center;">
-          <i data-lucide="align-left" style="width:14px;height:14px;color:#fff;"></i>
-        </div>
-        ข้อความในส่วนต่างๆ
+        <div style="width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,#0891b2,#6366f1);display:flex;align-items:center;justify-content:center;"><i data-lucide="users" style="width:14px;height:14px;color:#fff;"></i></div>
+        ข้อความ Section: นักจิตวิทยา / ผู้ให้คำปรึกษา
         <div class="lang-toggle" style="margin-left:auto;">
-          <button type="button" class="lang-btn <%= autoEnSections ? 'lang-btn-inactive' : 'lang-btn-active' %>" id="sections-btn-th" onclick="cardLang('sections','th')">TH</button>
-          <button type="button" class="lang-btn <%= autoEnSections ? 'lang-btn-active' : 'lang-btn-inactive' %>" id="sections-btn-en" onclick="cardLang('sections','en')">EN</button>
+          <button type="button" class="lang-btn <%= autoEnCounselors ? 'lang-btn-inactive' : 'lang-btn-active' %>" id="counselors-btn-th" onclick="cardLang('counselors','th')">TH</button>
+          <button type="button" class="lang-btn <%= autoEnCounselors ? 'lang-btn-active' : 'lang-btn-inactive' %>" id="counselors-btn-en" onclick="cardLang('counselors','en')">EN</button>
         </div>
       </div>
-
-      <!-- TH -->
-      <div id="sections-th" style="display:<%= autoEnSections ? 'none' : '' %>;">
-        <form method="POST" action="/admin/content/sections">
-          <div style="display:grid;gap:20px;">
-            <div>
-              <div style="font-size:12px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">ส่วนนักจิตวิทยา <span class="lang-badge lang-badge-th">ภาษาไทย</span></div>
-              <div style="display:grid;gap:10px;">
-                <div>
-                  <label class="lbl">หัวข้อ</label>
-                  <input type="text" name="counselorsHeading" class="inp" value="<%= content.counselors.heading %>">
-                </div>
-                <div>
-                  <label class="lbl">คำอธิบาย</label>
-                  <input type="text" name="counselorsSubtext" class="inp" value="<%= content.counselors.subtext %>">
-                </div>
-                <div class="text-color-panel">
-                  <div class="text-color-title">สีข้อความส่วนนักจิตวิทยา</div>
-                  <div class="text-color-grid">
-                    <%- colorControl('counselors', 'heading', 'สีหัวข้อ', 'counselors_heading_th') %>
-                    <%- colorControl('counselors', 'subtext', 'สีคำอธิบาย', 'counselors_subtext_th') %>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div>
-              <div style="font-size:12px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">ส่วนฝากข้อมูล</div>
-              <div style="display:grid;gap:10px;">
-                <div>
-                  <label class="lbl">หัวข้อ</label>
-                  <input type="text" name="bookHeading" class="inp" value="<%= content.book.heading %>">
-                </div>
-                <div>
-                  <label class="lbl">คำอธิบาย</label>
-                  <textarea name="bookSubtext" class="inp" rows="2" style="resize:none;"><%= content.book.subtext %></textarea>
-                </div>
-                <div>
-                  <label class="lbl">หัวข้อฟอร์ม</label>
-                  <input type="text" name="bookFormHeading" class="inp" value="<%= content.book.formHeading %>">
-                </div>
-                <div class="text-color-panel">
-                  <div class="text-color-title">สีข้อความส่วนฝากข้อมูล</div>
-                  <div class="text-color-grid">
-                    <%- colorControl('book', 'heading', 'สีหัวข้อ', 'book_heading_th') %>
-                    <%- colorControl('book', 'subtext', 'สีคำอธิบาย', 'book_subtext_th') %>
-                    <%- colorControl('book', 'formHeading', 'สีหัวข้อฟอร์ม', 'book_form_heading_th') %>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div>
-              <div style="font-size:12px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">ข้อมูลติดต่อ (Footer)</div>
-              <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">
-                <div>
-                  <label class="lbl">อีเมล</label>
-                  <input type="text" name="contactEmail" class="inp" value="<%= content.contact.email %>">
-                </div>
-                <div>
-                  <label class="lbl">เบอร์โทร</label>
-                  <input type="text" name="contactPhone" class="inp" value="<%= content.contact.phone %>">
-                </div>
-                <div>
-                  <label class="lbl">เวลาทำการ</label>
-                  <input type="text" name="contactHours" class="inp" value="<%= content.contact.hours %>">
-                </div>
-              </div>
-            </div>
-          </div>
-          <div style="margin-top:16px;display:flex;justify-content:flex-end;">
-            <button type="submit" class="act-btn ab-primary">
-              <i data-lucide="save" style="width:14px;height:14px;"></i> บันทึกส่วนนี้ (TH)
-            </button>
-          </div>
-        </form>
+      <div id="counselors-th" style="display:<%= autoEnCounselors ? 'none' : '' %>;">
+      <form method="POST" action="/admin/content/counselors" style="display:grid;gap:12px;">
+        <div style="font-size:12px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;">ภาษาไทย</div>
+        <div><label class="lbl">หัวข้อ Section นักจิตวิทยา</label><input type="text" name="counselorsHeading" class="inp" value="<%= content.counselors.heading %>"></div>
+        <div><label class="lbl">คำอธิบาย Section นักจิตวิทยา</label><input type="text" name="counselorsSubtext" class="inp" value="<%= content.counselors.subtext %>"></div>
+        <div class="text-color-panel"><div class="text-color-title">สีข้อความ Section นักจิตวิทยา</div><div class="text-color-grid"><%- colorControl('counselors', 'heading', 'สีหัวข้อ', 'counselors_heading_th') %><%- colorControl('counselors', 'subtext', 'สีคำอธิบาย', 'counselors_subtext_th') %></div></div>
+        <div style="display:flex;justify-content:flex-end;"><button type="submit" class="act-btn ab-primary"><i data-lucide="save" style="width:14px;height:14px;"></i> บันทึกนักจิตวิทยา (TH)</button></div>
+      </form>
       </div>
+      <div id="counselors-en" style="display:<%= autoEnCounselors ? '' : 'none' %>;">
+      <form method="POST" action="/admin/content/counselors-en" style="display:grid;gap:12px;">
+        <div style="font-size:12px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;">English</div>
+        <div><label class="lbl">Counselors section heading</label><input type="text" name="counselorsHeading" class="inp" value="<%= enCounselors.heading || '' %>"></div>
+        <div><label class="lbl">Counselors section subtext</label><input type="text" name="counselorsSubtext" class="inp" value="<%= enCounselors.subtext || '' %>"></div>
+        <div class="text-color-panel"><div class="text-color-title">Counselors text colors</div><div class="text-color-grid"><%- colorControl('counselors', 'heading', 'Heading color', 'counselors_heading_en') %><%- colorControl('counselors', 'subtext', 'Subtext color', 'counselors_subtext_en') %></div></div>
+        <div style="display:flex;justify-content:flex-end;"><button type="submit" class="act-btn ab-primary"><i data-lucide="save" style="width:14px;height:14px;"></i> Save Counselors (EN)</button></div>
+      </form>
+      </div>
+    </div>
 
-      <!-- EN -->
-      <div id="sections-en" style="display:<%= autoEnSections ? '' : 'none' %>;">
-        <form method="POST" action="/admin/content/sections-en">
-          <div style="display:grid;gap:20px;">
-            <div>
-              <div style="font-size:12px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">Counselors section <span class="lang-badge lang-badge-en">English</span></div>
-              <div style="display:grid;gap:10px;">
-                <div>
-                  <label class="lbl">Heading</label>
-                  <input type="text" name="counselorsHeading" class="inp" value="<%= enCounselors.heading || '' %>">
-                </div>
-                <div>
-                  <label class="lbl">Subtext</label>
-                  <input type="text" name="counselorsSubtext" class="inp" value="<%= enCounselors.subtext || '' %>">
-                </div>
-                <div class="text-color-panel">
-                  <div class="text-color-title">Counselors text colors</div>
-                  <div class="text-color-grid">
-                    <%- colorControl('counselors', 'heading', 'Heading color', 'counselors_heading_en') %>
-                    <%- colorControl('counselors', 'subtext', 'Subtext color', 'counselors_subtext_en') %>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div>
-              <div style="font-size:12px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">Registration section</div>
-              <div style="display:grid;gap:10px;">
-                <div>
-                  <label class="lbl">Heading</label>
-                  <input type="text" name="bookHeading" class="inp" value="<%= enBook.heading || '' %>">
-                </div>
-                <div>
-                  <label class="lbl">Subtext</label>
-                  <textarea name="bookSubtext" class="inp" rows="2" style="resize:none;"><%= enBook.subtext || '' %></textarea>
-                </div>
-                <div>
-                  <label class="lbl">Form heading</label>
-                  <input type="text" name="bookFormHeading" class="inp" value="<%= enBook.formHeading || '' %>">
-                </div>
-                <div class="text-color-panel">
-                  <div class="text-color-title">Registration text colors</div>
-                  <div class="text-color-grid">
-                    <%- colorControl('book', 'heading', 'Heading color', 'book_heading_en') %>
-                    <%- colorControl('book', 'subtext', 'Subtext color', 'book_subtext_en') %>
-                    <%- colorControl('book', 'formHeading', 'Form heading color', 'book_form_heading_en') %>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div>
-              <div style="font-size:12px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">Contact info (Footer)</div>
-              <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">
-                <div>
-                  <label class="lbl">Email</label>
-                  <input type="text" name="contactEmail" class="inp" value="<%= enContact.email || '' %>">
-                </div>
-                <div>
-                  <label class="lbl">Phone</label>
-                  <input type="text" name="contactPhone" class="inp" value="<%= enContact.phone || '' %>">
-                </div>
-                <div>
-                  <label class="lbl">Hours</label>
-                  <input type="text" name="contactHours" class="inp" value="<%= enContact.hours || '' %>">
-                </div>
-              </div>
-            </div>
-          </div>
-          <div style="margin-top:16px;display:flex;justify-content:flex-end;">
-            <button type="submit" class="act-btn ab-primary">
-              <i data-lucide="save" style="width:14px;height:14px;"></i> Save Sections (EN)
-            </button>
-          </div>
-        </form>
+    <!-- Section Copy: Features -->
+    <div class="section-card">
+      <div class="section-title">
+        <div style="width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,#8b5cf6,#06b6d4);display:flex;align-items:center;justify-content:center;"><i data-lucide="star" style="width:14px;height:14px;color:#fff;"></i></div>
+        ข้อความ Section: ทำไมต้องเลือก MindCare
+        <div class="lang-toggle" style="margin-left:auto;">
+          <button type="button" class="lang-btn <%= autoEnFeatures ? 'lang-btn-inactive' : 'lang-btn-active' %>" id="features-btn-th" onclick="cardLang('features','th')">TH</button>
+          <button type="button" class="lang-btn <%= autoEnFeatures ? 'lang-btn-active' : 'lang-btn-inactive' %>" id="features-btn-en" onclick="cardLang('features','en')">EN</button>
+        </div>
+      </div>
+      <div id="features-th" style="display:<%= autoEnFeatures ? 'none' : '' %>;">
+      <form method="POST" action="/admin/content/features" style="display:grid;gap:12px;">
+        <div style="font-size:12px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;">ภาษาไทย</div>
+        <div><label class="lbl">หัวข้อ Section ทำไมต้องเลือก MindCare</label><input type="text" name="featuresHeading" class="inp" value="<%= (content.features && content.features.heading) || 'ทำไมต้องเลือก MindCare?' %>"></div>
+        <div><label class="lbl">คำอธิบาย Section ทำไมต้องเลือก MindCare</label><textarea name="featuresSubtext" class="inp" rows="2" style="resize:none;"><%= (content.features && content.features.subtext) || '' %></textarea></div>
+        <div style="display:grid;gap:8px;"><label class="lbl">รายการเหตุผล / bullet ใน Section นี้</label><% ((content.features && content.features.items) || []).forEach((item, idx) => { %><input type="text" name="featureText" class="inp" value="<%= item %>" placeholder="เหตุผลข้อ <%= idx + 1 %>"><% }) %><% if (!content.features || !content.features.items || !content.features.items.length) { %><% [1,2,3,4,5].forEach((idx) => { %><input type="text" name="featureText" class="inp" placeholder="เหตุผลข้อ <%= idx %>"><% }) %><% } %></div>
+        <div class="text-color-panel"><div class="text-color-title">สีข้อความ Section ทำไมต้องเลือก MindCare</div><div class="text-color-grid"><%- colorControl('features', 'heading', 'สีหัวข้อ', 'features_heading_th') %><%- colorControl('features', 'subtext', 'สีคำอธิบายและรายการเหตุผล', 'features_subtext_th') %></div></div>
+        <div style="display:flex;justify-content:flex-end;"><button type="submit" class="act-btn ab-primary"><i data-lucide="save" style="width:14px;height:14px;"></i> บันทึกเหตุผลที่เลือก (TH)</button></div>
+      </form>
+      </div>
+      <div id="features-en" style="display:<%= autoEnFeatures ? '' : 'none' %>;">
+      <form method="POST" action="/admin/content/features-en" style="display:grid;gap:12px;">
+        <div style="font-size:12px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;">English</div>
+        <div><label class="lbl">Why choose section heading</label><input type="text" name="featuresHeading" class="inp" value="<%= enFeatures.heading || 'Why Choose MindCare?' %>"></div>
+        <div><label class="lbl">Why choose section subtext</label><textarea name="featuresSubtext" class="inp" rows="2" style="resize:none;"><%= enFeatures.subtext || '' %></textarea></div>
+        <div style="display:grid;gap:8px;"><label class="lbl">Reason bullets in this section</label><% ((enFeatures && enFeatures.items) || []).forEach((item, idx) => { %><input type="text" name="featureText" class="inp" value="<%= item %>" placeholder="Reason <%= idx + 1 %>"><% }) %><% if (!enFeatures.items || !enFeatures.items.length) { %><% [1,2,3,4,5].forEach((idx) => { %><input type="text" name="featureText" class="inp" placeholder="Reason <%= idx %>"><% }) %><% } %></div>
+        <div class="text-color-panel"><div class="text-color-title">Features text colors</div><div class="text-color-grid"><%- colorControl('features', 'heading', 'Heading color', 'features_heading_en') %><%- colorControl('features', 'subtext', 'Subtext and bullet color', 'features_subtext_en') %></div></div>
+        <div style="display:flex;justify-content:flex-end;"><button type="submit" class="act-btn ab-primary"><i data-lucide="save" style="width:14px;height:14px;"></i> Save Why Choose (EN)</button></div>
+      </form>
+      </div>
+    </div>
+
+    <!-- Section Copy: Contact -->
+    <div class="section-card">
+      <div class="section-title">
+        <div style="width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,#64748b,#0f766e);display:flex;align-items:center;justify-content:center;"><i data-lucide="contact" style="width:14px;height:14px;color:#fff;"></i></div>
+        ข้อความ Section: ข้อมูลติดต่อ / Footer
+        <div class="lang-toggle" style="margin-left:auto;">
+          <button type="button" class="lang-btn <%= autoEnContact ? 'lang-btn-inactive' : 'lang-btn-active' %>" id="contact-btn-th" onclick="cardLang('contact','th')">TH</button>
+          <button type="button" class="lang-btn <%= autoEnContact ? 'lang-btn-active' : 'lang-btn-inactive' %>" id="contact-btn-en" onclick="cardLang('contact','en')">EN</button>
+        </div>
+      </div>
+      <div id="contact-th" style="display:<%= autoEnContact ? 'none' : '' %>;">
+      <form method="POST" action="/admin/content/contact-info" style="display:grid;gap:12px;">
+        <div style="font-size:12px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;">ภาษาไทย</div>
+        <div><label class="lbl">คำอธิบาย Footer</label><textarea name="contactDescription" class="inp" rows="3" style="resize:none;"><%= content.contact.description || 'ระบบจองนัดหมายการให้คำปรึกษาทางสุขภาพจิต เชื่อมต่อผู้ที่ต้องการความช่วยเหลือกับผู้เชี่ยวชาญที่ไว้วางใจได้' %></textarea></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <div><label class="lbl">ข้อความ LINE ใน Footer</label><input type="text" name="contactLineLabel" class="inp" value="<%= content.contact.lineLabel || 'LINE @bucare' %>"></div>
+          <div><label class="lbl">ลิงก์ LINE ใน Footer</label><input type="url" name="contactLineUrl" class="inp" value="<%= content.contact.lineUrl || 'https://page.line.me/bucare?openQrModal=true' %>"></div>
+        </div>
+        <div><label class="lbl">เวลาทำการที่แสดงใน Footer</label><textarea name="contactHours" class="inp" rows="2" style="resize:none;"><%= content.contact.hours %></textarea></div>
+        <div style="display:flex;justify-content:flex-end;"><button type="submit" class="act-btn ab-primary"><i data-lucide="save" style="width:14px;height:14px;"></i> บันทึก Footer (TH)</button></div>
+      </form>
+      </div>
+      <div id="contact-en" style="display:<%= autoEnContact ? '' : 'none' %>;">
+      <form method="POST" action="/admin/content/contact-info-en" style="display:grid;gap:12px;">
+        <div style="font-size:12px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;">English</div>
+        <div><label class="lbl">Footer description</label><textarea name="contactDescription" class="inp" rows="3" style="resize:none;"><%= enContact.description || 'Mental health counseling appointment system — connecting those who need help with trusted experts.' %></textarea></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <div><label class="lbl">Footer LINE text</label><input type="text" name="contactLineLabel" class="inp" value="<%= enContact.lineLabel || 'LINE @bucare' %>"></div>
+          <div><label class="lbl">Footer LINE URL</label><input type="url" name="contactLineUrl" class="inp" value="<%= enContact.lineUrl || (content.contact && content.contact.lineUrl) || 'https://page.line.me/bucare?openQrModal=true' %>"></div>
+        </div>
+        <div><label class="lbl">Footer office hours</label><textarea name="contactHours" class="inp" rows="2" style="resize:none;"><%= enContact.hours || '' %></textarea></div>
+        <div style="display:flex;justify-content:flex-end;"><button type="submit" class="act-btn ab-primary"><i data-lucide="save" style="width:14px;height:14px;"></i> Save Footer (EN)</button></div>
+      </form>
       </div>
     </div>
 
