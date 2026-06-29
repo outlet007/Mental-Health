@@ -417,11 +417,11 @@ function _bgLayers(sec) {
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label class="form-label"><span data-i18n="form-label-phone"><%= bookText(bookFormTexts, 'phoneLabel', 'เบอร์โทรศัพท์') %></span> <span class="text-red-400">*</span></label>
-              <input type="tel" name="phone" class="form-input" placeholder="08X-XXX-XXXX" required>
+              <input type="tel" name="phone" class="form-input" placeholder="<%= bookText(bookFormTexts, 'phonePlaceholder', '08X-XXX-XXXX') %>" data-i18n-ph="form-ph-phone" required>
             </div>
             <div>
               <label class="form-label"><span data-i18n="form-label-email"><%= bookText(bookFormTexts, 'emailLabel', 'อีเมล') %></span> <span class="text-red-400">*</span></label>
-              <input type="email" name="email" class="form-input" placeholder="your@email.com" required>
+              <input type="email" name="email" class="form-input" placeholder="<%= bookText(bookFormTexts, 'emailPlaceholder', 'your@email.com') %>" data-i18n-ph="form-ph-email" required>
             </div>
           </div>
           <div>
@@ -835,6 +835,8 @@ function _bgLayers(sec) {
         'form-label-email': <%- JSON.stringify(bookText(bookFormTexts, 'emailLabel', 'อีเมล')) %>,
         'form-ph-name': <%- JSON.stringify(bookText(bookFormTexts, 'namePlaceholder', 'กรอกชื่อของคุณ')) %>,
         'form-ph-studentid': <%- JSON.stringify(bookText(bookFormTexts, 'studentIdPlaceholder', 'เช่น 1680123456')) %>,
+        'form-ph-phone': <%- JSON.stringify(bookText(bookFormTexts, 'phonePlaceholder', '08X-XXX-XXXX')) %>,
+        'form-ph-email': <%- JSON.stringify(bookText(bookFormTexts, 'emailPlaceholder', 'your@email.com')) %>,
         'form-label-concern': <%- JSON.stringify(bookText(bookFormTexts, 'concernLabel', 'คุณต้องการความช่วยเหลือเรื่องอะไร?')) %>,
         'concern-0': '-- เลือกประเภท --',
         <% concernItems.forEach((item, idx) => { %>
@@ -903,6 +905,8 @@ function _bgLayers(sec) {
         'form-label-email': <%- JSON.stringify(bookText(enBookFormTexts, 'emailLabel', 'Email')) %>,
         'form-ph-name': <%- JSON.stringify(bookText(enBookFormTexts, 'namePlaceholder', 'Enter your name')) %>,
         'form-ph-studentid': <%- JSON.stringify(bookText(enBookFormTexts, 'studentIdPlaceholder', 'e.g. 1680123456')) %>,
+        'form-ph-phone': <%- JSON.stringify(bookText(enBookFormTexts, 'phonePlaceholder', '08X-XXX-XXXX')) %>,
+        'form-ph-email': <%- JSON.stringify(bookText(enBookFormTexts, 'emailPlaceholder', 'your@email.com')) %>,
         'form-label-concern': <%- JSON.stringify(bookText(enBookFormTexts, 'concernLabel', 'What would you like help with?')) %>,
         'concern-0': '-- Select Type --',
         <% enConcernItems.forEach((item, idx) => { %>

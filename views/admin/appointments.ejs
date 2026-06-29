@@ -139,6 +139,7 @@
               <th>ระยะเวลา</th>
               <th>สถานะ</th>
               <th>การจัดการ</th>
+              <th>สถานะนัดหมาย</th>
             </tr>
           </thead>
           <tbody>
@@ -150,7 +151,7 @@
                 cancelled: {bg:'#fee2e2', color:'#991b1b'},
               }[a.status] || {bg:'#f1f5f9', color:'#64748b'}
               const statusLabel = {
-                pending:'รอยืนยัน', confirmed:'ยืนยันแล้ว', completed:'เสร็จสิ้น', cancelled:'ยกเลิก'
+                pending:'รอยืนยันนัด', confirmed:'ยืนยันแล้ว', completed:'เสร็จสิ้น', cancelled:'ยกเลิกนัด'
               }[a.status] || a.status
             %>
             <tr>
@@ -210,32 +211,6 @@
                   </button>
                   <% } %>
 
-                  <%/* ยืนยัน — pending ทุก role */%>
-                  <% if (a.status === 'pending') { %>
-                  <form method="POST" action="/admin/appointments/<%= a.id %>/confirm" style="margin:0;">
-                    <button type="submit" class="act-btn ab-primary">
-                      <i data-lucide="check" style="width:12px;height:12px;"></i> ยืนยัน
-                    </button>
-                  </form>
-                  <% } %>
-
-                  <%/* ปฏิเสธ — pending ทุก role */%>
-                  <% if (a.status === 'pending') { %>
-                  <form method="POST" action="/admin/appointments/<%= a.id %>/cancel"
-                        onsubmit="return confirm('ปฏิเสธนัดหมายนี้?')" style="margin:0;">
-                    <button type="submit" class="act-btn ab-danger">
-                      <i data-lucide="x" style="width:12px;height:12px;"></i> ปฏิเสธ
-                    </button>
-                  </form>
-                  <% } %>
-
-                  <%/* เสร็จสิ้น — เฉพาะ confirmed + counselor */%>
-                  <% if (a.status === 'confirmed' && userType === 'counselor') { %>
-                  <button onclick="openCompletePanel('<%= a.id %>')" class="act-btn ab-secondary">
-                    <i data-lucide="check-check" style="width:12px;height:12px;"></i> เสร็จสิ้น
-                  </button>
-                  <% } %>
-
                   <%/* แก้ไขหมายเหตุ — เฉพาะ completed + counselor */%>
                   <% if (a.status === 'completed' && userType === 'counselor') { %>
                   <button data-id="<%= a.id %>" data-note="<%= a.counselorNote || '' %>" onclick="openEditNotePanel(this.dataset.id, this.dataset.note)" class="act-btn ab-warn" title="แก้ไขหมายเหตุการให้คำปรึกษา">
@@ -259,10 +234,39 @@
                 </div>
                 <% } %>
               </td>
+              <td>
+                <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+                  <%/* ยืนยัน — pending ทุก role */%>
+                  <% if (a.status === 'pending') { %>
+                  <form method="POST" action="/admin/appointments/<%= a.id %>/confirm" style="margin:0;">
+                    <button type="submit" class="act-btn ab-primary">
+                      <i data-lucide="check" style="width:12px;height:12px;"></i> ยืนยันนัด
+                    </button>
+                  </form>
+                  <% } %>
+
+                  <%/* ปฏิเสธ — pending ทุก role */%>
+                  <% if (a.status === 'pending') { %>
+                  <form method="POST" action="/admin/appointments/<%= a.id %>/cancel"
+                        onsubmit="return confirm('ปฏิเสธนัดหมายนี้?')" style="margin:0;">
+                    <button type="submit" class="act-btn ab-danger">
+                      <i data-lucide="x" style="width:12px;height:12px;"></i> ยกเลิกนัด
+                    </button>
+                  </form>
+                  <% } %>
+
+                  <%/* เสร็จสิ้น — เฉพาะ confirmed + counselor */%>
+                  <% if (a.status === 'confirmed' && userType === 'counselor') { %>
+                  <button onclick="openCompletePanel('<%= a.id %>')" class="act-btn ab-secondary">
+                    <i data-lucide="check-check" style="width:12px;height:12px;"></i> ให้คำปรึกษาเสร็จสิ้น
+                  </button>
+                  <% } %>
+                </div>
+              </td>
             </tr>
             <% }) %>
             <% if (appointments.length===0) { %>
-            <tr><td colspan="8" style="text-align:center; padding:48px 16px; color:#94a3b8;">
+            <tr><td colspan="9" style="text-align:center; padding:48px 16px; color:#94a3b8;">
               <i data-lucide="calendar-x" style="width:36px;height:36px;display:block;margin:0 auto 10px;opacity:.3;"></i>
               ไม่พบนัดหมายที่ตรงกับเงื่อนไข
             </td></tr>
@@ -582,10 +586,10 @@
         <div>
           <label class="lbl">สถานะ</label>
           <select name="status" id="e_status" class="inp">
-            <option value="pending">รอยืนยัน</option>
-            <option value="confirmed">ยืนยันแล้ว</option>
-            <option value="completed">เสร็จสิ้น</option>
-            <option value="cancelled">ยกเลิก</option>
+            <option value="pending">รอยืนยันนัด</option>
+            <option value="confirmed">ยืนยันนัด</option>
+            <option value="completed">ให้คำปรึกษาเสร็จสิ้น</option>
+            <option value="cancelled">ยกเลิกนัด</option>
           </select>
         </div>
         <div>

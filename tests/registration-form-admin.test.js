@@ -105,8 +105,52 @@ test('registration form admin page renders editable TH and EN form controls', as
   assert.match(body, /name="bookConcernOptionEn"/)
   assert.match(body, /name="formText_nameLabel"/)
   assert.match(body, /name="formText_pdpaText"/)
+  assert.match(body, /name="formText_phonePlaceholder"/)
+  assert.match(body, /name="formText_emailPlaceholder"/)
   assert.match(body, /name="formText_submitLabel"/)
+  assert.doesNotMatch(body, /name="formText_errorText"/)
+  assert.doesNotMatch(body, /ข้อความแจ้งเตือนเมื่อกรอกไม่ครบ/)
   assert.match(body, /id="registration-en" style="display:;"/)
+})
+
+test('registration form admin separates public section and form card fields into framed layout', async () => {
+  const { res, body } = await requestRegistrationForm('/admin/registration-form')
+
+  assert.equal(res.statusCode, 200)
+  assert.match(body, /data-registration-layout="th"/)
+  assert.match(body, /data-layout-frame="registration-section-copy-th"/)
+  assert.match(body, /data-layout-frame="registration-public-form-th"/)
+  assert.match(body, /data-layout-frame="registration-form-heading-th"/)
+  assert.match(body, /data-layout-frame="registration-concern-options-th"/)
+  assert.match(body, /data-layout-frame="registration-form-fields-th"/)
+  assert.match(body, /data-layout-frame="registration-section-copy-en"/)
+  assert.match(body, /data-layout-frame="registration-public-form-en"/)
+  assert.match(body, /class="public-form-shape"/)
+
+  const sectionIndex = body.indexOf('data-layout-frame="registration-section-copy-th"')
+  const publicFormIndex = body.indexOf('data-layout-frame="registration-public-form-th"')
+  const headingIndex = body.indexOf('data-layout-frame="registration-form-heading-th"')
+  const fieldsIndex = body.indexOf('data-layout-frame="registration-form-fields-th"')
+  const concernLabelIndex = body.indexOf('name="formText_concernLabel"')
+  const concernIndex = body.indexOf('data-layout-frame="registration-concern-options-th"')
+  const typeLabelIndex = body.indexOf('name="formText_typeLabel"')
+
+  assert.ok(sectionIndex < publicFormIndex)
+  assert.ok(publicFormIndex < headingIndex)
+  assert.ok(headingIndex < fieldsIndex)
+  assert.ok(fieldsIndex < concernLabelIndex)
+  assert.ok(concernLabelIndex < concernIndex)
+  assert.ok(concernIndex < typeLabelIndex)
+
+  const fieldWrapperStyle = fieldName => {
+    const match = body.match(new RegExp('<div style="([^\"]*)">\\s*<label class="lbl">[^<]*<\/label>\\s*(?:<%[\\s\\S]*?%>\\s*)?<input type="text" name="' + fieldName + '"'))
+    return match ? match[1] : ''
+  }
+
+  assert.equal(fieldWrapperStyle('formText_typeLabel'), 'grid-column:1/-1;')
+  assert.equal(fieldWrapperStyle('formText_onlineLabel'), '')
+  assert.equal(fieldWrapperStyle('formText_onsiteLabel'), '')
+  assert.equal(fieldWrapperStyle('formText_pdpaHeading'), 'grid-column:1/-1;')
 })
 
 test('registration concern options render add and remove controls', async () => {
@@ -146,13 +190,14 @@ test('registration form page saves all visible Thai form settings', async () => 
       bookConcernOption: ['Stress option', 'Sleep option'],
       formText_successHeading: 'Custom success heading',
       formText_successText: 'Custom success text',
-      formText_errorText: 'Custom error text',
       formText_nameLabel: 'Custom name label',
       formText_namePlaceholder: 'Custom name placeholder',
       formText_studentIdLabel: 'Custom student id label',
       formText_studentIdPlaceholder: 'Custom student id placeholder',
       formText_phoneLabel: 'Custom phone label',
+      formText_phonePlaceholder: 'Custom phone placeholder',
       formText_emailLabel: 'Custom email label',
+      formText_emailPlaceholder: 'Custom email placeholder',
       formText_concernLabel: 'Custom concern label',
       formText_typeLabel: 'Custom type label',
       formText_onlineLabel: 'Custom online label',
@@ -169,6 +214,8 @@ test('registration form page saves all visible Thai form settings', async () => 
     assert.equal(saved.book.heading, 'Custom registration heading')
     assert.deepEqual(saved.book.concernOptions, ['Stress option', 'Sleep option'])
     assert.equal(saved.book.formTexts.nameLabel, 'Custom name label')
+    assert.equal(saved.book.formTexts.phonePlaceholder, 'Custom phone placeholder')
+    assert.equal(saved.book.formTexts.emailPlaceholder, 'Custom email placeholder')
     assert.equal(saved.book.formTexts.pdpaText, 'Custom PDPA text')
     assert.equal(saved.book.formTexts.submitLabel, 'Custom submit label')
   } finally {
@@ -185,6 +232,8 @@ test('registration form page saves all visible English form settings', async () 
       bookFormHeading: 'English form heading',
       bookConcernOptionEn: ['English stress', 'English sleep'],
       formText_nameLabel: 'English name label',
+      formText_phonePlaceholder: 'English phone placeholder',
+      formText_emailPlaceholder: 'English email placeholder',
       formText_pdpaText: 'English PDPA text',
       formText_submitLabel: 'English submit label',
     })
@@ -195,6 +244,8 @@ test('registration form page saves all visible English form settings', async () 
     assert.equal(saved.en.book.heading, 'English registration heading')
     assert.deepEqual(saved.en.book.concernOptions, ['English stress', 'English sleep'])
     assert.equal(saved.en.book.formTexts.nameLabel, 'English name label')
+    assert.equal(saved.en.book.formTexts.phonePlaceholder, 'English phone placeholder')
+    assert.equal(saved.en.book.formTexts.emailPlaceholder, 'English email placeholder')
     assert.equal(saved.en.book.formTexts.pdpaText, 'English PDPA text')
     assert.equal(saved.en.book.formTexts.submitLabel, 'English submit label')
   } finally {
@@ -210,6 +261,8 @@ test('home page renders registration form text from content data', async () => {
       ...(base.book.formTexts || {}),
       nameLabel: 'Rendered name label',
       pdpaText: 'Rendered PDPA text',
+      phonePlaceholder: 'Rendered phone placeholder',
+      emailPlaceholder: 'Rendered email placeholder',
       submitLabel: 'Rendered submit label',
     },
   }
@@ -220,6 +273,8 @@ test('home page renders registration form text from content data', async () => {
       ...((base.en.book && base.en.book.formTexts) || {}),
       nameLabel: 'Rendered English name label',
       pdpaText: 'Rendered English PDPA text',
+      phonePlaceholder: 'Rendered English phone placeholder',
+      emailPlaceholder: 'Rendered English email placeholder',
       submitLabel: 'Rendered English submit label',
     },
   }
@@ -228,9 +283,13 @@ test('home page renders registration form text from content data', async () => {
 
   assert.match(html, /Rendered name label/)
   assert.match(html, /Rendered PDPA text/)
+  assert.match(html, /Rendered phone placeholder/)
+  assert.match(html, /Rendered email placeholder/)
   assert.match(html, /Rendered submit label/)
   assert.match(html, /'form-label-name': "Rendered English name label"/)
   assert.match(html, /'pdpa-text': "Rendered English PDPA text"/)
+  assert.match(html, /'form-ph-phone': "Rendered English phone placeholder"/)
+  assert.match(html, /'form-ph-email': "Rendered English email placeholder"/)
   assert.match(html, /'form-submit': "Rendered English submit label"/)
 })
 

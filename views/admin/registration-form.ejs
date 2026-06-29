@@ -6,7 +6,7 @@
   <title><%= title %> — MindCare Admin</title>
   <%- include('../partials/head') %>
   <style>
-    .inp{width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:13px;color:#334155;outline:none;font-family:inherit;box-sizing:border-box;background:#fff}.inp:focus{border-color:#2dd4b4;box-shadow:0 0 0 3px rgba(45,212,180,.15)}.lbl{display:block;font-size:12px;font-weight:600;color:#64748b;margin-bottom:5px}.section-card{background:#fff;border:1px solid #f1f5f9;border-radius:16px;padding:24px;margin-bottom:24px}.section-title{font-size:14px;font-weight:700;color:#1e293b;display:flex;align-items:center;gap:8px;margin-bottom:20px;padding-bottom:14px;border-bottom:1px solid #f1f5f9}.act-btn{display:inline-flex;align-items:center;gap:5px;padding:9px 16px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;border:none;transition:all .15s;white-space:nowrap}.ab-primary{background:#05967e;color:#fff}.ab-primary:hover{background:#067866}.lang-toggle{display:flex;border:1.5px solid #e2e8f0;border-radius:8px;overflow:hidden;margin-left:auto;flex-shrink:0}.lang-btn{padding:4px 14px;font-size:11px;font-weight:800;border:none;cursor:pointer;transition:all .15s;letter-spacing:.02em}.lang-btn-active{background:#05967e;color:#fff}.lang-btn-inactive{background:transparent;color:#94a3b8}.lang-badge{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;padding:2px 8px;border-radius:9999px;margin-left:8px}.lang-badge-th{background:#fff3cd;color:#7c5500;border:1px solid #fde68a}.lang-badge-en{background:#dbeafe;color:#1d4ed8;border:1px solid #93c5fd}.field-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.form-group-title{font-size:11px;font-weight:800;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;margin:6px 0 0;padding-top:12px;border-top:1px solid #f1f5f9}.option-list{display:grid;gap:8px}.option-row{display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:center}.option-row.is-dragging{opacity:.55}.drag-handle{width:36px;height:36px;border:1px solid #e2e8f0;border-radius:10px;background:#f8fafc;color:#64748b;display:inline-flex;align-items:center;justify-content:center;cursor:grab}.drag-handle:active{cursor:grabbing}.drag-handle:hover{background:#ecfdf9;color:#05967e;border-color:#a0f3e1}.icon-btn{width:36px;height:36px;border:1px solid #e2e8f0;border-radius:10px;background:#fff;color:#94a3b8;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;transition:all .15s}.icon-btn:hover{background:#fef2f2;color:#ef4444;border-color:#fecaca}.ab-ghost{background:#fff;color:#05967e;border:1px solid #a0f3e1}.ab-ghost:hover{background:#ecfdf9}@media(max-width:768px){.admin-main{margin-left:0!important}.field-grid{grid-template-columns:1fr}}
+    .inp{width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:13px;color:#334155;outline:none;font-family:inherit;box-sizing:border-box;background:#fff}.inp:focus{border-color:#2dd4b4;box-shadow:0 0 0 3px rgba(45,212,180,.15)}.lbl{display:block;font-size:12px;font-weight:600;color:#64748b;margin-bottom:5px}.section-card{background:#fff;border:1px solid #f1f5f9;border-radius:16px;padding:24px;margin-bottom:24px}.section-title{font-size:14px;font-weight:700;color:#1e293b;display:flex;align-items:center;gap:8px;margin-bottom:20px;padding-bottom:14px;border-bottom:1px solid #f1f5f9}.act-btn{display:inline-flex;align-items:center;gap:5px;padding:9px 16px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;border:none;transition:all .15s;white-space:nowrap}.ab-primary{background:#05967e;color:#fff}.ab-primary:hover{background:#067866}.lang-toggle{display:flex;border:1.5px solid #e2e8f0;border-radius:8px;overflow:hidden;margin-left:auto;flex-shrink:0}.lang-btn{padding:4px 14px;font-size:11px;font-weight:800;border:none;cursor:pointer;transition:all .15s;letter-spacing:.02em}.lang-btn-active{background:#05967e;color:#fff}.lang-btn-inactive{background:transparent;color:#94a3b8}.lang-badge{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;padding:2px 8px;border-radius:9999px;margin-left:8px}.lang-badge-th{background:#fff3cd;color:#7c5500;border:1px solid #fde68a}.lang-badge-en{background:#dbeafe;color:#1d4ed8;border:1px solid #93c5fd}.field-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.registration-layout{display:grid;gap:16px}.form-frame{border:1px solid #e2e8f0;border-radius:14px;background:#fff;padding:16px;box-shadow:0 1px 2px rgba(15,23,42,.03)}.form-frame-soft{background:#f8fafc}.form-frame-header{display:flex;align-items:flex-start;gap:10px;margin-bottom:14px}.form-frame-icon{width:30px;height:30px;border-radius:10px;background:#ecfdf9;color:#05967e;display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto}.form-frame-title{font-size:13px;font-weight:800;color:#1e293b;margin:0 0 2px}.form-frame-note{font-size:11px;color:#94a3b8;margin:0;line-height:1.45}.public-form-shape{border:1px solid #d9f5ef;border-radius:18px;background:linear-gradient(180deg,#ffffff,#f8fffd);padding:16px;display:grid;gap:14px}.public-form-heading-frame{border:1px solid #e2e8f0;border-radius:14px;background:#fff;padding:14px}.form-group-title{font-size:11px;font-weight:800;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;margin:0 0 12px}.option-list{display:grid;gap:8px}.option-row{display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:center}.option-row.is-dragging{opacity:.55}.drag-handle{width:36px;height:36px;border:1px solid #e2e8f0;border-radius:10px;background:#f8fafc;color:#64748b;display:inline-flex;align-items:center;justify-content:center;cursor:grab}.drag-handle:active{cursor:grabbing}.drag-handle:hover{background:#ecfdf9;color:#05967e;border-color:#a0f3e1}.icon-btn{width:36px;height:36px;border:1px solid #e2e8f0;border-radius:10px;background:#fff;color:#94a3b8;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;transition:all .15s}.icon-btn:hover{background:#fef2f2;color:#ef4444;border-color:#fecaca}.ab-ghost{background:#fff;color:#05967e;border:1px solid #a0f3e1}.ab-ghost:hover{background:#ecfdf9}@media(max-width:768px){.admin-main{margin-left:0!important}.field-grid{grid-template-columns:1fr}.section-card{padding:18px}.form-frame{padding:14px}}
   </style>
 </head>
 <body style="background:#f8fafc;margin:0;">
@@ -24,16 +24,18 @@
   const formTexts = book.formTexts || {}
   const enFormTexts = enBook.formTexts || {}
   function val(obj, key, fallback) { return obj[key] || fallback }
+  function isWideField(key) { return ['successText', 'typeLabel', 'pdpaHeading', 'pdpaText'].includes(key) }
   const thFields = [
     ['successHeading', 'หัวข้อเมื่อส่งคำขอสำเร็จ', 'ส่งคำขอสำเร็จแล้ว!'],
     ['successText', 'ข้อความเมื่อส่งคำขอสำเร็จ', 'ทีมงานจะติดต่อกลับหาคุณภายใน 1 วันทำการ<br>ขอบคุณที่ไว้วางใจ MindCare'],
-    ['errorText', 'ข้อความแจ้งเตือนเมื่อกรอกไม่ครบ', 'กรุณากรอกข้อมูลให้ครบถ้วนและยอมรับการเปิดเผยข้อมูลส่วนบุคคล'],
     ['nameLabel', 'Label: ชื่อ-นามสกุล', 'ชื่อ-นามสกุล'],
     ['namePlaceholder', 'Placeholder: ชื่อ-นามสกุล', 'กรอกชื่อของคุณ'],
     ['studentIdLabel', 'Label: รหัสนักศึกษา', 'รหัสนักศึกษา'],
     ['studentIdPlaceholder', 'Placeholder: รหัสนักศึกษา', 'เช่น 1680123456'],
     ['phoneLabel', 'Label: เบอร์โทรศัพท์', 'เบอร์โทรศัพท์'],
+    ['phonePlaceholder', 'Placeholder: เบอร์โทรศัพท์', '08X-XXX-XXXX'],
     ['emailLabel', 'Label: อีเมล', 'อีเมล'],
+    ['emailPlaceholder', 'Placeholder: อีเมล', 'your@email.com'],
     ['concernLabel', 'Label: เรื่องที่ต้องการความช่วยเหลือ', 'คุณต้องการความช่วยเหลือเรื่องอะไร?'],
     ['typeLabel', 'Label: รูปแบบที่ต้องการ', 'รูปแบบที่ต้องการ'],
     ['onlineLabel', 'ตัวเลือก: ออนไลน์', 'ออนไลน์'],
@@ -46,13 +48,14 @@
   const enFields = [
     ['successHeading', 'Success heading', 'Request Sent Successfully!'],
     ['successText', 'Success text', 'Our team will contact you within 1 business day.<br>Thank you for trusting MindCare.'],
-    ['errorText', 'Validation error text', 'Please complete all required fields and accept the personal data disclosure consent.'],
     ['nameLabel', 'Label: Full name', 'Full Name'],
     ['namePlaceholder', 'Placeholder: Full name', 'Enter your name'],
     ['studentIdLabel', 'Label: Student ID', 'Student ID'],
     ['studentIdPlaceholder', 'Placeholder: Student ID', 'e.g. 1680123456'],
     ['phoneLabel', 'Label: Phone number', 'Phone Number'],
+    ['phonePlaceholder', 'Placeholder: Phone number', '08X-XXX-XXXX'],
     ['emailLabel', 'Label: Email', 'Email'],
+    ['emailPlaceholder', 'Placeholder: Email', 'your@email.com'],
     ['concernLabel', 'Label: Concern', 'What would you like help with?'],
     ['typeLabel', 'Label: Preferred format', 'Preferred Format'],
     ['onlineLabel', 'Option: Online', 'Online'],
@@ -83,12 +86,58 @@
       </div>
       <div id="registration-th" style="display:<%= autoEnRegistration ? 'none' : '' %>;">
         <form method="POST" action="/admin/registration-form" style="display:grid;gap:14px;">
-          <div class="field-grid">
-            <div><label class="lbl">หัวข้อ section <span class="lang-badge lang-badge-th">ภาษาไทย</span></label><input type="text" name="bookHeading" class="inp" value="<%= book.heading || '' %>"></div>
-            <div><label class="lbl">หัวข้อในกล่องฟอร์ม</label><input type="text" name="bookFormHeading" class="inp" value="<%= book.formHeading || '' %>"></div>
-          </div>
-          <div><label class="lbl">คำอธิบายใต้หัวข้อ section</label><textarea name="bookSubtext" class="inp" rows="2" style="resize:vertical;"><%= book.subtext || '' %></textarea></div>
-          <p class="form-group-title">Dropdown: คุณต้องการความช่วยเหลือเรื่องอะไร?</p>
+          <div class="registration-layout" data-registration-layout="th">
+            <div class="form-frame form-frame-soft" data-layout-frame="registration-section-copy-th">
+              <div class="form-frame-header">
+                <div class="form-frame-icon"><i data-lucide="type" style="width:15px;height:15px;"></i></div>
+                <div>
+                  <p class="form-frame-title">ส่วนหัวบนหน้าเว็บ</p>
+                  <p class="form-frame-note">แยกหัวข้อและคำอธิบายที่แสดงอยู่เหนือกล่องฟอร์มบนหน้าเว็บ</p>
+                </div>
+              </div>
+              <div class="field-grid">
+                <div><label class="lbl">หัวข้อ section <span class="lang-badge lang-badge-th">ภาษาไทย</span></label><input type="text" name="bookHeading" class="inp" value="<%= book.heading || '' %>"></div>
+                <div><label class="lbl">คำอธิบายใต้หัวข้อ section</label><textarea name="bookSubtext" class="inp" rows="2" style="resize:vertical;"><%= book.subtext || '' %></textarea></div>
+              </div>
+            </div>
+            <div class="public-form-shape" data-layout-frame="registration-public-form-th">
+              <div class="public-form-heading-frame" data-layout-frame="registration-form-heading-th">
+                <div class="form-frame-header">
+                  <div class="form-frame-icon"><i data-lucide="file-text" style="width:15px;height:15px;"></i></div>
+                  <div>
+                    <p class="form-frame-title">หัวข้อในกล่องฟอร์ม</p>
+                    <p class="form-frame-note">ส่วนนี้ตรงกับหัวข้อด้านบนของ form บนหน้าเว็บ</p>
+                  </div>
+                </div>
+                <label class="lbl">หัวข้อในกล่องฟอร์ม</label><input type="text" name="bookFormHeading" class="inp" value="<%= book.formHeading || '' %>">
+              </div>
+              <div class="form-frame" data-layout-frame="registration-form-fields-th">
+                <div class="form-frame-header">
+                  <div class="form-frame-icon"><i data-lucide="panel-top" style="width:15px;height:15px;"></i></div>
+                  <div>
+                    <p class="form-frame-title">ข้อความภายในฟอร์ม</p>
+                    <p class="form-frame-note">Labels, placeholders, สถานะสำเร็จ/ผิดพลาด, PDPA และปุ่มส่งฟอร์ม</p>
+                  </div>
+                </div>
+                <div class="field-grid">
+            <% thFields.forEach(([key, label, fallback]) => { %>
+              <div style="<%= isWideField(key) ? 'grid-column:1/-1;' : '' %>">
+                <label class="lbl"><%= label %></label>
+                <% if (key === 'successText' || key === 'pdpaText') { %>
+                  <textarea name="formText_<%= key %>" class="inp" rows="<%= key === 'pdpaText' ? 5 : 2 %>" style="resize:vertical;"><%= val(formTexts, key, fallback) %></textarea>
+                <% } else { %>
+                  <input type="text" name="formText_<%= key %>" class="inp" value="<%= val(formTexts, key, fallback) %>">
+                <% } %>
+              </div>
+              <% if (key === 'concernLabel') { %>
+              <div class="form-frame" data-layout-frame="registration-concern-options-th" style="grid-column:1/-1;">
+                <div class="form-frame-header">
+                  <div class="form-frame-icon"><i data-lucide="list-plus" style="width:15px;height:15px;"></i></div>
+                  <div>
+                    <p class="form-frame-title">Dropdown: คุณต้องการความช่วยเหลือเรื่องอะไร?</p>
+                    <p class="form-frame-note">จัดลำดับตัวเลือกตามที่ผู้รับบริการจะเห็นใน form</p>
+                  </div>
+                </div>
           <div id="registration-concern-list-th" class="option-list">
             <% concernItems.forEach((item, idx) => { %>
               <div class="option-row" data-option-row="bookConcernOption" data-drag-row="bookConcernOption" draggable="true" ondragstart="handleConcernDragStart(event)" ondragover="handleConcernDragOver(event)" ondrop="handleConcernDrop(event)" ondragend="handleConcernDragEnd(event)">
@@ -99,30 +148,70 @@
             <% }) %>
           </div>
           <button type="button" class="act-btn ab-ghost" onclick="addConcernOption('registration-concern-list-th','bookConcernOption','ตัวเลือกข้อ')"><i data-lucide="plus" style="width:14px;height:14px;"></i> เพิ่มตัวเลือก</button>
-          <p class="form-group-title">ข้อความในฟอร์ม</p>
-          <div class="field-grid">
-            <% thFields.forEach(([key, label, fallback]) => { %>
-              <div style="<%= key === 'successText' || key === 'pdpaText' ? 'grid-column:1/-1;' : '' %>">
-                <label class="lbl"><%= label %></label>
-                <% if (key === 'successText' || key === 'pdpaText') { %>
-                  <textarea name="formText_<%= key %>" class="inp" rows="<%= key === 'pdpaText' ? 5 : 2 %>" style="resize:vertical;"><%= val(formTexts, key, fallback) %></textarea>
-                <% } else { %>
-                  <input type="text" name="formText_<%= key %>" class="inp" value="<%= val(formTexts, key, fallback) %>">
-                <% } %>
               </div>
+              <% } %>
             <% }) %>
+          </div>
+              </div>
+            </div>
           </div>
           <div style="display:flex;justify-content:flex-end;"><button type="submit" class="act-btn ab-primary"><i data-lucide="save" style="width:14px;height:14px;"></i> บันทึกฟอร์ม (TH)</button></div>
         </form>
       </div>
       <div id="registration-en" style="display:<%= autoEnRegistration ? '' : 'none' %>;">
         <form method="POST" action="/admin/registration-form/en" style="display:grid;gap:14px;">
-          <div class="field-grid">
-            <div><label class="lbl">Section heading <span class="lang-badge lang-badge-en">English</span></label><input type="text" name="bookHeading" class="inp" value="<%= enBook.heading || '' %>"></div>
-            <div><label class="lbl">Form heading</label><input type="text" name="bookFormHeading" class="inp" value="<%= enBook.formHeading || '' %>"></div>
-          </div>
-          <div><label class="lbl">Section description</label><textarea name="bookSubtext" class="inp" rows="2" style="resize:vertical;"><%= enBook.subtext || '' %></textarea></div>
-          <p class="form-group-title">Dropdown: What would you like help with?</p>
+          <div class="registration-layout" data-registration-layout="en">
+            <div class="form-frame form-frame-soft" data-layout-frame="registration-section-copy-en">
+              <div class="form-frame-header">
+                <div class="form-frame-icon"><i data-lucide="type" style="width:15px;height:15px;"></i></div>
+                <div>
+                  <p class="form-frame-title">Website section copy</p>
+                  <p class="form-frame-note">Separate the public heading and description that appear above the form card.</p>
+                </div>
+              </div>
+              <div class="field-grid">
+                <div><label class="lbl">Section heading <span class="lang-badge lang-badge-en">English</span></label><input type="text" name="bookHeading" class="inp" value="<%= enBook.heading || '' %>"></div>
+                <div><label class="lbl">Section description</label><textarea name="bookSubtext" class="inp" rows="2" style="resize:vertical;"><%= enBook.subtext || '' %></textarea></div>
+              </div>
+            </div>
+            <div class="public-form-shape" data-layout-frame="registration-public-form-en">
+              <div class="public-form-heading-frame" data-layout-frame="registration-form-heading-en">
+                <div class="form-frame-header">
+                  <div class="form-frame-icon"><i data-lucide="file-text" style="width:15px;height:15px;"></i></div>
+                  <div>
+                    <p class="form-frame-title">Form card heading</p>
+                    <p class="form-frame-note">This matches the heading shown at the top of the public form card.</p>
+                  </div>
+                </div>
+                <label class="lbl">Form heading</label><input type="text" name="bookFormHeading" class="inp" value="<%= enBook.formHeading || '' %>">
+              </div>
+              <div class="form-frame" data-layout-frame="registration-form-fields-en">
+                <div class="form-frame-header">
+                  <div class="form-frame-icon"><i data-lucide="panel-top" style="width:15px;height:15px;"></i></div>
+                  <div>
+                    <p class="form-frame-title">Form text</p>
+                    <p class="form-frame-note">Labels, placeholders, success/error states, PDPA copy, and submit button text.</p>
+                  </div>
+                </div>
+                <div class="field-grid">
+            <% enFields.forEach(([key, label, fallback]) => { %>
+              <div style="<%= isWideField(key) ? 'grid-column:1/-1;' : '' %>">
+                <label class="lbl"><%= label %></label>
+                <% if (key === 'successText' || key === 'pdpaText') { %>
+                  <textarea name="formText_<%= key %>" class="inp" rows="<%= key === 'pdpaText' ? 5 : 2 %>" style="resize:vertical;"><%= val(enFormTexts, key, fallback) %></textarea>
+                <% } else { %>
+                  <input type="text" name="formText_<%= key %>" class="inp" value="<%= val(enFormTexts, key, fallback) %>">
+                <% } %>
+              </div>
+              <% if (key === 'concernLabel') { %>
+              <div class="form-frame" data-layout-frame="registration-concern-options-en" style="grid-column:1/-1;">
+                <div class="form-frame-header">
+                  <div class="form-frame-icon"><i data-lucide="list-plus" style="width:15px;height:15px;"></i></div>
+                  <div>
+                    <p class="form-frame-title">Dropdown: What would you like help with?</p>
+                    <p class="form-frame-note">Order the options exactly as service users will see them.</p>
+                  </div>
+                </div>
           <div id="registration-concern-list-en" class="option-list">
             <% enConcernItems.forEach((item, idx) => { %>
               <div class="option-row" data-option-row="bookConcernOptionEn" data-drag-row="bookConcernOptionEn" draggable="true" ondragstart="handleConcernDragStart(event)" ondragover="handleConcernDragOver(event)" ondrop="handleConcernDrop(event)" ondragend="handleConcernDragEnd(event)">
@@ -133,18 +222,12 @@
             <% }) %>
           </div>
           <button type="button" class="act-btn ab-ghost" onclick="addConcernOption('registration-concern-list-en','bookConcernOptionEn','Option')"><i data-lucide="plus" style="width:14px;height:14px;"></i> Add option</button>
-          <p class="form-group-title">Form text</p>
-          <div class="field-grid">
-            <% enFields.forEach(([key, label, fallback]) => { %>
-              <div style="<%= key === 'successText' || key === 'pdpaText' ? 'grid-column:1/-1;' : '' %>">
-                <label class="lbl"><%= label %></label>
-                <% if (key === 'successText' || key === 'pdpaText') { %>
-                  <textarea name="formText_<%= key %>" class="inp" rows="<%= key === 'pdpaText' ? 5 : 2 %>" style="resize:vertical;"><%= val(enFormTexts, key, fallback) %></textarea>
-                <% } else { %>
-                  <input type="text" name="formText_<%= key %>" class="inp" value="<%= val(enFormTexts, key, fallback) %>">
-                <% } %>
               </div>
+              <% } %>
             <% }) %>
+          </div>
+              </div>
+            </div>
           </div>
           <div style="display:flex;justify-content:flex-end;"><button type="submit" class="act-btn ab-primary"><i data-lucide="save" style="width:14px;height:14px;"></i> Save form (EN)</button></div>
         </form>
