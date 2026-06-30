@@ -5,6 +5,7 @@ const { matchesSearch } = require('../../utils/search')
 const path    = require('path')
 const crypto = require('crypto')
 const { sendAppointmentEmails, sendSurveyEmail } = require('../../utils/mailer')
+const { readSurveyEmailSettings, resolveSurveyEmailRecipient } = require('../../utils/survey-email-settings')
 
 const dataDir = path.join(__dirname, '../../../data')
 
@@ -180,6 +181,28 @@ router.post('/:id/edit', (req, res) => {
   const idx  = data.findIndex(a => a.id === req.params.id)
   if (idx !== -1) {
     if (!canUseAppointment(req, data[idx])) return forbidden(res)
+
+    const current  = data[idx]
+    const newDate  = date || current.date
+    const newTime  = time || current.time
+
+    if (date || time) {
+      const counselors = read('counselors.json')
+      const counselor  = counselors.find(c => c.id === current.counselorId)
+      const duration   = counselor?.sessionDuration || 60
+      const toMin      = t => { const [h, m] = t.split(':').map(Number); return h * 60 + m }
+      const newMin     = toMin(newTime)
+
+      const conflict = data.some((a, i) =>
+        i !== idx &&
+        a.counselorId === current.counselorId &&
+        a.date === newDate &&
+        a.status !== 'cancelled' &&
+        Math.abs(toMin(a.time) - newMin) < duration
+      )
+      if (conflict) return res.redirect('/admin/appointments?error=conflict')
+    }
+
     if (date)   data[idx].date   = date
     if (time)   data[idx].time   = time
     if (type)   data[idx].type   = type

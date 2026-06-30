@@ -3,6 +3,7 @@ const express = require('express')
 const session = require('express-session')
 const path    = require('path')
 const fs      = require('fs')
+const { attachSurveyRatingsToCounselors } = require('./src/utils/counselor-survey-ratings')
 
 const app = express()
 
@@ -30,9 +31,18 @@ app.use((req, res, next) => {
 // Landing page
 app.get('/', (req, res) => {
   const counselors = JSON.parse(fs.readFileSync(path.join(__dirname, 'data/counselors.json'), 'utf8'))
+  const surveysPath = path.join(__dirname, 'data/surveys.json')
+  const surveys = fs.existsSync(surveysPath) ? JSON.parse(fs.readFileSync(surveysPath, 'utf8')) : []
   const approved   = counselors.filter(c => c.isApproved)
+  const ratingStats = attachSurveyRatingsToCounselors(approved, surveys)
   const content    = JSON.parse(fs.readFileSync(path.join(__dirname, 'data/content.json'), 'utf8'))
-  res.render('index', { counselors: approved, query: req.query, content })
+  res.render('index', {
+    counselors: ratingStats.counselors,
+    counselorRatingAverage: ratingStats.averageRating,
+    counselorReviewCount: ratingStats.reviewCount,
+    query: req.query,
+    content,
+  })
 })
 
 // Contact form (landing page)
@@ -41,7 +51,7 @@ app.use('/contact', require('./src/routes/contact'))
 // Public survey (no auth required)
 app.use('/survey', require('./src/routes/survey'))
 
-// Auth routes — login/logout (no protection)
+// Auth routes - login/logout (no protection)
 app.use('/admin', require('./src/routes/admin/auth'))
 
 // Protect all /admin routes
@@ -58,9 +68,11 @@ app.use('/admin/admins',        require('./src/routes/admin/admins'))
 app.use('/admin/profile',       require('./src/routes/admin/profile'))
 app.use('/admin/content',       require('./src/routes/admin/content'))
 app.use('/admin/registration-form', require('./src/routes/admin/registration-form'))
+app.use('/admin/survey-email',  require('./src/routes/admin/survey-email'))
 app.use('/admin/import-export', require('./src/routes/admin/import-export'))
 app.use('/admin/surveys',       require('./src/routes/admin/surveys'))
-app.use('/admin/reports',       require('./src/routes/admin/reports'))
+app.use('/admin/reports',        require('./src/routes/admin/reports'))
+app.use('/admin/notifications', require('./src/routes/admin/notifications'))
 
 const PORT = process.env.PORT || 3000
-app.listen(PORT, () => console.log(`MindCare running → http://localhost:${PORT}`))
+app.listen(PORT, () => console.log(`MindCare running -> http://localhost:${PORT}`))

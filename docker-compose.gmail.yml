@@ -1,0 +1,5 @@
+﻿services:
+  app:
+    environment:
+      BASE_URL: http://localhost:3010
+      SMTP_BCC: ${SMTP_BCC:-}

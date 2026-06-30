@@ -50,7 +50,7 @@
   }
 
   function initTable(table, index) {
-    if (table.dataset.tablePagination === 'server') return
+    if (table.dataset.tablePagination === 'server' || table.dataset.tablePagination === 'ignore') return
     if (table.dataset.tablePaginationReady === 'true') return
 
     const rows = getRows(table)

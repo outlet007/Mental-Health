@@ -26,14 +26,16 @@
     </p>
 
   <% if (!isCounselor) { %>
-    <a href="/admin/contacts" class="nav-link <%= page==='contacts' ? 'active' : '' %>">
+    <a href="/admin/contacts" class="nav-link <%= page==='contacts' ? 'active' : '' %>" style="position:relative;">
       <i data-lucide="inbox" class="w-4 h-4"></i>
       คำขอเพื่อทำนัดหมาย
+      <span id="notif-contacts" data-notif="contacts" style="display:none;position:absolute;top:6px;right:8px;min-width:18px;height:18px;border-radius:999px;background:#ef4444;color:#fff;font-size:10px;font-weight:700;line-height:18px;text-align:center;padding:0 4px;"></span>
     </a>
   <% } %>
-    <a href="/admin/appointments" class="nav-link <%= page==='appointments' ? 'active' : '' %>">
+    <a href="/admin/appointments" class="nav-link <%= page==='appointments' ? 'active' : '' %>" style="position:relative;">
       <i data-lucide="calendar-check" class="w-4 h-4"></i>
       จัดการนัดหมาย
+      <span id="notif-appointments" data-notif="appointments" style="display:none;position:absolute;top:6px;right:8px;min-width:18px;height:18px;border-radius:999px;background:#f59e0b;color:#fff;font-size:10px;font-weight:700;line-height:18px;text-align:center;padding:0 4px;"></span>
     </a>
     <a href="/admin/clients" class="nav-link <%= page==='clients' ? 'active' : '' %>">
       <i data-lucide="users" class="w-4 h-4"></i>
@@ -76,6 +78,10 @@
       <i data-lucide="clipboard-list" class="w-4 h-4"></i>
       จัดการฟอร์มลงทะเบียน
     </a>
+    <a href="/admin/survey-email" class="nav-link <%= page==='survey-email' ? 'active' : '' %>">
+      <i data-lucide="mail-check" class="w-4 h-4"></i>
+      อีเมลประเมินความพึงพอใจ
+    </a>
 
 
     <a href="/admin/reports" class="nav-link <%= page==='reports' ? 'active' : '' %>">
@@ -112,3 +118,32 @@
     </div>
   </div>
 </aside>
+<script>
+(function () {
+  function updateBadge(id, count) {
+    const el = document.getElementById(id)
+    if (!el) return
+    if (count > 0) {
+      el.textContent = count > 99 ? '99+' : count
+      el.style.display = 'inline-block'
+    } else {
+      el.style.display = 'none'
+    }
+  }
+
+  function fetchNotifications() {
+    fetch('/admin/notifications')
+      .then(function (r) { return r.ok ? r.json() : null })
+      .then(function (data) {
+        if (!data) return
+        updateBadge('notif-contacts',     data.newContacts)
+        updateBadge('notif-appointments', data.pendingAppointments)
+      })
+      .catch(function () {})
+  }
+
+  fetchNotifications()
+  setInterval(fetchNotifications, 30000)
+})()
+</script>
+

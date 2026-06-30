@@ -303,6 +303,14 @@ function _bgLayers(sec) {
                 </div>
                 <% } %>
 
+                <% if (c.rating) { %>
+                <div data-counselor-rating="<%= c.id %>" class="absolute left-5 top-5 z-10 inline-flex items-center gap-2 rounded-full bg-white/90 px-3 py-1.5 text-xs font-bold text-slate-700 shadow-md ring-1 ring-slate-200">
+                  <i data-lucide="star" class="w-3.5 h-3.5 text-amber-400 fill-amber-400"></i>
+                  <span><%= Number(c.rating).toFixed(1) %></span>
+                  <span class="text-slate-400">(<%= c.reviewCount || 0 %> รีวิว)</span>
+                </div>
+                <% } %>
+
                 <!-- Photo / Avatar background -->
                 <% if (c.photo) { %>
                 <img src="<%= c.photo %>" alt="<%= c.name %>" class="absolute inset-0 h-full w-full object-cover object-top">
@@ -356,12 +364,15 @@ function _bgLayers(sec) {
           </ul>
         </div>
         <div class="grid grid-cols-2 gap-4">
-          <% const metrics = [
-            { icon:'users', num:'500+', label:'ผู้รับบริการ' },
-            { icon:'user-check', num:'20+', label:'นักให้คำปรึกษา' },
-            { icon:'calendar-check', num:'1,200+', label:'นัดหมายสำเร็จ' },
-            { icon:'star', num:'4.8', label:'คะแนนเฉลี่ย' },
-          ] %>
+          <%
+            const liveAverageRating = typeof counselorRatingAverage !== 'undefined' && counselorRatingAverage ? counselorRatingAverage : '4.8'
+            const metrics = [
+              { icon:'users', num:'500+', label:'ผู้รับบริการ' },
+              { icon:'user-check', num:'20+', label:'นักให้คำปรึกษา' },
+              { icon:'calendar-check', num:'1,200+', label:'นัดหมายสำเร็จ' },
+              { icon:'star', num: liveAverageRating, label:'คะแนนเฉลี่ย' },
+            ]
+          %>
           <% metrics.forEach((m, idx) => { %>
           <div data-animate="zoom-in" data-delay="<%= idx * 80 %>ms" class="bg-white/10 backdrop-blur rounded-2xl p-6 text-white text-center">
             <i data-lucide="<%= m.icon %>" class="w-7 h-7 mx-auto mb-3 text-brand-200"></i>

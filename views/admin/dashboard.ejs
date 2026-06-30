@@ -123,7 +123,7 @@
           </div>
 
           <div style="overflow-x:auto; overflow-y:auto; max-height:340px; border:1px solid #e2e8f0; border-radius:8px;">
-            <table style="width:100%; border-collapse:collapse; table-layout:fixed; min-width:480px;">
+            <table data-table-pagination="ignore" style="width:100%; border-collapse:collapse; table-layout:fixed; min-width:480px;">
               <thead>
                 <tr style="background:#f8fafc; position:sticky; top:0; z-index:2;">
                   <th style="width:42px; border-bottom:2px solid #e2e8f0; border-right:1px solid #e2e8f0;"></th>
@@ -160,10 +160,16 @@
                       const APT_BG     = { pending:'#fef9c3', confirmed:'#eff6ff', completed:'#f0fdf4' }
                       const bdClr = APT_BORDER[a.status] || '#6366f1'
                       const bgClr = APT_BG[a.status]     || '#f5f3ff'
+                      const statusTH = { pending:'รอยืนยันนัด', confirmed:'ยืนยันนัด', completed:'ให้คำปรึกษาเสร็จสิ้น', cancelled:'ยกเลิกนัด' }
+                      const typeTH   = a.type === 'online' ? 'ออนไลน์' : 'พบตัว'
                     %>
-                    <div title="<%= a.clientName %> (<%= a.time %>)"
-                         style="background:<%= bgClr %>;border-left:2px solid <%= bdClr %>;border-radius:2px;padding:2px 3px;margin-bottom:1px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font-size:9px;color:#334155;font-weight:600;line-height:1.4;">
-                      📅 <%= a.clientName %>
+                    <div class="cal-appt"
+                         data-client="<%= a.clientName %>"
+                         data-time="<%= a.time %>"
+                         data-status="<%= statusTH[a.status] || a.status %>"
+                         data-type="<%= typeTH %>"
+                         style="background:<%= bgClr %>;border-left:2px solid <%= bdClr %>;border-radius:2px;padding:2px 3px;margin-bottom:1px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font-size:9px;color:#334155;font-weight:600;line-height:1.4;cursor:default;">
+                      <i data-lucide="calendar" style="width:8px;height:8px;vertical-align:middle;display:inline-block;"></i> <%= a.clientName %>
                     </div>
                     <% }) %>
                   </td>
@@ -416,7 +422,7 @@
 
           <!-- Calendar grid -->
           <div style="overflow-x:auto; overflow-y:auto; max-height:340px; border:1px solid #e2e8f0; border-radius:8px;">
-            <table style="width:100%; border-collapse:collapse; table-layout:fixed; min-width:480px;">
+            <table data-table-pagination="ignore" style="width:100%; border-collapse:collapse; table-layout:fixed; min-width:480px;">
               <!-- Day headers -->
               <thead>
                 <tr style="background:#f8fafc; position:sticky; top:0; z-index:2;">
@@ -461,10 +467,18 @@
                       const APT_BG     = { pending:'#fef9c3', confirmed:'#eff6ff', completed:'#f0fdf4' }
                       const bdClr = APT_BORDER[a.status] || '#6366f1'
                       const bgClr = APT_BG[a.status] || '#f5f3ff'
+                      const aStatusTH = { pending:'รอยืนยันนัด', confirmed:'ยืนยันนัด', completed:'ให้คำปรึกษาเสร็จสิ้น', cancelled:'ยกเลิกนัด' }
+                      const aTypeTH   = a.type === 'online' ? 'ออนไลน์' : 'พบตัว'
+                      const aCounselor = (counselorMap[a.counselorId] || {}).name || a.counselorName
                     %>
-                    <div title="<%= a.clientName %> (<%= a.time %>)"
-                         style="background:<%= bgClr %>; border-left:2px solid <%= bdClr %>; border-radius:2px; padding:2px 3px; margin-bottom:1px; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; font-size:9px; color:#334155; font-weight:600; line-height:1.4;">
-                      📅 <%= a.clientName %>
+                    <div class="cal-appt"
+                         data-client="<%= a.clientName %>"
+                         data-time="<%= a.time %>"
+                         data-status="<%= aStatusTH[a.status] || a.status %>"
+                         data-type="<%= aTypeTH %>"
+                         data-counselor="<%= aCounselor %>"
+                         style="background:<%= bgClr %>; border-left:2px solid <%= bdClr %>; border-radius:2px; padding:2px 3px; margin-bottom:1px; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; font-size:9px; color:#334155; font-weight:600; line-height:1.4; cursor:default;">
+                      <i data-lucide="calendar" style="width:8px;height:8px;vertical-align:middle;display:inline-block;"></i> <%= a.clientName %>
                     </div>
                     <% }) %>
                   </td>
@@ -601,20 +615,37 @@
           <div class="space-y-3">
             <div class="flex justify-between items-center text-sm">
               <span class="text-slate-500">อัตราการยืนยัน</span>
-              <span class="font-semibold text-slate-700">78%</span>
+              <span class="font-semibold text-slate-700"><%= stats.confirmRate %>%</span>
             </div>
             <div class="w-full bg-slate-100 rounded-full h-1.5">
-              <div class="bg-brand-500 h-1.5 rounded-full" style="width:78%"></div>
+              <div class="bg-brand-500 h-1.5 rounded-full" style="width:<%= stats.confirmRate %>%"></div>
             </div>
             <div class="flex justify-between items-center text-sm">
-              <span class="text-slate-500">ความพึงพอใจ</span>
-              <span class="font-semibold text-slate-700">96%</span>
+              <span class="text-slate-500">ความพึงพอใจเฉลี่ย</span>
+              <span class="font-semibold text-slate-700">
+                <%= stats.totalSurveys > 0 ? stats.avgRating + '/5' : '—' %>
+              </span>
             </div>
             <div class="w-full bg-slate-100 rounded-full h-1.5">
-              <div class="bg-ocean-500 h-1.5 rounded-full" style="width:96%"></div>
+              <div class="bg-ocean-500 h-1.5 rounded-full" style="width:<%= stats.avgSatisfaction %>%"></div>
             </div>
+            <% if (stats.totalSurveys > 0) { %>
+            <p style="font-size:11px;color:#94a3b8;margin-top:2px;">จาก <%= stats.totalSurveys %> แบบประเมิน</p>
+            <% } else { %>
+            <p style="font-size:11px;color:#94a3b8;margin-top:2px;">ยังไม่มีแบบประเมิน</p>
+            <% } %>
           </div>
         </div>
+
+        <!-- ── Appointment Trend Chart ── -->
+        <div class="card">
+          <h2 class="font-semibold text-slate-700 mb-3 flex items-center gap-2">
+            <i data-lucide="trending-up" class="w-4 h-4 text-brand-500"></i>
+            นัดหมาย 14 วันล่าสุด
+          </h2>
+          <canvas id="apptChart" height="160"></canvas>
+        </div>
+
       </div><!-- /right column -->
 
     </div><!-- /grid -->
@@ -624,6 +655,119 @@
   </main>
 </div>
 
+<style>
+#cal-tooltip {
+  position: fixed;
+  z-index: 9999;
+  background: #1e293b;
+  color: #f8fafc;
+  border-radius: 10px;
+  padding: 10px 13px;
+  font-size: 12px;
+  line-height: 1.6;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.12s;
+  max-width: 220px;
+  box-shadow: 0 8px 24px rgba(0,0,0,.25);
+  white-space: nowrap;
+}
+#cal-tooltip.visible { opacity: 1; }
+#cal-tooltip .tt-label { font-size:10px; color:#94a3b8; font-weight:600; text-transform:uppercase; letter-spacing:.05em; margin-bottom:4px; }
+#cal-tooltip .tt-row { display:flex; align-items:center; gap:6px; }
+#cal-tooltip .tt-row + .tt-row { margin-top:3px; }
+</style>
+<div id="cal-tooltip" role="tooltip"></div>
+<script>
+(function () {
+  const tip = document.getElementById('cal-tooltip')
+  if (!tip) return
+
+  function show(el, e) {
+    const client   = el.dataset.client   || ''
+    const time     = el.dataset.time     || ''
+    const status   = el.dataset.status   || ''
+    const type     = el.dataset.type     || ''
+    const counselor = el.dataset.counselor || ''
+
+    let html = `<div class="tt-label">นัดหมาย</div>`
+    html += `<div class="tt-row"><strong>${client}</strong></div>`
+    if (counselor) html += `<div class="tt-row" style="color:#94a3b8;">นักจิตวิทยา: ${counselor}</div>`
+    if (time)   html += `<div class="tt-row" style="color:#7dd3fc;">🕐 ${time} น.</div>`
+    if (type)   html += `<div class="tt-row" style="color:#a5b4fc;">${type === 'ออนไลน์' ? '📹' : '📍'} ${type}</div>`
+    if (status) html += `<div class="tt-row" style="color:#86efac;">${status}</div>`
+
+    tip.innerHTML = html
+    tip.classList.add('visible')
+    move(e)
+  }
+
+  function move(e) {
+    const vw = window.innerWidth
+    const vh = window.innerHeight
+    let x = e.clientX + 14
+    let y = e.clientY - 10
+    tip.style.left = x + 'px'
+    tip.style.top  = y + 'px'
+    // flip left if near right edge
+    if (x + tip.offsetWidth + 20 > vw) tip.style.left = (e.clientX - tip.offsetWidth - 14) + 'px'
+    if (y + tip.offsetHeight + 10 > vh) tip.style.top  = (e.clientY - tip.offsetHeight - 6) + 'px'
+  }
+
+  function hide() { tip.classList.remove('visible') }
+
+  document.addEventListener('mouseover', function (e) {
+    const el = e.target.closest('.cal-appt')
+    if (el) show(el, e)
+  })
+  document.addEventListener('mousemove', function (e) {
+    if (tip.classList.contains('visible')) move(e)
+  })
+  document.addEventListener('mouseout', function (e) {
+    if (e.target.closest && e.target.closest('.cal-appt') && !e.relatedTarget?.closest('.cal-appt')) hide()
+  })
+})()
+</script>
 <script>lucide.createIcons();</script>
+
+<% if (!locals.isCounselorUser && stats && stats.chartDays) { %>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+<script>
+(function () {
+  const days = <%- JSON.stringify(stats.chartDays) %>
+  const labels   = days.map(d => d.label)
+  const pending   = days.map(d => d.pending)
+  const confirmed = days.map(d => d.confirmed)
+  const completed = days.map(d => d.completed)
+
+  const ctx = document.getElementById('apptChart')
+  if (!ctx) return
+
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        { label: 'รอยืนยัน',   data: pending,   backgroundColor: '#fde68a', borderRadius: 3 },
+        { label: 'ยืนยันแล้ว', data: confirmed, backgroundColor: '#93c5fd', borderRadius: 3 },
+        { label: 'เสร็จสิ้น',  data: completed, backgroundColor: '#6ee7b7', borderRadius: 3 },
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'bottom', labels: { font: { size: 11, family: "'Noto Sans Thai', sans-serif" }, boxWidth: 12, padding: 10 } },
+        tooltip: { bodyFont: { family: "'Noto Sans Thai', sans-serif" }, titleFont: { family: "'Noto Sans Thai', sans-serif" } }
+      },
+      scales: {
+        x: { stacked: true, ticks: { font: { size: 10 }, maxRotation: 0 }, grid: { display: false } },
+        y: { stacked: true, beginAtZero: true, ticks: { precision: 0, font: { size: 10 } }, grid: { color: '#f1f5f9' } }
+      }
+    }
+  })
+})()
+</script>
+<% } %>
 </body>
 </html>

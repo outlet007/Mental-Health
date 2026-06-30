@@ -112,6 +112,34 @@ router.get('/', (req, res) => {
   // ── Admin Dashboard ───────────────────────────────────────────
   const clients  = readData('clients.json')
   const contacts = readData('contacts.json')
+  const surveysPath = require('path').join(dataDir, 'surveys.json')
+  const surveys = require('fs').existsSync(surveysPath) ? readData('surveys.json') : []
+
+  // Live rates
+  const nonCancelled = appointments.filter(a => a.status !== 'cancelled').length
+  const confirmedOrDone = appointments.filter(a => a.status === 'confirmed' || a.status === 'completed').length
+  const confirmRate = nonCancelled > 0 ? Math.round(confirmedOrDone / nonCancelled * 100) : 0
+
+  const ratedSurveys = surveys.filter(s => typeof s.rating === 'number')
+  const avgRating = ratedSurveys.length > 0
+    ? (ratedSurveys.reduce((sum, s) => sum + s.rating, 0) / ratedSurveys.length)
+    : 0
+  const avgSatisfaction = Math.round(avgRating / 5 * 100)
+
+  // Last 14 days chart data
+  const today14 = new Date()
+  const chartDays = Array.from({ length: 14 }, (_, i) => {
+    const d = new Date(today14)
+    d.setDate(d.getDate() - (13 - i))
+    const dateStr = fmtDate(d)
+    return {
+      label: `${d.getDate()}/${d.getMonth() + 1}`,
+      dateStr,
+      pending:   appointments.filter(a => a.date === dateStr && a.status === 'pending').length,
+      confirmed: appointments.filter(a => a.date === dateStr && a.status === 'confirmed').length,
+      completed: appointments.filter(a => a.date === dateStr && a.status === 'completed').length,
+    }
+  })
 
   const stats = {
     totalCounselors:     counselors.filter(c => c.isApproved).length,
@@ -121,6 +149,11 @@ router.get('/', (req, res) => {
     totalAppointments:   appointments.length,
     pendingAppointments: appointments.filter(a => a.status === 'pending').length,
     newContacts:         contacts.filter(c => c.status === 'new').length,
+    confirmRate,
+    avgSatisfaction,
+    avgRating:           avgRating.toFixed(1),
+    totalSurveys:        ratedSurveys.length,
+    chartDays,
   }
 
   const recentAppointments = appointments

@@ -1,0 +1,31 @@
+﻿services:
+  app:
+    build: .
+    container_name: mindcare-app
+    depends_on:
+      - mailpit
+    ports:
+      - "3010:3000"
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      BASE_URL: http://localhost:3010
+      SESSION_SECRET: mindcare-docker-local-session
+      SMTP_AUTH: "false"
+      SMTP_HOST: mailpit
+      SMTP_PORT: 1025
+      SMTP_SECURE: "false"
+      SMTP_FROM_NAME: MindCare Docker
+      SMTP_FROM_EMAIL: no-reply@mindcare.local
+    volumes:
+      - mindcare-data:/app/data
+
+  mailpit:
+    image: axllent/mailpit:v1.20
+    container_name: mindcare-mailpit
+    ports:
+      - "8025:8025"
+      - "1025:1025"
+
+volumes:
+  mindcare-data:

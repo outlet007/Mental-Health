@@ -1,0 +1,87 @@
+﻿<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %> - MindCare Admin</title>
+  <%- include('../partials/head') %>
+  <style>
+    .settings-card{background:#fff;border:1px solid #f1f5f9;border-radius:16px;padding:24px;max-width:860px;box-shadow:0 1px 2px rgba(15,23,42,.03)}
+    .section-block{border:1px solid #e2e8f0;border-radius:14px;padding:18px;margin-top:18px;background:#fff}.section-block-soft{background:#f8fafc}.page-note{font-size:13px;color:#64748b;line-height:1.7;margin:0 0 20px}.lbl{display:block;font-size:12px;font-weight:700;color:#64748b;margin-bottom:6px}.inp{width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:13px;color:#334155;outline:none;font-family:inherit;box-sizing:border-box;background:#fff}.inp:focus{border-color:#2dd4b4;box-shadow:0 0 0 3px rgba(45,212,180,.15)}.radio-list{display:grid;gap:10px;margin-bottom:18px}.radio-row{display:flex;gap:10px;align-items:flex-start;border:1px solid #e2e8f0;border-radius:12px;padding:14px;background:#fff}.radio-row input{margin-top:2px}.radio-title{font-size:13px;font-weight:800;color:#1e293b;margin:0 0 3px}.radio-help{font-size:12px;color:#94a3b8;margin:0;line-height:1.5}.mode-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.mode-card{position:relative;display:block;border:1.5px solid #e2e8f0;border-radius:14px;padding:16px;background:#fff;cursor:pointer}.mode-card input{position:absolute;opacity:0;pointer-events:none}.mode-card:has(input:checked){border-color:#05967e;background:#ecfdf9;box-shadow:0 0 0 3px rgba(5,150,126,.12)}.mode-title{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:900;color:#1e293b;margin:0 0 5px}.mode-desc{font-size:12px;color:#64748b;line-height:1.5;margin:0}.field-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.act-btn{display:inline-flex;align-items:center;gap:6px;padding:10px 16px;border-radius:10px;font-size:13px;font-weight:800;cursor:pointer;border:none;transition:all .15s;white-space:nowrap}.ab-primary{background:#05967e;color:#fff}.ab-primary:hover{background:#067866}.alert-ok{margin-bottom:20px;padding:12px 16px;background:#ecfdf9;border:1px solid #a0f3e1;border-radius:12px;color:#065f46;font-size:13px;display:flex;align-items:center;gap:8px}.field-help{font-size:12px;color:#94a3b8;margin:7px 0 0;line-height:1.5}@media(max-width:768px){.admin-main{margin-left:0!important}.settings-card{padding:18px}.mode-grid,.field-grid{grid-template-columns:1fr}}
+  </style>
+</head>
+<body style="background:#f8fafc;margin:0;">
+<%- include('../partials/admin-sidebar') %>
+<div class="admin-main" style="margin-left:256px;min-height:100vh;display:flex;flex-direction:column;">
+  <div style="height:56px;background:#fff;border-bottom:1px solid #f1f5f9;padding:0 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:20;">
+    <h1 style="font-size:15px;font-weight:700;color:#1e293b;margin:0;"><%= title %></h1>
+  </div>
+  <main style="padding:24px;max-width:1120px;width:100%;box-sizing:border-box;">
+    <% if (query.saved) { %>
+      <div class="alert-ok"><i data-lucide="check-circle" style="width:16px;height:16px;"></i> บันทึกการตั้งค่าอีเมลสำเร็จ</div>
+    <% } %>
+
+    <section class="settings-card">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+        <div style="width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#05967e,#06b6d4);display:flex;align-items:center;justify-content:center;color:#fff;"><i data-lucide="mail-check" style="width:17px;height:17px;"></i></div>
+        <div>
+          <h2 style="font-size:16px;color:#1e293b;margin:0;">อีเมลประเมินความพึงพอใจ</h2>
+          <p style="font-size:12px;color:#94a3b8;margin:3px 0 0;">เลือกโหมดส่งอีเมลระหว่างทดสอบกับใช้งานจริง และกำหนดปลายทางอีเมลแบบประเมิน</p>
+        </div>
+      </div>
+
+      <form method="POST" action="/admin/survey-email">
+        <div class="section-block section-block-soft">
+          <h3 style="font-size:14px;color:#1e293b;margin:0 0 10px;">โหมดส่งอีเมล</h3>
+          <p class="page-note">โหมดทดสอบจะส่งเข้า Mailpit ที่ http://localhost:8025 ส่วนโหมดใช้งานจริงจะส่งผ่าน Gmail SMTP ด้วย Gmail App Password</p>
+          <div class="mode-grid">
+            <label class="mode-card">
+              <input type="radio" name="deliveryMode" value="test" <%= settings.deliveryMode !== 'gmail' ? 'checked' : '' %>>
+              <p class="mode-title"><i data-lucide="flask-conical" style="width:16px;height:16px;color:#05967e;"></i> ทดสอบ</p>
+              <p class="mode-desc">ส่งเข้า Mailpit ใน Docker ไม่ส่งออกอีเมลจริง เหมาะสำหรับทดสอบ flow</p>
+            </label>
+            <label class="mode-card">
+              <input type="radio" name="deliveryMode" value="gmail" <%= settings.deliveryMode === 'gmail' ? 'checked' : '' %>>
+              <p class="mode-title"><i data-lucide="send" style="width:16px;height:16px;color:#05967e;"></i> ใช้งานจริง Gmail</p>
+              <p class="mode-desc">ส่งอีเมลจริงผ่าน smtp.gmail.com ต้องใช้ Gmail App Password</p>
+            </label>
+          </div>
+          <div class="field-grid" style="margin-top:14px;">
+            <div><label class="lbl">Gmail sender</label><input type="email" name="gmailUser" class="inp" value="<%= settings.gmailUser || '' %>" placeholder="yourgmail@gmail.com"></div>
+            <div><label class="lbl">Gmail App Password</label><input type="password" name="gmailAppPassword" class="inp" value="<%= settings.gmailAppPassword || '' %>" autocomplete="new-password" placeholder="xxxx xxxx xxxx xxxx"></div>
+            <div><label class="lbl">ชื่อผู้ส่ง</label><input type="text" name="fromName" class="inp" value="<%= settings.fromName || 'MindCare Docker' %>" placeholder="MindCare"></div>
+            <div><label class="lbl">อีเมลผู้ส่ง</label><input type="email" name="fromEmail" class="inp" value="<%= settings.fromEmail || '' %>" placeholder="yourgmail@gmail.com"></div>
+          </div>
+          <p class="field-help">ถ้าเลือกใช้งานจริงแต่ยังไม่ได้กรอก Gmail/App Password ระบบจะข้ามการส่งเพื่อป้องกัน error</p>
+        </div>
+
+        <div class="section-block">
+          <h3 style="font-size:14px;color:#1e293b;margin:0 0 10px;">ผู้รับอีเมลแบบประเมิน</h3>
+          <p class="page-note">ค่าเริ่มต้นจะส่งลิงก์แบบประเมินไปยังอีเมลของผู้รับบริการ หากต้องการส่งไปยังอีเมลเฉพาะสำหรับทดสอบหรือกล่องกลาง ให้เลือกอีเมลที่กำหนดเอง</p>
+          <div class="radio-list">
+            <label class="radio-row">
+              <input type="radio" name="recipientMode" value="client" <%= settings.recipientMode !== 'custom' ? 'checked' : '' %>>
+              <span><span class="radio-title">ส่งไปยังอีเมลผู้รับบริการ</span><span class="radio-help">ใช้ email จากข้อมูลผู้รับบริการของนัดหมายนั้นโดยตรง</span></span>
+            </label>
+            <label class="radio-row">
+              <input type="radio" name="recipientMode" value="custom" <%= settings.recipientMode === 'custom' ? 'checked' : '' %>>
+              <span><span class="radio-title">ส่งไปยังอีเมลที่กำหนดเอง</span><span class="radio-help">เหมาะสำหรับทดสอบ flow แบบประเมิน หรือส่งเข้ากล่องกลางของหน่วยงาน</span></span>
+            </label>
+          </div>
+          <div>
+            <label class="lbl">อีเมลที่กำหนดเอง</label>
+            <input type="email" name="customEmail" class="inp" value="<%= settings.customEmail || '' %>" placeholder="quality@example.com">
+            <p class="field-help">ถ้าเลือกอีเมลที่กำหนดเองแต่กรอกไม่ถูกต้อง ระบบจะ fallback กลับไปส่งที่อีเมลผู้รับบริการ</p>
+          </div>
+        </div>
+
+        <div style="display:flex;justify-content:flex-end;margin-top:18px;">
+          <button type="submit" class="act-btn ab-primary"><i data-lucide="save" style="width:14px;height:14px;"></i> บันทึกการตั้งค่า</button>
+        </div>
+      </form>
+    </section>
+  </main>
+</div>
+<script>lucide.createIcons()</script>
+</body>
+</html>
