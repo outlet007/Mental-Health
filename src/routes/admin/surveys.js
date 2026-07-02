@@ -74,9 +74,19 @@ function getSurveyContext(req) {
     ? counselors.filter(counselor => counselor.id === req.session.counselorId)
     : counselors
 
-  const all = isCounselor
+  const dateFrom = /^\d{4}-\d{2}-\d{2}$/.test(req.query.dateFrom || '') ? req.query.dateFrom : ''
+  const dateTo   = /^\d{4}-\d{2}-\d{2}$/.test(req.query.dateTo   || '') ? req.query.dateTo   : ''
+
+  const byCounselor = isCounselor
     ? getSurveys().filter(s => s.counselorId === req.session.counselorId)
     : getSurveys()
+
+  const all = byCounselor.filter(s => {
+    const submittedDate = (s.submittedAt || s.createdAt || '').slice(0, 10)
+    if (dateFrom && submittedDate < dateFrom) return false
+    if (dateTo   && submittedDate > dateTo)   return false
+    return true
+  })
 
   const requestedCounselorId = String(req.query.counselorId || 'all')
   const selectedCounselorId = !isCounselor && allowedCounselors.some(counselor => counselor.id === requestedCounselorId)
@@ -103,6 +113,8 @@ function getSurveyContext(req) {
     all,
     surveys,
     selectedCounselorId,
+    dateFrom,
+    dateTo,
   }
 }
 
@@ -142,6 +154,8 @@ router.get('/', (req, res) => {
     all,
     surveys,
     selectedCounselorId,
+    dateFrom,
+    dateTo,
   } = getSurveyContext(req)
 
   const total = all.length
@@ -164,6 +178,8 @@ router.get('/', (req, res) => {
     selectedCounselorId,
     isCounselorUser: isCounselor,
     query: req.query,
+    dateFrom,
+    dateTo,
   })
 })
 

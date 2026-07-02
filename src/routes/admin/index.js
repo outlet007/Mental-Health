@@ -91,12 +91,25 @@ router.get('/', (req, res) => {
       .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
       .slice(0, 8)
 
+    const surveysPath   = path.join(dataDir, 'surveys.json')
+    const surveys       = fs.existsSync(surveysPath) ? readData('surveys.json') : []
+    const mySurveys      = surveys.filter(s => s.counselorId === cId && typeof s.rating === 'number')
+    const myAvgRating    = mySurveys.length > 0
+      ? mySurveys.reduce((sum, s) => sum + s.rating, 0) / mySurveys.length
+      : 0
+    const myAvgSatisfaction = Math.round(myAvgRating / 5 * 100)
+
     return res.render('admin/dashboard', {
       page: 'dashboard',
       title: 'แดชบอร์ด',
       isCounselorUser: true,
       me,
-      myStats: { total, pending, confirmed, completed, todayApts, confirmRate, completeRate },
+      myStats: {
+        total, pending, confirmed, completed, todayApts, confirmRate, completeRate,
+        totalSurveys:    mySurveys.length,
+        avgRating:       myAvgRating.toFixed(1),
+        avgSatisfaction: myAvgSatisfaction,
+      },
       recentMyApts,
       weekDays,
       myCalendarGrid,

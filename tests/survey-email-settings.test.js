@@ -53,7 +53,7 @@ test('survey email settings page is a system menu item', async () => {
   assert.match(sidebar, /href="\/admin\/survey-email"/)
   assert.match(sidebar, /อีเมลประเมินความพึงพอใจ/)
   assert.ok(sidebar.indexOf('href="/admin/registration-form"') < sidebar.indexOf('href="/admin/survey-email"'))
-  assert.ok(sidebar.indexOf('href="/admin/survey-email"') < sidebar.indexOf('href="/admin/reports"'))
+  assert.ok(sidebar.indexOf('href="/admin/survey-email"') < sidebar.indexOf('href="/admin/import-export"'))
 })
 
 test('survey email settings page renders and saves recipient settings', async () => {

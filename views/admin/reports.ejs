@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+﻿﻿<!DOCTYPE html>
 <html lang="th">
 <head>
   <meta charset="UTF-8">
@@ -13,7 +13,7 @@
     .bar-track{height:9px;background:#f1f5f9;border-radius:999px;overflow:hidden;}
     .bar-fill{height:100%;border-radius:999px;background:#05967e;}
     .table-cell{padding:12px 14px;border-bottom:1px solid #f1f5f9;font-size:13px;color:#334155;vertical-align:top;}
-    .status-pill{display:inline-flex;align-items:center;border-radius:999px;padding:3px 8px;background:#f1f5f9;color:#475569;font-size:11px;font-weight:700;}
+    .status-pill{display:inline-flex;align-items:center;border-radius:999px;padding:3px 8px;background:#f1f5f9;color:#475569;font-size:12px;font-weight:700;}
     .pagination-shell{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 18px;border-top:1px solid #f1f5f9;background:#fff;flex-wrap:wrap;}
     .pagination-results{display:flex;align-items:center;gap:10px;font-size:13px;font-weight:600;color:#475569;}
     .pagination-size-form{margin:0;display:inline-flex;align-items:center;}
@@ -124,8 +124,8 @@
       </div>
     </section>
 
-    <section style="display:grid;grid-template-columns:1.2fr .8fr;gap:18px;margin-bottom:18px;">
-      <div class="report-card" style="padding:18px;">
+    <section style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:18px;align-items:start;">
+      <div class="report-card" style="padding:18px;grid-column:span 3;">
         <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px;gap:12px;">
           <div>
             <h3 style="font-size:15px;font-weight:800;color:#1e293b;margin:0;"><%= '\u0e2a\u0e16\u0e34\u0e15\u0e34\u0e01\u0e32\u0e23\u0e43\u0e0a\u0e49\u0e1a\u0e23\u0e34\u0e01\u0e32\u0e23' %></h3>
@@ -147,91 +147,60 @@
           </form>
         </div>
         <% if (stats.dailyUsage.length) { %>
-          <%
-            const dailyChart = { width: 760, height: 240, left: 24, right: 4, top: 10, bottom: 28 }
-            dailyChart.plotWidth = dailyChart.width - dailyChart.left - dailyChart.right
-            dailyChart.plotHeight = dailyChart.height - dailyChart.top - dailyChart.bottom
-            const contactDailyUsage = stats.dailyContactRequests || []
-            const dailyMax = Math.max(
-              1,
-              ...stats.dailyUsage.map(day => Number(day.count) || 0),
-              ...contactDailyUsage.map(day => Number(day.count) || 0)
-            )
-            const dailyChartMax = Math.max(4, Math.ceil(dailyMax / 4) * 4)
-            const dailyTickCount = 4
-            const dailyTickValues = Array.from({ length: dailyTickCount + 1 }, (_, index) => Math.round((dailyChartMax / dailyTickCount) * index))
-            const buildDailyPoints = (items) => items.map((day, index) => {
-              const x = dailyChart.left + (items.length === 1 ? dailyChart.plotWidth / 2 : (index / (items.length - 1)) * dailyChart.plotWidth)
-              const y = dailyChart.top + dailyChart.plotHeight - ((Number(day.count) || 0) / dailyChartMax) * dailyChart.plotHeight
-              return { ...day, x, y, xText: x.toFixed(2), yText: y.toFixed(2) }
+          <div data-report-chart="appointments-daily-line" style="position:relative;height:260px;">
+            <canvas id="dailyUsageChart"></canvas>
+          </div>
+          <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+          <script>
+          (function () {
+            const days              = <%- JSON.stringify(stats.dailyUsage) %>
+            const contactDays       = <%- JSON.stringify(stats.dailyContactRequests || []) %>
+            const labels            = days.map(d => d.date)
+            const appointmentCounts = days.map(d => d.count)
+            const contactCounts     = contactDays.map(d => d.count)
+
+            const ctx = document.getElementById('dailyUsageChart')
+            if (!ctx) return
+
+            const ChartCtor = typeof Chart === 'function' ? Chart : null
+            if (!ChartCtor) {
+              const fallback = document.createElement('p')
+              fallback.style.cssText = 'font-size:12px;color:#94a3b8;margin:10px 0 0;line-height:1.5;'
+              fallback.textContent = 'ไม่สามารถโหลดกราฟได้ กรุณาตรวจสอบการเชื่อมต่อแล้วรีเฟรชหน้าอีกครั้ง'
+              ctx.insertAdjacentElement('afterend', fallback)
+              return
+            }
+
+            new ChartCtor(ctx, {
+              type: 'line',
+              data: {
+                labels,
+                datasets: [
+                  { label: 'นัดหมาย', data: appointmentCounts, borderColor: '#1d4ed8', backgroundColor: 'rgba(29,78,216,.12)', pointBackgroundColor: '#1d4ed8', pointBorderColor: '#fff', pointRadius: 3, pointHoverRadius: 5, borderWidth: 2, tension: 0.35, fill: true },
+                  { label: 'คำขอเพื่อทำนัดหมาย', data: contactCounts, borderColor: '#22c55e', backgroundColor: 'rgba(34,197,94,.12)', pointBackgroundColor: '#22c55e', pointBorderColor: '#fff', pointRadius: 3, pointHoverRadius: 5, borderWidth: 2, borderDash: [6, 6], tension: 0.35, fill: false },
+                ]
+              },
+              options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: { mode: 'index', intersect: false },
+                plugins: {
+                  legend: { position: 'bottom', labels: { font: { size: 11, family: "'Noto Sans Thai', sans-serif" }, boxWidth: 12, padding: 10, usePointStyle: true } },
+                  tooltip: { bodyFont: { family: "'Noto Sans Thai', sans-serif" }, titleFont: { family: "'Noto Sans Thai', sans-serif" } }
+                },
+                scales: {
+                  x: { ticks: { font: { size: 10 }, maxRotation: 0, autoSkip: true }, grid: { display: false } },
+                  y: { beginAtZero: true, ticks: { precision: 0, font: { size: 10 } }, grid: { color: '#f1f5f9' } }
+                }
+              }
             })
-            const dailyPoints = buildDailyPoints(stats.dailyUsage)
-            const contactPoints = buildDailyPoints(contactDailyUsage)
-            const dailyPolyline = dailyPoints.map(point => `${point.xText},${point.yText}`).join(' ')
-            const contactPolyline = contactPoints.map(point => `${point.xText},${point.yText}`).join(' ')
-          %>
-          <div data-report-chart="appointments-daily-line" class="daily-usage-chart-shell" style="height:260px;border:1px solid #e5e7eb;border-radius:8px;background:#fff;padding:0;box-shadow:0 1px 2px rgba(15,23,42,.04);">
-            <svg viewBox="0 0 760 240" role="img" aria-label="จำนวน" style="width:100%;height:100%;display:block;overflow:visible;">
-              <title>จำนวน</title>
-              <defs>
-                <linearGradient id="daily-line-fill" x1="0" x2="0" y1="0" y2="1">
-                  <stop offset="0%" stop-color="#2563eb" stop-opacity=".13" />
-                  <stop offset="100%" stop-color="#2563eb" stop-opacity="0" />
-                </linearGradient>
-              </defs>
-              <rect x="<%= dailyChart.left %>" y="<%= dailyChart.top %>" width="<%= dailyChart.plotWidth %>" height="<%= dailyChart.plotHeight %>" rx="8" fill="#fff" stroke="#edf2f7" />
-              <% for (let index = 0; index <= 10; index += 1) {
-                   const x = dailyChart.left + (dailyChart.plotWidth / 10) * index
-              %>
-                <line class="daily-chart-grid-x" x1="<%= x.toFixed(2) %>" y1="<%= dailyChart.top %>" x2="<%= x.toFixed(2) %>" y2="<%= dailyChart.top + dailyChart.plotHeight %>" stroke="#e5e7eb" stroke-width="1" />
-              <% } %>
-              <% dailyTickValues.slice().reverse().forEach(value => {
-                   const y = dailyChart.top + dailyChart.plotHeight - (value / dailyChartMax) * dailyChart.plotHeight
-              %>
-                <text x="2" y="<%= (y + 4).toFixed(2) %>" fill="#9ca3af" font-size="12" font-weight="600"><%= value %></text>
-                <line class="daily-chart-grid-y" x1="<%= dailyChart.left %>" y1="<%= y.toFixed(2) %>" x2="<%= dailyChart.left + dailyChart.plotWidth %>" y2="<%= y.toFixed(2) %>" stroke="#e5e7eb" stroke-width="1" />
-              <% }) %>
-              <polyline class="daily-appointment-area" fill="url(#daily-line-fill)" stroke="none" points="<%= `${dailyChart.left},${dailyChart.top + dailyChart.plotHeight} ${dailyPolyline} ${dailyChart.left + dailyChart.plotWidth},${dailyChart.top + dailyChart.plotHeight}` %>"></polyline>
-              <% if (contactPolyline) { %>
-                <polyline class="daily-contact-request-line" fill="none" stroke="#22c55e" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="6 6" points="<%= contactPolyline %>"></polyline>
-              <% } %>
-              <polyline class="daily-appointment-line" fill="none" stroke="#1d4ed8" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" points="<%= dailyPolyline %>"></polyline>
-              <% contactPoints.forEach(point => { %>
-                <circle class="daily-contact-request-point" cx="<%= point.xText %>" cy="<%= point.yText %>" r="3.8" fill="#fff" stroke="#22c55e" stroke-width="2">
-                  <title><%= point.date %>: คำขอเพื่อทำนัดหมาย <%= point.count %> รายการ</title>
-                </circle>
-              <% }) %>
-              <% dailyPoints.forEach(point => { %>
-                <circle class="daily-appointment-point" cx="<%= point.xText %>" cy="<%= point.yText %>" r="4" fill="#fff" stroke="#1d4ed8" stroke-width="2.2">
-                  <title><%= point.date %>: นัดหมาย <%= point.count %> <%= '\u0e23\u0e32\u0e22\u0e01\u0e32\u0e23' %></title>
-                </circle>
-              <% }) %>
-              <% const firstPoint = dailyPoints[0]
-                 const lastPoint = dailyPoints[dailyPoints.length - 1]
-                 const firstDateLabel = firstPoint ? firstPoint.date : ''
-                 const lastDateLabel = lastPoint ? lastPoint.date : ''
-              %>
-              <% if (firstPoint) { %>
-                <text class="daily-chart-date-label daily-chart-date-start" x="<%= firstPoint.xText %>" y="226" text-anchor="start" fill="#9ca3af" font-size="11" font-weight="600"><%= firstDateLabel %></text>
-              <% } %>
-              <% if (lastPoint) { %>
-                <text class="daily-chart-date-label daily-chart-date-end" x="<%= lastPoint.xText %>" y="226" text-anchor="end" fill="#9ca3af" font-size="11" font-weight="600"><%= lastDateLabel %></text>
-              <% } %>
-            </svg>
-          </div>
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px;font-size:11px;color:#94a3b8;">
-            <span><%= stats.dailyUsage[0]?.date || filters.graphMonth %></span>
-            <span style="display:inline-flex;align-items:center;gap:12px;color:#64748b;font-weight:700;">
-              <span><i style="display:inline-block;width:8px;height:8px;border-radius:2px;background:#1d4ed8;margin-right:5px;"></i>นัดหมาย</span>
-              <span><i style="display:inline-block;width:8px;height:8px;border-radius:2px;background:#22c55e;margin-right:5px;"></i>คำขอเพื่อทำนัดหมาย</span>
-            </span>
-            <span><%= stats.dailyUsage[stats.dailyUsage.length - 1]?.date || filters.graphMonth %></span>
-          </div>
+          })()
+          </script>
         <% } else { %>
-          <div style="height:210px;display:flex;align-items:center;justify-content:center;color:#94a3b8;font-size:13px;"><%= '\u0e44\u0e21\u0e48\u0e21\u0e35\u0e02\u0e49\u0e2d\u0e21\u0e39\u0e25\u0e43\u0e19\u0e0a\u0e48\u0e27\u0e07\u0e27\u0e31\u0e19\u0e17\u0e35\u0e48\u0e19\u0e35\u0e49' %></div>
+          <div style="height:210px;display:flex;align-items:center;justify-content:center;color:#94a3b8;font-size:13px;"><%= 'ไม่มีข้อมูลในช่วงวันที่นี้' %></div>
         <% } %>
       </div>
-      <div class="report-card" style="padding:18px;">
+      <div class="report-card" style="padding:18px;grid-column:span 1;">
         <h3 style="font-size:15px;font-weight:800;color:#1e293b;margin:0 0 16px;">ช่องทางบริการ</h3>
         <% if (stats.serviceUsage.length) { %>
           <% stats.serviceUsage.forEach(item => { %>
@@ -289,7 +258,7 @@
               <span style="font-size:12px;color:#64748b;flex-shrink:0;"><%= item.count %></span>
             </div>
             <div class="bar-track"><div class="bar-fill" style="width:<%= pct %>%;background:<%= ratingColor %>;"></div></div>
-            <p style="font-size:11px;color:#94a3b8;margin:7px 0 0;"><%= pct %>%</p>
+            <p style="font-size:12px;color:#94a3b8;margin:7px 0 0;"><%= pct %>%</p>
           </div>
         <% }) %>
       </div>
@@ -326,16 +295,16 @@
                 </div>
                 <div style="text-align:right;white-space:nowrap;">
                   <p style="font-size:22px;font-weight:900;color:#0f172a;margin:0;"><%= item.avgRating %><span style="font-size:12px;color:#64748b;font-weight:700;"> / 5</span></p>
-                  <p style="font-size:11px;color:#f59e0b;font-weight:800;margin:2px 0 0;">คะแนนเฉลี่ย</p>
+                  <p style="font-size:12px;color:#f59e0b;font-weight:800;margin:2px 0 0;">คะแนนเฉลี่ย</p>
                 </div>
               </div>
               <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
                 <div>
-                  <p style="font-size:11px;color:#64748b;margin:0 0 3px;">จำนวนแบบประเมิน</p>
+                  <p style="font-size:12px;color:#64748b;margin:0 0 3px;">จำนวนแบบประเมิน</p>
                   <p style="font-size:13px;font-weight:800;color:#334155;margin:0;">แบบประเมิน <%= item.count %> รายการ</p>
                 </div>
                 <div>
-                  <p style="font-size:11px;color:#64748b;margin:0 0 3px;">สัดส่วน 5 ดาว</p>
+                  <p style="font-size:12px;color:#64748b;margin:0 0 3px;">สัดส่วน 5 ดาว</p>
                   <p style="font-size:13px;font-weight:800;color:#334155;margin:0;"><%= item.fiveStarPercent %>%</p>
                 </div>
               </div>

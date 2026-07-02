@@ -84,11 +84,11 @@ test('registration form admin page is a system menu item', async () => {
 
   const contentIndex = sidebar.indexOf('href="/admin/content"')
   const formIndex = sidebar.indexOf('href="/admin/registration-form"')
-  const reportsIndex = sidebar.indexOf('href="/admin/reports"')
+  const surveyEmailIndex = sidebar.indexOf('href="/admin/survey-email"')
 
   assert.ok(contentIndex >= 0)
   assert.ok(formIndex > contentIndex)
-  assert.ok(formIndex < reportsIndex)
+  assert.ok(formIndex < surveyEmailIndex)
   assert.match(sidebar, /จัดการฟอร์มลงทะเบียน/)
 })
 

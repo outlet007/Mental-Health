@@ -7,7 +7,7 @@ const ejs = require('ejs')
 
 const THAI = {
   reports: '\u0e23\u0e32\u0e22\u0e07\u0e32\u0e19\u0e2a\u0e16\u0e34\u0e15\u0e34',
-  system: '\u0e23\u0e30\u0e1a\u0e1a',
+  system: 'จัดการระบบ',
   importExport: '\u0e19\u0e33\u0e40\u0e02\u0e49\u0e32-\u0e2a\u0e48\u0e07\u0e2d\u0e2d\u0e01 \u0e02\u0e49\u0e2d\u0e21\u0e39\u0e25',
   fromDate: '\u0e27\u0e31\u0e19\u0e17\u0e35\u0e48\u0e15\u0e31\u0e49\u0e07\u0e15\u0e49\u0e19',
   toDate: '\u0e27\u0e31\u0e19\u0e17\u0e35\u0e48\u0e17\u0e35\u0e48\u0e15\u0e49\u0e2d\u0e07\u0e01\u0e32\u0e23',
@@ -60,16 +60,14 @@ test('reports page renders overview dashboard, filters, charts, and CSV export l
   assert.match(body, />จำนวน<\/p>/)
   assert.doesNotMatch(body, new RegExp(THAI.appointmentsDaily))
   assert.match(body, /data-report-chart="appointments-daily-line"/)
-  assert.match(body, /class="daily-usage-chart-shell"/)
-  assert.match(body, /<rect x="24"[^>]+width="732"/)
-  assert.match(body, /class="daily-chart-date-label daily-chart-date-start"/)
-  assert.match(body, /class="daily-chart-date-label daily-chart-date-end"/)
+  assert.match(body, /<canvas id="dailyUsageChart">/)
+  assert.match(body, /chart\.js@4\/dist\/chart\.umd\.min\.js/)
+  assert.match(body, /typeof Chart/)
+  assert.match(body, /type: 'line'/)
+  assert.match(body, /borderColor: '#1d4ed8'/)
+  assert.match(body, /tension: 0\.35/)
   assert.match(body, /id="chart-month"/)
   assert.match(body, /name="graphMonth" type="month" value="2026-06"/)
-  assert.match(body, /<polyline[^>]+class="daily-appointment-line"/)
-  assert.match(body, /<circle[^>]+class="daily-appointment-point"/)
-  assert.match(body, /class="daily-contact-request-line"/)
-  assert.match(body, /class="daily-contact-request-point"/)
   assert.match(body, /คำขอเพื่อทำนัดหมาย/)
   assert.doesNotMatch(body, /class="daily-chart-highlight-band"/)
   assert.doesNotMatch(body, /class="daily-chart-tooltip"/)
@@ -98,9 +96,8 @@ test('reports chart month filter renders every day in selected month', async () 
   assert.equal(res.statusCode, 200)
   assert.match(body, /id="chart-month"/)
   assert.match(body, /name="graphMonth" type="month" value="2026-02"/)
-  assert.equal((body.match(/class="daily-chart-date-label/g) || []).length, 2)
-  assert.match(body, />2026-02-01<\/text>/)
-  assert.match(body, />2026-02-28<\/text>/)
+  assert.match(body, /"date":"2026-02-01"/)
+  assert.match(body, /"date":"2026-02-28"/)
   assert.doesNotMatch(body, /class="daily-chart-highlight-band"/)
 })
 test('reports page renders satisfaction results grouped by counselor before report table', async () => {
@@ -134,7 +131,7 @@ test('reports CSV export returns filtered report rows with Thai-friendly headers
   assert.match(body, new RegExp(THAI.appointment))
 })
 
-test('reports sidebar item is in system group before import-export and labels are readable', async () => {
+test('reports sidebar item is the last service menu item after surveys and labels are readable', async () => {
   const body = await new Promise((resolve, reject) => {
     ejs.renderFile(
       path.join(__dirname, '..', 'views', 'partials', 'admin-sidebar.ejs'),
@@ -144,18 +141,22 @@ test('reports sidebar item is in system group before import-export and labels ar
     )
   })
 
-  const contentIndex = body.indexOf('href="/admin/content"')
+  const surveysIndex = body.indexOf('href="/admin/surveys"')
   const reportsIndex = body.indexOf('href="/admin/reports"')
+  const systemIndex = body.indexOf(THAI.system, reportsIndex)
   const importExportIndex = body.indexOf('href="/admin/import-export"')
 
-  assert.ok(contentIndex >= 0)
-  assert.ok(reportsIndex > contentIndex)
-  assert.ok(reportsIndex < importExportIndex)
+  assert.ok(surveysIndex >= 0)
+  assert.ok(reportsIndex > surveysIndex)
+  assert.ok(systemIndex > reportsIndex)
+  assert.ok(importExportIndex > systemIndex)
   assert.match(body, new RegExp(THAI.system))
   assert.match(body, new RegExp(THAI.reports))
   assert.match(body, new RegExp(THAI.importExport))
   assert.match(body, /href="\/admin\/surveys"[\s\S]*data-lucide="smile-plus"/)
   assert.doesNotMatch(body, /href="\/admin\/surveys"[\s\S]*data-lucide="star"/)
+  assert.match(body, /id="notif-contacts"[^>]+style="[^"]*top:50%;[^"]*transform:translateY\(-50%\);[^"]*min-width:22px;[^"]*height:22px;[^"]*background:#ef4444;[^"]*font-size:12px;[^"]*font-weight:500;[^"]*line-height:22px;/)
+  assert.match(body, /id="notif-appointments"[^>]+style="[^"]*top:50%;[^"]*transform:translateY\(-50%\);[^"]*min-width:22px;[^"]*height:22px;[^"]*background:#ff7700;[^"]*font-size:12px;[^"]*font-weight:500;[^"]*line-height:22px;/)
   assert.doesNotMatch(body, /\?{3,}/)
 })
 

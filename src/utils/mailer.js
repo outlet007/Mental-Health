@@ -82,7 +82,7 @@ function clientEmailHtml(data) {
 function counselorEmailHtml(data) {
   const th = `<p style="font-size:15px;line-height:1.8;color:#334155;margin:0 0 18px;">${icon('heart-handshake')}\u0e2a\u0e27\u0e31\u0e2a\u0e14\u0e35 <strong>${data.counselor.name}</strong><br>\u0e04\u0e38\u0e13\u0e21\u0e35\u0e19\u0e31\u0e14\u0e2b\u0e21\u0e32\u0e22\u0e43\u0e2b\u0e21\u0e48\u0e08\u0e32\u0e01 MindCare</p>${appointmentDetails(data, 'th')}<p>${icon('video')}\u0e42\u0e1b\u0e23\u0e14\u0e15\u0e23\u0e27\u0e08\u0e2a\u0e2d\u0e1a\u0e23\u0e39\u0e1b\u0e41\u0e1a\u0e1a\u0e01\u0e32\u0e23\u0e19\u0e31\u0e14\u0e2b\u0e21\u0e32\u0e22\u0e01\u0e48\u0e2d\u0e19\u0e40\u0e27\u0e25\u0e32</p>`
   const en = `<p style="font-size:15px;line-height:1.8;color:#334155;margin:0 0 18px;">${icon('heart-handshake')}Hello <strong>${data.counselor.name}</strong><br>You have a new appointment from MindCare.</p>${appointmentDetails(data, 'en')}<p>${icon('video')}Please check the appointment format before the session.</p>`
-  return emailWrapper('\u0e19\u0e31\u0e14\u0e2b\u0e21\u0e32\u0e22\u0e43\u0e2b\u0e21\u0e48', { from: '#7c3aed', to: '#6366f1' }, th, en)
+  return emailWrapper('\u0e19\u0e31\u0e14\u0e2b\u0e21\u0e32\u0e22\u0e43\u0e2b\u0e21\u0e48', { from: '#3874FF', to: '#6366f1' }, th, en)
 }
 
 function surveyEmailHtml({ appointment, client, counselor }) {
@@ -92,6 +92,31 @@ function surveyEmailHtml({ appointment, client, counselor }) {
   const feedbackTh = `<div style="border:1px solid #fde68a;border-radius:14px;padding:18px;margin-bottom:18px;background:#fff7ed;text-align:center;"><h3 style="margin:0 0 8px;color:#92400e;">${icon('smile-plus', '#f59e0b')}\u0e04\u0e27\u0e32\u0e21\u0e04\u0e34\u0e14\u0e40\u0e2b\u0e47\u0e19\u0e02\u0e2d\u0e07\u0e17\u0e48\u0e32\u0e19\u0e0a\u0e48\u0e27\u0e22\u0e43\u0e2b\u0e49\u0e40\u0e23\u0e32\u0e1e\u0e31\u0e12\u0e19\u0e32\u0e1a\u0e23\u0e34\u0e01\u0e32\u0e23\u0e43\u0e2b\u0e49\u0e14\u0e35\u0e22\u0e34\u0e48\u0e07\u0e02\u0e36\u0e49\u0e19</h3><p style="margin:0 0 12px;color:#b45309;">\u0e17\u0e33\u0e41\u0e1a\u0e1a\u0e1b\u0e23\u0e30\u0e40\u0e21\u0e34\u0e19\u0e04\u0e27\u0e32\u0e21\u0e1e\u0e36\u0e07\u0e1e\u0e2d\u0e43\u0e08</p>${icons}</div>`
   const feedbackEn = `<div style="border:1px solid #fde68a;border-radius:14px;padding:18px;margin-bottom:18px;background:#fff7ed;text-align:center;"><h3 style="margin:0 0 8px;color:#92400e;">${icon('smile-plus', '#f59e0b')}Your feedback helps us improve our service.</h3><p style="margin:0 0 12px;color:#b45309;">Please rate your satisfaction</p>${icons}</div>`
   return emailWrapper('\u0e1b\u0e23\u0e30\u0e40\u0e21\u0e34\u0e19\u0e04\u0e27\u0e32\u0e21\u0e1e\u0e36\u0e07\u0e1e\u0e2d\u0e43\u0e08', { from: '#f59e0b', to: '#f97316' }, feedbackTh + detailTh, feedbackEn + detailEn)
+}
+
+function counselorReassignedEmailHtml({ appointment, client, counselor }) {
+  const dateStr = formatDate(appointment.date)
+  const detailTh = card(`${icon('calendar')}รายละเอียดนัดหมายที่ถูกนำออกจากคิว`, [
+    row('รหัสการนัด', appointment.id), row('ผู้รับบริการ', client.name), row('วันที่เดิม', dateStr), row('เวลาเดิม', `${appointment.time} น.`)
+  ], '#ef4444')
+  const detailEn = card(`${icon('calendar')}Appointment removed from your schedule`, [
+    row('Appointment ID', appointment.id), row('Client', client.name), row('Original date', dateStr), row('Original time', appointment.time)
+  ], '#ef4444')
+  const th = `<p style="font-size:15px;line-height:1.8;color:#334155;margin:0 0 18px;">${icon('circle-alert', '#ef4444')}สวัสดี <strong>${counselor.name}</strong><br>นัดหมายนี้ถูกเปลี่ยนไปเป็นนักจิตวิทยาท่านอื่นแล้ว กรุณานำนัดออกจากตารางเวลาของคุณ</p>${detailTh}`
+  const en = `<p style="font-size:15px;line-height:1.8;color:#334155;margin:0 0 18px;">${icon('circle-alert', '#ef4444')}Hello <strong>${counselor.name}</strong><br>This appointment has been reassigned to another counselor. Please remove it from your schedule.</p>${detailEn}`
+  return emailWrapper('ยกเลิกนัดหมาย', { from: '#ef4444', to: '#f97316' }, th, en)
+}
+
+async function sendCounselorReassignedEmail({ appointment, client, counselor }) {
+  const transporter = getTransporter()
+  if (!counselor.email) return { skipped: true }
+  const info = await transporter.sendMail({
+    from: fromAddress(),
+    to: counselor.email,
+    subject: `[MindCare] ยกเลิกนัดหมาย - ${client.name} ${formatDate(appointment.date)} ${appointment.time}`,
+    html: counselorReassignedEmailHtml({ appointment, client, counselor }),
+  })
+  return { sent: true, messageId: info.messageId }
 }
 
 function fromAddress() {
@@ -127,4 +152,4 @@ async function sendAppointmentEmails({ appointment, client, counselor, concern }
   return { sent }
 }
 
-module.exports = { sendAppointmentEmails, sendSurveyEmail }
+module.exports = { sendAppointmentEmails, sendSurveyEmail, sendCounselorReassignedEmail }

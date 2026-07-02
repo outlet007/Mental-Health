@@ -22,7 +22,8 @@
             <%= client.name.substring(client.name.length-2) %>
           </div>
           <h2 class="font-bold text-slate-800 text-lg"><%= client.name %></h2>
-          <p class="text-sm text-slate-500 mb-3"><%= client.age %> ปี · <%= client.gender %></p>
+          <% const GENDER_LABELS = { male: 'ชาย', female: 'หญิง', unspecified: 'ไม่ระบุเพศ' } %>
+          <p class="text-sm text-slate-500 mb-3"><%= client.age %> ปี · <%= GENDER_LABELS[client.gender] || client.gender || 'ไม่ระบุเพศ' %></p>
           <% if (client.status==='active') { %><span class="badge-green">ใช้งาน</span>
           <% } else { %><span class="badge-gray">ไม่ได้ใช้งาน</span><% } %>
         </div>

@@ -12,13 +12,13 @@
     .ab-secondary{background:#fff;color:#05967e;border:1px solid #a0f3e1}.ab-secondary:hover{background:#ecfdf9}
     .ab-ghost{background:transparent;color:#64748b}.ab-ghost:hover{background:#f1f5f9}
     .ab-danger{background:#ef4444;color:#fff}.ab-danger:hover{background:#dc2626}
-    .ab-violet{background:linear-gradient(135deg,#7c3aed,#6366f1);color:#fff}.ab-violet:hover{opacity:.9}
+    .ab-violet{background:#3874FF;color:#fff}.ab-violet:hover{opacity:.9}
     .panel-overlay{position:fixed;inset:0;background:rgba(15,23,42,.45);z-index:40;display:none;backdrop-filter:blur(2px);opacity:0;transition:opacity .2s ease}.panel-overlay.open{opacity:1}
     .panel-drawer{position:fixed;top:50%;left:50%;width:calc(100% - 48px);max-width:480px;max-height:90vh;background:#fff;border-radius:20px;box-shadow:0 20px 60px rgba(0,0,0,.18);z-index:50;display:flex;flex-direction:column;transform:translate(-50%,-50%) scale(.94);opacity:0;transition:transform .22s cubic-bezier(.34,1.56,.64,1),opacity .18s ease;pointer-events:none}.panel-drawer.open{transform:translate(-50%,-50%) scale(1);opacity:1;pointer-events:auto}
     .inp{width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:13px;color:#334155;outline:none;font-family:inherit;box-sizing:border-box}.inp:focus{border-color:#2dd4b4;box-shadow:0 0 0 3px rgba(45,212,180,.15)}
     .lbl{display:block;font-size:12px;font-weight:500;color:#64748b;margin-bottom:5px}
-    .counselor-card{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:12px;cursor:pointer;transition:all .15s}.counselor-card:hover{border-color:#2dd4b4;background:#ecfdf9}.counselor-card.selected{border-color:#7c3aed;background:#f3e8ff}
-    .slot-btn{padding:7px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;font-weight:500;color:#334155;cursor:pointer;background:#fff;transition:all .15s}.slot-btn:hover:not(:disabled){border-color:#7c3aed;background:#f3e8ff}.slot-btn.selected{border-color:#7c3aed;background:#7c3aed;color:#fff}.slot-btn:disabled{opacity:.4;cursor:not-allowed;text-decoration:line-through}
+    .counselor-card{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:12px;cursor:pointer;transition:all .15s}.counselor-card:hover{border-color:#2dd4b4;background:#ecfdf9}.counselor-card.selected{border-color:#3874FF;background:#f3e8ff}
+    .slot-btn{padding:7px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;font-weight:500;color:#334155;cursor:pointer;background:#fff;transition:all .15s}.slot-btn:hover:not(:disabled){border-color:#3874FF;background:#f3e8ff}.slot-btn.selected{border-color:#3874FF;background:#3874FF;color:#fff}.slot-btn:disabled{opacity:.4;cursor:not-allowed;text-decoration:line-through}
     .appt-row{padding:10px 12px;border:1px solid #f1f5f9;border-radius:10px;margin-bottom:6px;cursor:pointer;transition:background .15s}.appt-row:hover{background:#f8fafc}
     .appt-detail{display:none;padding:10px 12px;background:#f8fafc;border-radius:8px;margin-top:6px;font-size:12px;color:#64748b;line-height:1.8}
     .appt-row.expanded .appt-detail{display:block}
@@ -28,6 +28,8 @@
 <%- include('../partials/admin-sidebar') %>
 
 <div style="margin-left:256px;min-height:100vh;display:flex;flex-direction:column;">
+<% const GENDER_LABELS = { male: 'ชาย', female: 'หญิง', unspecified: 'ไม่ระบุเพศ' } %>
+<% const genderLabel = g => GENDER_LABELS[g] || g || 'ไม่ระบุเพศ' %>
 
   <div style="height:56px;background:#fff;border-bottom:1px solid #f1f5f9;padding:0 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:20;">
     <h1 style="font-size:15px;font-weight:600;color:#1e293b;margin:0;"><%= title %></h1>
@@ -40,14 +42,55 @@
     </div>
   </div>
 
+  <% const isCounselorView = session && session.userType === 'counselor' %>
+  <% if (isCounselorView) { %>
+  <div style="padding:20px 24px 0;">
+    <%- include('../partials/counselor-welcome-banner') %>
+  </div>
+  <% } %>
+
+  <% if (!isCounselorView) { %>
   <div style="padding:14px 24px;background:#fff;border-bottom:2px solid #f1f5f9;display:flex;justify-content:flex-end;">
     <button onclick="openPanel('create')" style="display:inline-flex;align-items:center;gap:10px;padding:11px 22px;background:linear-gradient(135deg,#05967e,#06b6d4);color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;box-shadow:0 2px 8px rgba(5,150,126,.30);transition:all .15s;" onmouseover="this.style.boxShadow='0 4px 16px rgba(5,150,126,.45)';this.style.transform='translateY(-1px)'" onmouseout="this.style.boxShadow='0 2px 8px rgba(5,150,126,.30)';this.style.transform='translateY(0)'">
       <i data-lucide="user-plus" style="width:18px;height:18px;"></i>
       + เพิ่มผู้รับบริการ
     </button>
   </div>
+  <% } %>
 
   <div style="padding:24px;">
+
+    <!-- Stat cards -->
+    <% const statusFilterQS = search => search ? '&search=' + encodeURIComponent(search) : '' %>
+    <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-bottom:20px;">
+      <a href="/admin/clients?status=<%= statusFilterQS(query.search) %>" style="text-decoration:none;background:#fff;border:1.5px solid <%= !query.status ? '#0284c7' : '#e2e8f0' %>;border-radius:14px;padding:18px;display:flex;align-items:center;justify-content:space-between;gap:10px;cursor:pointer;">
+        <div>
+          <p style="font-size:12px;color:#64748b;margin:0;"><%= isCounselorView ? 'ผู้รับบริการทั้งหมดของฉัน' : 'ผู้รับบริการทั้งหมด' %></p>
+          <p style="font-size:28px;font-weight:800;color:#0f172a;margin:4px 0 0;"><%= clientStats.total %></p>
+        </div>
+        <div style="width:40px;height:40px;border-radius:8px;background:#e0f2fe;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          <i data-lucide="users" style="width:20px;height:20px;color:#0284c7;"></i>
+        </div>
+      </a>
+      <a href="/admin/clients?status=active<%= statusFilterQS(query.search) %>" style="text-decoration:none;background:#fff;border:1.5px solid <%= query.status==='active' ? '#16a34a' : '#e2e8f0' %>;border-radius:14px;padding:18px;display:flex;align-items:center;justify-content:space-between;gap:10px;cursor:pointer;">
+        <div>
+          <p style="font-size:12px;color:#64748b;margin:0;">ยังใช้บริการอยู่</p>
+          <p style="font-size:28px;font-weight:800;color:#0f172a;margin:4px 0 0;"><%= clientStats.active %></p>
+        </div>
+        <div style="width:40px;height:40px;border-radius:8px;background:#dcfce7;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          <i data-lucide="user-check" style="width:20px;height:20px;color:#16a34a;"></i>
+        </div>
+      </a>
+      <a href="/admin/clients?status=inactive<%= statusFilterQS(query.search) %>" style="text-decoration:none;background:#fff;border:1.5px solid <%= query.status==='inactive' ? '#64748b' : '#e2e8f0' %>;border-radius:14px;padding:18px;display:flex;align-items:center;justify-content:space-between;gap:10px;cursor:pointer;">
+        <div>
+          <p style="font-size:12px;color:#64748b;margin:0;">ไม่ได้ใช้บริการแล้ว</p>
+          <p style="font-size:28px;font-weight:800;color:#0f172a;margin:4px 0 0;"><%= clientStats.inactive %></p>
+        </div>
+        <div style="width:40px;height:40px;border-radius:8px;background:#f1f5f9;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          <i data-lucide="user-x" style="width:20px;height:20px;color:#64748b;"></i>
+        </div>
+      </a>
+    </div>
 
     <!-- Alerts -->
     <% if (query.created) { %>
@@ -62,6 +105,12 @@
     <div style="margin-bottom:16px;padding:12px 16px;background:#fef2f2;border:1px solid #fca5a5;border-radius:12px;color:#991b1b;font-size:13px;display:flex;align-items:center;gap:8px;"><i data-lucide="alert-circle" style="width:16px;height:16px;flex-shrink:0;"></i> อีเมลนี้มีในระบบแล้ว กรุณาใช้อีเมลอื่น</div>
     <% } if (query.error==='conflict') { %>
     <div style="margin-bottom:16px;padding:12px 16px;background:#fef2f2;border:1px solid #fca5a5;border-radius:12px;color:#991b1b;font-size:13px;display:flex;align-items:center;gap:8px;"><i data-lucide="alert-circle" style="width:16px;height:16px;flex-shrink:0;"></i> ช่วงเวลานี้ถูกจองแล้ว กรุณาเลือกเวลาอื่น</div>
+    <% } if (typeof query.transferred !== 'undefined') { %>
+    <div style="margin-bottom:16px;padding:12px 16px;background:#ecfdf9;border:1px solid #a0f3e1;border-radius:12px;color:#065f46;font-size:13px;display:flex;align-items:center;gap:8px;">
+      <i data-lucide="repeat" style="width:16px;height:16px;flex-shrink:0;"></i>
+      โอนย้ายนัดหมายสำเร็จ <%= query.transferred %> รายการ
+      <% if (Number(query.transferConflict) > 0) { %>· ติดปัญหาช่วงเวลาซ้ำ <%= query.transferConflict %> รายการ (กรุณาแก้ไขทีละนัดผ่านหน้าจัดการนัดหมาย)<% } %>
+    </div>
     <% } %>
 
     <!-- Filter -->
@@ -114,28 +163,28 @@
                   <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#06b6d4,#05967e);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:12px;flex-shrink:0;"><%= c.name.slice(-2) %></div>
                   <div>
                     <div style="font-weight:600;color:#1e293b;font-size:13px;"><%= c.name %></div>
-                    <div style="font-size:11px;color:#94a3b8;">ลงทะเบียน <%= c.registeredAt %></div>
+                    <div style="font-size:12px;color:#94a3b8;">ลงทะเบียน <%= c.registeredAt %></div>
                   </div>
                 </div>
               </td>
               <td>
                 <div style="font-size:13px;"><%= c.email %></div>
-                <div style="font-size:11px;color:#94a3b8;"><%= c.phone %></div>
+                <div style="font-size:12px;color:#94a3b8;"><%= c.phone %></div>
               </td>
-              <td style="font-size:13px;"><%= c.age %> ปี / <%= c.gender %></td>
+              <td style="font-size:13px;"><%= c.age %> ปี / <%= genderLabel(c.gender) %></td>
               <td>
                 <div style="display:flex;align-items:center;gap:5px;">
                   <i data-lucide="calendar-check" style="width:13px;height:13px;color:#05967e;"></i>
                   <span style="font-weight:600;font-size:14px;color:#1e293b;"><%= clientAppts.length %></span>
-                  <span style="font-size:11px;color:#94a3b8;">ครั้ง</span>
+                  <span style="font-size:12px;color:#94a3b8;">ครั้ง</span>
                 </div>
               </td>
               <td style="font-size:12px;color:#64748b;"><%= lastAppt ? lastAppt.date : '—' %></td>
               <td>
                 <% if (c.status==='active') { %>
-                <span style="padding:3px 10px;background:#d1fae5;color:#065f46;border-radius:99px;font-size:11px;font-weight:500;">ใช้งาน</span>
+                <span style="padding:3px 10px;background:#d1fae5;color:#065f46;border-radius:99px;font-size:12px;font-weight:500;">ใช้งาน</span>
                 <% } else { %>
-                <span style="padding:3px 10px;background:#fee2e2;color:#991b1b;border-radius:99px;font-size:11px;font-weight:500;">ไม่ได้ใช้งาน</span>
+                <span style="padding:3px 10px;background:#fee2e2;color:#991b1b;border-radius:99px;font-size:12px;font-weight:500;">ไม่ได้ใช้งาน</span>
                 <% } %>
               </td>
               <td>
@@ -150,7 +199,7 @@
                     <button type="submit" class="act-btn ab-danger" title="ลบ"><i data-lucide="trash-2" style="width:12px;height:12px;"></i></button>
                   </form>
                   <button class="act-btn ab-violet book-client-btn" data-rec="<%= JSON.stringify(c) %>" title="ทำนัดหมายใหม่">
-                    <i data-lucide="calendar-plus" style="width:13px;height:13px;"></i> นัด
+                    <i data-lucide="calendar-plus" style="width:13px;height:13px;"></i> ทำนัดหมายใหม่
                   </button>
                 </div>
               </td>
@@ -176,7 +225,7 @@
       <div id="detailAvatar" style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#06b6d4,#05967e);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:14px;flex-shrink:0;"></div>
       <div>
         <div id="detailName" style="font-size:15px;font-weight:700;color:#1e293b;"></div>
-        <div id="detailSub"  style="font-size:11px;color:#94a3b8;"></div>
+        <div id="detailSub"  style="font-size:12px;color:#94a3b8;"></div>
       </div>
     </div>
     <button onclick="closeDetail()" style="background:none;border:none;cursor:pointer;padding:6px;border-radius:8px;color:#94a3b8;"><i data-lucide="x" style="width:18px;height:18px;"></i></button>
@@ -192,26 +241,63 @@
         <div style="font-size:13px;font-weight:600;color:#1e293b;display:flex;align-items:center;gap:6px;">
           <i data-lucide="calendar-check" style="width:15px;height:15px;color:#05967e;"></i>
           ประวัติการนัดหมาย
-          <span id="detailApptCount" style="padding:2px 8px;background:#d1fae5;color:#065f46;border-radius:99px;font-size:11px;font-weight:600;"></span>
+          <span id="detailApptCount" style="padding:2px 8px;background:#d1fae5;color:#065f46;border-radius:99px;font-size:12px;font-weight:600;"></span>
         </div>
-        <button id="detailBookBtn" class="act-btn ab-violet" onclick="openBookFromDetail()">
-          <i data-lucide="calendar-plus" style="width:13px;height:13px;"></i> ทำนัดหมายใหม่
-        </button>
+        <div style="display:flex;gap:6px;">
+          <% if (!isCounselorView) { %>
+          <button id="detailTransferBtn" class="act-btn ab-secondary" onclick="openTransferFromDetail()">
+            <i data-lucide="repeat" style="width:13px;height:13px;"></i> โอนย้ายผู้รับบริการ
+          </button>
+          <% } %>
+          <button id="detailBookBtn" class="act-btn ab-violet" onclick="openBookFromDetail()">
+            <i data-lucide="calendar-plus" style="width:13px;height:13px;"></i> ทำนัดหมายใหม่
+          </button>
+        </div>
       </div>
       <div id="detailApptList"></div>
     </div>
   </div>
 </div>
 
+<% if (!isCounselorView) { %>
+<!-- ░░░ Transfer overlay ░░░ -->
+<div id="transferOverlay" class="panel-overlay" onclick="closeTransfer()"></div>
+<div id="transferPanel" class="panel-drawer" style="max-width:560px;">
+  <div style="padding:16px 20px;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;justify-content:space-between;">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <div style="width:32px;height:32px;border-radius:8px;background:#3874FF;display:flex;align-items:center;justify-content:center;"><i data-lucide="repeat" style="width:15px;height:15px;color:#fff;"></i></div>
+      <div>
+        <div style="font-size:14px;font-weight:600;color:#1e293b;">โอนย้ายผู้รับบริการ</div>
+        <div id="transferPanelSub" style="font-size:11px;color:#94a3b8;"></div>
+      </div>
+    </div>
+    <button onclick="closeTransfer()" style="background:none;border:none;cursor:pointer;padding:6px;border-radius:8px;color:#94a3b8;"><i data-lucide="x" style="width:18px;height:18px;"></i></button>
+  </div>
+  <div style="flex:1;overflow-y:auto;padding:20px;">
+    <p style="font-size:12px;color:#64748b;margin:0 0 14px;">เลือกนักจิตวิทยาคนใหม่แยกทีละนัดหมาย (แสดงเฉพาะนัดที่รอยืนยัน/ยืนยันแล้ว — นัดที่เสร็จสิ้นหรือยกเลิกไปแล้วจะไม่ถูกย้าย)</p>
+    <form id="transferForm" method="POST" action="">
+      <div id="transferRows" style="display:grid;gap:10px;"></div>
+      <p id="transferEmpty" style="display:none;font-size:13px;color:#94a3b8;text-align:center;padding:24px 0;">ไม่มีนัดหมายที่รอยืนยัน/ยืนยันแล้วสำหรับผู้รับบริการคนนี้</p>
+    </form>
+  </div>
+  <div style="padding:16px 20px;border-top:1px solid #f1f5f9;display:flex;gap:10px;">
+    <button onclick="closeTransfer()" class="act-btn ab-ghost" style="flex:1;justify-content:center;border:1px solid #e2e8f0;">ยกเลิก</button>
+    <button id="transferSubmitBtn" onclick="submitTransfer()" class="act-btn ab-primary" style="flex:1;justify-content:center;">
+      <i data-lucide="repeat" style="width:14px;height:14px;"></i> ยืนยันการโอนย้าย
+    </button>
+  </div>
+</div>
+<% } %>
+
 <!-- ░░░ Book overlay ░░░ -->
 <div id="bookOverlay" class="panel-overlay" onclick="closeBook()"></div>
 <div id="bookPanel" class="panel-drawer" style="max-width:540px;">
   <div style="padding:16px 20px;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;justify-content:space-between;">
     <div style="display:flex;align-items:center;gap:10px;">
-      <div style="width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,#7c3aed,#6366f1);display:flex;align-items:center;justify-content:center;"><i data-lucide="calendar-plus" style="width:15px;height:15px;color:#fff;"></i></div>
+      <div style="width:32px;height:32px;border-radius:8px;background:#3874FF;display:flex;align-items:center;justify-content:center;"><i data-lucide="calendar-plus" style="width:15px;height:15px;color:#fff;"></i></div>
       <div>
         <div style="font-size:14px;font-weight:600;color:#1e293b;">ทำนัดหมายใหม่</div>
-        <div id="bookPanelSub" style="font-size:11px;color:#94a3b8;"></div>
+        <div id="bookPanelSub" style="font-size:12px;color:#94a3b8;"></div>
       </div>
     </div>
     <button onclick="closeBook()" style="background:none;border:none;cursor:pointer;padding:6px;border-radius:8px;color:#94a3b8;"><i data-lucide="x" style="width:18px;height:18px;"></i></button>
@@ -222,14 +308,29 @@
       <!-- Step 1 -->
       <div style="padding:16px 20px;border-bottom:1px solid #f8fafc;">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
-          <div style="width:22px;height:22px;border-radius:50%;background:#7c3aed;color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;">1</div>
+          <div style="width:22px;height:22px;border-radius:50%;background:#3874FF;color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;">1</div>
           <span style="font-size:13px;font-weight:600;color:#1e293b;">เลือกนักจิตวิทยาให้คำปรึกษา</span>
         </div>
         <div style="display:grid;gap:8px;" id="bCounselorList">
+          <%
+            const _DAY_ABBR = { 0:'อา', 1:'จ', 2:'อ', 3:'พ', 4:'พฤ', 5:'ศ', 6:'ส' }
+            const _cDays = {}
+            schedules.forEach(s => {
+              if (!s.isActive) return
+              if (!_cDays[s.counselorId]) _cDays[s.counselorId] = []
+              if (!_cDays[s.counselorId].includes(s.dayOfWeek)) _cDays[s.counselorId].push(s.dayOfWeek)
+            })
+            Object.keys(_cDays).forEach(k => _cDays[k].sort((a,b) => a-b))
+          %>
           <% counselors.forEach(cn => { %>
+          <% if (isCounselorView) { %>
+          <div class="counselor-card selected" id="bcard_<%= cn.id %>" style="cursor:default;">
+            <input type="hidden" name="counselorId" value="<%= cn.id %>">
+          <% } else { %>
           <label class="counselor-card" id="bcard_<%= cn.id %>">
-            <input type="radio" name="counselorId" value="<%= cn.id %>" data-duration="<%= cn.sessionDuration %>" data-name="<%= cn.name %>" style="accent-color:#7c3aed;" onchange="bOnCounselorChange(this)" required>
-            <div style="width:36px;height:36px;border-radius:10px;overflow:hidden;background:linear-gradient(135deg,#2dd4b4,#0ea5e9);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:13px;flex-shrink:0;">
+            <input type="radio" name="counselorId" value="<%= cn.id %>" data-duration="<%= cn.sessionDuration %>" data-name="<%= cn.name %>" style="accent-color:#3874FF;" onchange="bOnCounselorChange(this)" required>
+          <% } %>
+            <div style="width:36px;height:36px;border-radius:10px;overflow:hidden;background:#3874FF;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:13px;flex-shrink:0;">
               <% if (cn.photo) { %>
                 <img data-counselor-profile-photo="<%= cn.id %>" src="<%= cn.photo %>" alt="<%= cn.name %>" style="width:100%;height:100%;object-fit:cover;">
               <% } else { %>
@@ -237,24 +338,42 @@
               <% } %>
             </div>
             <div style="flex:1;min-width:0;">
-              <div style="font-weight:600;font-size:13px;color:#1e293b;"><%= cn.name %></div>
-              <div style="font-size:11px;color:#94a3b8;"><%= cn.title %></div>
+              <div style="display:flex;align-items:center;flex-wrap:wrap;gap:3px;">
+                <span style="font-weight:600;font-size:13px;color:#1e293b;"><%= cn.name %></span>
+                <% (_cDays[cn.id] || []).forEach(dow => { %>
+                <span style="width:20px;height:20px;border-radius:50%;background:#eaf1ff;border:1px solid #b9d0ff;display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#3874FF;flex-shrink:0;" title="วัน<%= ['อาทิตย์','จันทร์','อังคาร','พุธ','พฤหัสบดี','ศุกร์','เสาร์'][dow] %>">
+                  <%= _DAY_ABBR[dow] %>
+                </span>
+                <% }) %>
+              </div>
+              <div style="font-size:12px;color:#94a3b8;"><%= cn.title %></div>
             </div>
-            <div style="font-size:11px;color:#94a3b8;flex-shrink:0;"><%= cn.sessionDuration %> นาที</div>
+            <div style="text-align:right;flex-shrink:0;">
+              <div style="font-size:12px;font-weight:700;color:#3874FF;">นัดหมายรวม <%= counselorActiveCounts[cn.id] || 0 %> นัด</div>
+              <div style="font-size:12px;color:#94a3b8;"><%= cn.sessionDuration %> นาที</div>
+            </div>
+          <% if (isCounselorView) { %>
+          </div>
+          <% } else { %>
           </label>
+          <% } %>
           <% }) %>
         </div>
       </div>
       <!-- Step 2 -->
       <div style="padding:16px 20px;border-bottom:1px solid #f8fafc;">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
-          <div style="width:22px;height:22px;border-radius:50%;background:#7c3aed;color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;">2</div>
+          <div style="width:22px;height:22px;border-radius:50%;background:#3874FF;color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;">2</div>
           <span style="font-size:13px;font-weight:600;color:#1e293b;">เลือกวันที่และเวลา</span>
         </div>
         <div style="margin-bottom:12px;">
           <label class="lbl">วันที่นัดหมาย</label>
           <input type="date" name="date" id="bDateInput" min="<%= new Date().toISOString().split('T')[0] %>" class="inp" onchange="bLoadSlots()" required disabled>
-          <div id="bDateHint" style="font-size:11px;color:#94a3b8;margin-top:5px;">กรุณาเลือกนักจิตวิทยาก่อน</div>
+          <div id="bDateHint" style="font-size:12px;color:#94a3b8;margin-top:5px;">กรุณาเลือกนักจิตวิทยาก่อน</div>
+        </div>
+        <div id="bAvailableDays" style="display:none;margin-bottom:12px;">
+          <div style="font-size:12px;font-weight:500;color:#64748b;margin-bottom:6px;">วันที่เปิดรับนัด</div>
+          <div id="bDayBadges" style="display:flex;flex-wrap:wrap;gap:6px;"></div>
         </div>
         <div id="bSlotLoading" style="display:none;font-size:13px;color:#94a3b8;padding:6px 0;">กำลังโหลดช่วงเวลา...</div>
         <div id="bSlotSection" style="display:none;">
@@ -266,7 +385,7 @@
       <!-- Step 3 -->
       <div style="padding:16px 20px;">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
-          <div style="width:22px;height:22px;border-radius:50%;background:#7c3aed;color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;">3</div>
+          <div style="width:22px;height:22px;border-radius:50%;background:#3874FF;color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;">3</div>
           <span style="font-size:13px;font-weight:600;color:#1e293b;">รูปแบบและหมายเหตุ</span>
         </div>
         <div style="display:grid;gap:12px;">
@@ -285,8 +404,8 @@
             <label class="lbl">หมายเหตุ (ถ้ามี)</label>
             <textarea name="note" rows="2" class="inp" style="resize:none;" placeholder="เช่น ต่อเนื่องจากครั้งที่แล้ว..."></textarea>
           </div>
-          <div id="bSummary" style="display:none;padding:12px;background:#f3e8ff;border:1px solid #ddd6fe;border-radius:12px;">
-            <div style="font-size:11px;font-weight:600;color:#64748b;margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em;">สรุป</div>
+          <div id="bSummary" style="display:none;padding:12px;background:#eaf1ff;border:1px solid #b9d0ff;border-radius:12px;">
+            <div style="font-size:12px;font-weight:600;color:#64748b;margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em;">สรุป</div>
             <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px;"><span style="color:#64748b;">นักจิตวิทยา</span><span id="bSummCounselor" style="font-weight:500;color:#1e293b;"></span></div>
             <div style="display:flex;justify-content:space-between;font-size:13px;"><span style="color:#64748b;">วันเวลา</span><span id="bSummDateTime" style="font-weight:500;color:#1e293b;"></span></div>
           </div>
@@ -308,7 +427,7 @@
       <div style="width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,#06b6d4,#05967e);display:flex;align-items:center;justify-content:center;"><i id="panelIcon" data-lucide="user-plus" style="width:15px;height:15px;color:#fff;"></i></div>
       <div>
         <div id="panelTitle" style="font-size:14px;font-weight:600;color:#1e293b;">เพิ่มผู้รับบริการ</div>
-        <div id="panelSub"   style="font-size:11px;color:#94a3b8;">กรอกข้อมูลให้ครบถ้วน</div>
+        <div id="panelSub"   style="font-size:12px;color:#94a3b8;">กรอกข้อมูลให้ครบถ้วน</div>
       </div>
     </div>
     <button onclick="closePanel()" style="background:none;border:none;cursor:pointer;padding:6px;border-radius:8px;color:#94a3b8;"><i data-lucide="x" style="width:18px;height:18px;"></i></button>
@@ -332,9 +451,9 @@
           <div>
             <label class="lbl">เพศ</label>
             <select name="gender" id="f_gender" class="inp">
-              <option value="ชาย">ชาย</option>
-              <option value="หญิง">หญิง</option>
-              <option value="ไม่ระบุ">ไม่ระบุ</option>
+              <option value="male">ชาย</option>
+              <option value="female">หญิง</option>
+              <option value="unspecified">ไม่ระบุเพศ</option>
             </select>
           </div>
         </div>
@@ -371,7 +490,10 @@
 <script>
   const ALL_APPOINTMENTS = <%- JSON.stringify(appointments) %>
   const SCHEDULES        = <%- JSON.stringify(schedules) %>
+  const COUNSELORS       = <%- JSON.stringify(counselors) %>
+  const IS_COUNSELOR_VIEW = <%- isCounselorView ? 'true' : 'false' %>
 
+  const GENDER_LABEL = { male:'ชาย', female:'หญิง', unspecified:'ไม่ระบุเพศ' }
   const STATUS_LABEL = { pending:'รอยืนยัน', confirmed:'ยืนยันแล้ว', completed:'เสร็จสิ้น', cancelled:'ยกเลิก' }
   const STATUS_COLOR = {
     pending:   {bg:'#fef3c7',color:'#92400e'},
@@ -410,12 +532,12 @@
       ['อีเมล',       client.email  || '—'],
       ['โทรศัพท์',   client.phone  || '—'],
       ['อายุ',        (client.age   || '—') + ' ปี'],
-      ['เพศ',         client.gender || '—'],
+      ['เพศ',         GENDER_LABEL[client.gender] || client.gender || 'ไม่ระบุเพศ'],
       ['สถานะ',       statusLabel],
       ['ลงทะเบียน',  client.registeredAt || '—'],
     ].map(([k,v]) => `
       <div>
-        <div style="font-size:11px;color:#94a3b8;margin-bottom:2px;">${k}</div>
+        <div style="font-size:12px;color:#94a3b8;margin-bottom:2px;">${k}</div>
         <div style="font-size:13px;color:#1e293b;font-weight:500;">${v}</div>
       </div>`
     ).join('')
@@ -438,12 +560,12 @@
           <div class="appt-row" onclick="toggleAppt(this)">
             <div style="display:flex;align-items:center;justify-content:space-between;">
               <div style="display:flex;align-items:center;gap:8px;">
-                <span style="font-size:11px;font-weight:600;color:#94a3b8;">#${appts.length - i}</span>
+                <span style="font-size:12px;font-weight:600;color:#94a3b8;">#${appts.length - i}</span>
                 <span style="font-size:13px;font-weight:600;color:#1e293b;">${a.date}</span>
                 <span style="font-size:12px;color:#64748b;">${a.time} น.</span>
               </div>
               <div style="display:flex;align-items:center;gap:6px;">
-                <span style="padding:2px 8px;background:${sc.bg};color:${sc.color};border-radius:99px;font-size:11px;font-weight:500;">${sl}</span>
+                <span style="padding:2px 8px;background:${sc.bg};color:${sc.color};border-radius:99px;font-size:12px;font-weight:500;">${sl}</span>
                 <i data-lucide="chevron-down" style="width:14px;height:14px;color:#94a3b8;transition:transform .15s;" class="chevron-icon"></i>
               </div>
             </div>
@@ -484,6 +606,71 @@
     setTimeout(() => { if (detailClient) openBook(detailClient) }, 220)
   }
 
+  // ── Transfer modal ────────────────────────────────────────────────────────────
+  function openTransferFromDetail() {
+    closeDetail()
+    setTimeout(() => { if (detailClient) openTransfer(detailClient) }, 220)
+  }
+
+  function openTransfer(client) {
+    document.getElementById('transferPanelSub').textContent = 'สำหรับ ' + client.name
+    document.getElementById('transferForm').action = '/admin/clients/' + client.id + '/transfer'
+
+    const movable = ALL_APPOINTMENTS.filter(a =>
+      a.clientId === client.id && (a.status === 'pending' || a.status === 'confirmed')
+    ).sort((a, b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time))
+
+    const rows  = document.getElementById('transferRows')
+    const empty = document.getElementById('transferEmpty')
+    const submitBtn = document.getElementById('transferSubmitBtn')
+
+    if (!movable.length) {
+      rows.innerHTML = ''
+      empty.style.display = 'block'
+      submitBtn.disabled = true
+      submitBtn.style.opacity = '.5'
+      submitBtn.style.cursor = 'not-allowed'
+    } else {
+      empty.style.display = 'none'
+      submitBtn.disabled = false
+      submitBtn.style.opacity = '1'
+      submitBtn.style.cursor = 'pointer'
+      rows.innerHTML = movable.map(a => `
+        <div style="border:1px solid #e2e8f0;border-radius:10px;padding:12px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+          <div style="min-width:0;">
+            <div style="font-size:13px;font-weight:600;color:#1e293b;">${a.date} · ${a.time} น.</div>
+            <div style="font-size:11px;color:#94a3b8;margin-top:2px;">ปัจจุบัน: ${a.counselorName || '—'}</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <input type="hidden" name="appointmentId[]" value="${a.id}">
+            <select name="counselorId[]" class="inp" style="min-width:180px;">
+              ${COUNSELORS.map(c => `<option value="${c.id}" ${c.id === a.counselorId ? 'selected' : ''}>${c.name}</option>`).join('')}
+            </select>
+          </div>
+        </div>`
+      ).join('')
+    }
+
+    const ov = document.getElementById('transferOverlay')
+    ov.style.display = 'block'
+    requestAnimationFrame(() => ov.classList.add('open'))
+    document.getElementById('transferPanel').classList.add('open')
+    document.body.style.overflow = 'hidden'
+    lucide.createIcons()
+  }
+
+  function closeTransfer() {
+    const ov = document.getElementById('transferOverlay')
+    ov.classList.remove('open')
+    document.getElementById('transferPanel').classList.remove('open')
+    document.body.style.overflow = ''
+    setTimeout(() => { ov.style.display = 'none' }, 200)
+  }
+
+  function submitTransfer() {
+    document.getElementById('transferForm').submit()
+  }
+
   // ── Book modal ────────────────────────────────────────────────────────────────
   let bCounselor = null, bTime = null
 
@@ -501,6 +688,7 @@
     document.getElementById('bDateInput').disabled = true
     document.getElementById('bDateInput').value    = ''
     document.getElementById('bDateHint').style.display = 'block'
+    document.getElementById('bAvailableDays').style.display = 'none'
     document.getElementById('bSlotSection').style.display = 'none'
     document.getElementById('bSummary').style.display    = 'none'
     document.querySelectorAll('#bCounselorList .counselor-card').forEach(el => el.classList.remove('selected'))
@@ -511,6 +699,20 @@
     requestAnimationFrame(() => bo.classList.add('open'))
     document.getElementById('bookPanel').classList.add('open')
     document.body.style.overflow = 'hidden'
+
+    // Counselor view: only one counselor (self) — pick it automatically, no click needed.
+    if (IS_COUNSELOR_VIEW && COUNSELORS.length) {
+      const me = COUNSELORS[0]
+      bCounselor = { id: me.id, duration: me.sessionDuration, name: me.name }
+      document.getElementById('bcard_' + me.id)?.classList.add('selected')
+      document.getElementById('bDateInput').disabled = false
+      document.getElementById('bDateHint').style.display = 'none'
+      const mySched = SCHEDULES.filter(s => s.counselorId === me.id && s.isActive)
+      document.getElementById('bDayBadges').innerHTML = mySched.map(s =>
+        `<span style="padding:3px 10px; background:#dbeafe; color:#1e40af; border-radius:99px; font-size:12px;">${s.dayName} ${s.startTime}–${s.endTime}</span>`
+      ).join('')
+      document.getElementById('bAvailableDays').style.display = 'block'
+    }
   }
 
   function closeBook() {
@@ -530,6 +732,11 @@
     document.getElementById('bDateInput').disabled = false
     document.getElementById('bDateInput').value    = ''
     document.getElementById('bDateHint').style.display = 'none'
+    const mySched = SCHEDULES.filter(s => s.counselorId===radio.value && s.isActive)
+    document.getElementById('bDayBadges').innerHTML = mySched.map(s =>
+      `<span style="padding:3px 10px; background:#dbeafe; color:#1e40af; border-radius:99px; font-size:12px;">${s.dayName} ${s.startTime}–${s.endTime}</span>`
+    ).join('')
+    document.getElementById('bAvailableDays').style.display = 'block'
     document.getElementById('bSlotSection').style.display = 'none'
     document.getElementById('bSummary').style.display = 'none'
     bTime = null; document.getElementById('bTimeInput').value = ''
@@ -545,9 +752,10 @@
     document.getElementById('bSlotLoading').style.display = 'none'
     document.getElementById('bSlotSection').style.display = 'block'
     const grid = document.getElementById('bSlotGrid')
-    if (!slots.length) { grid.innerHTML = '<div style="font-size:12px;color:#94a3b8;grid-column:1/-1;">ไม่มีตารางเวลาในวันนี้</div>'; return }
-    grid.innerHTML = slots.map(s =>
-      `<button type="button" class="slot-btn" onclick="bSelectSlot(this,'${s.time}')" ${!s.available?'disabled':''}>${s.time}</button>`
+    const available = slots.filter(s => s.available)
+    if (!available.length) { grid.innerHTML = `<div style="font-size:12px;color:#94a3b8;grid-column:1/-1;">${slots.length ? 'เวลาทั้งหมดถูกจองแล้วในวันนี้' : 'ไม่มีตารางเวลาในวันนี้'}</div>`; return }
+    grid.innerHTML = available.map(s =>
+      `<button type="button" class="slot-btn" onclick="bSelectSlot(this,'${s.time}')">${s.time}</button>`
     ).join('')
   }
 
@@ -590,7 +798,7 @@
       document.getElementById('f_email').value           = data.email     || ''
       document.getElementById('f_phone').value           = data.phone     || ''
       document.getElementById('f_age').value             = data.age       || ''
-      document.getElementById('f_gender').value          = data.gender || 'ไม่ระบุ'
+      document.getElementById('f_gender').value          = data.gender || 'unspecified'
       document.getElementById(data.status==='active' ? 'r_active' : 'r_inactive').checked = true
     }
     lucide.createIcons()

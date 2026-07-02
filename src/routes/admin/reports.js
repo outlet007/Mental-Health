@@ -13,7 +13,6 @@ const REPORT_TYPES = {
   clients: 'ผู้รับบริการ',
   contacts: 'คำขอฝากข้อมูล',
   surveys: 'แบบประเมินความพึงพอใจ',
-  counselors: 'นักจิตวิทยา',
 }
 
 const STATUS_LABELS = {

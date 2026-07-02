@@ -1,4 +1,4 @@
-﻿const assert = require('node:assert/strict')
+const assert = require('node:assert/strict')
 const path = require('node:path')
 const test = require('node:test')
 const ejs = require('ejs')
@@ -15,6 +15,7 @@ const PENDING_TABLE_LABEL = textFromCodes([0x0E23, 0x0E2D, 0x0E22, 0x0E37, 0x0E1
 const CANCELLED_TABLE_LABEL = textFromCodes([0x0E22, 0x0E01, 0x0E40, 0x0E25, 0x0E34, 0x0E01, 0x0E19, 0x0E31, 0x0E14])
 const CONFIRM_BUTTON_LABEL = textFromCodes([0x0E22, 0x0E37, 0x0E19, 0x0E22, 0x0E31, 0x0E19, 0x0E19, 0x0E31, 0x0E14])
 const CANCEL_BUTTON_LABEL = textFromCodes([0x0E22, 0x0E01, 0x0E40, 0x0E25, 0x0E34, 0x0E01, 0x0E19, 0x0E31, 0x0E14])
+const VIEW_SITE_LABEL = textFromCodes([0x0E14, 0x0E39, 0x0E2B, 0x0E19, 0x0E49, 0x0E32, 0x0E40, 0x0E27, 0x0E47, 0x0E1A, 0x0E2B, 0x0E25, 0x0E31, 0x0E01])
 
 function renderAppointments(locals = {}) {
   return new Promise((resolve, reject) => {
@@ -48,6 +49,8 @@ function renderAppointments(locals = {}) {
             note: '',
           },
         ],
+        counselorActiveCounts: {},
+        myStatusCounts: {},
         ...locals,
       },
       {},
@@ -81,6 +84,13 @@ test('appointments table separates status action buttons into the final column',
   assert.match(statusManagementCell, new RegExp(CONFIRM_BUTTON_LABEL))
   assert.match(statusManagementCell, new RegExp(CANCEL_BUTTON_LABEL))
   assert.match(row, new RegExp(PENDING_TABLE_LABEL))
+})
+
+test('appointments header links to the public website', async () => {
+  const html = await renderAppointments()
+
+  assert.match(html, /<a href="\/" target="_blank"[\s\S]*data-lucide="external-link"[\s\S]*<\/a>/)
+  assert.match(html, new RegExp(VIEW_SITE_LABEL))
 })
 
 test('appointments empty state spans the added status management column', async () => {
@@ -118,7 +128,7 @@ test('counselor completion button is in the status management column', async () 
 
   assert.match(managementCell, /openViewPanel/)
   assert.doesNotMatch(managementCell, /openCompletePanel/)
-  assert.doesNotMatch(managementCell, /openEditPanel/)
+  assert.match(managementCell, /openEditPanel/)
   assert.doesNotMatch(managementCell, /\/admin\/appointments\/app-test-confirmed\/delete/)
 
   assert.match(statusManagementCell, /openCompletePanel\('app-test-confirmed'\)/)

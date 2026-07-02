@@ -96,7 +96,7 @@ test('counselor profile page renders editable profile fields with readonly usern
   assert.match(body, /data-password-toggle="true"/)
   assert.match(body, /togglePasswordVisibility\(this\)/)
   assert.match(body, /data-lucide="eye"/)
-  assert.match(body, /data-readonly-username="true"><p style="font-size:11px;color:#94a3b8;margin:7px 0 0;">.*?<\/p><\/div><div><label class="lbl" for="f_password">/s, 'readonly username helper stays under username input')
+  assert.match(body, /data-readonly-username="true"><p style="font-size:12px;color:#94a3b8;margin:7px 0 0;">.*?<\/p><\/div><div><label class="lbl" for="f_password">/s, 'readonly username helper stays under username input')
   assert.doesNotMatch(body, /\?{3,}/)
 })
 

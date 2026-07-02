@@ -4,8 +4,9 @@ const fs      = require('fs')
 const { matchesSearch } = require('../../utils/search')
 const path    = require('path')
 const crypto = require('crypto')
-const { sendAppointmentEmails, sendSurveyEmail } = require('../../utils/mailer')
+const { sendAppointmentEmails, sendSurveyEmail, sendCounselorReassignedEmail } = require('../../utils/mailer')
 const { readSurveyEmailSettings, resolveSurveyEmailRecipient } = require('../../utils/survey-email-settings')
+const { toMin, timesOverlap } = require('../../utils/appointment-scheduling')
 
 const dataDir = path.join(__dirname, '../../../data')
 
@@ -37,7 +38,7 @@ function forbidden(res) {
 
 // Generate time slots from counselor schedule for a given date,
 // excluding already-booked slots.
-function getAvailableSlots(counselorId, dateStr) {
+function getAvailableSlots(counselorId, dateStr, excludeId) {
   const schedules    = read('schedules.json')
   const appointments = read('appointments.json')
 
@@ -49,19 +50,18 @@ function getAvailableSlots(counselorId, dateStr) {
   const counselor = read('counselors.json').find(c => c.id === counselorId)
   const duration  = counselor?.sessionDuration || 60
 
-  const toMin = t => { const [h, m] = t.split(':').map(Number); return h * 60 + m }
   const toStr = m => `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`
 
   const start = toMin(schedule.startTime)
   const end   = toMin(schedule.endTime)
 
-  const bookedTimes = appointments
-    .filter(a => a.counselorId === counselorId && a.date === dateStr && a.status !== 'cancelled')
-    .map(a => toMin(a.time))
+  const booked = appointments
+    .filter(a => a.counselorId === counselorId && a.date === dateStr && a.status !== 'cancelled' && a.id !== excludeId)
+    .map(a => ({ start: toMin(a.time), duration: a.duration || duration }))
 
   const slots = []
   for (let t = start; t + duration <= end; t += duration) {
-    const conflict = bookedTimes.some(bt => Math.abs(bt - t) < duration)
+    const conflict = booked.some(b => timesOverlap(t, duration, b.start, b.duration))
     slots.push({ time: toStr(t), available: !conflict })
   }
   return slots
@@ -86,6 +86,12 @@ router.get('/', (req, res) => {
     if (counselorId) filtered = filtered.filter(a => a.counselorId === counselorId)
   }
 
+  const myStatusCounts = {
+    pending:   filtered.filter(a => a.status === 'pending').length,
+    confirmed: filtered.filter(a => a.status === 'confirmed').length,
+    completed: filtered.filter(a => a.status === 'completed').length,
+  }
+
   if (status) filtered = filtered.filter(a => a.status === status)
   if (type)   filtered = filtered.filter(a => a.type === type)
   if (search) filtered = filtered.filter(a => matchesSearch([
@@ -98,6 +104,13 @@ router.get('/', (req, res) => {
     ? read('schedules.json').filter(s => s.counselorId === req.session.counselorId)
     : read('schedules.json')
 
+  const counselorActiveCounts = {}
+  appointments.forEach(a => {
+    if (a.status === 'pending' || a.status === 'confirmed') {
+      counselorActiveCounts[a.counselorId] = (counselorActiveCounts[a.counselorId] || 0) + 1
+    }
+  })
+
   res.render('admin/appointments', {
     page: 'appointments',
     title: 'จัดการนัดหมาย',
@@ -105,6 +118,8 @@ router.get('/', (req, res) => {
     counselors,
     clients,
     schedules,
+    counselorActiveCounts,
+    myStatusCounts,
     query: req.query,
     userType: req.session.userType || 'admin',
   })
@@ -112,10 +127,10 @@ router.get('/', (req, res) => {
 
 // ── API: available slots (JSON) ───────────────────────────────────────────────
 router.get('/slots', (req, res) => {
-  const { counselorId, date } = req.query
+  const { counselorId, date, excludeId } = req.query
   if (!counselorId || !date) return res.json({ slots: [], error: 'missing params' })
   if (!canUseCounselor(req, counselorId)) return res.status(403).json({ slots: [], error: 'forbidden' })
-  const slots = getAvailableSlots(counselorId, date)
+  const slots = getAvailableSlots(counselorId, date, excludeId)
   res.json({ slots })
 })
 
@@ -133,11 +148,12 @@ router.post('/create', async (req, res) => {
   if (!counselor || !client) return res.redirect('/admin/appointments?error=invalid')
 
   const appointments = read('appointments.json')
+  const duration = counselor.sessionDuration || 60
   const conflict = appointments.some(a =>
     a.counselorId === counselorId &&
     a.date === date &&
-    a.time === time &&
-    a.status !== 'cancelled'
+    a.status !== 'cancelled' &&
+    timesOverlap(toMin(a.time), a.duration || duration, toMin(time), duration)
   )
   if (conflict) return res.redirect('/admin/appointments?error=conflict')
 
@@ -154,7 +170,7 @@ router.post('/create', async (req, res) => {
     counselorName: counselor.name,
     date,
     time,
-    duration:      counselor.sessionDuration || 60,
+    duration,
     type:          type || 'online',
     status:        'confirmed',
     note:          note || '',
@@ -176,40 +192,78 @@ router.post('/create', async (req, res) => {
 
 // ── EDIT ──────────────────────────────────────────────────────────────────────
 router.post('/:id/edit', (req, res) => {
-  const { date, time, type, status, note } = req.body
+  const { counselorId, date, time, type, status, note } = req.body
   const data = read('appointments.json')
   const idx  = data.findIndex(a => a.id === req.params.id)
-  if (idx !== -1) {
-    if (!canUseAppointment(req, data[idx])) return forbidden(res)
+  if (idx === -1) return res.redirect('/admin/appointments?updated=1')
 
-    const current  = data[idx]
-    const newDate  = date || current.date
-    const newTime  = time || current.time
+  const current = data[idx]
+  if (!canUseAppointment(req, current)) return forbidden(res)
 
-    if (date || time) {
-      const counselors = read('counselors.json')
-      const counselor  = counselors.find(c => c.id === current.counselorId)
-      const duration   = counselor?.sessionDuration || 60
-      const toMin      = t => { const [h, m] = t.split(':').map(Number); return h * 60 + m }
-      const newMin     = toMin(newTime)
+  const counselorRole = isCounselor(req)
+  const counselors = read('counselors.json')
 
-      const conflict = data.some((a, i) =>
-        i !== idx &&
-        a.counselorId === current.counselorId &&
-        a.date === newDate &&
-        a.status !== 'cancelled' &&
-        Math.abs(toMin(a.time) - newMin) < duration
-      )
-      if (conflict) return res.redirect('/admin/appointments?error=conflict')
-    }
+  // Counselors may only reschedule their own appointments — no counselor
+  // reassignment, type, status, or note changes.
+  const requestedCounselorId = counselorRole ? current.counselorId : (counselorId || current.counselorId)
+  const newCounselor = counselors.find(c => c.id === requestedCounselorId)
+  if (!newCounselor) return res.redirect('/admin/appointments?error=invalid')
 
-    if (date)   data[idx].date   = date
-    if (time)   data[idx].time   = time
+  const counselorChanged = requestedCounselorId !== current.counselorId
+  const newDate = date || current.date
+  const newTime = time || current.time
+  const duration = newCounselor.sessionDuration || current.duration || 60
+
+  if (date || time || counselorChanged) {
+    const newMin = toMin(newTime)
+
+    const conflict = data.some((a, i) =>
+      i !== idx &&
+      a.counselorId === requestedCounselorId &&
+      a.date === newDate &&
+      a.status !== 'cancelled' &&
+      timesOverlap(toMin(a.time), a.duration || duration, newMin, duration)
+    )
+    if (conflict) return res.redirect('/admin/appointments?error=conflict')
+  }
+
+  const oldCounselor    = counselors.find(c => c.id === current.counselorId)
+  const scheduleChanged = newDate !== current.date || newTime !== current.time || counselorChanged
+
+  data[idx].counselorId   = requestedCounselorId
+  data[idx].counselorName = newCounselor.name
+  data[idx].duration      = duration
+  data[idx].date          = newDate
+  data[idx].time          = newTime
+  if (!counselorRole) {
     if (type)   data[idx].type   = type
     if (status) data[idx].status = status
     if (note !== undefined) data[idx].note = note.trim()
-    write('appointments.json', data)
   }
+  write('appointments.json', data)
+
+  if (scheduleChanged) {
+    const clients = read('clients.json')
+    const client  = clients.find(c => c.id === current.clientId)
+
+    if (client) {
+      sendAppointmentEmails({
+        appointment: data[idx],
+        client:      { name: client.name, email: client.email || '', phone: client.phone || '' },
+        counselor:   { name: newCounselor.name, title: newCounselor.title, email: newCounselor.email, phone: newCounselor.phone, specialties: newCounselor.specialties },
+        concern:     '',
+      }).catch(err => console.error('[Email] unexpected error:', err.message))
+
+      if (counselorChanged && oldCounselor) {
+        sendCounselorReassignedEmail({
+          appointment: current,
+          client:      { name: client.name },
+          counselor:   { name: oldCounselor.name, email: oldCounselor.email },
+        }).catch(err => console.error('[Email] unexpected error:', err.message))
+      }
+    }
+  }
+
   res.redirect('/admin/appointments?updated=1')
 })
 

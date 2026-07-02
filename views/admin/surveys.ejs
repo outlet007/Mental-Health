@@ -8,6 +8,8 @@
   <style>
     .filter-btn{padding:5px 12px;border-radius:8px;font-size:12px;font-weight:600;text-decoration:none;transition:all .15s;display:inline-flex;align-items:center;gap:5px;white-space:nowrap;}
     .filter-btn:hover{opacity:.85;}
+    .report-label{font-size:12px;font-weight:600;color:#64748b;}
+    .report-input{height:38px;border:1px solid #cbd5e1;border-radius:8px;padding:0 10px;font-size:13px;color:#1e293b;background:#fff;min-width:150px;}
     .report-button{height:38px;border-radius:8px;padding:0 14px;font-size:13px;font-weight:700;display:inline-flex;align-items:center;gap:7px;text-decoration:none;border:0;cursor:pointer;}
     .rating-filter-icon{width:14px;height:14px;}
     .rating-inline-icon{width:15px;height:15px;display:inline-block;vertical-align:-2px;}
@@ -26,7 +28,10 @@
 <% const counselorRows = typeof counselorSummaries !== 'undefined' ? counselorSummaries : [] %>
 <% const counselorOptions = typeof counselors !== 'undefined' ? counselors : [] %>
 <% const counselorQuerySuffix = !isCounselorUser && selectedCounselor !== 'all' ? '&counselorId=' + encodeURIComponent(selectedCounselor) : '' %>
-<% const surveyExportUrl = '/admin/surveys/export.csv?rating=' + encodeURIComponent(query.rating || 'all') + counselorQuerySuffix %>
+<% const dateFromVal = typeof dateFrom !== 'undefined' ? dateFrom : '' %>
+<% const dateToVal   = typeof dateTo   !== 'undefined' ? dateTo   : '' %>
+<% const dateQuerySuffix = (dateFromVal ? '&dateFrom=' + encodeURIComponent(dateFromVal) : '') + (dateToVal ? '&dateTo=' + encodeURIComponent(dateToVal) : '') %>
+<% const surveyExportUrl = '/admin/surveys/export.csv?rating=' + encodeURIComponent(query.rating || 'all') + counselorQuerySuffix + dateQuerySuffix %>
 
   <div style="height:56px;background:#fff;border-bottom:1px solid #f1f5f9;padding:0 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:20;">
     <h1 style="font-size:15px;font-weight:600;color:#1e293b;margin:0;"><%= title %></h1>
@@ -39,6 +44,36 @@
         ดูหน้าเว็บหลัก
       </a>
     </div>
+  </div>
+
+  <% if (isCounselorUser) { %>
+  <div style="padding:20px 24px 0;background:#fff;">
+    <%- include('../partials/counselor-welcome-banner') %>
+  </div>
+  <% } %>
+
+  <div style="padding:12px 24px;background:#fff;border-bottom:1px solid #f1f5f9;display:flex;justify-content:flex-end;">
+    <form method="GET" action="/admin/surveys" style="display:flex;align-items:flex-end;gap:10px;flex-wrap:nowrap;margin:0;">
+      <input type="hidden" name="rating" value="<%= query.rating || 'all' %>">
+      <% if (!isCounselorUser) { %><input type="hidden" name="counselorId" value="<%= selectedCounselor %>"><% } %>
+      <div>
+        <label class="report-label" for="date-from">วันที่ตั้งต้น</label>
+        <input class="report-input" id="date-from" name="dateFrom" type="date" value="<%= dateFromVal %>">
+      </div>
+      <div>
+        <label class="report-label" for="date-to">วันที่ที่ต้องการแสดงผล</label>
+        <input class="report-input" id="date-to" name="dateTo" type="date" value="<%= dateToVal %>">
+      </div>
+      <button class="report-button" type="submit" style="background:#05967e;color:#fff;">
+        <i data-lucide="filter" style="width:15px;height:15px;"></i>
+        แสดงผล
+      </button>
+      <% if (dateFromVal || dateToVal) { %>
+        <a class="report-button" href="/admin/surveys?rating=<%= query.rating || 'all' %><%= counselorQuerySuffix %>" style="background:#fff;color:#64748b;border:1px solid #cbd5e1;">
+          ล้างช่วงวันที่
+        </a>
+      <% } %>
+    </form>
   </div>
 
   <div style="padding:12px 24px;background:#fff;border-bottom:2px solid #f1f5f9;display:flex;align-items:center;justify-content:space-between;gap:16px;">
@@ -58,7 +93,7 @@
       <% rOpts.forEach(o => {
            const active = (query.rating || 'all') === o.val
       %>
-        <a href="/admin/surveys?rating=<%= o.val %><%= counselorQuerySuffix %>" class="filter-btn"
+        <a href="/admin/surveys?rating=<%= o.val %><%= counselorQuerySuffix %><%= dateQuerySuffix %>" class="filter-btn"
            style="background:<%= active ? '#05967e' : '#f1f5f9' %>;color:<%= active ? '#fff' : '#64748b' %>;">
           <i data-lucide="<%= o.icon %>" class="rating-filter-icon"></i>
           <%= o.label %>
@@ -121,7 +156,7 @@
             <div style="flex:1;height:6px;background:#f1f5f9;border-radius:99px;overflow:hidden;">
               <div style="width:<%= pct %>%;height:100%;background:<%= barColors[r] %>;border-radius:99px;"></div>
             </div>
-            <span style="font-size:11px;color:#94a3b8;width:22px;text-align:right;"><%= pct %>%</span>
+            <span style="font-size:12px;color:#94a3b8;width:22px;text-align:right;"><%= pct %>%</span>
           </div>
         <% }) %>
       </div>
@@ -159,16 +194,16 @@
                 </div>
                 <div style="text-align:right;white-space:nowrap;">
                   <p style="font-size:22px;font-weight:900;color:#05967e;margin:0;"><%= item.avgRating %><span style="font-size:12px;color:#64748b;font-weight:700;"> / 5</span></p>
-                  <p style="font-size:11px;color:#94a3b8;font-weight:700;margin:2px 0 0;">คะแนนเฉลี่ย</p>
+                  <p style="font-size:12px;color:#94a3b8;font-weight:700;margin:2px 0 0;">คะแนนเฉลี่ย</p>
                 </div>
               </div>
               <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
                 <div>
-                  <p style="font-size:11px;color:#64748b;margin:0 0 3px;">จำนวนแบบประเมิน</p>
+                  <p style="font-size:12px;color:#64748b;margin:0 0 3px;">จำนวนแบบประเมิน</p>
                   <p style="font-size:13px;font-weight:800;color:#334155;margin:0;">แบบประเมิน <%= item.count %> รายการ</p>
                 </div>
                 <div>
-                  <p style="font-size:11px;color:#64748b;margin:0 0 3px;">สัดส่วนมากที่สุด</p>
+                  <p style="font-size:12px;color:#64748b;margin:0 0 3px;">สัดส่วนมากที่สุด</p>
                   <p style="font-size:13px;font-weight:800;color:#334155;margin:0;"><%= item.fiveStarPercent %>%</p>
                 </div>
               </div>
@@ -191,6 +226,8 @@
         <% if (!isCounselorUser) { %>
           <form method="GET" action="/admin/surveys" style="display:flex;align-items:flex-end;gap:8px;flex-wrap:wrap;margin:0;">
             <input type="hidden" name="rating" value="<%= query.rating || 'all' %>">
+            <input type="hidden" name="dateFrom" value="<%= dateFromVal %>">
+            <input type="hidden" name="dateTo" value="<%= dateToVal %>">
             <div style="display:flex;align-items:center;gap:8px;">
               <label for="survey-counselor-filter" style="font-size:12px;color:#64748b;font-weight:700;white-space:nowrap;">นักจิตวิทยา</label>
               <select id="survey-counselor-filter" name="counselorId" onchange="this.form.submit()" style="height:38px;border:1px solid #cbd5e1;border-radius:8px;background:#fff;color:#1e293b;padding:0 36px 0 10px;font-size:13px;font-weight:700;min-width:220px;">
@@ -223,14 +260,14 @@
           <table style="width:100%;border-collapse:collapse;font-size:13px;">
             <thead>
               <tr style="background:#f8fafc;">
-                <th style="padding:12px 16px;text-align:left;font-weight:600;color:#64748b;font-size:11px;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap;">วันที่ประเมิน</th>
-                <th style="padding:12px 16px;text-align:left;font-weight:600;color:#64748b;font-size:11px;text-transform:uppercase;letter-spacing:.05em;">ผู้รับบริการ</th>
+                <th style="padding:12px 16px;text-align:left;font-weight:600;color:#64748b;font-size:12px;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap;">วันที่ประเมิน</th>
+                <th style="padding:12px 16px;text-align:left;font-weight:600;color:#64748b;font-size:12px;text-transform:uppercase;letter-spacing:.05em;">ผู้รับบริการ</th>
                 <% if (!isCounselorUser) { %>
-                <th style="padding:12px 16px;text-align:left;font-weight:600;color:#64748b;font-size:11px;text-transform:uppercase;letter-spacing:.05em;">นักจิตวิทยา</th>
+                <th style="padding:12px 16px;text-align:left;font-weight:600;color:#64748b;font-size:12px;text-transform:uppercase;letter-spacing:.05em;">นักจิตวิทยา</th>
                 <% } %>
-                <th style="padding:12px 16px;text-align:left;font-weight:600;color:#64748b;font-size:11px;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap;">วันที่นัดหมาย</th>
-                <th style="padding:12px 16px;text-align:center;font-weight:600;color:#64748b;font-size:11px;text-transform:uppercase;letter-spacing:.05em;">ระดับ</th>
-                <th style="padding:12px 16px;text-align:left;font-weight:600;color:#64748b;font-size:11px;text-transform:uppercase;letter-spacing:.05em;">ข้อเสนอแนะ</th>
+                <th style="padding:12px 16px;text-align:left;font-weight:600;color:#64748b;font-size:12px;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap;">วันที่นัดหมาย</th>
+                <th style="padding:12px 16px;text-align:center;font-weight:600;color:#64748b;font-size:12px;text-transform:uppercase;letter-spacing:.05em;">ระดับ</th>
+                <th style="padding:12px 16px;text-align:left;font-weight:600;color:#64748b;font-size:12px;text-transform:uppercase;letter-spacing:.05em;">ข้อเสนอแนะ</th>
               </tr>
             </thead>
             <tbody>

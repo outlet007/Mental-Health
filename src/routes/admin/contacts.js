@@ -13,10 +13,11 @@ function readData()     { return JSON.parse(fs.readFileSync(dataFile, 'utf8')) }
 function writeData(d)   { fs.writeFileSync(dataFile, JSON.stringify(d, null, 2)) }
 
 router.get('/', (req, res) => {
-  const contacts   = readData()
-  const counselors = readFile('counselors.json').filter(c => c.isApproved)
-  const schedules  = readFile('schedules.json')
-  const clients    = readFile('clients.json')
+  const contacts     = readData()
+  const counselors   = readFile('counselors.json').filter(c => c.isApproved)
+  const schedules    = readFile('schedules.json')
+  const clients      = readFile('clients.json')
+  const appointments = readFile('appointments.json')
 
   const { search } = req.query
   let filtered = contacts
@@ -27,13 +28,20 @@ router.get('/', (req, res) => {
   ], search))
   filtered.sort((a, b) => b.createdAt.localeCompare(a.createdAt))
 
+  const counselorActiveCounts = {}
+  appointments.forEach(a => {
+    if (a.status === 'pending' || a.status === 'confirmed') {
+      counselorActiveCounts[a.counselorId] = (counselorActiveCounts[a.counselorId] || 0) + 1
+    }
+  })
+
   res.render('admin/contacts', {
     page: 'contacts', title: 'คำขอเพื่อทำนัดหมาย',
     contacts: filtered, query: req.query,
     total:        contacts.length,
     pendingCount: contacts.filter(c => ['new','contacted'].includes(c.status)).length,
     doneCount:    contacts.filter(c => ['converted','closed'].includes(c.status)).length,
-    counselors, schedules, clients,
+    counselors, schedules, clients, counselorActiveCounts,
   })
 })
 

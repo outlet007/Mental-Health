@@ -1,11 +1,18 @@
 ﻿const fs = require('fs')
 const path = require('path')
 
-const counselorFile = path.join(__dirname, '../../data/counselors.json')
+const counselorFile   = path.join(__dirname, '../../data/counselors.json')
+const appointmentFile = path.join(__dirname, '../../data/appointments.json')
 
 function readCounselors() {
   if (!fs.existsSync(counselorFile)) return []
   try { return JSON.parse(fs.readFileSync(counselorFile, 'utf8')) }
+  catch (error) { return [] }
+}
+
+function readAppointments() {
+  if (!fs.existsSync(appointmentFile)) return []
+  try { return JSON.parse(fs.readFileSync(appointmentFile, 'utf8')) }
   catch (error) { return [] }
 }
 
@@ -28,6 +35,12 @@ module.exports = (req, res, next) => {
       req.session.adminPhoto = counselor.photo || ''
       req.session.adminAvatar = counselor.avatar || ''
       res.locals.currentCounselor = counselor
+
+      const now = new Date()
+      const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+      res.locals.myTodayApts = readAppointments().filter(a =>
+        a.counselorId === counselor.id && a.date === todayStr && a.status !== 'cancelled'
+      ).length
     }
 
     const isDash  = req.originalUrl === '/admin' || req.originalUrl.startsWith('/admin?')

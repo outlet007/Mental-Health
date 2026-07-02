@@ -140,8 +140,8 @@
                   </div>
                   <div>
                     <div style="font-weight:600; color:#1e293b; font-size:13px;"><%= c.name %></div>
-                    <div style="font-size:11px; color:#94a3b8;"><%= c.title %></div>
-                    <div style="font-size:11px; color:#94a3b8;"><%= c.email %></div>
+                    <div style="font-size:12px; color:#94a3b8;"><%= c.title %></div>
+                    <div style="font-size:12px; color:#94a3b8;"><%= c.email %></div>
                   </div>
                 </div>
               </td>
@@ -155,11 +155,11 @@
               <td>
                 <div style="display:flex; flex-wrap:wrap; gap:4px;">
                   <% c.specialties.slice(0,2).forEach(s => { %>
-                  <span style="padding:2px 8px; background:#ecfeff; color:#0e7490; border-radius:99px; font-size:11px; font-weight:500;"><%= s %></span>
+                  <span style="padding:2px 8px; background:#ecfeff; color:#0e7490; border-radius:99px; font-size:12px; font-weight:500;"><%= s %></span>
                   <% }) %>
-                  <% if(c.specialties.length>2){ %><span style="padding:2px 8px; background:#f1f5f9; color:#64748b; border-radius:99px; font-size:11px;">+<%= c.specialties.length-2 %></span><% } %>
+                  <% if(c.specialties.length>2){ %><span style="padding:2px 8px; background:#f1f5f9; color:#64748b; border-radius:99px; font-size:12px;">+<%= c.specialties.length-2 %></span><% } %>
                 </div>
-                <div style="font-size:11px; color:#94a3b8; margin-top:3px;"><%= (c.languages||[]).join(', ') %></div>
+                <div style="font-size:12px; color:#94a3b8; margin-top:3px;"><%= (c.languages||[]).join(', ') %></div>
               </td>
               <td style="color:#64748b;"><%= c.sessionDuration %> นาที</td>
               <td>
@@ -176,19 +176,19 @@
                     <i data-lucide="<%= _icons[_rounded] %>" style="width:15px;height:15px;"></i>
                   </span>
                   <span style="font-weight:700;font-size:13px;color:#1e293b;"><%= _avg %></span>
-                  <span style="font-size:11px;color:#94a3b8;">(<%= _ss.count %>)</span>
+                  <span style="font-size:12px;color:#94a3b8;">(<%= _ss.count %>)</span>
                 </div>
                 <% } else { %>
-                <span style="font-size:11px;color:#cbd5e1;">ยังไม่มีข้อมูล</span>
+                <span style="font-size:12px;color:#cbd5e1;">ยังไม่มีข้อมูล</span>
                 <% } %>
               </td>
               <td>
                 <% if (!c.isApproved) { %>
-                  <span style="padding:3px 10px; background:#fef3c7; color:#92400e; border-radius:99px; font-size:11px; font-weight:500;">รออนุมัติ</span>
+                  <span style="padding:3px 10px; background:#fef3c7; color:#92400e; border-radius:99px; font-size:12px; font-weight:500;">รออนุมัติ</span>
                 <% } else if (c.status==='active') { %>
-                  <span style="padding:3px 10px; background:#d1fae5; color:#065f46; border-radius:99px; font-size:11px; font-weight:500;">ใช้งาน</span>
+                  <span style="padding:3px 10px; background:#d1fae5; color:#065f46; border-radius:99px; font-size:12px; font-weight:500;">ใช้งาน</span>
                 <% } else { %>
-                  <span style="padding:3px 10px; background:#fee2e2; color:#991b1b; border-radius:99px; font-size:11px; font-weight:500;">ระงับ</span>
+                  <span style="padding:3px 10px; background:#fee2e2; color:#991b1b; border-radius:99px; font-size:12px; font-weight:500;">ระงับ</span>
                 <% } %>
               </td>
               <td>
@@ -249,7 +249,7 @@
       </div>
       <div>
         <div id="panelTitle" style="font-size:14px; font-weight:600; color:#1e293b;">เพิ่มนักจิตวิทยาให้คำปรึกษา</div>
-        <div id="panelSub"   style="font-size:11px; color:#94a3b8;">กรอกข้อมูลให้ครบถ้วน</div>
+        <div id="panelSub"   style="font-size:12px; color:#94a3b8;">กรอกข้อมูลให้ครบถ้วน</div>
       </div>
     </div>
     <button onclick="closePanel()" style="background:none; border:none; cursor:pointer; padding:6px; border-radius:8px; color:#94a3b8;">
@@ -262,7 +262,7 @@
 
       <!-- Photo Upload -->
       <div style="padding:20px; border-bottom:1px solid #f8fafc;">
-        <div style="font-size:11px; font-weight:600; color:#94a3b8; text-transform:uppercase; letter-spacing:.05em; margin-bottom:14px;">รูปถ่าย</div>
+        <div style="font-size:12px; font-weight:600; color:#94a3b8; text-transform:uppercase; letter-spacing:.05em; margin-bottom:14px;">รูปถ่าย</div>
         <div style="display:flex; align-items:center; gap:16px;">
           <div id="photo-preview" style="width:68px; height:68px; border-radius:50%; overflow:hidden; background:linear-gradient(135deg,#2dd4b4,#06b6d4); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
             <span id="photo-initials" style="color:#fff; font-weight:700; font-size:20px;">?</span>
@@ -271,13 +271,13 @@
           <div style="flex:1;">
             <label class="lbl">เลือกรูปถ่าย</label>
             <input type="file" name="photo" id="f_photo" accept="image/jpeg,image/png,image/webp" class="inp" style="padding:6px;" onchange="previewPhoto(this)">
-            <p style="font-size:11px; color:#94a3b8; margin:4px 0 0;">JPG, PNG, WEBP · ไม่เกิน 5MB</p>
+            <p style="font-size:12px; color:#94a3b8; margin:4px 0 0;">JPG, PNG, WEBP · ไม่เกิน 5MB</p>
           </div>
         </div>
       </div>
 
       <div style="padding:20px; border-bottom:1px solid #f8fafc;">
-        <div style="font-size:11px; font-weight:600; color:#94a3b8; text-transform:uppercase; letter-spacing:.05em; margin-bottom:14px;">ข้อมูลส่วนตัว</div>
+        <div style="font-size:12px; font-weight:600; color:#94a3b8; text-transform:uppercase; letter-spacing:.05em; margin-bottom:14px;">ข้อมูลส่วนตัว</div>
         <div style="display:grid; gap:12px;">
           <div>
             <label class="lbl">ชื่อ-นามสกุล *</label>
@@ -305,7 +305,7 @@
       </div>
 
       <div style="padding:20px; border-bottom:1px solid #f8fafc;">
-        <div style="font-size:11px; font-weight:600; color:#94a3b8; text-transform:uppercase; letter-spacing:.05em; margin-bottom:14px;">ความเชี่ยวชาญ</div>
+        <div style="font-size:12px; font-weight:600; color:#94a3b8; text-transform:uppercase; letter-spacing:.05em; margin-bottom:14px;">ความเชี่ยวชาญ</div>
         <div style="display:grid; gap:12px;">
           <div>
             <label class="lbl">ความเชี่ยวชาญ <span style="font-weight:400; color:#94a3b8;">(คั่นด้วยจุลภาค)</span></label>
@@ -340,7 +340,7 @@
       </div>
 
       <div style="padding:20px; border-bottom:1px solid #f8fafc;">
-        <div style="font-size:11px; font-weight:600; color:#94a3b8; text-transform:uppercase; letter-spacing:.05em; margin-bottom:14px;">ระยะเวลาต่อครั้ง</div>
+        <div style="font-size:12px; font-weight:600; color:#94a3b8; text-transform:uppercase; letter-spacing:.05em; margin-bottom:14px;">ระยะเวลาต่อครั้ง</div>
         <div>
           <label class="lbl">ระยะเวลา</label>
           <select name="sessionDuration" id="f_sessionDuration" class="inp">
@@ -354,7 +354,7 @@
 
       <!-- Login credentials -->
       <div style="padding:20px; border-bottom:1px solid #f8fafc;">
-        <div style="font-size:11px; font-weight:600; color:#94a3b8; text-transform:uppercase; letter-spacing:.05em; margin-bottom:14px;">ข้อมูลการเข้าสู่ระบบ</div>
+        <div style="font-size:12px; font-weight:600; color:#94a3b8; text-transform:uppercase; letter-spacing:.05em; margin-bottom:14px;">ข้อมูลการเข้าสู่ระบบ</div>
         <div style="display:grid; gap:12px;">
           <div>
             <label class="lbl" id="unameLbl">ชื่อผู้ใช้</label>
@@ -365,24 +365,24 @@
             <input type="password" name="password" id="f_password" class="inp" placeholder="กรอกรหัสผ่าน">
           </div>
         </div>
-        <p style="font-size:11px; color:#94a3b8; margin:10px 0 0;">กรอกเพื่อให้นักจิตวิทยาให้คำปรึกษาเข้าใช้งานระบบหลังบ้านได้</p>
+        <p style="font-size:12px; color:#94a3b8; margin:10px 0 0;">กรอกเพื่อให้นักจิตวิทยาให้คำปรึกษาเข้าใช้งานระบบหลังบ้านได้</p>
       </div>
 
       <div id="approveSection" style="padding:20px;">
-        <div style="font-size:11px; font-weight:600; color:#94a3b8; text-transform:uppercase; letter-spacing:.05em; margin-bottom:14px;">สถานะการอนุมัติ</div>
+        <div style="font-size:12px; font-weight:600; color:#94a3b8; text-transform:uppercase; letter-spacing:.05em; margin-bottom:14px;">สถานะการอนุมัติ</div>
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
           <label style="display:flex; align-items:flex-start; gap:10px; padding:12px; border:1.5px solid #a0f3e1; border-radius:10px; cursor:pointer; background:#ecfdf9;">
             <input type="radio" name="isApproved" value="true" checked style="margin-top:2px; accent-color:#05967e;">
             <div>
               <div style="font-size:13px; font-weight:500; color:#1e293b;">อนุมัติทันที</div>
-              <div style="font-size:11px; color:#64748b;">แสดงในหน้าค้นหา</div>
+              <div style="font-size:12px; color:#64748b;">แสดงในหน้าค้นหา</div>
             </div>
           </label>
           <label style="display:flex; align-items:flex-start; gap:10px; padding:12px; border:1.5px solid #e2e8f0; border-radius:10px; cursor:pointer;">
             <input type="radio" name="isApproved" value="false" style="margin-top:2px; accent-color:#f59e0b;">
             <div>
               <div style="font-size:13px; font-weight:500; color:#1e293b;">รออนุมัติ</div>
-              <div style="font-size:11px; color:#64748b;">ซ่อนจากหน้าค้นหา</div>
+              <div style="font-size:12px; color:#64748b;">ซ่อนจากหน้าค้นหา</div>
             </div>
           </label>
         </div>
