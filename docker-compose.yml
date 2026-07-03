@@ -18,7 +18,7 @@
       SMTP_FROM_NAME: MindCare Docker
       SMTP_FROM_EMAIL: no-reply@mindcare.local
     volumes:
-      - mindcare-data:/app/data
+      - ./data:/app/data
 
   mailpit:
     image: axllent/mailpit:v1.20
@@ -26,6 +26,3 @@
     ports:
       - "8025:8025"
       - "1025:1025"
-
-volumes:
-  mindcare-data:

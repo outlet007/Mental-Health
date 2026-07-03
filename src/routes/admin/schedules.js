@@ -2,6 +2,7 @@ const express = require('express')
 const router  = express.Router()
 const fs      = require('fs')
 const path    = require('path')
+const { logDeletion } = require('../../utils/audit-log')
 
 const scheduleFile  = path.join(__dirname, '../../../data/schedules.json')
 const counselorFile = path.join(__dirname, '../../../data/counselors.json')
@@ -145,10 +146,18 @@ router.post('/delete', (req, res) => {
   const { counselorId, dayOfWeek } = req.body
   if (!canUseCounselor(req, counselorId)) return forbidden(res)
 
-  const cId = isCounselor(req) ? req.session.counselorId : counselorId
+  const cId       = isCounselor(req) ? req.session.counselorId : counselorId
+  const counselor = readCounselors().find(c => c.id === cId)
   writeSchedules(readSchedules().filter(
     s => !(s.counselorId === cId && s.dayOfWeek == dayOfWeek)
   ))
+  logDeletion({
+    entityType: 'schedule',
+    entityId:   `${cId}-${dayOfWeek}`,
+    entityName: `${DAY_NAMES[dayOfWeek]}${counselor ? ' ของ ' + counselor.name : ''}`,
+    reason:     req.body.reason,
+    req,
+  })
   const back = new URLSearchParams(req.body.returnQuery || '').toString()
   res.redirect(`/admin/schedules?${back}&deleted=1`)
 })

@@ -4,6 +4,7 @@ const fs      = require('fs')
 const { matchesSearch } = require('../../utils/search')
 const path    = require('path')
 const bcrypt  = require('bcryptjs')
+const { logDeletion } = require('../../utils/audit-log')
 
 const dataFile = path.join(__dirname, '../../../data/admins.json')
 
@@ -106,7 +107,11 @@ router.post('/:id/toggle-status', (req, res) => {
 router.post('/:id/delete', (req, res) => {
   const data = readData()
   if (data.length <= 1) return res.redirect('/admin/admins?error=last')
+  const admin = data.find(a => a.id === req.params.id)
   writeData(data.filter(a => a.id !== req.params.id))
+  if (admin) {
+    logDeletion({ entityType: 'admin', entityId: admin.id, entityName: admin.name, reason: req.body.reason, req })
+  }
   res.redirect('/admin/admins')
 })
 

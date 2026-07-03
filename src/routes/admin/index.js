@@ -154,6 +154,14 @@ router.get('/', (req, res) => {
     }
   })
 
+  // ผู้รับบริการที่รอโอนย้าย: มีนัดหมายรอยืนยัน/ยืนยันแล้วผูกกับนักจิตวิทยาที่ถูกระงับ/ลาออก
+  const inactiveCounselorIds = new Set(counselors.filter(c => c.status === 'inactive').map(c => c.id))
+  const pendingTransferClients = new Set(
+    appointments
+      .filter(a => (a.status === 'pending' || a.status === 'confirmed') && inactiveCounselorIds.has(a.counselorId))
+      .map(a => a.clientId)
+  ).size
+
   const stats = {
     totalCounselors:     counselors.filter(c => c.isApproved).length,
     pendingApproval:     counselors.filter(c => !c.isApproved).length,
@@ -162,6 +170,7 @@ router.get('/', (req, res) => {
     totalAppointments:   appointments.length,
     pendingAppointments: appointments.filter(a => a.status === 'pending').length,
     newContacts:         contacts.filter(c => c.status === 'new').length,
+    pendingTransferClients,
     confirmRate,
     avgSatisfaction,
     avgRating:           avgRating.toFixed(1),

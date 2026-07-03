@@ -7,8 +7,13 @@ const crypto = require('crypto')
 const { sendAppointmentEmails, sendSurveyEmail, sendCounselorReassignedEmail } = require('../../utils/mailer')
 const { readSurveyEmailSettings, resolveSurveyEmailRecipient } = require('../../utils/survey-email-settings')
 const { toMin, timesOverlap } = require('../../utils/appointment-scheduling')
+const { logDeletion } = require('../../utils/audit-log')
+const { getConcernOptions } = require('../../utils/concern-options')
 
 const dataDir = path.join(__dirname, '../../../data')
+
+// สีอ้างอิงต่อนักจิตวิทยา — ต้องตรงกับ COLORS ใน src/routes/admin/schedules.js
+const COUNSELOR_COLORS = ['#6366f1','#05967e','#f59e0b','#ef4444','#06b6d4','#8b5cf6','#10b981','#f43f5e']
 
 function read(file) { return JSON.parse(fs.readFileSync(path.join(dataDir, file), 'utf8')) }
 function write(file, d) { fs.writeFileSync(path.join(dataDir, file), JSON.stringify(d, null, 2)) }
@@ -73,8 +78,13 @@ router.get('/', (req, res) => {
   let counselors     = read('counselors.json').filter(c => c.isApproved)
   let clients        = read('clients.json')
 
+  // สีต่อนักจิตวิทยา อ้างอิงลำดับเดียวกับตารางเวลา (มุมมอง admin) เพื่อให้สีตรงกันทั้งระบบ
+  const counselorColors = {}
+  counselors.forEach((c, i) => { counselorColors[c.id] = COUNSELOR_COLORS[i % COUNSELOR_COLORS.length] })
+
   const { status, type, search, counselorId } = req.query
   let filtered = appointments
+  let clientAppointments = appointments
 
   // Counselors see only their own appointments and clients
   if (isCounselor(req)) {
@@ -82,6 +92,8 @@ router.get('/', (req, res) => {
     counselors = counselors.filter(c => c.id === req.session.counselorId)
     const myClientIds = new Set(filtered.map(a => a.clientId))
     clients = clients.filter(c => myClientIds.has(c.id))
+    // ประวัตินัดหมายเต็มของผู้รับบริการที่ตนดูแล (ทุกนักจิตวิทยา) สำหรับ modal ดูข้อมูล
+    clientAppointments = appointments.filter(a => myClientIds.has(a.clientId))
   } else {
     if (counselorId) filtered = filtered.filter(a => a.counselorId === counselorId)
   }
@@ -90,6 +102,7 @@ router.get('/', (req, res) => {
     pending:   filtered.filter(a => a.status === 'pending').length,
     confirmed: filtered.filter(a => a.status === 'confirmed').length,
     completed: filtered.filter(a => a.status === 'completed').length,
+    cancelled: filtered.filter(a => a.status === 'cancelled').length,
   }
 
   if (status) filtered = filtered.filter(a => a.status === status)
@@ -115,6 +128,9 @@ router.get('/', (req, res) => {
     page: 'appointments',
     title: 'จัดการนัดหมาย',
     appointments: filtered,
+    clientAppointments,
+    concernOptions: getConcernOptions(),
+    counselorColors,
     counselors,
     clients,
     schedules,
@@ -136,7 +152,7 @@ router.get('/slots', (req, res) => {
 
 // ── CREATE ────────────────────────────────────────────────────────────────────
 router.post('/create', async (req, res) => {
-  const { counselorId, clientId, date, time, type, note } = req.body
+  const { counselorId, clientId, date, time, type, note, concern } = req.body
 
   if (!canUseCounselor(req, counselorId) || !canUseClient(req, clientId)) return forbidden(res)
 
@@ -174,6 +190,7 @@ router.post('/create', async (req, res) => {
     type:          type || 'online',
     status:        'confirmed',
     note:          note || '',
+    concern:       (concern || '').trim(),
     createdAt:     new Date().toISOString().split('T')[0],
   }
 
@@ -184,7 +201,7 @@ router.post('/create', async (req, res) => {
     appointment: newAppt,
     client:      { name: client.name, email: client.email || '', phone: client.phone || '' },
     counselor:   { name: counselor.name, title: counselor.title, email: counselor.email, phone: counselor.phone, specialties: counselor.specialties },
-    concern:     '',
+    concern:     newAppt.concern,
   }).catch(err => console.error('[Email] unexpected error:', err.message))
 
   res.redirect('/admin/appointments?created=1')
@@ -192,7 +209,7 @@ router.post('/create', async (req, res) => {
 
 // ── EDIT ──────────────────────────────────────────────────────────────────────
 router.post('/:id/edit', (req, res) => {
-  const { counselorId, date, time, type, status, note } = req.body
+  const { counselorId, date, time, type, status, note, concern } = req.body
   const data = read('appointments.json')
   const idx  = data.findIndex(a => a.id === req.params.id)
   if (idx === -1) return res.redirect('/admin/appointments?updated=1')
@@ -239,6 +256,7 @@ router.post('/:id/edit', (req, res) => {
     if (type)   data[idx].type   = type
     if (status) data[idx].status = status
     if (note !== undefined) data[idx].note = note.trim()
+    if (concern !== undefined) data[idx].concern = concern.trim()
   }
   write('appointments.json', data)
 
@@ -251,7 +269,7 @@ router.post('/:id/edit', (req, res) => {
         appointment: data[idx],
         client:      { name: client.name, email: client.email || '', phone: client.phone || '' },
         counselor:   { name: newCounselor.name, title: newCounselor.title, email: newCounselor.email, phone: newCounselor.phone, specialties: newCounselor.specialties },
-        concern:     '',
+        concern:     data[idx].concern || '',
       }).catch(err => console.error('[Email] unexpected error:', err.message))
 
       if (counselorChanged && oldCounselor) {
@@ -273,6 +291,15 @@ router.post('/:id/delete', (req, res) => {
   const appt = data.find(a => a.id === req.params.id)
   if (appt && !canUseAppointment(req, appt)) return forbidden(res)
   write('appointments.json', data.filter(a => a.id !== req.params.id))
+  if (appt) {
+    logDeletion({
+      entityType: 'appointment',
+      entityId:   appt.id,
+      entityName: `${appt.clientName} - ${appt.counselorName} (${appt.date})`,
+      reason:     req.body.reason,
+      req,
+    })
+  }
   res.redirect('/admin/appointments?deleted=1')
 })
 

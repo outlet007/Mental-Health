@@ -73,6 +73,7 @@ app.use('/admin/import-export', require('./src/routes/admin/import-export'))
 app.use('/admin/surveys',       require('./src/routes/admin/surveys'))
 app.use('/admin/reports',        require('./src/routes/admin/reports'))
 app.use('/admin/notifications', require('./src/routes/admin/notifications'))
+app.use('/admin/audit-log',     require('./src/routes/admin/audit-log'))
 
 const PORT = process.env.PORT || 3000
 app.listen(PORT, () => console.log(`MindCare running -> http://localhost:${PORT}`))

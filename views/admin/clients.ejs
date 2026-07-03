@@ -13,6 +13,7 @@
     .ab-ghost{background:transparent;color:#64748b}.ab-ghost:hover{background:#f1f5f9}
     .ab-danger{background:#ef4444;color:#fff}.ab-danger:hover{background:#dc2626}
     .ab-violet{background:#3874FF;color:#fff}.ab-violet:hover{opacity:.9}
+    .ab-amber{background:rgb(245,158,11);color:#fff}.ab-amber:hover{opacity:.9}
     .panel-overlay{position:fixed;inset:0;background:rgba(15,23,42,.45);z-index:40;display:none;backdrop-filter:blur(2px);opacity:0;transition:opacity .2s ease}.panel-overlay.open{opacity:1}
     .panel-drawer{position:fixed;top:50%;left:50%;width:calc(100% - 48px);max-width:480px;max-height:90vh;background:#fff;border-radius:20px;box-shadow:0 20px 60px rgba(0,0,0,.18);z-index:50;display:flex;flex-direction:column;transform:translate(-50%,-50%) scale(.94);opacity:0;transition:transform .22s cubic-bezier(.34,1.56,.64,1),opacity .18s ease;pointer-events:none}.panel-drawer.open{transform:translate(-50%,-50%) scale(1);opacity:1;pointer-events:auto}
     .inp{width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:13px;color:#334155;outline:none;font-family:inherit;box-sizing:border-box}.inp:focus{border-color:#2dd4b4;box-shadow:0 0 0 3px rgba(45,212,180,.15)}
@@ -62,7 +63,7 @@
 
     <!-- Stat cards -->
     <% const statusFilterQS = search => search ? '&search=' + encodeURIComponent(search) : '' %>
-    <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-bottom:20px;">
+    <div style="display:grid;grid-template-columns:repeat(<%= isCounselorView ? 3 : 4 %>,minmax(0,1fr));gap:14px;margin-bottom:20px;">
       <a href="/admin/clients?status=<%= statusFilterQS(query.search) %>" style="text-decoration:none;background:#fff;border:1.5px solid <%= !query.status ? '#0284c7' : '#e2e8f0' %>;border-radius:14px;padding:18px;display:flex;align-items:center;justify-content:space-between;gap:10px;cursor:pointer;">
         <div>
           <p style="font-size:12px;color:#64748b;margin:0;"><%= isCounselorView ? 'ผู้รับบริการทั้งหมดของฉัน' : 'ผู้รับบริการทั้งหมด' %></p>
@@ -72,6 +73,18 @@
           <i data-lucide="users" style="width:20px;height:20px;color:#0284c7;"></i>
         </div>
       </a>
+      <% if (!isCounselorView) { %>
+      <a href="/admin/clients?status=pending_transfer<%= statusFilterQS(query.search) %>" style="text-decoration:none;background:#fff;border:1.5px solid <%= query.status==='pending_transfer' ? '#f59e0b' : '#e2e8f0' %>;border-radius:14px;padding:18px;display:flex;align-items:center;justify-content:space-between;gap:10px;cursor:pointer;">
+        <div>
+          <p style="font-size:12px;color:#64748b;margin:0;">ผู้รับบริการที่รอโอนย้าย</p>
+          <p style="font-size:28px;font-weight:800;color:#0f172a;margin:4px 0 0;"><%= clientStats.pendingTransfer %></p>
+          <p style="font-size:11px;color:#f59e0b;margin:4px 0 0;">หมายเหตุ: นักจิตวิทยามีสถานะถูกระงับ หรือลาออก</p>
+        </div>
+        <div style="width:40px;height:40px;border-radius:8px;background:#fef3c7;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          <i data-lucide="user-round-x" style="width:20px;height:20px;color:#f59e0b;"></i>
+        </div>
+      </a>
+      <% } %>
       <a href="/admin/clients?status=active<%= statusFilterQS(query.search) %>" style="text-decoration:none;background:#fff;border:1.5px solid <%= query.status==='active' ? '#16a34a' : '#e2e8f0' %>;border-radius:14px;padding:18px;display:flex;align-items:center;justify-content:space-between;gap:10px;cursor:pointer;">
         <div>
           <p style="font-size:12px;color:#64748b;margin:0;">ยังใช้บริการอยู่</p>
@@ -126,6 +139,7 @@
         <select name="status" class="inp" style="width:150px;">
           <option value="">ทั้งหมด</option>
           <option value="active" <%=query.status==='active'?'selected':''%>>ใช้งาน</option>
+          <option value="pending_transfer" <%=query.status==='pending_transfer'?'selected':''%>>รอโอนย้าย</option>
           <option value="inactive" <%=query.status==='inactive'?'selected':''%>>ไม่ได้ใช้งาน</option>
         </select>
       </div>
@@ -144,6 +158,7 @@
           <thead>
             <tr>
               <th>ผู้รับบริการ</th>
+              <th>รหัสนักศึกษา</th>
               <th>ข้อมูลติดต่อ</th>
               <th>อายุ / เพศ</th>
               <th>นัดหมาย</th>
@@ -153,6 +168,7 @@
             </tr>
           </thead>
           <tbody>
+            <% const pendingTransferSet = new Set(pendingTransferClientIds || []) %>
             <% clients.forEach(c => {
               const clientAppts = appointments.filter(a => a.clientId === c.id)
               const lastAppt    = clientAppts.sort((a,b)=>b.date.localeCompare(a.date))[0]
@@ -167,6 +183,7 @@
                   </div>
                 </div>
               </td>
+              <td style="font-size:13px;color:#334155;"><%= c.studentId || '—' %></td>
               <td>
                 <div style="font-size:13px;"><%= c.email %></div>
                 <div style="font-size:12px;color:#94a3b8;"><%= c.phone %></div>
@@ -195,9 +212,14 @@
                   <button class="act-btn ab-secondary edit-btn" data-rec="<%= JSON.stringify(c) %>" title="แก้ไข">
                     <i data-lucide="pencil" style="width:13px;height:13px;"></i> แก้ไข
                   </button>
-                  <form method="POST" action="/admin/clients/<%= c.id %>/delete" onsubmit="return confirm('ลบ <%= c.name %>?\nข้อมูลจะหายถาวร')" style="margin:0;">
-                    <button type="submit" class="act-btn ab-danger" title="ลบ"><i data-lucide="trash-2" style="width:12px;height:12px;"></i></button>
-                  </form>
+                  <button type="button" class="act-btn ab-danger delete-btn" data-action="/admin/clients/<%= c.id %>/delete" data-name="<%= c.name %>" data-warning="ข้อมูลผู้รับบริการและประวัติที่เกี่ยวข้องจะถูกลบถาวร ไม่สามารถกู้คืนได้" title="ลบ">
+                    <i data-lucide="trash-2" style="width:12px;height:12px;"></i>
+                  </button>
+                  <% if (!isCounselorView && pendingTransferSet.has(c.id)) { %>
+                  <button class="act-btn ab-amber transfer-client-btn" data-rec="<%= JSON.stringify(c) %>" title="โอนย้ายผู้รับบริการ">
+                    <i data-lucide="repeat" style="width:13px;height:13px;"></i> โอนย้ายผู้รับบริการ
+                  </button>
+                  <% } %>
                   <button class="act-btn ab-violet book-client-btn" data-rec="<%= JSON.stringify(c) %>" title="ทำนัดหมายใหม่">
                     <i data-lucide="calendar-plus" style="width:13px;height:13px;"></i> ทำนัดหมายใหม่
                   </button>
@@ -206,7 +228,7 @@
             </tr>
             <% }) %>
             <% if (clients.length===0) { %>
-            <tr><td colspan="7" style="text-align:center;padding:48px 16px;color:#94a3b8;">
+            <tr><td colspan="8" style="text-align:center;padding:48px 16px;color:#94a3b8;">
               <i data-lucide="users" style="width:36px;height:36px;display:block;margin:0 auto 10px;opacity:.3;"></i>ไม่พบข้อมูลผู้รับบริการ
             </td></tr>
             <% } %>
@@ -219,13 +241,13 @@
 
 <!-- ░░░ Detail overlay ░░░ -->
 <div id="detailOverlay" class="panel-overlay" onclick="closeDetail()"></div>
-<div id="detailPanel" class="panel-drawer" style="max-width:580px;">
+<div id="detailPanel" class="panel-drawer" style="max-width:760px;">
   <div style="padding:16px 20px;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;justify-content:space-between;">
     <div style="display:flex;align-items:center;gap:10px;">
       <div id="detailAvatar" style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#06b6d4,#05967e);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:14px;flex-shrink:0;"></div>
       <div>
         <div id="detailName" style="font-size:15px;font-weight:700;color:#1e293b;"></div>
-        <div id="detailSub"  style="font-size:12px;color:#94a3b8;"></div>
+        <div id="detailStudentId" style="font-size:14px;color:#1e293b;"></div>
       </div>
     </div>
     <button onclick="closeDetail()" style="background:none;border:none;cursor:pointer;padding:6px;border-radius:8px;color:#94a3b8;"><i data-lucide="x" style="width:18px;height:18px;"></i></button>
@@ -245,7 +267,7 @@
         </div>
         <div style="display:flex;gap:6px;">
           <% if (!isCounselorView) { %>
-          <button id="detailTransferBtn" class="act-btn ab-secondary" onclick="openTransferFromDetail()">
+          <button id="detailTransferBtn" class="act-btn ab-amber" onclick="openTransferFromDetail()">
             <i data-lucide="repeat" style="width:13px;height:13px;"></i> โอนย้ายผู้รับบริการ
           </button>
           <% } %>
@@ -401,6 +423,10 @@
             </div>
           </div>
           <div>
+            <label class="lbl">เรื่องที่ต้องการความช่วยเหลือ</label>
+            <textarea name="concern" rows="2" class="inp" style="resize:none;" placeholder="เช่น ความเครียดจากการเรียน, ปัญหาความสัมพันธ์ ฯลฯ"></textarea>
+          </div>
+          <div>
             <label class="lbl">หมายเหตุ (ถ้ามี)</label>
             <textarea name="note" rows="2" class="inp" style="resize:none;" placeholder="เช่น ต่อเนื่องจากครั้งที่แล้ว..."></textarea>
           </div>
@@ -487,11 +513,84 @@
   </div>
 </div>
 
+<!-- ░░░ Delete confirm overlay ░░░ -->
+<div id="deleteOverlay" class="panel-overlay" onclick="closeDeleteModal()"></div>
+<div id="deletePanel" class="panel-drawer" style="max-width:420px;">
+  <div style="padding:16px 20px;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;justify-content:space-between;">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <div style="width:36px;height:36px;border-radius:10px;background:#fee2e2;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <i data-lucide="trash-2" style="width:17px;height:17px;color:#ef4444;"></i>
+      </div>
+      <div style="font-size:14px;font-weight:600;color:#1e293b;">ยืนยันการลบ</div>
+    </div>
+    <button onclick="closeDeleteModal()" style="background:none;border:none;cursor:pointer;padding:6px;border-radius:8px;color:#94a3b8;"><i data-lucide="x" style="width:18px;height:18px;"></i></button>
+  </div>
+  <form id="deleteForm" method="POST" action="" style="padding:20px;display:flex;flex-direction:column;gap:14px;">
+    <div style="padding:12px 14px;background:#fef2f2;border:1px solid #fca5a5;border-radius:10px;font-size:13px;color:#991b1b;display:flex;gap:8px;align-items:flex-start;">
+      <i data-lucide="alert-triangle" style="width:16px;height:16px;flex-shrink:0;margin-top:1px;"></i>
+      <span id="deleteWarningText"></span>
+    </div>
+    <div>
+      <label class="lbl">เหตุผลการลบ <span style="color:#ef4444;">*</span></label>
+      <textarea name="reason" id="deleteReason" required rows="3" class="inp" style="resize:none;" placeholder="ระบุเหตุผลที่ต้องการลบข้อมูลนี้..."></textarea>
+    </div>
+    <div style="display:flex;gap:10px;">
+      <button type="button" onclick="closeDeleteModal()" class="act-btn ab-secondary" style="flex:1;justify-content:center;">ยกเลิก</button>
+      <button type="submit" class="act-btn ab-danger" style="flex:1;justify-content:center;"><i data-lucide="trash-2" style="width:14px;height:14px;"></i> ยืนยันลบ</button>
+    </div>
+  </form>
+</div>
+
 <script>
   const ALL_APPOINTMENTS = <%- JSON.stringify(appointments) %>
   const SCHEDULES        = <%- JSON.stringify(schedules) %>
   const COUNSELORS       = <%- JSON.stringify(counselors) %>
+  const COUNSELOR_COLORS = <%- JSON.stringify(counselorColors) %>
   const IS_COUNSELOR_VIEW = <%- isCounselorView ? 'true' : 'false' %>
+
+  // ── Concern (เรื่องที่ต้องการความช่วยเหลือ) pill badge ────────────────────────
+  const CONCERN_OPTIONS = <%- JSON.stringify(concernOptions) %>
+  const CONCERN_PALETTE = [
+    { bg:'#ffedd5', color:'#9a3412' },
+    { bg:'#ede9fe', color:'#5b21b6' },
+    { bg:'#fce7f3', color:'#9d174d' },
+    { bg:'#cffafe', color:'#155e75' },
+    { bg:'#e0e7ff', color:'#3730a3' },
+    { bg:'#f1f5f9', color:'#475569' },
+  ]
+  const CONCERN_FALLBACK = { bg:'#f1f5f9', color:'#475569' }
+  const CONCERN_COLOR_MAP = {}
+  CONCERN_OPTIONS.forEach((opt, i) => { CONCERN_COLOR_MAP[opt] = CONCERN_PALETTE[i % CONCERN_PALETTE.length] })
+  function concernBadge(concern) {
+    if (!concern) return ''
+    const cc = CONCERN_COLOR_MAP[concern] || CONCERN_FALLBACK
+    return `<span style="display:inline-block;padding:2px 8px;background:${cc.bg};color:${cc.color};border-radius:99px;font-size:12px;font-weight:500;">${concern}</span>`
+  }
+
+  // ── Delete confirm modal ─────────────────────────────────────────────────────
+  function openDeleteModal(action, name, warning) {
+    document.getElementById('deleteForm').action        = action
+    document.getElementById('deleteReason').value       = ''
+    document.getElementById('deleteWarningText').textContent = warning || ('ต้องการลบ "' + name + '" ใช่หรือไม่ การลบไม่สามารถกู้คืนได้')
+    const ov = document.getElementById('deleteOverlay')
+    ov.style.display = 'block'
+    requestAnimationFrame(() => ov.classList.add('open'))
+    document.getElementById('deletePanel').classList.add('open')
+    document.body.style.overflow = 'hidden'
+    lucide.createIcons()
+  }
+  function closeDeleteModal() {
+    const ov = document.getElementById('deleteOverlay')
+    ov.classList.remove('open')
+    document.getElementById('deletePanel').classList.remove('open')
+    document.body.style.overflow = ''
+    setTimeout(() => { ov.style.display = 'none' }, 200)
+  }
+  document.querySelectorAll('.delete-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      openDeleteModal(btn.dataset.action, btn.dataset.name, btn.dataset.warning)
+    })
+  })
 
   const GENDER_LABEL = { male:'ชาย', female:'หญิง', unspecified:'ไม่ระบุเพศ' }
   const STATUS_LABEL = { pending:'รอยืนยัน', confirmed:'ยืนยันแล้ว', completed:'เสร็จสิ้น', cancelled:'ยกเลิก' }
@@ -525,7 +624,7 @@
 
     document.getElementById('detailAvatar').textContent = client.name.slice(-2)
     document.getElementById('detailName').textContent   = client.name
-    document.getElementById('detailSub').textContent    = client.email || client.phone
+    document.getElementById('detailStudentId').textContent = 'รหัสนักศึกษา ' + (client.studentId || '—')
 
     const statusLabel = client.status === 'active' ? 'ใช้งาน' : 'ไม่ได้ใช้งาน'
     document.getElementById('detailInfoGrid').innerHTML = [
@@ -553,8 +652,9 @@
         '<div style="text-align:center;padding:24px;color:#94a3b8;font-size:13px;">ยังไม่มีประวัติการนัดหมาย</div>'
     } else {
       document.getElementById('detailApptList').innerHTML = appts.map((a, i) => {
-        const sc = STATUS_COLOR[a.status] || {bg:'#f1f5f9',color:'#64748b'}
-        const sl = STATUS_LABEL[a.status] || a.status
+        const sc  = STATUS_COLOR[a.status] || {bg:'#f1f5f9',color:'#64748b'}
+        const sl  = STATUS_LABEL[a.status] || a.status
+        const cCol = COUNSELOR_COLORS[a.counselorId] || '#64748b'
         const typeLabel = a.type === 'online' ? 'ออนไลน์' : 'เข้ารับบริการด้วยตนเอง'
         return `
           <div class="appt-row" onclick="toggleAppt(this)">
@@ -563,6 +663,9 @@
                 <span style="font-size:12px;font-weight:600;color:#94a3b8;">#${appts.length - i}</span>
                 <span style="font-size:13px;font-weight:600;color:#1e293b;">${a.date}</span>
                 <span style="font-size:12px;color:#64748b;">${a.time} น.</span>
+                ${a.concern ? `<span style="font-size:12px;color:#64748b;">เรื่อง</span>${concernBadge(a.concern)}` : ''}
+                <span style="font-size:12px;color:#64748b;">โดย</span>
+                <span style="padding:2px 8px;background:${cCol}18;color:${cCol};border-radius:99px;font-size:11px;font-weight:600;">${a.counselorName || '—'}</span>
               </div>
               <div style="display:flex;align-items:center;gap:6px;">
                 <span style="padding:2px 8px;background:${sc.bg};color:${sc.color};border-radius:99px;font-size:12px;font-weight:500;">${sl}</span>
@@ -573,6 +676,7 @@
               <div><strong>นักจิตวิทยา:</strong> ${a.counselorName || '—'}</div>
               <div><strong>รูปแบบ:</strong> ${typeLabel}</div>
               <div><strong>ระยะเวลา:</strong> ${a.duration || 60} นาที</div>
+              ${a.concern ? `<div><strong>เรื่องที่ต้องการความช่วยเหลือ:</strong> ${concernBadge(a.concern)}</div>` : ''}
               ${a.note ? `<div><strong>หมายเหตุ:</strong> ${a.note}</div>` : ''}
             </div>
           </div>`
@@ -670,6 +774,12 @@
   function submitTransfer() {
     document.getElementById('transferForm').submit()
   }
+
+  document.querySelectorAll('.transfer-client-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      openTransfer(JSON.parse(btn.dataset.rec))
+    })
+  })
 
   // ── Book modal ────────────────────────────────────────────────────────────────
   let bCounselor = null, bTime = null

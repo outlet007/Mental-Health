@@ -102,6 +102,7 @@ test('admin counselors page uses lucide satisfaction icons instead of emoji', as
     }],
     allCounselors: [],
     surveyStats: { c001: { sum: 5, count: 1 } },
+    clientCounts: { c001: 3 },
   })
 
   assert.doesNotMatch(html, emojiPattern)

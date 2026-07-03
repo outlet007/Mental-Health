@@ -16,6 +16,7 @@ function renderDashboard(locals = {}) {
       totalAppointments: 12,
       pendingAppointments: 2,
       newContacts: 4,
+      pendingTransferClients: 2,
       confirmRate: 80,
       avgSatisfaction: 90,
       avgRating: '4.5',
@@ -56,10 +57,10 @@ function renderDashboard(locals = {}) {
 test('admin dashboard top stat cards link to their management sections', async () => {
   const html = await renderDashboard()
 
-  assert.match(html, /<a href="\/admin\/counselors"[^>]*class="stat-card"[\s\S]*?นักจิตวิทยาให้คำปรึกษา[\s\S]*?<\/a>/)
+  assert.match(html, /<a href="\/admin\/clients\?status=pending_transfer"[^>]*class="stat-card"[\s\S]*?ผู้รับบริการที่รอโอนย้าย[\s\S]*?<\/a>/)
   assert.match(html, /<a href="\/admin\/clients"[^>]*class="stat-card"[\s\S]*?ผู้รับบริการทั้งหมด[\s\S]*?<\/a>/)
   assert.match(html, /<a href="\/admin\/appointments"[^>]*class="stat-card"[\s\S]*?นัดหมายทั้งหมด[\s\S]*?<\/a>/)
-  assert.match(html, /<a href="\/admin\/contacts"[^>]*class="stat-card"[\s\S]*?คำขอรอดำเนินการ[\s\S]*?<\/a>/)
+  assert.match(html, /<a href="\/admin\/contacts"[^>]*class="stat-card"[\s\S]*?คำขอเพื่อทำนัดหมาย[\s\S]*?<\/a>/)
 })
 
 test('counselor dashboard top stat cards link to filtered appointment sections', async () => {
@@ -88,6 +89,7 @@ test('admin dashboard appointment trend chart guards against missing Chart.js CD
       totalAppointments: 12,
       pendingAppointments: 2,
       newContacts: 4,
+      pendingTransferClients: 2,
       confirmRate: 80,
       avgSatisfaction: 90,
       avgRating: '4.5',
@@ -110,6 +112,7 @@ test('admin dashboard appointment trend chart renders as a line chart', async ()
       totalAppointments: 12,
       pendingAppointments: 2,
       newContacts: 4,
+      pendingTransferClients: 2,
       confirmRate: 80,
       avgSatisfaction: 90,
       avgRating: '4.5',

@@ -5,10 +5,15 @@ const { matchesSearch } = require('../../utils/search')
 const path    = require('path')
 const { sendAppointmentEmails, sendCounselorReassignedEmail } = require('../../utils/mailer')
 const { reassignAppointmentCounselor } = require('../../utils/appointment-scheduling')
+const { logDeletion } = require('../../utils/audit-log')
+const { getConcernOptions } = require('../../utils/concern-options')
 
 const dataDir    = path.join(__dirname, '../../../data')
 const clientFile = path.join(dataDir, 'clients.json')
 const apptFile   = path.join(dataDir, 'appointments.json')
+
+// สีอ้างอิงต่อนักจิตวิทยา — ต้องตรงกับ COLORS ใน src/routes/admin/schedules.js
+const COUNSELOR_COLORS = ['#6366f1','#05967e','#f59e0b','#ef4444','#06b6d4','#8b5cf6','#10b981','#f43f5e']
 
 function read(file)    { return JSON.parse(fs.readFileSync(path.join(dataDir, file), 'utf8')) }
 function write(file, d) { fs.writeFileSync(path.join(dataDir, file), JSON.stringify(d, null, 2)) }
@@ -37,28 +42,46 @@ router.get('/', (req, res) => {
   let counselors     = read('counselors.json').filter(c => c.isApproved)
   let schedules      = read('schedules.json')
 
+  // สีต่อนักจิตวิทยา อ้างอิงลำดับเดียวกับตารางเวลา (มุมมอง admin) เพื่อให้สีตรงกันทั้งระบบ
+  const counselorColors = {}
+  counselors.forEach((c, i) => { counselorColors[c.id] = COUNSELOR_COLORS[i % COUNSELOR_COLORS.length] })
+
+  // ผู้รับบริการที่รอโอนย้าย: มีนัดหมายรอยืนยัน/ยืนยันแล้วผูกกับนักจิตวิทยาที่ถูกระงับ/ลาออก (status inactive)
+  const inactiveCounselorIds = new Set(
+    read('counselors.json').filter(c => c.status === 'inactive').map(c => c.id)
+  )
+  const pendingTransferClientIds = new Set(
+    appointments
+      .filter(a => (a.status === 'pending' || a.status === 'confirmed') && inactiveCounselorIds.has(a.counselorId))
+      .map(a => a.clientId)
+  )
+
   const { status, search } = req.query
   let filtered = clients
 
   // Counselors only see clients who have appointments with them
   if (isCounselor(req)) {
-    appointments = appointments.filter(a => a.counselorId === req.session.counselorId)
-    counselors   = counselors.filter(c => c.id === req.session.counselorId)
-    schedules    = schedules.filter(s => s.counselorId === req.session.counselorId)
+    const myAppointments = appointments.filter(a => a.counselorId === req.session.counselorId)
+    counselors = counselors.filter(c => c.id === req.session.counselorId)
+    schedules  = schedules.filter(s => s.counselorId === req.session.counselorId)
 
-    const myClientIds = new Set(
-      appointments.map(a => a.clientId)
-    )
+    const myClientIds = new Set(myAppointments.map(a => a.clientId))
     filtered = filtered.filter(c => myClientIds.has(c.id))
+
+    // ส่งประวัตินัดหมายทั้งหมดของผู้รับบริการเหล่านี้ (ไม่ใช่แค่ของตัวเอง) ไปที่ modal
+    // ประวัติการนัดหมาย เพื่อให้เห็นประวัติต่อเนื่องเมื่อมีการโอนย้ายมาจากนักจิตวิทยาคนอื่น
+    appointments = appointments.filter(a => myClientIds.has(a.clientId))
   }
 
   const clientStats = {
-    total:    filtered.length,
-    active:   filtered.filter(c => c.status === 'active').length,
-    inactive: filtered.filter(c => c.status === 'inactive').length,
+    total:           filtered.length,
+    active:          filtered.filter(c => c.status === 'active').length,
+    inactive:        filtered.filter(c => c.status === 'inactive').length,
+    pendingTransfer: filtered.filter(c => pendingTransferClientIds.has(c.id)).length,
   }
 
-  if (status) filtered = filtered.filter(c => c.status === status)
+  if (status === 'pending_transfer') filtered = filtered.filter(c => pendingTransferClientIds.has(c.id))
+  else if (status)                   filtered = filtered.filter(c => c.status === status)
   if (search) filtered = filtered.filter(c => matchesSearch([
     c.name,
     c.email,
@@ -76,7 +99,9 @@ router.get('/', (req, res) => {
   res.render('admin/clients', {
     page: 'clients', title: 'ข้อมูลผู้รับบริการ',
     clients: filtered, query: req.query,
-    appointments, counselors, schedules, counselorActiveCounts, clientStats,
+    appointments, counselors, schedules, counselorActiveCounts, clientStats, counselorColors,
+    pendingTransferClientIds: [...pendingTransferClientIds],
+    concernOptions: getConcernOptions(),
   })
 })
 
@@ -87,11 +112,10 @@ router.get('/:id', (req, res) => {
   const client       = clients.find(c => c.id === req.params.id)
   if (!client) return res.redirect('/admin/clients')
   if (!canUseClient(req, req.params.id)) return forbidden(res)
+  // นักจิตวิทยาที่เข้าถึงหน้านี้ได้ (ผ่าน canUseClient) ต้องเห็นประวัตินัดหมายทั้งหมด
+  // ของผู้รับบริการ รวมถึงนัดหมายกับนักจิตวิทยาคนก่อนหน้า เพื่อติดตามอาการต่อเนื่อง
   const clientAppointments = appointments
-    .filter(a =>
-      a.clientId === req.params.id &&
-      (!isCounselor(req) || a.counselorId === req.session.counselorId)
-    )
+    .filter(a => a.clientId === req.params.id)
     .sort((a, b) => new Date(b.date) - new Date(a.date))
   res.render('admin/client-detail', {
     page: 'clients', title: `ข้อมูล ${client.name}`,
@@ -153,7 +177,12 @@ router.post('/:id/edit', (req, res) => {
 // ── DELETE ────────────────────────────────────────────────────────────────────
 router.post('/:id/delete', (req, res) => {
   if (!canUseClient(req, req.params.id)) return forbidden(res)
-  writeClients(readClients().filter(c => c.id !== req.params.id))
+  const clients = readClients()
+  const client  = clients.find(c => c.id === req.params.id)
+  writeClients(clients.filter(c => c.id !== req.params.id))
+  if (client) {
+    logDeletion({ entityType: 'client', entityId: client.id, entityName: client.name, reason: req.body.reason, req })
+  }
   res.redirect('/admin/clients?deleted=1')
 })
 

@@ -5,6 +5,7 @@ const { matchesSearch } = require('../../utils/search')
 const path    = require('path')
 const multer  = require('multer')
 const bcrypt  = require('bcryptjs')
+const { logDeletion } = require('../../utils/audit-log')
 
 const dataFile   = path.join(__dirname, '../../../data/counselors.json')
 const uploadDir  = path.join(__dirname, '../../../public/uploads/counselors')
@@ -62,9 +63,22 @@ router.get('/', (req, res) => {
     surveyStats[s.counselorId].count += 1
   })
 
+  // นับจำนวนผู้รับบริการที่ดูแลอยู่ปัจจุบัน (distinct client ที่มีนัด pending/confirmed) ต่อนักจิตวิทยา
+  const apptFile     = path.join(__dirname, '../../../data/appointments.json')
+  const appointments = fs.existsSync(apptFile) ? JSON.parse(fs.readFileSync(apptFile, 'utf8')) : []
+  const clientIdsByCounselor = {}
+  appointments
+    .filter(a => a.status === 'pending' || a.status === 'confirmed')
+    .forEach(a => {
+      if (!clientIdsByCounselor[a.counselorId]) clientIdsByCounselor[a.counselorId] = new Set()
+      clientIdsByCounselor[a.counselorId].add(a.clientId)
+    })
+  const clientCounts = {}
+  Object.keys(clientIdsByCounselor).forEach(cid => { clientCounts[cid] = clientIdsByCounselor[cid].size })
+
   res.render('admin/counselors', {
     page: 'counselors', title: 'จัดการนักจิตวิทยาให้คำปรึกษา',
-    counselors: filtered, allCounselors: readData(), query: req.query, surveyStats,
+    counselors: filtered, allCounselors: readData(), query: req.query, surveyStats, clientCounts,
   })
 })
 
@@ -171,7 +185,10 @@ router.post('/:id/toggle-status', (req, res) => {
 router.post('/:id/delete', (req, res) => {
   const data = readData()
   const c    = data.find(x => x.id === req.params.id)
-  if (c) deletePhoto(c.photo)
+  if (c) {
+    deletePhoto(c.photo)
+    logDeletion({ entityType: 'counselor', entityId: c.id, entityName: c.name, reason: req.body.reason, req })
+  }
   writeData(data.filter(x => x.id !== req.params.id))
   res.redirect('/admin/counselors')
 })

@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %> — MindCare Admin</title>
+  <%- include('../partials/head') %>
+  <style>
+    .tbl { width:100%; border-collapse:collapse; }
+    .tbl thead { background:#f8fafc; }
+    .tbl th { padding:10px 14px; text-align:left; font-size:12px; font-weight:600; color:#64748b; text-transform:uppercase; letter-spacing:.05em; border-bottom:1px solid #f1f5f9; white-space:nowrap; }
+    .tbl td { padding:12px 14px; font-size:14px; color:#334155; border-bottom:1px solid #f8fafc; vertical-align:top; }
+    .tbl tbody tr:hover { background:#f8fafc; }
+    .tbl tbody tr:last-child td { border-bottom:none; }
+    .act-btn { display:inline-flex; align-items:center; gap:4px; padding:5px 10px; border-radius:8px; font-size:12px; font-weight:500; cursor:pointer; border:none; transition:all .15s; white-space:nowrap; text-decoration:none; }
+    .ab-primary   { background:#05967e; color:#fff; }
+    .ab-primary:hover   { background:#067866; }
+    .ab-ghost     { background:transparent; color:#64748b; }
+    .ab-ghost:hover     { background:#f1f5f9; }
+    .inp { width:100%; padding:9px 12px; border:1.5px solid #e2e8f0; border-radius:10px; font-size:13px; color:#334155; outline:none; font-family:inherit; box-sizing:border-box; }
+    .inp:focus { border-color:#2dd4b4; box-shadow:0 0 0 3px rgba(45,212,180,.15); }
+    .lbl { display:block; font-size:12px; font-weight:500; color:#64748b; margin-bottom:5px; }
+  </style>
+</head>
+<body style="background:#f8fafc; margin:0;">
+<%- include('../partials/admin-sidebar') %>
+
+<div style="margin-left:256px; min-height:100vh; display:flex; flex-direction:column;">
+
+  <div style="height:56px; background:#fff; border-bottom:1px solid #f1f5f9; padding:0 24px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:20;">
+    <h1 style="font-size:15px; font-weight:600; color:#1e293b; margin:0;"><%= title %></h1>
+    <div style="display:flex;align-items:center;gap:12px;">
+      <span style="font-size:12px;color:#94a3b8;"><%= new Date().toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric'}) %></span>
+    </div>
+  </div>
+
+  <div style="padding:24px;">
+
+    <!-- Page header -->
+    <div style="margin-bottom:20px;">
+      <h2 style="font-size:20px;font-weight:700;color:#1e293b;display:flex;align-items:center;gap:8px;margin:0;">
+        <i data-lucide="history" style="width:22px;height:22px;color:#05967e;"></i> ประวัติการลบข้อมูล
+      </h2>
+      <p style="color:#64748b;margin:4px 0 0;font-size:13.5px;">บันทึกการลบข้อมูลทั้งหมดในระบบ พร้อมเหตุผลและผู้ดำเนินการ (ดูอย่างเดียว แก้ไข/ลบไม่ได้)</p>
+    </div>
+
+    <!-- Filter -->
+    <div style="background:#fff;border:1px solid #f1f5f9;border-radius:16px;padding:16px;margin-bottom:16px;">
+      <form method="GET" action="/admin/audit-log" style="display:flex;flex-wrap:wrap;align-items:flex-end;gap:12px;">
+        <div style="flex:1;min-width:200px;">
+          <label class="lbl">ค้นหา</label>
+          <div style="position:relative;">
+            <i data-lucide="search" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);width:14px;height:14px;color:#94a3b8;pointer-events:none;"></i>
+            <input type="text" name="search" value="<%= query.search || '' %>" class="inp" style="padding-left:32px;" placeholder="ชื่อรายการ, เหตุผล, ผู้ลบ...">
+          </div>
+        </div>
+        <div style="min-width:170px;">
+          <label class="lbl">ประเภทข้อมูล</label>
+          <select name="entityType" class="inp">
+            <option value="">ทั้งหมด</option>
+            <% Object.entries(entityLabels).forEach(([key, label]) => { %>
+            <option value="<%= key %>" <%= query.entityType===key?'selected':'' %>><%= label %></option>
+            <% }) %>
+          </select>
+        </div>
+        <button type="submit" class="act-btn ab-primary"><i data-lucide="filter" style="width:13px;height:13px;"></i> กรอง</button>
+        <% if (query.search || query.entityType) { %><a href="/admin/audit-log" class="act-btn ab-ghost">ล้าง</a><% } %>
+      </form>
+    </div>
+
+    <!-- Table -->
+    <div style="background:#fff;border:1px solid #f1f5f9;border-radius:16px;overflow:hidden;">
+      <div style="padding:14px 16px;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;justify-content:space-between;">
+        <span style="font-size:13px;font-weight:600;color:#334155;">รายการที่ถูกลบ</span>
+        <span style="font-size:12px;color:#94a3b8;">ทั้งหมด <%= logs.length %> รายการ</span>
+      </div>
+      <div style="overflow-x:auto;">
+        <table class="tbl">
+          <thead>
+            <tr>
+              <th>วันที่/เวลา</th>
+              <th>ประเภทข้อมูล</th>
+              <th>ชื่อรายการ</th>
+              <th>เหตุผลการลบ</th>
+              <th>ผู้ดำเนินการ</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% if (logs.length === 0) { %>
+            <tr><td colspan="5" style="text-align:center;padding:48px;color:#94a3b8;">
+              <i data-lucide="inbox" style="width:32px;height:32px;margin:0 auto 8px;display:block;opacity:.4;"></i>
+              ยังไม่มีประวัติการลบข้อมูล
+            </td></tr>
+            <% } %>
+            <% logs.forEach(l => { %>
+            <tr>
+              <td style="white-space:nowrap;font-size:12px;color:#64748b;"><%= new Date(l.deletedAt).toLocaleString('th-TH', { dateStyle: 'medium', timeStyle: 'short' }) %></td>
+              <td><span style="padding:3px 10px;background:#f1f5f9;color:#334155;border-radius:99px;font-size:12px;font-weight:500;white-space:nowrap;"><%= entityLabels[l.entityType] || l.entityType %></span></td>
+              <td style="font-weight:500;color:#1e293b;max-width:220px;"><%= l.entityName || '—' %></td>
+              <td style="max-width:280px;color:#475569;"><%= l.reason || '—' %></td>
+              <td style="white-space:nowrap;">
+                <div style="font-weight:500;color:#1e293b;"><%= l.actorName || '—' %></div>
+                <div style="font-size:12px;color:#94a3b8;"><%= l.actorRole === 'counselor' ? 'นักจิตวิทยา' : 'ผู้ดูแลระบบ' %></div>
+              </td>
+            </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>
+<script>lucide.createIcons()</script>
+</body>
+</html>

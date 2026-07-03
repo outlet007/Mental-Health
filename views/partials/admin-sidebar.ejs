@@ -37,9 +37,12 @@
       จัดการนัดหมาย
       <span id="notif-appointments" data-notif="appointments" style="display:none;position:absolute;top:50%;transform:translateY(-50%);right:8px;min-width:22px;height:22px;border-radius:999px;background:#ff7700;color:#fff;font-size:12px;font-weight:500;line-height:22px;text-align:center;padding:0 4px;"></span>
     </a>
-    <a href="/admin/clients" class="nav-link <%= page==='clients' ? 'active' : '' %>">
+    <a href="/admin/clients" class="nav-link <%= page==='clients' ? 'active' : '' %>" style="position:relative;">
       <i data-lucide="users" class="w-4 h-4"></i>
       ข้อมูลผู้รับบริการ
+      <% if (!isCounselor) { %>
+      <span id="notif-clients" data-notif="clients" style="display:none;position:absolute;top:50%;transform:translateY(-50%);right:8px;min-width:22px;height:22px;border-radius:999px;background:#f59e0b;color:#fff;font-size:12px;font-weight:500;line-height:22px;text-align:center;padding:0 4px;"></span>
+      <% } %>
     </a>
   <% if (!isCounselor) { %>
     <a href="/admin/counselors" class="nav-link <%= page==='counselors' ? 'active' : '' %>">
@@ -89,6 +92,10 @@
       อีเมลประเมินความพึงพอใจ
     </a>
 
+    <a href="/admin/audit-log" class="nav-link <%= page==='audit-log' ? 'active' : '' %>">
+      <i data-lucide="history" class="w-4 h-4"></i>
+      ประวัติการลบข้อมูล
+    </a>
     <a href="/admin/import-export" class="nav-link <%= page==='import-export' ? 'active' : '' %>">
       <i data-lucide="arrow-left-right" class="w-4 h-4"></i>
       นำเข้า-ส่งออก ข้อมูล
@@ -139,6 +146,7 @@
         if (!data) return
         updateBadge('notif-contacts',     data.newContacts)
         updateBadge('notif-appointments', data.pendingAppointments)
+        updateBadge('notif-clients',      data.pendingTransferClients)
       })
       .catch(function () {})
   }

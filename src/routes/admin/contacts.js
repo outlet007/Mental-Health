@@ -4,9 +4,14 @@ const fs      = require('fs')
 const { matchesSearch } = require('../../utils/search')
 const path    = require('path')
 const { sendAppointmentEmails } = require('../../utils/mailer')
+const { logDeletion } = require('../../utils/audit-log')
+const { getConcernOptions } = require('../../utils/concern-options')
 
 const dataDir  = path.join(__dirname, '../../../data')
 const dataFile = path.join(dataDir, 'contacts.json')
+
+// สีอ้างอิงต่อนักจิตวิทยา — ต้องตรงกับ COLORS ใน src/routes/admin/schedules.js
+const COUNSELOR_COLORS = ['#6366f1','#05967e','#f59e0b','#ef4444','#06b6d4','#8b5cf6','#10b981','#f43f5e']
 
 function readFile(file) { return JSON.parse(fs.readFileSync(path.join(dataDir, file), 'utf8')) }
 function readData()     { return JSON.parse(fs.readFileSync(dataFile, 'utf8')) }
@@ -16,11 +21,19 @@ router.get('/', (req, res) => {
   const contacts     = readData()
   const counselors   = readFile('counselors.json').filter(c => c.isApproved)
   const schedules    = readFile('schedules.json')
+
+  // สีต่อนักจิตวิทยา อ้างอิงลำดับเดียวกับตารางเวลา (มุมมอง admin) เพื่อให้สีตรงกันทั้งระบบ
+  const counselorColors = {}
+  counselors.forEach((c, i) => { counselorColors[c.id] = COUNSELOR_COLORS[i % COUNSELOR_COLORS.length] })
   const clients      = readFile('clients.json')
   const appointments = readFile('appointments.json')
 
-  const { search } = req.query
+  const concernOptions = getConcernOptions()
+
+  const { search, status, concern } = req.query
   let filtered = contacts
+  if (status)  filtered = filtered.filter(c => c.status === status)
+  if (concern) filtered = filtered.filter(c => c.concern === concern)
   if (search) filtered = filtered.filter(c => matchesSearch([
     c.name,
     c.phone,
@@ -35,13 +48,18 @@ router.get('/', (req, res) => {
     }
   })
 
+  const statusCounts = {
+    new:       contacts.filter(c => c.status === 'new').length,
+    contacted: contacts.filter(c => c.status === 'contacted').length,
+    converted: contacts.filter(c => c.status === 'converted').length,
+    closed:    contacts.filter(c => c.status === 'closed').length,
+  }
+
   res.render('admin/contacts', {
     page: 'contacts', title: 'คำขอเพื่อทำนัดหมาย',
     contacts: filtered, query: req.query,
-    total:        contacts.length,
-    pendingCount: contacts.filter(c => ['new','contacted'].includes(c.status)).length,
-    doneCount:    contacts.filter(c => ['converted','closed'].includes(c.status)).length,
-    counselors, schedules, clients, counselorActiveCounts,
+    total: contacts.length, statusCounts, concernOptions, counselorColors,
+    counselors, schedules, clients, appointments, counselorActiveCounts,
   })
 })
 
@@ -57,8 +75,24 @@ router.post('/:id/status', (req, res) => {
   res.redirect('/admin/contacts?updated=1')
 })
 
+router.post('/:id/edit', (req, res) => {
+  const { name, studentId, phone, email, concern, sessionType } = req.body
+  const data = readData()
+  const idx  = data.findIndex(c => c.id === req.params.id)
+  if (idx !== -1) {
+    data[idx].name        = (name || '').trim()
+    data[idx].studentId    = (studentId || '').trim()
+    data[idx].phone        = (phone || '').trim()
+    data[idx].email        = (email || '').trim()
+    data[idx].concern      = concern || ''
+    data[idx].sessionType  = sessionType || data[idx].sessionType || 'online'
+    writeData(data)
+  }
+  res.redirect('/admin/contacts?updated=1')
+})
+
 router.post('/:id/book', async (req, res) => {
-  const { counselorId, date, time, type, note } = req.body
+  const { counselorId, date, time, type, note, existingClientId } = req.body
   const contacts = readData()
   const idx      = contacts.findIndex(c => c.id === req.params.id)
   if (idx === -1) return res.redirect('/admin/contacts?error=notfound')
@@ -75,17 +109,20 @@ router.post('/:id/book', async (req, res) => {
   )
   if (conflict) return res.redirect('/admin/contacts?error=conflict')
 
-  // Find or create client from contact info
+  // ผู้รับบริการ: ใช้ตัวที่ admin ยืนยันเลือกไว้ (existingClientId) เท่านั้น
+  // ไม่ auto-match ด้วยเบอร์โทร/อีเมลอีกต่อไป — ป้องกันการ merge ข้อมูลผิดคนโดยไม่ได้ตั้งใจ
   const clientsFile = path.join(dataDir, 'clients.json')
   const clients = JSON.parse(fs.readFileSync(clientsFile, 'utf8'))
-  let client = clients.find(c => c.phone === contact.phone || (contact.email && c.email === contact.email))
+  let client = existingClientId ? clients.find(c => c.id === existingClientId) : null
   if (!client) {
     client = {
       id: 'cl' + Date.now().toString().slice(-6),
       name: contact.name,
       phone: contact.phone,
       email: contact.email || '',
+      studentId: contact.studentId || '',
       status: 'active',
+      totalSessions: 0,
       createdAt: new Date().toISOString().split('T')[0],
     }
     clients.push(client)
@@ -110,12 +147,14 @@ router.post('/:id/book', async (req, res) => {
     type:          type || contact.sessionType || 'online',
     status:        'confirmed',
     note:          note || '',
+    concern:       contact.concern || '',
     createdAt:     new Date().toISOString().split('T')[0],
   }
   appts.push(newAppt)
   fs.writeFileSync(apptFile, JSON.stringify(appts, null, 2))
 
   contacts[idx].status = 'converted'
+  contacts[idx].appointmentId = newAppt.id
   writeData(contacts)
 
   // ส่งอีเมลแจ้งทั้งสองฝ่าย (ไม่รอ — redirect ทันที)
@@ -130,7 +169,12 @@ router.post('/:id/book', async (req, res) => {
 })
 
 router.post('/:id/delete', (req, res) => {
-  writeData(readData().filter(c => c.id !== req.params.id))
+  const data    = readData()
+  const contact = data.find(c => c.id === req.params.id)
+  writeData(data.filter(c => c.id !== req.params.id))
+  if (contact) {
+    logDeletion({ entityType: 'contact', entityId: contact.id, entityName: contact.name, reason: req.body.reason, req })
+  }
   res.redirect('/admin/contacts')
 })
 

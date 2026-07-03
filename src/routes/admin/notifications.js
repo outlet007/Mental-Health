@@ -13,7 +13,20 @@ router.get('/', (req, res) => {
   const newContacts         = contacts.filter(c => c.status === 'new').length
   const pendingAppointments = appointments.filter(a => a.status === 'pending').length
 
-  res.json({ newContacts, pendingAppointments })
+  // ผู้รับบริการที่รอโอนย้าย (admin เท่านั้น — เป็นฟีเจอร์ admin-only เหมือนปุ่มโอนย้าย)
+  let pendingTransferClients = 0
+  if (req.session.userType !== 'counselor') {
+    const inactiveCounselorIds = new Set(
+      read('counselors.json').filter(c => c.status === 'inactive').map(c => c.id)
+    )
+    pendingTransferClients = new Set(
+      appointments
+        .filter(a => (a.status === 'pending' || a.status === 'confirmed') && inactiveCounselorIds.has(a.counselorId))
+        .map(a => a.clientId)
+    ).size
+  }
+
+  res.json({ newContacts, pendingAppointments, pendingTransferClients })
 })
 
 module.exports = router

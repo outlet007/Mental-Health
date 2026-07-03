@@ -52,30 +52,49 @@
     <% } %>
 
     <%
-      const pendingFiltered = contacts.filter(c => ['new','contacted'].includes(c.status)).length
-      const doneFiltered    = contacts.filter(c => ['converted','closed'].includes(c.status)).length
+      const newFiltered       = contacts.filter(c => c.status === 'new').length
+      const contactedFiltered = contacts.filter(c => c.status === 'contacted').length
+      const convertedFiltered = contacts.filter(c => c.status === 'converted').length
+      const closedFiltered    = contacts.filter(c => c.status === 'closed').length
     %>
 
     <!-- Status Cards -->
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px;">
-      <div style="background:#fff;border:1px solid #fde68a;border-radius:16px;padding:20px 24px;display:flex;align-items:center;gap:16px;cursor:pointer;" onclick="switchTab('pending')">
-        <div style="width:44px;height:44px;border-radius:12px;background:#fef3c7;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-          <i data-lucide="inbox" style="width:22px;height:22px;color:#d97706;"></i>
+    <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;margin-bottom:24px;">
+      <div style="background:#fff;border:1px solid #fecaca;border-radius:16px;padding:20px 24px;display:flex;align-items:center;gap:16px;cursor:pointer;" onclick="switchTab('new')">
+        <div style="width:44px;height:44px;border-radius:12px;background:#fee2e2;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          <i data-lucide="inbox" style="width:22px;height:22px;color:rgb(239,68,68);"></i>
         </div>
         <div>
-          <p style="margin:0;font-size:28px;font-weight:700;color:#1e293b;line-height:1;"><%= pendingCount %></p>
-          <p style="margin:4px 0 0;font-size:12px;color:#92400e;font-weight:500;">รอดำเนินการ</p>
-          <p style="margin:2px 0 0;font-size:12px;color:#94a3b8;">คำขอใหม่ที่ยังไม่ได้นัด</p>
+          <p style="margin:0;font-size:28px;font-weight:700;color:#1e293b;line-height:1;"><%= statusCounts.new %></p>
+          <p style="margin:4px 0 0;font-size:12px;color:rgb(239,68,68);font-weight:500;">รอดำเนินการ</p>
         </div>
       </div>
-      <div style="background:#fff;border:1px solid #a0f3e1;border-radius:16px;padding:20px 24px;display:flex;align-items:center;gap:16px;cursor:pointer;" onclick="switchTab('done')">
+      <div style="background:#fff;border:1px solid #bfdbfe;border-radius:16px;padding:20px 24px;display:flex;align-items:center;gap:16px;cursor:pointer;" onclick="switchTab('contacted')">
+        <div style="width:44px;height:44px;border-radius:12px;background:#dbeafe;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          <i data-lucide="phone-call" style="width:22px;height:22px;color:#1e40af;"></i>
+        </div>
+        <div>
+          <p style="margin:0;font-size:28px;font-weight:700;color:#1e293b;line-height:1;"><%= statusCounts.contacted %></p>
+          <p style="margin:4px 0 0;font-size:12px;color:#1e40af;font-weight:500;">ติดต่อแล้ว</p>
+        </div>
+      </div>
+      <div style="background:#fff;border:1px solid #a0f3e1;border-radius:16px;padding:20px 24px;display:flex;align-items:center;gap:16px;cursor:pointer;" onclick="switchTab('converted')">
         <div style="width:44px;height:44px;border-radius:12px;background:#d1fae5;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
           <i data-lucide="check-circle-2" style="width:22px;height:22px;color:#059669;"></i>
         </div>
         <div>
-          <p style="margin:0;font-size:28px;font-weight:700;color:#1e293b;line-height:1;"><%= doneCount %></p>
-          <p style="margin:4px 0 0;font-size:12px;color:#065f46;font-weight:500;">ดำเนินการแล้ว</p>
-          <p style="margin:2px 0 0;font-size:12px;color:#94a3b8;">นัดหมายแล้วหรือปิดแล้ว</p>
+          <p style="margin:0;font-size:28px;font-weight:700;color:#1e293b;line-height:1;"><%= statusCounts.converted %></p>
+          <p style="margin:4px 0 0;font-size:12px;color:#065f46;font-weight:500;">นัดหมายแล้ว</p>
+        </div>
+      </div>
+      <div style="background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:20px 24px;display:flex;align-items:center;gap:16px;cursor:pointer;" onclick="switchTab('closed')">
+        <div style="width:44px;height:44px;border-radius:12px;background:#f1f5f9;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          <i data-lucide="archive" style="width:22px;height:22px;color:#64748b;"></i>
+        </div>
+        <div>
+          <p style="margin:0;font-size:28px;font-weight:700;color:#1e293b;line-height:1;"><%= statusCounts.closed %></p>
+          <p style="margin:4px 0 0;font-size:12px;color:#64748b;font-weight:500;">ปิดแล้ว</p>
+          <p style="margin:2px 0 0;font-size:12px;color:#94a3b8;">หมายเหตุ: ติดต่อไม่ได้ หรือยกเลิกคำขอ</p>
         </div>
       </div>
     </div>
@@ -89,8 +108,27 @@
           <input name="search" value="<%= query.search||'' %>" class="inp" style="padding-left:32px;" placeholder="ชื่อ, เบอร์, อีเมล">
         </div>
       </div>
+      <div>
+        <label class="lbl">เรื่องที่ต้องการความช่วยเหลือ</label>
+        <select name="concern" class="inp" style="width:200px;">
+          <option value="">ทั้งหมด</option>
+          <% concernOptions.forEach(opt => { %>
+          <option value="<%= opt %>" <%=query.concern===opt?'selected':''%>><%= opt %></option>
+          <% }) %>
+        </select>
+      </div>
+      <div>
+        <label class="lbl">สถานะ</label>
+        <select name="status" class="inp" style="width:170px;">
+          <option value="">ทั้งหมด</option>
+          <option value="new" <%=query.status==='new'?'selected':''%>>รอดำเนินการ</option>
+          <option value="contacted" <%=query.status==='contacted'?'selected':''%>>ติดต่อแล้ว</option>
+          <option value="converted" <%=query.status==='converted'?'selected':''%>>นัดหมายแล้ว</option>
+          <option value="closed" <%=query.status==='closed'?'selected':''%>>ปิดแล้ว</option>
+        </select>
+      </div>
       <button type="submit" class="act-btn ab-primary"><i data-lucide="search" style="width:13px;height:13px;"></i> ค้นหา</button>
-      <% if (query.search) { %><a href="/admin/contacts" class="act-btn ab-ghost" style="text-decoration:none;">ล้าง</a><% } %>
+      <% if (query.search || query.status || query.concern) { %><a href="/admin/contacts" class="act-btn ab-ghost" style="text-decoration:none;">ล้าง</a><% } %>
     </form>
 
     <!-- Tab + Table card -->
@@ -98,15 +136,30 @@
 
       <!-- Tab bar -->
       <div style="display:flex;border-bottom:1px solid #f1f5f9;padding:0 8px;">
-        <button class="tab-btn active" id="tab-pending" onclick="switchTab('pending')">
+        <button class="tab-btn" id="tab-all" onclick="switchTab('all')">
+          <i data-lucide="list" style="width:14px;height:14px;"></i>
+          ทั้งหมด
+          <span class="tab-count" style="background:#e2e8f0;color:#334155;" id="badge-all"><%= contacts.length %></span>
+        </button>
+        <button class="tab-btn active" id="tab-new" onclick="switchTab('new')">
           <i data-lucide="inbox" style="width:14px;height:14px;"></i>
           รอดำเนินการ
-          <span class="tab-count" style="background:#fef3c7;color:#92400e;" id="badge-pending"><%= pendingFiltered %></span>
+          <span class="tab-count" style="background:#fee2e2;color:rgb(239,68,68);" id="badge-new"><%= newFiltered %></span>
         </button>
-        <button class="tab-btn" id="tab-done" onclick="switchTab('done')">
+        <button class="tab-btn" id="tab-contacted" onclick="switchTab('contacted')">
+          <i data-lucide="phone-call" style="width:14px;height:14px;"></i>
+          ติดต่อแล้ว
+          <span class="tab-count" style="background:#dbeafe;color:#1e40af;" id="badge-contacted"><%= contactedFiltered %></span>
+        </button>
+        <button class="tab-btn" id="tab-converted" onclick="switchTab('converted')">
           <i data-lucide="check-circle-2" style="width:14px;height:14px;"></i>
-          ติดต่อและทำนัดหมายแล้ว
-          <span class="tab-count" style="background:#d1fae5;color:#065f46;" id="badge-done"><%= doneFiltered %></span>
+          นัดหมายแล้ว
+          <span class="tab-count" style="background:#d1fae5;color:#065f46;" id="badge-converted"><%= convertedFiltered %></span>
+        </button>
+        <button class="tab-btn" id="tab-closed" onclick="switchTab('closed')">
+          <i data-lucide="archive" style="width:14px;height:14px;"></i>
+          ปิดแล้ว
+          <span class="tab-count" style="background:#f1f5f9;color:#64748b;" id="badge-closed"><%= closedFiltered %></span>
         </button>
       </div>
 
@@ -117,11 +170,12 @@
             <tr>
               <th>ผู้ส่งคำขอ</th>
               <th>ข้อมูลติดต่อ</th>
-              <th>เรื่องที่ต้องการ</th>
+              <th>เรื่องที่ต้องการความช่วยเหลือ</th>
               <th>รูปแบบ</th>
               <th>วันที่</th>
               <th>สถานะ</th>
               <th>การจัดการ</th>
+              <th>จัดการคำขอเพื่อทำนัดหมาย</th>
             </tr>
           </thead>
           <tbody>
@@ -132,10 +186,21 @@
                 converted: {bg:'#d1fae5',color:'#065f46',label:'นัดหมายแล้ว'},
                 closed:    {bg:'#f1f5f9',color:'#64748b',label:'ปิดแล้ว'},
               }
+              const CONCERN_PALETTE = [
+                {bg:'#ffedd5',color:'#9a3412'},
+                {bg:'#ede9fe',color:'#5b21b6'},
+                {bg:'#fce7f3',color:'#9d174d'},
+                {bg:'#cffafe',color:'#155e75'},
+                {bg:'#e0e7ff',color:'#3730a3'},
+                {bg:'#f1f5f9',color:'#475569'},
+              ]
+              const CONCERN_FALLBACK = {bg:'#f1f5f9',color:'#475569'}
+              const concernColorMap = {}
+              concernOptions.forEach((opt, i) => { concernColorMap[opt] = CONCERN_PALETTE[i % CONCERN_PALETTE.length] })
             %>
             <% contacts.forEach(c => {
               const st  = statusMap[c.status] || statusMap.new
-              const grp = ['new','contacted'].includes(c.status) ? 'pending' : 'done'
+              const grp = c.status || 'new'
             %>
             <tr data-grp="<%= grp %>">
               <td>
@@ -143,16 +208,24 @@
                   <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#2dd4b4,#06b6d4);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:13px;flex-shrink:0;"><%= c.name.slice(0,1) %></div>
                   <div>
                     <div style="font-weight:600;color:#1e293b;font-size:13px;"><%= c.name %></div>
+                    <% if (c.studentId) { %><div style="font-size:12px;color:#64748b;font-weight:500;">รหัส: <%= c.studentId %></div><% } %>
                     <% if (c.note) { %><div style="font-size:12px;color:#94a3b8;font-style:italic;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="<%= c.note %>"><%= c.note %></div><% } %>
                   </div>
                 </div>
               </td>
               <td>
-                <% if (c.studentId) { %><div style="font-size:12px;color:#64748b;font-weight:500;margin-bottom:2px;">รหัส: <%= c.studentId %></div><% } %>
                 <div style="font-size:13px;"><%= c.phone %></div>
                 <% if (c.email) { %><div style="font-size:12px;color:#94a3b8;"><%= c.email %></div><% } %>
               </td>
-              <td style="max-width:140px;font-size:12px;color:#334155;"><%= c.concern || '—' %></td>
+              <td style="max-width:160px;">
+                <% if (c.concern) {
+                  const cc = concernColorMap[c.concern] || CONCERN_FALLBACK
+                %>
+                <span style="display:inline-block;padding:3px 10px;background:<%= cc.bg %>;color:<%= cc.color %>;border-radius:99px;font-size:12px;font-weight:500;white-space:normal;"><%= c.concern %></span>
+                <% } else { %>
+                <span style="font-size:12px;color:#cbd5e1;">—</span>
+                <% } %>
+              </td>
               <td>
                 <% if (c.sessionType==='online') { %>
                 <div style="display:flex;align-items:center;gap:4px;"><i data-lucide="video" style="width:13px;height:13px;color:#0891b2;"></i><span style="font-size:12px;color:#0891b2;">ออนไลน์</span></div>
@@ -164,23 +237,30 @@
               <td><span style="padding:3px 10px;background:<%= st.bg %>;color:<%= st.color %>;border-radius:99px;font-size:12px;font-weight:500;"><%= st.label %></span></td>
               <td>
                 <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;">
+                  <button class="act-btn ab-secondary edit-request-btn" data-rec="<%= JSON.stringify(c) %>" title="แก้ไขคำขอ">
+                    <i data-lucide="file-pen" style="width:13px;height:13px;"></i> แก้ไขคำขอ
+                  </button>
+                  <button type="button" class="act-btn ab-danger delete-btn" data-action="/admin/contacts/<%= c.id %>/delete" data-name="คำขอของ <%= c.name %>" data-warning="คำขอนี้จะถูกลบออกจากระบบถาวร ไม่สามารถกู้คืนได้" title="ลบ">
+                    <i data-lucide="trash-2" style="width:12px;height:12px;"></i>
+                  </button>
+                </div>
+              </td>
+              <td>
+                <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;">
+                  <button class="act-btn ab-secondary edit-btn" data-rec="<%= JSON.stringify(c) %>">
+                    <i data-lucide="pencil" style="width:13px;height:13px;"></i> จัดการคำขอ
+                  </button>
                   <% if (['new','contacted'].includes(c.status)) { %>
                   <button class="act-btn ab-book book-btn" data-rec="<%= JSON.stringify(c) %>" title="สร้างนัดหมาย">
                     <i data-lucide="calendar-plus" style="width:13px;height:13px;"></i> สร้างนัด
                   </button>
                   <% } %>
-                  <button class="act-btn ab-secondary edit-btn" data-rec="<%= JSON.stringify(c) %>">
-                    <i data-lucide="pencil" style="width:13px;height:13px;"></i> จัดการ
-                  </button>
-                  <form method="POST" action="/admin/contacts/<%= c.id %>/delete" onsubmit="return confirm('ลบคำขอของ <%= c.name %>?')" style="margin:0;">
-                    <button type="submit" class="act-btn ab-danger"><i data-lucide="trash-2" style="width:12px;height:12px;"></i></button>
-                  </form>
                 </div>
               </td>
             </tr>
             <% }) %>
             <tr id="emptyState" style="display:none;">
-              <td colspan="7" style="text-align:center;padding:48px 16px;color:#94a3b8;">
+              <td colspan="8" style="text-align:center;padding:48px 16px;color:#94a3b8;">
                 <i data-lucide="inbox" style="width:36px;height:36px;display:block;margin:0 auto 10px;opacity:.3;"></i>
                 ไม่มีคำขอในหมวดนี้
               </td>
@@ -233,6 +313,64 @@
   </div>
 </div>
 
+<!-- Panel: แก้ไขคำขอ -->
+<div id="editRequestPanel" class="panel-drawer">
+  <div style="padding:16px 20px;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;justify-content:space-between;">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <div style="width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,#3874FF,#6366f1);display:flex;align-items:center;justify-content:center;"><i data-lucide="file-pen" style="width:15px;height:15px;color:#fff;"></i></div>
+      <div>
+        <div style="font-size:14px;font-weight:600;color:#1e293b;">แก้ไขคำขอเพื่อทำนัดหมาย</div>
+        <div id="editRequestPanelSub" style="font-size:12px;color:#94a3b8;"></div>
+      </div>
+    </div>
+    <button onclick="closeAll()" style="background:none;border:none;cursor:pointer;padding:6px;border-radius:8px;color:#94a3b8;"><i data-lucide="x" style="width:18px;height:18px;"></i></button>
+  </div>
+  <div style="flex:1;overflow-y:auto;padding:20px;">
+    <form id="editRequestForm" method="POST" action="">
+      <div style="display:grid;gap:14px;">
+        <div>
+          <label class="lbl">ชื่อ-นามสกุล</label>
+          <input type="text" name="name" id="er_name" class="inp" required>
+        </div>
+        <div>
+          <label class="lbl">รหัสนักศึกษา</label>
+          <input type="text" name="studentId" id="er_studentId" class="inp">
+        </div>
+        <div>
+          <label class="lbl">เบอร์โทรศัพท์</label>
+          <input type="text" name="phone" id="er_phone" class="inp" required>
+        </div>
+        <div>
+          <label class="lbl">อีเมล</label>
+          <input type="email" name="email" id="er_email" class="inp">
+        </div>
+        <div>
+          <label class="lbl">เรื่องที่ต้องการความช่วยเหลือ</label>
+          <select name="concern" id="er_concern" class="inp">
+            <option value="">-- ไม่ระบุ --</option>
+            <% concernOptions.forEach(opt => { %><option value="<%= opt %>"><%= opt %></option><% }) %>
+          </select>
+        </div>
+        <div>
+          <label class="lbl">รูปแบบที่ต้องการ</label>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+            <label style="display:flex;align-items:center;gap:8px;padding:10px;border:1.5px solid #e2e8f0;border-radius:10px;cursor:pointer;">
+              <input type="radio" name="sessionType" value="online" id="er_typeOnline" style="accent-color:#0891b2;"><i data-lucide="video" style="width:14px;height:14px;color:#0891b2;flex-shrink:0;"></i><span style="font-size:13px;font-weight:500;">ออนไลน์</span>
+            </label>
+            <label style="display:flex;align-items:center;gap:8px;padding:10px;border:1.5px solid #e2e8f0;border-radius:10px;cursor:pointer;">
+              <input type="radio" name="sessionType" value="onsite" id="er_typeOnsite" style="accent-color:#05967e;"><i data-lucide="map-pin" style="width:14px;height:14px;color:#05967e;flex-shrink:0;"></i><span style="font-size:13px;font-weight:500;">เข้ารับบริการด้วยตนเอง</span>
+            </label>
+          </div>
+        </div>
+      </div>
+    </form>
+  </div>
+  <div style="padding:16px 20px;border-top:1px solid #f1f5f9;display:flex;gap:10px;">
+    <button onclick="closeAll()" class="act-btn ab-secondary" style="flex:1;justify-content:center;">ยกเลิก</button>
+    <button onclick="submitEditRequest()" class="act-btn ab-primary" style="flex:1;justify-content:center;"><i data-lucide="save" style="width:14px;height:14px;"></i> บันทึก</button>
+  </div>
+</div>
+
 <!-- Panel: สร้างนัดหมาย -->
 <div id="bookPanel" class="panel-drawer" style="max-width:560px;">
   <div style="padding:16px 20px;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;justify-content:space-between;">
@@ -248,6 +386,13 @@
   <div style="flex:1;overflow-y:auto;">
     <form method="POST" id="bookForm" action="">
       <div id="contactSummary" style="margin:16px 20px 0;padding:12px 14px;background:#f8fafc;border-radius:12px;font-size:13px;display:grid;gap:5px;"></div>
+      <div id="clientMatchSection" style="display:none;margin:16px 20px 0;padding:14px;background:#fffbeb;border:1px solid #fde68a;border-radius:12px;">
+        <div style="font-size:12px;font-weight:600;color:#92400e;margin-bottom:10px;display:flex;align-items:center;gap:6px;">
+          <i data-lucide="alert-triangle" style="width:14px;height:14px;flex-shrink:0;"></i>
+          พบผู้รับบริการที่มีข้อมูลตรงกัน กรุณายืนยันว่าใช่คนเดียวกันหรือไม่
+        </div>
+        <div id="clientMatchList" style="display:grid;gap:8px;"></div>
+      </div>
       <!-- Step 1 -->
       <div style="padding:20px;border-bottom:1px solid #f8fafc;">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
@@ -354,9 +499,84 @@
   </div>
 </div>
 
+<!-- ░░░ Delete confirm overlay ░░░ -->
+<div id="deleteOverlay" class="panel-overlay" onclick="closeDeleteModal()"></div>
+<div id="deletePanel" class="panel-drawer" style="max-width:420px;">
+  <div style="padding:16px 20px;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;justify-content:space-between;">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <div style="width:36px;height:36px;border-radius:10px;background:#fee2e2;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <i data-lucide="trash-2" style="width:17px;height:17px;color:#ef4444;"></i>
+      </div>
+      <div style="font-size:14px;font-weight:600;color:#1e293b;">ยืนยันการลบ</div>
+    </div>
+    <button onclick="closeDeleteModal()" style="background:none;border:none;cursor:pointer;padding:6px;border-radius:8px;color:#94a3b8;"><i data-lucide="x" style="width:18px;height:18px;"></i></button>
+  </div>
+  <form id="deleteForm" method="POST" action="" style="padding:20px;display:flex;flex-direction:column;gap:14px;">
+    <div style="padding:12px 14px;background:#fef2f2;border:1px solid #fca5a5;border-radius:10px;font-size:13px;color:#991b1b;display:flex;gap:8px;align-items:flex-start;">
+      <i data-lucide="alert-triangle" style="width:16px;height:16px;flex-shrink:0;margin-top:1px;"></i>
+      <span id="deleteWarningText"></span>
+    </div>
+    <div>
+      <label class="lbl">เหตุผลการลบ <span style="color:#ef4444;">*</span></label>
+      <textarea name="reason" id="deleteReason" required rows="3" class="inp" style="resize:none;" placeholder="ระบุเหตุผลที่ต้องการลบข้อมูลนี้..."></textarea>
+    </div>
+    <div style="display:flex;gap:10px;">
+      <button type="button" onclick="closeDeleteModal()" class="act-btn ab-secondary" style="flex:1;justify-content:center;">ยกเลิก</button>
+      <button type="submit" class="act-btn ab-danger" style="flex:1;justify-content:center;"><i data-lucide="trash-2" style="width:14px;height:14px;"></i> ยืนยันลบ</button>
+    </div>
+  </form>
+</div>
+
 <script>
+  // ── Delete confirm modal ─────────────────────────────────────────────────────
+  function openDeleteModal(action, name, warning) {
+    document.getElementById('deleteForm').action        = action
+    document.getElementById('deleteReason').value       = ''
+    document.getElementById('deleteWarningText').textContent = warning || ('ต้องการลบ "' + name + '" ใช่หรือไม่ การลบไม่สามารถกู้คืนได้')
+    const ov = document.getElementById('deleteOverlay')
+    ov.style.display = 'block'
+    requestAnimationFrame(() => ov.classList.add('open'))
+    document.getElementById('deletePanel').classList.add('open')
+    document.body.style.overflow = 'hidden'
+    lucide.createIcons()
+  }
+  function closeDeleteModal() {
+    const ov = document.getElementById('deleteOverlay')
+    ov.classList.remove('open')
+    document.getElementById('deletePanel').classList.remove('open')
+    document.body.style.overflow = ''
+    setTimeout(() => { ov.style.display = 'none' }, 200)
+  }
+  document.querySelectorAll('.delete-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      openDeleteModal(btn.dataset.action, btn.dataset.name, btn.dataset.warning)
+    })
+  })
+
   const SCHEDULES = <%- JSON.stringify(schedules) %>
+  const CLIENTS = <%- JSON.stringify(clients) %>
+  const COUNSELOR_COLORS = <%- JSON.stringify(counselorColors) %>
+  const APPOINTMENTS = <%- JSON.stringify(appointments) %>
   let bCounselor = null, bTime = null
+
+  // ── Concern (เรื่องที่ต้องการความช่วยเหลือ) pill badge ────────────────────────
+  const CONCERN_OPTIONS = <%- JSON.stringify(concernOptions) %>
+  const CONCERN_PALETTE_JS = [
+    { bg:'#ffedd5', color:'#9a3412' },
+    { bg:'#ede9fe', color:'#5b21b6' },
+    { bg:'#fce7f3', color:'#9d174d' },
+    { bg:'#cffafe', color:'#155e75' },
+    { bg:'#e0e7ff', color:'#3730a3' },
+    { bg:'#f1f5f9', color:'#475569' },
+  ]
+  const CONCERN_FALLBACK_JS = { bg:'#f1f5f9', color:'#475569' }
+  const CONCERN_COLOR_MAP_JS = {}
+  CONCERN_OPTIONS.forEach((opt, i) => { CONCERN_COLOR_MAP_JS[opt] = CONCERN_PALETTE_JS[i % CONCERN_PALETTE_JS.length] })
+  function concernBadge(concern) {
+    if (!concern) return ''
+    const cc = CONCERN_COLOR_MAP_JS[concern] || CONCERN_FALLBACK_JS
+    return `<span style="display:inline-block;padding:2px 8px;background:${cc.bg};color:${cc.color};border-radius:99px;font-size:12px;font-weight:500;">${esc(concern)}</span>`
+  }
 
   function esc(value) {
     return String(value || '')
@@ -369,11 +589,12 @@
 
   // ── Tab switching ─────────────────────────────────────────────────────────────
   function switchTab(tab) {
-    document.getElementById('tab-pending').classList.toggle('active', tab==='pending')
-    document.getElementById('tab-done').classList.toggle('active', tab==='done')
+    ['all','new','contacted','converted','closed'].forEach(s => {
+      document.getElementById('tab-' + s).classList.toggle('active', tab === s)
+    })
     let vis = 0
     document.querySelectorAll('tr[data-grp]').forEach(r => {
-      const show = r.dataset.grp === tab
+      const show = tab === 'all' || r.dataset.grp === tab
       r.style.display = show ? '' : 'none'
       if (show) vis++
     })
@@ -389,17 +610,50 @@
       document.getElementById('f_status').value             = c.status || 'new'
       document.getElementById('f_note').value               = c.note   || ''
       const typeLabel = c.sessionType==='online' ? 'ออนไลน์' : 'เข้ารับบริการด้วยตนเอง'
+      const linkedAppt = (c.status === 'converted' && c.appointmentId)
+        ? APPOINTMENTS.find(a => a.id === c.appointmentId)
+        : null
       document.getElementById('statusInfoBox').innerHTML = `
+        <div style="font-size:14px;font-weight:600;color:#3874FF;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">ข้อมูลคำขอเพื่อทำนัดหมาย</div>
         <div style="display:flex;gap:8px;"><span style="color:#94a3b8;min-width:80px;">ชื่อ</span><strong>${esc(c.name)}</strong></div>
         ${c.studentId?`<div style="display:flex;gap:8px;"><span style="color:#94a3b8;min-width:80px;">รหัสนักศึกษา</span><span>${esc(c.studentId)}</span></div>`:''}
         <div style="display:flex;gap:8px;"><span style="color:#94a3b8;min-width:80px;">โทร</span><span>${esc(c.phone)}</span></div>
         ${c.email?`<div style="display:flex;gap:8px;"><span style="color:#94a3b8;min-width:80px;">อีเมล</span><span>${esc(c.email)}</span></div>`:''}
-        ${c.concern?`<div style="display:flex;gap:8px;"><span style="color:#94a3b8;min-width:80px;">เรื่อง</span><span>${esc(c.concern)}</span></div>`:''}
+        ${c.concern?`<div style="display:flex;gap:8px;align-items:center;"><span style="color:#94a3b8;min-width:80px;">เรื่อง</span>${concernBadge(c.concern)}</div>`:''}
         <div style="display:flex;gap:8px;"><span style="color:#94a3b8;min-width:80px;">รูปแบบ</span><span>${typeLabel}</span></div>
+        ${linkedAppt ? `
+        <div style="margin-top:6px;padding-top:10px;border-top:1px solid #e2e8f0;">
+          <div style="font-size:14px;font-weight:600;color:#05967e;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">ข้อมูลนัดหมายที่สร้างแล้ว</div>
+          <div style="display:flex;gap:8px;"><span style="color:#94a3b8;min-width:80px;">นักจิตวิทยา</span><span>${esc(linkedAppt.counselorName)}</span></div>
+          <div style="display:flex;gap:8px;"><span style="color:#94a3b8;min-width:80px;">วันที่และเวลา</span><span>${esc(linkedAppt.date)} เวลา ${esc(linkedAppt.time)} น.</span></div>
+        </div>` : ''}
       `
       openOverlay(); document.getElementById('statusPanel').classList.add('open')
     })
   })
+
+  // ── Edit request panel ───────────────────────────────────────────────────────
+  document.querySelectorAll('.edit-request-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const c = JSON.parse(btn.dataset.rec)
+      document.getElementById('editRequestPanelSub').textContent = c.name
+      document.getElementById('editRequestForm').action = '/admin/contacts/' + c.id + '/edit'
+      document.getElementById('er_name').value      = c.name || ''
+      document.getElementById('er_studentId').value = c.studentId || ''
+      document.getElementById('er_phone').value     = c.phone || ''
+      document.getElementById('er_email').value      = c.email || ''
+      document.getElementById('er_concern').value    = c.concern || ''
+      if (c.sessionType === 'onsite') { document.getElementById('er_typeOnsite').checked = true; document.getElementById('er_typeOnline').checked = false }
+      else { document.getElementById('er_typeOnline').checked = true; document.getElementById('er_typeOnsite').checked = false }
+      openOverlay(); document.getElementById('editRequestPanel').classList.add('open')
+    })
+  })
+
+  function submitEditRequest() {
+    const form = document.getElementById('editRequestForm')
+    if (!form.reportValidity()) return
+    form.submit()
+  }
 
   // ── Book panel ────────────────────────────────────────────────────────────────
   document.querySelectorAll('.book-btn').forEach(btn => {
@@ -412,11 +666,58 @@
       const typeLabel = c.sessionType==='online' ? 'ออนไลน์' : 'เข้ารับบริการด้วยตนเอง'
       document.getElementById('contactSummary').innerHTML = `
         <div style="font-size:12px;font-weight:600;color:#64748b;margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em;">ผู้ร้องขอ</div>
-        <div style="display:flex;gap:8px;"><span style="color:#94a3b8;min-width:72px;">ชื่อ</span><strong>${esc(c.name)}</strong></div>
-        <div style="display:flex;gap:8px;"><span style="color:#94a3b8;min-width:72px;">โทร</span><span>${esc(c.phone)}</span></div>
-        ${c.concern?`<div style="display:flex;gap:8px;"><span style="color:#94a3b8;min-width:72px;">เรื่อง</span><span>${esc(c.concern)}</span></div>`:''}
+        <div style="display:flex;gap:8px;"><span style="color:#94a3b8;min-width:72px;">ชื่อ-นามสกุล</span><strong>${esc(c.name)}</strong></div>
+        <div style="display:flex;gap:8px;"><span style="color:#94a3b8;min-width:72px;">รหัสนักศึกษา</span><span>${esc(c.studentId || '—')}</span></div>
+        <div style="display:flex;gap:8px;"><span style="color:#94a3b8;min-width:72px;">เบอร์โทรศัพท์</span><span>${esc(c.phone || '—')}</span></div>
+        <div style="display:flex;gap:8px;"><span style="color:#94a3b8;min-width:72px;">อีเมล</span><span>${esc(c.email || '—')}</span></div>
+        ${c.concern?`<div style="display:flex;gap:8px;align-items:center;"><span style="color:#94a3b8;min-width:72px;">เรื่อง</span>${concernBadge(c.concern)}</div>`:''}
         <div style="display:flex;gap:8px;"><span style="color:#94a3b8;min-width:72px;">รูปแบบ</span><span>${typeLabel}</span></div>
       `
+
+      // ── ตรวจสอบผู้รับบริการที่อาจเป็นคนเดียวกัน (ชื่อ + รหัสนักศึกษา ไม่ใช้เบอร์โทร/อีเมลเดี่ยวๆ) ──
+      const normName = v => String(v || '').trim().toLowerCase().replace(/\s+/g, ' ')
+      const matches = CLIENTS.map(cl => {
+        const nameMatch      = normName(cl.name) === normName(c.name) && normName(c.name) !== ''
+        const studentIdMatch = !!(c.studentId && cl.studentId && cl.studentId.trim() === c.studentId.trim())
+        if (!nameMatch && !studentIdMatch) return null
+        const reason = nameMatch && studentIdMatch ? 'ชื่อและรหัสนักศึกษาตรงกัน' : studentIdMatch ? 'รหัสนักศึกษาตรงกัน' : 'ชื่อตรงกัน'
+        return { client: cl, reason }
+      }).filter(Boolean)
+
+      const matchSection = document.getElementById('clientMatchSection')
+      const matchList     = document.getElementById('clientMatchList')
+      if (matches.length) {
+        matchList.innerHTML = matches.map(({ client, reason }) => {
+          const clientAppts = APPOINTMENTS
+            .filter(a => a.clientId === client.id)
+            .sort((a, b) => b.date.localeCompare(a.date))
+          const latestAppt = clientAppts[0]
+          const cCol = latestAppt ? (COUNSELOR_COLORS[latestAppt.counselorId] || '#64748b') : null
+          return `
+          <label style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:10px;cursor:pointer;background:#fff;">
+            <input type="radio" name="existingClientId" value="${client.id}" required style="accent-color:#05967e;flex-shrink:0;margin-top:2px;">
+            <div style="flex:1;min-width:0;display:grid;gap:2px;">
+              <div style="font-size:13px;font-weight:600;color:#1e293b;">${esc(client.name)}</div>
+              <div style="font-size:12px;color:#64748b;">รหัสนักศึกษา: ${esc(client.studentId || '—')}</div>
+              <div style="font-size:12px;color:#64748b;">เบอร์โทรศัพท์: ${esc(client.phone || '—')}</div>
+              <div style="font-size:12px;color:#64748b;">อีเมล: ${esc(client.email || '—')}</div>
+              ${latestAppt ? `<div style="font-size:12px;color:#64748b;display:flex;align-items:center;gap:6px;margin-top:2px;">รับคำปรึกษาล่าสุด <span style="padding:2px 8px;background:${cCol}18;color:${cCol};border-radius:99px;font-size:11px;font-weight:600;">${esc(latestAppt.counselorName || '—')}</span></div>` : ''}
+            </div>
+            <span style="padding:2px 8px;background:#fef3c7;color:#92400e;border-radius:99px;font-size:11px;font-weight:600;white-space:nowrap;flex-shrink:0;">${reason}</span>
+          </label>`
+        }
+        ).join('') + `
+          <label style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:10px;cursor:pointer;background:#fff;">
+            <input type="radio" name="existingClientId" value="" required style="accent-color:#05967e;flex-shrink:0;">
+            <div style="font-size:13px;font-weight:600;color:#1e293b;">ไม่ใช่คนเดียวกัน — สร้างผู้รับบริการใหม่</div>
+          </label>`
+        matchSection.style.display = 'block'
+      } else {
+        matchList.innerHTML = ''
+        matchSection.style.display = 'none'
+      }
+      lucide.createIcons()
+
       bCounselor=null; bTime=null
       document.getElementById('bDateInput').disabled=true; document.getElementById('bDateInput').value=''
       document.getElementById('bDateHint').style.display='block'
@@ -438,6 +739,7 @@
     const ov = document.getElementById('overlay')
     ov.classList.remove('open')
     document.getElementById('statusPanel').classList.remove('open')
+    document.getElementById('editRequestPanel').classList.remove('open')
     document.getElementById('bookPanel').classList.remove('open')
     document.body.style.overflow=''
     setTimeout(()=>{ov.style.display='none'},200)
@@ -495,7 +797,11 @@
     form.submit()
   }
 
-  switchTab('pending')
+  <%
+    const validTabs = ['new','contacted','converted','closed']
+    const initialTab = validTabs.includes(query.status) ? query.status : 'all'
+  %>
+  switchTab('<%= initialTab %>')
   lucide.createIcons()
 </script>
 </body>

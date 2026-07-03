@@ -9,13 +9,14 @@ function textFromCodes(codes) {
 
 const STATUS_HEADER = textFromCodes([0x0E2A, 0x0E16, 0x0E32, 0x0E19, 0x0E30])
 const MANAGEMENT_HEADER = textFromCodes([0x0E01, 0x0E32, 0x0E23, 0x0E08, 0x0E31, 0x0E14, 0x0E01, 0x0E32, 0x0E23])
-const STATUS_MANAGEMENT_HEADER = textFromCodes([0x0E2A, 0x0E16, 0x0E32, 0x0E19, 0x0E30, 0x0E19, 0x0E31, 0x0E14, 0x0E2B, 0x0E21, 0x0E32, 0x0E22])
+const STATUS_MANAGEMENT_HEADER = textFromCodes([0x0E08, 0x0E31, 0x0E14, 0x0E01, 0x0E32, 0x0E23, 0x0E19, 0x0E31, 0x0E14, 0x0E2B, 0x0E21, 0x0E32, 0x0E22])
 const COMPLETE_BUTTON_LABEL = textFromCodes([0x0E43, 0x0E2B, 0x0E49, 0x0E04, 0x0E33, 0x0E1B, 0x0E23, 0x0E36, 0x0E01, 0x0E29, 0x0E32, 0x0E40, 0x0E2A, 0x0E23, 0x0E47, 0x0E08, 0x0E2A, 0x0E34, 0x0E49, 0x0E19])
 const PENDING_TABLE_LABEL = textFromCodes([0x0E23, 0x0E2D, 0x0E22, 0x0E37, 0x0E19, 0x0E22, 0x0E31, 0x0E19, 0x0E19, 0x0E31, 0x0E14])
 const CANCELLED_TABLE_LABEL = textFromCodes([0x0E22, 0x0E01, 0x0E40, 0x0E25, 0x0E34, 0x0E01, 0x0E19, 0x0E31, 0x0E14])
 const CONFIRM_BUTTON_LABEL = textFromCodes([0x0E22, 0x0E37, 0x0E19, 0x0E22, 0x0E31, 0x0E19, 0x0E19, 0x0E31, 0x0E14])
 const CANCEL_BUTTON_LABEL = textFromCodes([0x0E22, 0x0E01, 0x0E40, 0x0E25, 0x0E34, 0x0E01, 0x0E19, 0x0E31, 0x0E14])
 const VIEW_SITE_LABEL = textFromCodes([0x0E14, 0x0E39, 0x0E2B, 0x0E19, 0x0E49, 0x0E32, 0x0E40, 0x0E27, 0x0E47, 0x0E1A, 0x0E2B, 0x0E25, 0x0E31, 0x0E01])
+const VIEW_APPOINTMENT_BUTTON_LABEL = textFromCodes([0x0E14, 0x0E39, 0x0E02, 0x0E49, 0x0E2D, 0x0E21, 0x0E39, 0x0E25, 0x0E19, 0x0E31, 0x0E14])
 
 function renderAppointments(locals = {}) {
   return new Promise((resolve, reject) => {
@@ -30,6 +31,7 @@ function renderAppointments(locals = {}) {
         counselors: [
           { id: 'coun-1', name: 'Counselor One', title: 'Psychologist', avatar: 'CO', isApproved: true, sessionDuration: 60, specialties: ['Stress', 'Anxiety'] },
         ],
+        counselorColors: { 'coun-1': '#6366f1' },
         clients: [
           { id: 'client-1', name: 'Client One', phone: '0812345678', email: 'client@example.com' },
         ],
@@ -51,6 +53,8 @@ function renderAppointments(locals = {}) {
         ],
         counselorActiveCounts: {},
         myStatusCounts: {},
+        clientAppointments: [],
+        concernOptions: ['ความวิตกกังวล / ความเครียด', 'ภาวะซึมเศร้า', 'ปัญหาความสัมพันธ์', 'ปัญหาครอบครัว', 'ความเศร้าโศก / การสูญเสีย', 'อื่นๆ'],
         ...locals,
       },
       {},
@@ -71,12 +75,15 @@ test('appointments table separates status action buttons into the final column',
   const managementCell = cells[7]
   const statusManagementCell = cells[8]
 
-  assert.match(managementCell, /openViewPanel/)
+  assert.doesNotMatch(managementCell, /openViewPanel/)
   assert.match(managementCell, /openEditPanel/)
   assert.match(managementCell, /\/admin\/appointments\/app-test-pending\/delete/)
   assert.doesNotMatch(managementCell, /\/admin\/appointments\/app-test-pending\/confirm/)
   assert.doesNotMatch(managementCell, /\/admin\/appointments\/app-test-pending\/cancel/)
 
+  assert.match(statusManagementCell, /openViewPanel/)
+  assert.match(statusManagementCell, new RegExp(VIEW_APPOINTMENT_BUTTON_LABEL))
+  assert.ok(statusManagementCell.indexOf('openViewPanel') < statusManagementCell.indexOf('/admin/appointments/app-test-pending/confirm'))
   assert.match(statusManagementCell, /\/admin\/appointments\/app-test-pending\/confirm/)
   assert.match(statusManagementCell, /\/admin\/appointments\/app-test-pending\/cancel/)
   assert.match(statusManagementCell, /data-lucide="check"/)
@@ -126,11 +133,12 @@ test('counselor completion button is in the status management column', async () 
   const managementCell = cells[7]
   const statusManagementCell = cells[8]
 
-  assert.match(managementCell, /openViewPanel/)
+  assert.doesNotMatch(managementCell, /openViewPanel/)
   assert.doesNotMatch(managementCell, /openCompletePanel/)
   assert.match(managementCell, /openEditPanel/)
   assert.doesNotMatch(managementCell, /\/admin\/appointments\/app-test-confirmed\/delete/)
 
+  assert.match(statusManagementCell, /openViewPanel/)
   assert.match(statusManagementCell, /openCompletePanel\('app-test-confirmed'\)/)
   assert.match(statusManagementCell, /data-lucide="check-check"/)
   assert.match(statusManagementCell, new RegExp(COMPLETE_BUTTON_LABEL))
