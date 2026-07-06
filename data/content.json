@@ -5,7 +5,8 @@
     "heading2": "อย่างที่ควรได้รับ",
     "subtext": "เชื่อมต่อกับนักจิตวิทยาและนักให้คำปรึกษาที่ผ่านการรับรอง จองนัดหมายได้ง่ายๆ ทั้งแบบออนไลน์และเข้ารับบริการด้วยตนเอง",
     "ctaMain": "ลงทะเบียนเพื่อขอรับบริการ",
-    "ctaSub": "ดูนักให้คำปรึกษา"
+    "ctaSub": "ดูนักให้คำปรึกษา",
+    "visualImage": "/uploads/content/1783323487329.webp"
   },
   "counselors": {
     "heading": "นักจิตวิทยาให้คำปรึกษาของเรา",
@@ -65,7 +66,8 @@
     "lineUrl": "https://page.line.me/bucare?openQrModal=true",
     "email": "hello@MindCare.th",
     "phone": "02-XXX-XXXX",
-    "hours": "จันทร์-เสาร์ 08.30 – 17.00 น.<br>(ยกเว้นวันหยุดนักขัตฤกษ์)"
+    "hours": "จันทร์-เสาร์ 08.30 – 17.00 น.<br>(ยกเว้นวันหยุดนักขัตฤกษ์)",
+    "copyright": "© 2026 MindCare · Bangkok University. All Rights Reserved."
   },
   "backgrounds": {
     "hero": {
@@ -78,62 +80,84 @@
         "subtext": ""
       },
       "motionEnabled": true,
-      "motionDuration": 90,
-      "motionScale": 1.35
+      "motionDuration": 42,
+      "motionScale": 1.35,
+      "motionStyle": "zoom"
     },
     "counselors": {
       "color": "#ffffff",
-      "opacity": 0.5,
-      "image": "/uploads/content/1782272390886.png",
-      "imgOpacity": 0.45,
+      "opacity": 0,
+      "image": "/uploads/content/1783317283390.png",
+      "imgOpacity": 1,
       "textColors": {
         "heading": "",
         "subtext": "#5a5f68"
       },
       "motionEnabled": true,
       "motionDuration": 38,
-      "motionScale": 1.12
+      "motionScale": 1.12,
+      "motionStyle": "zoom"
     },
     "features": {
       "color": "",
       "opacity": 1,
-      "image": "",
+      "image": "/uploads/content/1783317283397.jpg",
       "imgOpacity": 1,
       "textColors": {
         "heading": "",
         "subtext": ""
       },
       "motionEnabled": true,
-      "motionDuration": 38,
-      "motionScale": 1.12
+      "motionDuration": 17,
+      "motionScale": 1.35,
+      "motionStyle": "zoom"
     },
     "book": {
-      "color": "#83c9b7",
-      "opacity": 0.15,
-      "image": "/uploads/content/1782366455711.jpg",
-      "imgOpacity": 0.1,
+      "color": "#dedede",
+      "opacity": 0.7,
+      "image": "/uploads/content/1783335567922.jpg",
+      "imgOpacity": 0.55,
       "textColors": {
-        "heading": "",
-        "subtext": "#6a717c",
-        "formHeading": "#6a717c"
+        "heading": "#001638",
+        "subtext": "#001f4d",
+        "formHeading": "#001638"
       },
       "motionEnabled": true,
-      "motionDuration": 90,
-      "motionScale": 1.35
+      "motionDuration": 12,
+      "motionScale": 1.19,
+      "motionStyle": "zoom"
     },
     "faq": {
       "color": "#adafd2",
-      "opacity": 0.05,
+      "opacity": 0.25,
       "image": "/uploads/content/1782272361491.png",
-      "imgOpacity": 0.4,
+      "imgOpacity": 0.9,
       "textColors": {
         "heading": "",
         "questions": "",
         "answers": ""
       },
       "motionEnabled": true,
-      "motionDuration": 38,
-      "motionScale": 1.12
+      "motionDuration": 8,
+      "motionScale": 1.15,
+      "motionStyle": "zoom"
+    },
+    "footer": {
+      "color": "#081735",
+      "image": "/uploads/content/1783317283399.jpg",
+      "opacity": 0.9,
+      "imgOpacity": 0.6,
+      "motionEnabled": true,
+      "motionDuration": 14,
+      "motionScale": 1.12,
+      "textColors": {
+        "description": "#cfcfcf",
+        "menu": "#cfcfcf",
+        "lineLabel": "#cfcfcf",
+        "hours": "#cfcfcf",
+        "copyright": "#cfcfcf"
+      },
+      "motionStyle": "zoom"
     }
   },
   "en": {
@@ -201,7 +225,8 @@
       "lineUrl": "https://page.line.me/bucare?openQrModal=true",
       "email": "hello@MindCare.th",
       "phone": "02-XXX-XXXX",
-      "hours": "Mon–Sat 08:30 – 17:00 (Except public holidays)"
+      "hours": "Mon–Sat 08:30 – 17:00 (Except public holidays)",
+      "copyright": "© 2026 MindCare · Bangkok University. All Rights Reserved."
     },
     "features": {
       "heading": "Why Choose MindCare?",
@@ -224,6 +249,17 @@
       "จองนัดได้ตลอด 24 ชั่วโมง ทุกวัน",
       "รองรับทั้งการพบออนไลน์และเข้ารับบริการด้วยตนเอง",
       "แจ้งเตือนก่อนนัดหมาย ไม่ลืมแน่นอน"
-    ]
+    ],
+    "collagePhoto1": "/uploads/content/1783328773600.png",
+    "collagePhoto2": "/uploads/content/1783328773624.png",
+    "collagePhoto3": "/uploads/content/1783328773652.png",
+    "collagePhoto4": "/uploads/content/1783328773681.png",
+    "badge1Text": "พร้อมซัพพอร์ตคุณ<br>ในทุกช่วงเวลา",
+    "badge2Text": "ปลอดภัย เป็นความลับ<br>ใส่ใจในทุกความรู้สึก",
+    "badge3Text": "พื้นที่ที่เข้าใจและไม่ตัดสิน",
+    "collageMotionEnabled": true,
+    "collageMotionStyle": "float",
+    "collageMotionDuration": 8,
+    "collageMotionScale": 1.12
   }
 }

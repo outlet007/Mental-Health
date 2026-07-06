@@ -5,7 +5,12 @@ function isPlaceholder(value, placeholders = []) {
   return !value || placeholders.includes(String(value).trim())
 }
 
-function getTransporter() {
+function getTransporter(config) {
+  if (config) {
+    const options = { host: config.host, port: config.port, secure: !!config.secure }
+    if (config.auth) options.auth = { user: config.user, pass: config.pass }
+    return nodemailer.createTransport(options)
+  }
   const host = process.env.SMTP_HOST || 'localhost'
   const port = parseInt(process.env.SMTP_PORT || '1025', 10)
   const secure = process.env.SMTP_SECURE === 'true'
@@ -119,17 +124,18 @@ async function sendCounselorReassignedEmail({ appointment, client, counselor }) 
   return { sent: true, messageId: info.messageId }
 }
 
-function fromAddress() {
+function fromAddress(config) {
+  if (config) return `"${config.fromName}" <${config.fromEmail}>`
   const fromName = process.env.SMTP_FROM_NAME || 'MindCare'
   const fromEmail = process.env.SMTP_FROM_EMAIL || process.env.SMTP_USER || 'mindcare@example.test'
   return `"${fromName}" <${fromEmail}>`
 }
 
-async function sendSurveyEmail({ appointment, client, counselor, surveyUrl }) {
-  const transporter = getTransporter()
+async function sendSurveyEmail({ appointment, client, counselor, surveyUrl, deliveryConfig }) {
+  const transporter = getTransporter(deliveryConfig)
   if (!client.email) return { skipped: true }
   const info = await transporter.sendMail({
-    from: fromAddress(),
+    from: fromAddress(deliveryConfig),
     to: client.email,
     subject: `[MindCare] \u0e1b\u0e23\u0e30\u0e40\u0e21\u0e34\u0e19\u0e04\u0e27\u0e32\u0e21\u0e1e\u0e36\u0e07\u0e1e\u0e2d\u0e43\u0e08 - ${formatDate(appointment.date)}`,
     html: surveyEmailHtml({ appointment, client, counselor, surveyUrl }),

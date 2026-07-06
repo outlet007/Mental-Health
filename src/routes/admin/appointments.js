@@ -5,7 +5,7 @@ const { matchesSearch } = require('../../utils/search')
 const path    = require('path')
 const crypto = require('crypto')
 const { sendAppointmentEmails, sendSurveyEmail, sendCounselorReassignedEmail } = require('../../utils/mailer')
-const { readSurveyEmailSettings, resolveSurveyEmailRecipient } = require('../../utils/survey-email-settings')
+const { readSurveyEmailSettings, resolveSurveyEmailRecipient, getEmailDeliveryConfig } = require('../../utils/survey-email-settings')
 const { toMin, timesOverlap } = require('../../utils/appointment-scheduling')
 const { logDeletion } = require('../../utils/audit-log')
 const { getConcernOptions } = require('../../utils/concern-options')
@@ -347,11 +347,13 @@ router.post('/:id/complete', (req, res) => {
     const counselor  = counselors.find(c => c.id === appt.counselorId)
     if (client && counselor) {
       const baseUrl = process.env.BASE_URL || 'http://localhost:3000'
+      const settings = readSurveyEmailSettings()
       sendSurveyEmail({
         appointment: appt,
-        client,
+        client: resolveSurveyEmailRecipient(client, settings),
         counselor,
         surveyUrl: `${baseUrl}/survey/${appt.surveyToken}`,
+        deliveryConfig: getEmailDeliveryConfig(settings),
       }).catch(err => console.error('[Email] survey error:', err.message))
     }
   }

@@ -24,10 +24,10 @@ test('sample client, appointment, and survey data are cross-linked', () => {
       .map(appointment => appointment.id)
   )
 
-  assert.equal(clients.length, 51)
+  assert.equal(clients.length, 52)
   assert.equal(surveys.length, 50)
-  assert.equal(new Set(clients.map(client => client.email)).size, 51)
-  assert.equal(new Set(clients.map(client => client.studentId)).size, 51)
+  assert.equal(new Set(clients.map(client => client.email)).size, 52)
+  assert.equal(new Set(clients.map(client => client.studentId)).size, 52)
 
   for (const client of clients) {
     assert.ok(client.id)

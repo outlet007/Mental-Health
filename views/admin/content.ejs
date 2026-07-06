@@ -75,6 +75,57 @@
       '</div>' +
     '</div>'
   }
+  function photoField(fieldName, label, currentImage) {
+    return '<div>' +
+      '<label class="lbl">' + label + '</label>' +
+      '<div id="curimgbox_' + fieldName + '" style="display:' + (currentImage ? 'flex' : 'none') + ';align-items:center;gap:8px;margin-bottom:8px;padding:8px 10px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;">' +
+        '<img src="' + (currentImage || '') + '" style="width:56px;height:56px;object-fit:cover;border-radius:5px;border:1px solid #e2e8f0;flex-shrink:0;">' +
+        '<span style="font-size:12px;color:#64748b;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + (currentImage ? currentImage.split('/').pop() : '') + '</span>' +
+        '<label style="display:flex;align-items:center;gap:4px;font-size:12px;color:#ef4444;cursor:pointer;flex-shrink:0;white-space:nowrap;">' +
+          '<input type="checkbox" name="clear_' + fieldName + '" style="accent-color:#ef4444;"> ลบรูป' +
+        '</label>' +
+      '</div>' +
+      '<input type="file" name="' + fieldName + '" class="inp" accept="image/jpeg,image/png,image/webp,image/gif" style="padding:6px;font-size:12px;" onchange="previewBgImage(this,\'' + fieldName + '\')">' +
+      '<div id="newimgbox_' + fieldName + '" style="display:none;align-items:center;gap:8px;margin-top:8px;padding:8px 10px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;">' +
+        '<img style="width:56px;height:56px;object-fit:cover;border-radius:5px;border:1px solid #bbf7d0;flex-shrink:0;">' +
+        '<span style="font-size:12px;color:#16a34a;font-weight:600;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">รูปใหม่ที่เลือก (ยังไม่บันทึก)</span>' +
+      '</div>' +
+    '</div>'
+  }
+  function motionField(key, cur) {
+    cur = cur || {}
+    const enabled = cur[key + 'MotionEnabled'] !== false
+    const style = cur[key + 'MotionStyle'] === 'float' ? 'float' : 'zoom'
+    const duration = typeof cur[key + 'MotionDuration'] === 'number' ? cur[key + 'MotionDuration'] : 38
+    const scale = typeof cur[key + 'MotionScale'] === 'number' ? cur[key + 'MotionScale'] : 1.12
+    return '<div style="padding:10px;border:1px solid #e2e8f0;border-radius:10px;background:#fff;display:grid;gap:8px;">' +
+      '<label style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:#475569;">' +
+        '<input type="hidden" name="' + key + 'MotionEnabled" value="off">' +
+        '<input type="checkbox" name="' + key + 'MotionEnabled" value="on" ' + (enabled ? 'checked' : '') + ' style="accent-color:#8b5cf6;">' +
+        'เปิด motion (object กรอบ เคลื่อนไหว)' +
+      '</label>' +
+      '<div style="display:flex;align-items:center;gap:14px;font-size:12px;color:#475569;">' +
+        '<label style="display:flex;align-items:center;gap:5px;cursor:pointer;">' +
+          '<input type="radio" name="' + key + 'MotionStyle" value="zoom" ' + (style === 'float' ? '' : 'checked') + ' style="accent-color:#8b5cf6;" onchange="document.getElementById(\'mvscalerow_' + key + '\').style.display=\'\'">' +
+          'ซูมเข้า-ออก' +
+        '</label>' +
+        '<label style="display:flex;align-items:center;gap:5px;cursor:pointer;">' +
+          '<input type="radio" name="' + key + 'MotionStyle" value="float" ' + (style === 'float' ? 'checked' : '') + ' style="accent-color:#8b5cf6;" onchange="document.getElementById(\'mvscalerow_' + key + '\').style.display=\'none\'">' +
+          'ลอยขึ้น-ลง' +
+        '</label>' +
+      '</div>' +
+      '<div style="display:flex;align-items:center;gap:8px;">' +
+        '<span style="font-size:12px;color:#64748b;white-space:nowrap;">ระยะเวลา:</span>' +
+        '<input type="range" id="mvdur_' + key + '" name="' + key + 'MotionDuration" min="8" max="90" step="1" value="' + duration + '" style="flex:1;accent-color:#8b5cf6;height:4px;cursor:pointer;" oninput="document.getElementById(\'mvdurval_' + key + '\').textContent=this.value+\'s\'">' +
+        '<span id="mvdurval_' + key + '" style="font-size:12px;font-weight:700;color:#1e293b;width:34px;text-align:right;">' + duration + 's</span>' +
+      '</div>' +
+      '<div id="mvscalerow_' + key + '" style="display:' + (style === 'float' ? 'none' : '') + ';align-items:center;gap:8px;">' +
+        '<span style="font-size:12px;color:#64748b;white-space:nowrap;">ระดับ zoom:</span>' +
+        '<input type="range" id="mvscale_' + key + '" name="' + key + 'MotionScale" min="1" max="1.35" step="0.01" value="' + scale + '" style="flex:1;accent-color:#ec4899;height:4px;cursor:pointer;" oninput="document.getElementById(\'mvscaleval_' + key + '\').textContent=this.value+\'x\'">' +
+        '<span id="mvscaleval_' + key + '" style="font-size:12px;font-weight:700;color:#1e293b;width:42px;text-align:right;">' + scale + 'x</span>' +
+      '</div>' +
+    '</div>'
+  }
 %>
 
 <div style="margin-left:256px; min-height:100vh; display:flex; flex-direction:column;">
@@ -174,7 +225,7 @@ SMTP_BCC=   <span style="color:#94a3b8;"># optional สำเนาทุกอ�
 
       <!-- TH -->
       <div id="hero-th" style="display:<%= autoEnHero ? 'none' : '' %>;">
-        <form method="POST" action="/admin/content/hero">
+        <form method="POST" action="/admin/content/hero" enctype="multipart/form-data">
           <div style="display:grid;gap:14px;">
             <div>
               <label class="lbl">ข้อความ Badge <span class="lang-badge lang-badge-th">ภาษาไทย</span></label>
@@ -193,6 +244,21 @@ SMTP_BCC=   <span style="color:#94a3b8;"># optional สำเนาทุกอ�
             <div>
               <label class="lbl">คำอธิบาย</label>
               <textarea name="subtext" class="inp" rows="2" style="resize:none;"><%= content.hero.subtext %></textarea>
+            </div>
+            <div>
+              <label class="lbl">รูปภาพหลัก (แทนที่รูป/ไอคอนฝั่งขวาของ Hero ทั้งหมด แบบเต็มพื้นที่)</label>
+              <div id="curimgbox_herovisual" style="display:<%= content.hero.visualImage ? 'flex' : 'none' %>;align-items:center;gap:8px;margin-bottom:8px;padding:8px 10px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;">
+                <img src="<%= content.hero.visualImage || '' %>" style="width:56px;height:56px;object-fit:cover;border-radius:5px;border:1px solid #e2e8f0;flex-shrink:0;">
+                <span style="font-size:12px;color:#64748b;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"><%= content.hero.visualImage ? content.hero.visualImage.split('/').pop() : '' %></span>
+                <label style="display:flex;align-items:center;gap:4px;font-size:12px;color:#ef4444;cursor:pointer;flex-shrink:0;white-space:nowrap;">
+                  <input type="checkbox" name="clearVisualImage" style="accent-color:#ef4444;"> ลบรูป (ใช้ไอคอนเริ่มต้น)
+                </label>
+              </div>
+              <input type="file" name="heroVisualImage" class="inp" accept="image/jpeg,image/png,image/webp,image/gif" style="padding:6px;font-size:12px;" onchange="previewBgImage(this,'herovisual')">
+              <div id="newimgbox_herovisual" style="display:none;align-items:center;gap:8px;margin-top:8px;padding:8px 10px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;">
+                <img style="width:56px;height:56px;object-fit:cover;border-radius:5px;border:1px solid #bbf7d0;flex-shrink:0;">
+                <span style="font-size:12px;color:#16a34a;font-weight:600;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">รูปใหม่ที่เลือก (ยังไม่บันทึก)</span>
+              </div>
             </div>
             <div class="text-color-panel">
               <div class="text-color-title">สีข้อความที่แสดงบนหน้าเว็บ</div>
@@ -310,12 +376,25 @@ SMTP_BCC=   <span style="color:#94a3b8;"># optional สำเนาทุกอ�
         </div>
       </div>
       <div id="features-th" style="display:<%= autoEnFeatures ? 'none' : '' %>;">
-      <form method="POST" action="/admin/content/features" style="display:grid;gap:12px;">
+      <form method="POST" action="/admin/content/features" enctype="multipart/form-data" style="display:grid;gap:12px;">
         <div style="font-size:12px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;">ภาษาไทย</div>
         <div><label class="lbl">หัวข้อ Section ทำไมต้องเลือก MindCare</label><input type="text" name="featuresHeading" class="inp" value="<%= (content.features && content.features.heading) || 'ทำไมต้องเลือก MindCare?' %>"></div>
         <div><label class="lbl">คำอธิบาย Section ทำไมต้องเลือก MindCare</label><textarea name="featuresSubtext" class="inp" rows="2" style="resize:none;"><%= (content.features && content.features.subtext) || '' %></textarea></div>
         <div style="display:grid;gap:8px;"><label class="lbl">รายการเหตุผล / bullet ใน Section นี้</label><% ((content.features && content.features.items) || []).forEach((item, idx) => { %><input type="text" name="featureText" class="inp" value="<%= item %>" placeholder="เหตุผลข้อ <%= idx + 1 %>"><% }) %><% if (!content.features || !content.features.items || !content.features.items.length) { %><% [1,2,3,4,5].forEach((idx) => { %><input type="text" name="featureText" class="inp" placeholder="เหตุผลข้อ <%= idx %>"><% }) %><% } %></div>
         <div class="text-color-panel"><div class="text-color-title">สีข้อความ Section ทำไมต้องเลือก MindCare</div><div class="text-color-grid"><%- colorControl('features', 'heading', 'สีหัวข้อ', 'features_heading_th') %><%- colorControl('features', 'subtext', 'สีคำอธิบายและรายการเหตุผล', 'features_subtext_th') %></div></div>
+        <div style="padding:14px;border:1px solid #e2e8f0;border-radius:12px;background:#fafafa;display:grid;gap:14px;">
+          <div style="font-size:13px;font-weight:700;color:#334155;">คอลลาจรูปภาพฝั่งขวา (แทนการ์ดตัวเลขสถิติ)</div>
+          <%- photoField('collagePhoto1', 'รูปหลัก (ใหญ่)', content.features && content.features.collagePhoto1) %>
+          <%- photoField('collagePhoto2', 'รูปเล็กด้านบนขวา', content.features && content.features.collagePhoto2) %>
+          <%- photoField('collagePhoto3', 'รูปเล็กด้านล่างซ้าย', content.features && content.features.collagePhoto3) %>
+          <%- photoField('collagePhoto4', 'รูปเล็กด้านล่างขวา', content.features && content.features.collagePhoto4) %>
+          <%- motionField('collage', content.features) %>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+            <div><label class="lbl">ข้อความป้าย 1 (ไอคอนนาฬิกา)</label><input type="text" name="badge1Text" class="inp" value="<%= (content.features && content.features.badge1Text) || 'พร้อมซัพพอร์ตคุณในทุกช่วงเวลา' %>"></div>
+            <div><label class="lbl">ข้อความป้าย 2 (ไอคอนโล่)</label><input type="text" name="badge2Text" class="inp" value="<%= (content.features && content.features.badge2Text) || 'ปลอดภัย เป็นความลับ' %>"></div>
+          </div>
+          <div><label class="lbl">ข้อความป้าย 3 (ไอคอนหัวใจ)</label><input type="text" name="badge3Text" class="inp" value="<%= (content.features && content.features.badge3Text) || 'พื้นที่ที่เข้าใจและไม่ตัดสิน' %>"></div>
+        </div>
         <div style="display:flex;justify-content:flex-end;"><button type="submit" class="act-btn ab-primary"><i data-lucide="save" style="width:14px;height:14px;"></i> บันทึกเหตุผลที่เลือก (TH)</button></div>
       </form>
       </div>
@@ -350,6 +429,7 @@ SMTP_BCC=   <span style="color:#94a3b8;"># optional สำเนาทุกอ�
           <div><label class="lbl">ลิงก์ LINE ใน Footer</label><input type="url" name="contactLineUrl" class="inp" value="<%= content.contact.lineUrl || 'https://page.line.me/bucare?openQrModal=true' %>"></div>
         </div>
         <div><label class="lbl">เวลาทำการที่แสดงใน Footer</label><textarea name="contactHours" class="inp" rows="2" style="resize:none;"><%= content.contact.hours %></textarea></div>
+        <div><label class="lbl">ข้อความลิขสิทธิ์ (Copyright) ท้าย Footer</label><input type="text" name="contactCopyright" class="inp" value="<%= content.contact.copyright || '© 2024 MindCare · ข้อมูลทุกอย่างได้รับการคุ้มครองตาม PDPA' %>"></div>
         <div style="display:flex;justify-content:flex-end;"><button type="submit" class="act-btn ab-primary"><i data-lucide="save" style="width:14px;height:14px;"></i> บันทึก Footer (TH)</button></div>
       </form>
       </div>
@@ -362,6 +442,7 @@ SMTP_BCC=   <span style="color:#94a3b8;"># optional สำเนาทุกอ�
           <div><label class="lbl">Footer LINE URL</label><input type="url" name="contactLineUrl" class="inp" value="<%= enContact.lineUrl || (content.contact && content.contact.lineUrl) || 'https://page.line.me/bucare?openQrModal=true' %>"></div>
         </div>
         <div><label class="lbl">Footer office hours</label><textarea name="contactHours" class="inp" rows="2" style="resize:none;"><%= enContact.hours || '' %></textarea></div>
+        <div><label class="lbl">Footer copyright text</label><input type="text" name="contactCopyright" class="inp" value="<%= enContact.copyright || '© 2024 MindCare · All information is protected under PDPA' %>"></div>
         <div style="display:flex;justify-content:flex-end;"><button type="submit" class="act-btn ab-primary"><i data-lucide="save" style="width:14px;height:14px;"></i> Save Footer (EN)</button></div>
       </form>
       </div>
@@ -475,6 +556,7 @@ SMTP_BCC=   <span style="color:#94a3b8;"># optional สำเนาทุกอ�
         { key:'features',   label:'ทำไมต้องเลือก MindCare',  icon:'star',          fields:[{f:'heading',l:'หัวข้อ'},{f:'subtext',l:'คำอธิบาย'}] },
         { key:'book',       label:'ลงทะเบียน',                icon:'calendar-plus', fields:[{f:'heading',l:'หัวข้อ'},{f:'subtext',l:'คำอธิบาย'},{f:'formHeading',l:'หัวข้อฟอร์ม'}] },
         { key:'faq',        label:'FAQ',                      icon:'help-circle',   fields:[{f:'heading',l:'หัวข้อ'},{f:'questions',l:'คำถาม'},{f:'answers',l:'คำตอบ'}] },
+        { key:'footer',     label:'Footer (ท้ายเว็บ)',        icon:'layout-panel-top', fields:[{f:'description',l:'คำอธิบาย'},{f:'menu',l:'เมนู (บริการ/ลิงก์/ติดต่อ)'},{f:'lineLabel',l:'ข้อความ LINE'},{f:'hours',l:'เวลาทำการ'},{f:'copyright',l:'ข้อความลิขสิทธิ์'}] },
       ]
     %>
     <div class="section-card">
@@ -535,16 +617,18 @@ SMTP_BCC=   <span style="color:#94a3b8;"># optional สำเนาทุกอ�
             <!-- Image upload -->
             <div>
               <label class="lbl">รูปภาพพื้นหลัง</label>
-              <% if (bg.image) { %>
-              <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;padding:8px 10px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;">
-                <img src="<%= bg.image %>" style="width:56px;height:36px;object-fit:cover;border-radius:5px;border:1px solid #e2e8f0;flex-shrink:0;">
-                <span style="font-size:12px;color:#64748b;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"><%= bg.image.split('/').pop() %></span>
+              <div id="curimgbox_<%= s.key %>" style="display:<%= bg.image ? 'flex' : 'none' %>;align-items:center;gap:8px;margin-bottom:8px;padding:8px 10px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;">
+                <img src="<%= bg.image || '' %>" style="width:56px;height:36px;object-fit:cover;border-radius:5px;border:1px solid #e2e8f0;flex-shrink:0;">
+                <span style="font-size:12px;color:#64748b;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"><%= bg.image ? bg.image.split('/').pop() : '' %></span>
                 <label style="display:flex;align-items:center;gap:4px;font-size:12px;color:#ef4444;cursor:pointer;flex-shrink:0;white-space:nowrap;">
                   <input type="checkbox" name="clear_<%= s.key %>" style="accent-color:#ef4444;"> ลบรูป
                 </label>
               </div>
-              <% } %>
-              <input type="file" name="img_<%= s.key %>" class="inp" accept="image/jpeg,image/png,image/webp,image/gif" style="padding:6px;font-size:12px;">
+              <input type="file" name="img_<%= s.key %>" class="inp" accept="image/jpeg,image/png,image/webp,image/gif" style="padding:6px;font-size:12px;" onchange="previewBgImage(this,'<%= s.key %>')">
+              <div id="newimgbox_<%= s.key %>" style="display:none;align-items:center;gap:8px;margin-top:8px;padding:8px 10px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;">
+                <img style="width:56px;height:36px;object-fit:cover;border-radius:5px;border:1px solid #bbf7d0;flex-shrink:0;">
+                <span style="font-size:12px;color:#16a34a;font-weight:600;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">รูปใหม่ที่เลือก (ยังไม่บันทึก)</span>
+              </div>
               <!-- Image opacity slider -->
               <div style="margin-top:8px;display:flex;align-items:center;gap:8px;">
                 <span style="font-size:12px;color:#64748b;white-space:nowrap;">Opacity รูป:</span>
@@ -561,8 +645,18 @@ SMTP_BCC=   <span style="color:#94a3b8;"># optional สำเนาทุกอ�
                 <label style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:#475569;">
                   <input type="hidden" name="motionEnabled_<%= s.key %>" value="off">
                   <input type="checkbox" name="motionEnabled_<%= s.key %>" value="on" <%= bg.motionEnabled === false ? '' : 'checked' %> style="accent-color:#8b5cf6;">
-                  เปิด motion zoom (รูปค่อยๆ ขยาย)
+                  เปิด motion (รูปเคลื่อนไหว)
                 </label>
+                <div style="display:flex;align-items:center;gap:14px;font-size:12px;color:#475569;">
+                  <label style="display:flex;align-items:center;gap:5px;cursor:pointer;">
+                    <input type="radio" name="motionStyle_<%= s.key %>" value="zoom" <%= bg.motionStyle === 'float' ? '' : 'checked' %> style="accent-color:#8b5cf6;" onchange="document.getElementById('mvscalerow_<%= s.key %>').style.display=''">
+                    ซูมเข้า-ออก
+                  </label>
+                  <label style="display:flex;align-items:center;gap:5px;cursor:pointer;">
+                    <input type="radio" name="motionStyle_<%= s.key %>" value="float" <%= bg.motionStyle === 'float' ? 'checked' : '' %> style="accent-color:#8b5cf6;" onchange="document.getElementById('mvscalerow_<%= s.key %>').style.display='none'">
+                    ลอยขึ้น-ลง
+                  </label>
+                </div>
                 <div style="display:flex;align-items:center;gap:8px;">
                   <span style="font-size:12px;color:#64748b;white-space:nowrap;">ระยะเวลา:</span>
                   <input type="range" id="mvdur_<%= s.key %>" name="motionDuration_<%= s.key %>" min="8" max="90" step="1"
@@ -573,7 +667,7 @@ SMTP_BCC=   <span style="color:#94a3b8;"># optional สำเนาทุกอ�
                     <%= typeof bg.motionDuration === 'number' ? bg.motionDuration : 38 %>s
                   </span>
                 </div>
-                <div style="display:flex;align-items:center;gap:8px;">
+                <div id="mvscalerow_<%= s.key %>" style="display:<%= bg.motionStyle === 'float' ? 'none' : '' %>;align-items:center;gap:8px;">
                   <span style="font-size:12px;color:#64748b;white-space:nowrap;">ระดับ zoom:</span>
                   <input type="range" id="mvscale_<%= s.key %>" name="motionScale_<%= s.key %>" min="1" max="1.35" step="0.01"
                     value="<%= typeof bg.motionScale === 'number' ? bg.motionScale : 1.12 %>"
@@ -613,6 +707,9 @@ SMTP_BCC=   <span style="color:#94a3b8;"># optional สำเนาทุกอ�
                   </div>
                 </div>
                 <% }) %>
+                <% if (!s.fields.length) { %>
+                <span style="font-size:12px;color:#cbd5e1;">— ไม่มีข้อความให้ปรับสีในส่วนนี้ —</span>
+                <% } %>
               </div>
             </div>
           </div>
@@ -682,6 +779,23 @@ SMTP_BCC=   <span style="color:#94a3b8;"># optional สำเนาทุกอ�
 
   function removeFaq(btn) {
     btn.closest('.faq-item').remove()
+  }
+
+  function previewBgImage(input, key) {
+    const box = document.getElementById('newimgbox_' + key)
+    const img = box ? box.querySelector('img') : null
+    const file = input.files && input.files[0]
+    if (!box || !img || !file) {
+      if (box) box.style.display = 'none'
+      return
+    }
+    img.src = URL.createObjectURL(file)
+    box.style.display = 'flex'
+    const clearBox = document.getElementById('curimgbox_' + key)
+    if (clearBox) {
+      const clearCheckbox = clearBox.querySelector('input[type="checkbox"]')
+      if (clearCheckbox) clearCheckbox.checked = false
+    }
   }
 
   lucide.createIcons()

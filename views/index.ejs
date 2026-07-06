@@ -66,6 +66,25 @@ function _tc(sec, field) {
   const c = (bg.textColors || {})[field]
   return (c && /^#[0-9A-Fa-f]{6}$/.test(c)) ? 'color:' + c + ';' : ''
 }
+// For elements with a Tailwind hover: color class — inline style would always win over
+// :hover (higher specificity), permanently killing the hover effect. Use a plain class
+// selector instead: it has lower specificity than the hover pseudo-class rule, so hover
+// still overrides it on mouseover while still applying the custom color at rest.
+function _tcClass(sec, field) {
+  const bg = _bgs[sec] || {}
+  const c = (bg.textColors || {})[field]
+  return (c && /^#[0-9A-Fa-f]{6}$/.test(c)) ? ('tc-custom-' + sec + '-' + field) : ''
+}
+function _tcStyleTag(sec, field) {
+  const cls = _tcClass(sec, field)
+  if (!cls) return ''
+  const bg = _bgs[sec] || {}
+  const c = (bg.textColors || {})[field]
+  // Must join Tailwind's own "utilities" layer — CSS cascade layers always lose to
+  // unlayered styles regardless of specificity, so an unlayered rule here would
+  // permanently beat (and break) the hover:text-* utility rule.
+  return '<style>@layer utilities{.' + cls + '{color:' + c + ';}}</style>'
+}
 // Generates HTML for absolutely-positioned bg layer divs inside a section
 // Layer order (bottom→top): image → color overlay → content (z-index:2 on content wrapper)
 function _bgLayers(sec) {
@@ -76,11 +95,15 @@ function _bgLayers(sec) {
   const motionEnabled = bg.motionEnabled !== false
   const motionDuration = typeof bg.motionDuration === 'number' ? bg.motionDuration : 38
   const motionScale = typeof bg.motionScale === 'number' ? bg.motionScale : 1.12
+  const motionStyle = bg.motionStyle === 'float' ? 'float' : 'zoom'
   let html = ''
   if (bg.image) {
     if (motionEnabled) {
       const kfName = '_bgzm_' + sec
-      html += '<style>@keyframes ' + kfName + '{from{transform:scale(1)}to{transform:scale(' + motionScale + ')}}</style>'
+      const keyframes = motionStyle === 'float'
+        ? '@keyframes ' + kfName + '{from{transform:translateY(0)}to{transform:translateY(-18px)}}'
+        : '@keyframes ' + kfName + '{from{transform:scale(1)}to{transform:scale(' + motionScale + ')}}'
+      html += '<style>' + keyframes + '</style>'
       html += '<div aria-hidden="true" class="section-bg-motion" style="position:absolute;inset:0;background-image:url(\'' + bg.image + '\');background-size:cover;background-position:center;background-repeat:no-repeat;opacity:' + imgOp + ';animation:' + kfName + ' ' + motionDuration + 's ease-in-out infinite alternate;pointer-events:none;z-index:0;"></div>'
     } else {
       html += '<div aria-hidden="true" style="position:absolute;inset:0;background-image:url(\'' + bg.image + '\');background-size:cover;background-position:center;background-repeat:no-repeat;opacity:' + imgOp + ';pointer-events:none;z-index:0;"></div>'
@@ -91,6 +114,28 @@ function _bgLayers(sec) {
     html += '<div aria-hidden="true" style="position:absolute;inset:0;background-color:'+rgba+';pointer-events:none;z-index:1;"></div>'
   }
   return html
+}
+// Returns {styleTag, animStyleFor(frameIndex)} to animate whole frame elements (not just the photo
+// inside them) driven by content[obj][prefix+'Motion*'] fields. Each frame index gets a staggered
+// negative animation-delay so the frames float/zoom out of sync with each other instead of in unison.
+function _photoMotion(obj, prefix, uid) {
+  const o = obj || {}
+  const enabled = o[prefix + 'MotionEnabled'] !== false
+  if (!enabled) return { styleTag: '', animStyleFor: function () { return '' } }
+  const duration = typeof o[prefix + 'MotionDuration'] === 'number' ? o[prefix + 'MotionDuration'] : 38
+  const scale = typeof o[prefix + 'MotionScale'] === 'number' ? o[prefix + 'MotionScale'] : 1.12
+  const style = o[prefix + 'MotionStyle'] === 'float' ? 'float' : 'zoom'
+  const kfName = '_pm_' + prefix + '_' + uid
+  const keyframes = style === 'float'
+    ? '@keyframes ' + kfName + '{from{transform:translateY(0)}to{transform:translateY(-14px)}}'
+    : '@keyframes ' + kfName + '{from{transform:scale(1)}to{transform:scale(' + scale + ')}}'
+  return {
+    styleTag: '<style>' + keyframes + '</style>',
+    animStyleFor: function (frameIndex) {
+      const delay = -(duration * ((frameIndex % 4) / 4))
+      return 'animation:' + kfName + ' ' + duration + 's ease-in-out ' + delay + 's infinite alternate;'
+    },
+  }
 }
 %>
 
@@ -198,6 +243,12 @@ function _bgLayers(sec) {
   <!-- Hero -->
   <section id="home" class="pt-32 pb-24 bg-gradient-to-br from-brand-50 via-ocean-50 to-white" style="position:relative;overflow:hidden;">
     <%- _bgLayers('hero') %>
+    <% if (content.hero.visualImage) { %>
+    <!-- Full-bleed hero visual replacing the right-side object entirely -->
+    <div aria-hidden="true" class="hidden md:block" style="position:absolute;top:0;right:0;bottom:0;width:52%;z-index:1;overflow:hidden;pointer-events:none;">
+      <img src="<%= content.hero.visualImage %>" alt="" style="width:100%;height:100%;object-fit:cover;object-position:center;">
+    </div>
+    <% } %>
     <div class="max-w-6xl mx-auto px-6 grid md:grid-cols-2 gap-16 items-center" style="position:relative;z-index:2;">
       <div>
         <span data-animate="fade-down" class="inline-flex items-center gap-2 px-3 py-1 bg-brand-100 text-brand-700 text-sm font-medium rounded-full mb-6">
@@ -223,7 +274,8 @@ function _bgLayers(sec) {
         </div>
       </div>
 
-      <!-- Hero visual -->
+      <% if (!content.hero.visualImage) { %>
+      <!-- Hero visual (default illustration, shown only when no custom image is set) -->
       <div data-animate="fade-left" data-delay="180ms" class="hidden md:block">
         <div class="relative">
           <div class="w-80 h-80 mx-auto rounded-3xl bg-gradient-to-br from-brand-400 to-ocean-500 flex items-center justify-center shadow-xl">
@@ -250,6 +302,10 @@ function _bgLayers(sec) {
           </div>
         </div>
       </div>
+      <% } else { %>
+      <!-- Custom hero visual is rendered full-bleed via the absolute panel above; keep the grid column as empty spacer -->
+      <div class="hidden md:block"></div>
+      <% } %>
     </div>
   </section>
 
@@ -280,8 +336,8 @@ function _bgLayers(sec) {
                 <% if (hasThai || hasEnglish) { %>
                 <div class="absolute right-5 top-5 z-10 flex items-center gap-2">
                   <% if (hasThai) { %>
-                  <span class="lang-flag-display inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/90 shadow-md ring-1 ring-slate-200" title="ไทย" aria-label="ไทย">
-                    <svg viewBox="0 0 24 24" width="36" height="36" style="border-radius:999px;box-shadow:0 0 0 1px rgba(148,163,184,.35);clip-path:circle(50%);" aria-hidden="true">
+                  <span class="lang-flag-display inline-flex h-[30px] w-[30px] items-center justify-center rounded-full bg-white/90 shadow-md ring-1 ring-slate-200" title="ไทย" aria-label="ไทย">
+                    <svg viewBox="0 0 24 24" width="30" height="30" style="border-radius:999px;box-shadow:0 0 0 1px rgba(148,163,184,.35);clip-path:circle(50%);" aria-hidden="true">
                       <rect width="24" height="24" fill="#da291c"></rect>
                       <rect y="4" width="24" height="16" fill="#fff"></rect>
                       <rect y="8" width="24" height="8" fill="#2d2a4a"></rect>
@@ -289,8 +345,8 @@ function _bgLayers(sec) {
                   </span>
                   <% } %>
                   <% if (hasEnglish) { %>
-                  <span class="lang-flag-display inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/90 shadow-md ring-1 ring-slate-200" title="อังกฤษ" aria-label="อังกฤษ">
-                    <svg viewBox="0 0 60 60" width="36" height="36" style="border-radius:999px;box-shadow:0 0 0 1px rgba(148,163,184,.35);clip-path:circle(50%);" aria-hidden="true">
+                  <span class="lang-flag-display inline-flex h-[30px] w-[30px] items-center justify-center rounded-full bg-white/90 shadow-md ring-1 ring-slate-200" title="อังกฤษ" aria-label="อังกฤษ">
+                    <svg viewBox="0 0 60 60" width="30" height="30" style="border-radius:999px;box-shadow:0 0 0 1px rgba(148,163,184,.35);clip-path:circle(50%);" aria-hidden="true">
                       <rect width="60" height="36" fill="#012169"></rect>
                       <rect y="36" width="60" height="24" fill="#012169"></rect>
                       <path d="M0 0l60 60M60 0L0 60" stroke="#fff" stroke-width="12"></path>
@@ -300,14 +356,6 @@ function _bgLayers(sec) {
                     </svg>
                   </span>
                   <% } %>
-                </div>
-                <% } %>
-
-                <% if (c.rating) { %>
-                <div data-counselor-rating="<%= c.id %>" class="absolute left-5 top-5 z-10 inline-flex items-center gap-2 rounded-full bg-white/90 px-3 py-1.5 text-xs font-bold text-slate-700 shadow-md ring-1 ring-slate-200">
-                  <i data-lucide="star" class="w-3.5 h-3.5 text-amber-400 fill-amber-400"></i>
-                  <span><%= Number(c.rating).toFixed(1) %></span>
-                  <span class="text-slate-400">(<%= c.reviewCount || 0 %> รีวิว)</span>
                 </div>
                 <% } %>
 
@@ -363,6 +411,34 @@ function _bgLayers(sec) {
             <% }) %>
           </ul>
         </div>
+        <% if (content.features && content.features.collagePhoto1) { %>
+        <% const _cm = _photoMotion(content.features, 'collage', 'features') %>
+        <div class="relative hidden md:block" data-animate="fade-left" data-delay="120ms" style="height:440px;">
+          <%- _cm.styleTag %>
+          <img src="<%= content.features.collagePhoto1 %>" alt="" class="absolute rounded-3xl object-cover shadow-2xl" style="left:8%;top:0;width:60%;height:78%;border:4px solid #fff;<%- _cm.animStyleFor(0) %>">
+          <% if (content.features.collagePhoto2) { %>
+          <img src="<%= content.features.collagePhoto2 %>" alt="" class="absolute rounded-2xl object-cover shadow-xl" style="right:0;top:0;width:34%;height:34%;border:4px solid #fff;<%- _cm.animStyleFor(1) %>">
+          <% } %>
+          <% if (content.features.collagePhoto3) { %>
+          <img src="<%= content.features.collagePhoto3 %>" alt="" class="absolute rounded-2xl object-cover shadow-xl" style="left:0;bottom:8%;width:32%;height:36%;border:4px solid #fff;<%- _cm.animStyleFor(2) %>">
+          <% } %>
+          <% if (content.features.collagePhoto4) { %>
+          <img src="<%= content.features.collagePhoto4 %>" alt="" class="absolute rounded-2xl object-cover shadow-xl" style="right:0;bottom:20%;width:30%;height:34%;border:4px solid #fff;<%- _cm.animStyleFor(3) %>">
+          <% } %>
+          <div class="absolute inline-flex items-center gap-2 bg-white rounded-full shadow-lg px-4 py-2.5" style="right:2%;top:32%;max-width:220px;width:max-content;">
+            <div class="w-8 h-8 rounded-full bg-brand-500 flex items-center justify-center flex-shrink-0"><i data-lucide="clock" class="w-4 h-4 text-white"></i></div>
+            <span class="text-xs font-semibold text-slate-700 leading-tight" style="min-width:0;"><%- content.features.badge1Text || 'พร้อมซัพพอร์ตคุณในทุกช่วงเวลา' %></span>
+          </div>
+          <div class="absolute inline-flex items-center gap-2 bg-white rounded-full shadow-lg px-4 py-2.5" style="left:14%;bottom:2%;max-width:200px;width:max-content;">
+            <div class="w-8 h-8 rounded-full bg-ocean-500 flex items-center justify-center flex-shrink-0"><i data-lucide="shield-check" class="w-4 h-4 text-white"></i></div>
+            <span class="text-xs font-semibold text-slate-700 leading-tight" style="min-width:0;"><%- content.features.badge2Text || 'ปลอดภัย เป็นความลับ' %></span>
+          </div>
+          <div class="absolute inline-flex items-center gap-2 bg-white rounded-full shadow-lg px-4 py-2.5" style="right:0;bottom:14%;max-width:200px;width:max-content;">
+            <div class="w-8 h-8 rounded-full bg-ocean-400 flex items-center justify-center flex-shrink-0"><i data-lucide="heart" class="w-4 h-4 text-white"></i></div>
+            <span class="text-xs font-semibold text-slate-700 leading-tight" style="min-width:0;"><%- content.features.badge3Text || 'พื้นที่ที่เข้าใจและไม่ตัดสิน' %></span>
+          </div>
+        </div>
+        <% } else { %>
         <div class="grid grid-cols-2 gap-4">
           <%
             const liveAverageRating = typeof counselorRatingAverage !== 'undefined' && counselorRatingAverage ? counselorRatingAverage : '4.8'
@@ -381,6 +457,7 @@ function _bgLayers(sec) {
           </div>
           <% }) %>
         </div>
+        <% } %>
       </div>
     </div>
   </section>
@@ -389,9 +466,6 @@ function _bgLayers(sec) {
   <section id="book" class="py-20 bg-white" style="position:relative;overflow:hidden;">
     <%- _bgLayers('book') %>
     <div class="max-w-2xl mx-auto px-6 text-center" style="position:relative;z-index:2;">
-      <div data-animate="zoom-in" class="w-16 h-16 rounded-2xl bg-gradient-to-br from-brand-400 to-ocean-500 flex items-center justify-center mx-auto mb-6">
-        <i data-lucide="calendar-heart" class="w-8 h-8 text-white"></i>
-      </div>
       <h2 data-animate="fade-up" data-delay="100ms" class="text-3xl font-bold text-slate-800 mb-4" data-i18n="book-heading" style="<%- _tc('book','heading') %>"><%= content.book.heading %></h2>
       <p data-animate="fade-up" data-delay="200ms" class="text-slate-500 mb-8 leading-relaxed" data-i18n="book-subtext" style="<%- _tc('book','subtext') %>"><%= content.book.subtext %></p>
       <% if (query && query.sent) { %>
@@ -502,8 +576,9 @@ function _bgLayers(sec) {
   </section>
 
   <!-- Footer -->
-  <footer class="bg-slate-800 text-slate-400 py-12">
-    <div class="max-w-6xl mx-auto px-6">
+  <footer class="bg-slate-800 text-slate-400 py-12" style="position:relative;overflow:hidden;">
+    <%- _bgLayers('footer') %>
+    <div class="max-w-6xl mx-auto px-6" style="position:relative;z-index:2;">
       <div class="grid md:grid-cols-4 gap-8 mb-8">
         <div class="md:col-span-2">
           <div class="flex items-center gap-2 mb-3">
@@ -512,31 +587,33 @@ function _bgLayers(sec) {
             </div>
             <span class="font-bold text-white">MindCare</span>
           </div>
-          <p class="text-sm leading-relaxed" data-i18n="footer-desc"><%= (content.contact && content.contact.description) || 'ระบบจองนัดหมายการให้คำปรึกษาทางสุขภาพจิต เชื่อมต่อผู้ที่ต้องการความช่วยเหลือกับผู้เชี่ยวชาญที่ไว้วางใจได้' %></p>
+          <p class="text-sm leading-relaxed" data-i18n="footer-desc" style="<%- _tc('footer','description') %>"><%= (content.contact && content.contact.description) || 'ระบบจองนัดหมายการให้คำปรึกษาทางสุขภาพจิต เชื่อมต่อผู้ที่ต้องการความช่วยเหลือกับผู้เชี่ยวชาญที่ไว้วางใจได้' %></p>
         </div>
+        <%- _tcStyleTag('footer','menu') %>
+        <%- _tcStyleTag('footer','lineLabel') %>
         <div>
-          <p class="text-white font-medium mb-3" data-i18n="footer-services">บริการ</p>
+          <p class="text-white font-medium mb-3 <%= _tcClass('footer','menu') %>" data-i18n="footer-services">บริการ</p>
           <ul class="space-y-2 text-sm">
-            <li><a href="#counselors" class="hover:text-brand-400 transition-colors" data-i18n="footer-link-1">นักให้คำปรึกษาของเรา</a></li>
-            <li><a href="#book" class="hover:text-brand-400 transition-colors" data-i18n="footer-link-2">ลงทะเบียนเพื่อขอรับบริการ</a></li>
+            <li><a href="#counselors" class="hover:text-brand-400 transition-colors <%= _tcClass('footer','menu') %>" data-i18n="footer-link-1">นักให้คำปรึกษาของเรา</a></li>
+            <li><a href="#book" class="hover:text-brand-400 transition-colors <%= _tcClass('footer','menu') %>" data-i18n="footer-link-2">ลงทะเบียนเพื่อขอรับบริการ</a></li>
           </ul>
         </div>
         <div>
-          <p class="text-white font-medium mb-3" data-i18n="footer-contact">ติดต่อ</p>
+          <p class="text-white font-medium mb-3 <%= _tcClass('footer','menu') %>" data-i18n="footer-contact">ติดต่อ</p>
           <ul class="space-y-2 text-sm">
             <li class="flex items-center gap-2">
               <i data-lucide="message-circle" class="w-3.5 h-3.5 shrink-0"></i>
-              <a href="<%= (content.contact && content.contact.lineUrl) || 'https://page.line.me/bucare?openQrModal=true' %>" target="_blank" rel="noopener" class="hover:text-brand-400 transition-colors" data-i18n="footer-line" data-i18n-href="footer-line-url"><%= (content.contact && content.contact.lineLabel) || 'LINE @bucare' %></a>
+              <a href="<%= (content.contact && content.contact.lineUrl) || 'https://page.line.me/bucare?openQrModal=true' %>" target="_blank" rel="noopener" class="hover:text-brand-400 transition-colors <%= _tcClass('footer','lineLabel') %>" data-i18n="footer-line" data-i18n-href="footer-line-url"><%= (content.contact && content.contact.lineLabel) || 'LINE @bucare' %></a>
             </li>
             <li class="flex items-start gap-2">
               <i data-lucide="clock" class="w-3.5 h-3.5 shrink-0 mt-0.5"></i>
-              <span data-i18n-html="footer-hours">จันทร์-เสาร์ 08.30 – 17.00 น.<br>(ยกเว้นวันหยุดนักขัตฤกษ์)</span>
+              <span data-i18n-html="footer-hours" style="<%- _tc('footer','hours') %>"><%- (content.contact && content.contact.hours) || 'จันทร์-เสาร์ 08.30 – 17.00 น.<br>(ยกเว้นวันหยุดนักขัตฤกษ์)' %></span>
             </li>
           </ul>
         </div>
       </div>
       <div class="border-t border-slate-700 pt-6 text-center text-xs">
-        <p data-i18n="footer-copyright">© 2024 MindCare · ข้อมูลทุกอย่างได้รับการคุ้มครองตาม PDPA</p>
+        <p data-i18n="footer-copyright" style="<%- _tc('footer','copyright') %>"><%= (content.contact && content.contact.copyright) || '© 2024 MindCare · ข้อมูลทุกอย่างได้รับการคุ้มครองตาม PDPA' %></p>
       </div>
     </div>
   </footer>
@@ -870,7 +947,7 @@ function _bgLayers(sec) {
         'footer-line': <%- JSON.stringify(content.contact && content.contact.lineLabel || 'LINE @bucare') %>,
         'footer-line-url': <%- JSON.stringify(content.contact && content.contact.lineUrl || 'https://page.line.me/bucare?openQrModal=true') %>,
         'footer-hours': <%- JSON.stringify(content.contact && content.contact.hours || 'จันทร์-เสาร์ 08.30 – 17.00 น.<br>(ยกเว้นวันหยุดนักขัตฤกษ์)') %>,
-        'footer-copyright': '© 2024 MindCare · ข้อมูลทุกอย่างได้รับการคุ้มครองตาม PDPA',
+        'footer-copyright': <%- JSON.stringify((content.contact && content.contact.copyright) || '© 2024 MindCare · ข้อมูลทุกอย่างได้รับการคุ้มครองตาม PDPA') %>,
       },
       en: {
         'page-title': 'MindCare — Mental Health Counseling Appointment System',
@@ -940,7 +1017,7 @@ function _bgLayers(sec) {
         'footer-line': <%- JSON.stringify((content.en && content.en.contact && content.en.contact.lineLabel) || 'LINE @bucare') %>,
         'footer-line-url': <%- JSON.stringify((content.en && content.en.contact && content.en.contact.lineUrl) || (content.contact && content.contact.lineUrl) || 'https://page.line.me/bucare?openQrModal=true') %>,
         'footer-hours': <%- JSON.stringify((content.en && content.en.contact && content.en.contact.hours) || 'Mon–Sat 08:30–17:00 (excl. public holidays)') %>,
-        'footer-copyright': '© 2024 MindCare · All information is protected under PDPA',
+        'footer-copyright': <%- JSON.stringify((content.en && content.en.contact && content.en.contact.copyright) || '© 2024 MindCare · All information is protected under PDPA') %>,
       }
     };
 

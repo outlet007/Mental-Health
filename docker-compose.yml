@@ -19,6 +19,7 @@
       SMTP_FROM_EMAIL: no-reply@mindcare.local
     volumes:
       - ./data:/app/data
+      - ./public/uploads:/app/public/uploads
 
   mailpit:
     image: axllent/mailpit:v1.20

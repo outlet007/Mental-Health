@@ -19,6 +19,14 @@ const bgUpload = multer({ storage: bgStorage, limits: { fileSize: 5 * 1024 * 102
   { name: 'img_features',   maxCount: 1 },
   { name: 'img_book',       maxCount: 1 },
   { name: 'img_faq',        maxCount: 1 },
+  { name: 'img_footer',     maxCount: 1 },
+])
+const heroVisualUpload = multer({ storage: bgStorage, limits: { fileSize: 5 * 1024 * 1024 } }).single('heroVisualImage')
+const featuresCollageUpload = multer({ storage: bgStorage, limits: { fileSize: 5 * 1024 * 1024 } }).fields([
+  { name: 'collagePhoto1', maxCount: 1 },
+  { name: 'collagePhoto2', maxCount: 1 },
+  { name: 'collagePhoto3', maxCount: 1 },
+  { name: 'collagePhoto4', maxCount: 1 },
 ])
 
 function readData()   { return JSON.parse(fs.readFileSync(dataFile, 'utf8')) }
@@ -57,8 +65,9 @@ router.get('/', (req, res) => {
 })
 
 // ── TH endpoints ─────────────────────────────────────────────────────────────
-router.post('/hero', (req, res) => {
+router.post('/hero', heroVisualUpload, (req, res) => {
   const data = readData()
+  const previousHero = data.hero || {}
   data.hero = {
     badge:    (req.body.badge    || '').trim(),
     heading1: (req.body.heading1 || '').trim(),
@@ -66,6 +75,13 @@ router.post('/hero', (req, res) => {
     subtext:  (req.body.subtext  || '').trim(),
     ctaMain:  (req.body.ctaMain  || '').trim(),
     ctaSub:   (req.body.ctaSub   || '').trim(),
+    visualImage: previousHero.visualImage || '',
+  }
+  if (req.body.clearVisualImage) {
+    data.hero.visualImage = ''
+  }
+  if (req.file) {
+    data.hero.visualImage = '/uploads/content/' + req.file.filename
   }
   saveTextColors(data, 'hero', ['heading', 'subtext'], req.body)
   writeData(data)
@@ -106,13 +122,30 @@ router.post('/counselors', (req, res) => {
   res.redirect('/admin/content?saved=counselors')
 })
 
-router.post('/features', (req, res) => {
+router.post('/features', featuresCollageUpload, (req, res) => {
   const data = readData()
+  const previousFeatures = data.features || {}
+  const files = req.files || {}
   data.features = {
     heading: (req.body.featuresHeading || '').trim(),
     subtext: (req.body.featuresSubtext || '').trim(),
     items: readItems(req.body.featureText),
+    collagePhoto1: previousFeatures.collagePhoto1 || '',
+    collagePhoto2: previousFeatures.collagePhoto2 || '',
+    collagePhoto3: previousFeatures.collagePhoto3 || '',
+    collagePhoto4: previousFeatures.collagePhoto4 || '',
+    badge1Text: (req.body.badge1Text || '').trim(),
+    badge2Text: (req.body.badge2Text || '').trim(),
+    badge3Text: (req.body.badge3Text || '').trim(),
+    collageMotionEnabled: req.body.collageMotionEnabled !== 'off',
+    collageMotionStyle: req.body.collageMotionStyle === 'float' ? 'float' : 'zoom',
+    collageMotionDuration: clampNumber(req.body.collageMotionDuration, 38, 8, 90),
+    collageMotionScale: clampNumber(req.body.collageMotionScale, 1.12, 1, 1.35),
   }
+  ;['collagePhoto1', 'collagePhoto2', 'collagePhoto3', 'collagePhoto4'].forEach(key => {
+    if (req.body['clear_' + key]) data.features[key] = ''
+    if (files[key] && files[key][0]) data.features[key] = '/uploads/content/' + files[key][0].filename
+  })
   saveTextColors(data, 'features', ['heading', 'subtext'], req.body)
   writeData(data)
   res.redirect('/admin/content?saved=features')
@@ -140,6 +173,7 @@ router.post('/contact-info', (req, res) => {
     lineLabel: (req.body.contactLineLabel || '').trim(),
     lineUrl: (req.body.contactLineUrl || '').trim(),
     hours: (req.body.contactHours || '').trim(),
+    copyright: (req.body.contactCopyright || '').trim(),
   }
   writeData(data)
   res.redirect('/admin/content?saved=contact')
@@ -247,6 +281,7 @@ router.post('/contact-info-en', (req, res) => {
     lineLabel: (req.body.contactLineLabel || '').trim(),
     lineUrl: (req.body.contactLineUrl || '').trim(),
     hours: (req.body.contactHours || '').trim(),
+    copyright: (req.body.contactCopyright || '').trim(),
   }
   writeData(data)
   res.redirect('/admin/content?saved=contact-en')
@@ -272,13 +307,14 @@ const _tcFields = {
   features:   ['heading', 'subtext'],
   book:       ['heading', 'subtext', 'formHeading'],
   faq:        ['heading', 'questions', 'answers'],
+  footer:     ['description', 'menu', 'lineLabel', 'hours', 'copyright'],
 }
 
 router.post('/backgrounds', bgUpload, (req, res) => {
   const data = readData()
   if (!data.backgrounds) data.backgrounds = {}
   const files = req.files || {}
-  ;['hero', 'counselors', 'features', 'book', 'faq'].forEach(sec => {
+  ;['hero', 'counselors', 'features', 'book', 'faq', 'footer'].forEach(sec => {
     if (!data.backgrounds[sec]) data.backgrounds[sec] = { color: '', image: '' }
     data.backgrounds[sec].color = (req.body['color_' + sec] || '').trim()
     const op = parseFloat(req.body['opacity_' + sec])
@@ -288,6 +324,7 @@ router.post('/backgrounds', bgUpload, (req, res) => {
     data.backgrounds[sec].motionEnabled = req.body['motionEnabled_' + sec] !== 'off'
     data.backgrounds[sec].motionDuration = clampNumber(req.body['motionDuration_' + sec], 38, 8, 90)
     data.backgrounds[sec].motionScale = clampNumber(req.body['motionScale_' + sec], 1.12, 1, 1.35)
+    data.backgrounds[sec].motionStyle = req.body['motionStyle_' + sec] === 'float' ? 'float' : 'zoom'
     const hexRe = /^#[0-9A-Fa-f]{6}$/
     const textColors = {}
     ;(_tcFields[sec] || []).forEach(field => {
@@ -295,11 +332,11 @@ router.post('/backgrounds', bgUpload, (req, res) => {
       textColors[field] = hexRe.test(v) ? v : ''
     })
     data.backgrounds[sec].textColors = textColors
-    if (files['img_' + sec] && files['img_' + sec][0]) {
-      data.backgrounds[sec].image = '/uploads/content/' + files['img_' + sec][0].filename
-    }
     if (req.body['clear_' + sec]) {
       data.backgrounds[sec].image = ''
+    }
+    if (files['img_' + sec] && files['img_' + sec][0]) {
+      data.backgrounds[sec].image = '/uploads/content/' + files['img_' + sec][0].filename
     }
   })
   writeData(data)

@@ -1,4 +1,10 @@
 {
   "recipientMode": "client",
-  "customEmail": ""
+  "customEmail": "",
+  "deliveryMode": "test",
+  "gmailUser": "",
+  "gmailAppPassword": "",
+  "fromName": "MindCare Docker",
+  "fromEmail": "no-reply@mindcare.local",
+  "updatedAt": "2026-07-06T02:49:43.202Z"
 }
