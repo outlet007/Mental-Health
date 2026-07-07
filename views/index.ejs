@@ -4,6 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>MindCare — ระบบจองนัดหมายการให้คำปรึกษาทางจิตใจ</title>
+  <% if (content.branding && content.branding.faviconImage) { %>
+  <link rel="icon" href="<%= content.branding.faviconImage %>">
+  <% } %>
   <%- include('./partials/head') %>
   <style>
     [data-animate]{opacity:0;transition:opacity .7s cubic-bezier(.22,1,.36,1),transform .7s cubic-bezier(.22,1,.36,1);}
@@ -14,6 +17,8 @@
     [data-animate="zoom-in"]   {transform:scale(.86);}
     [data-animate].is-visible  {opacity:1;transform:none;}
     .section-bg-motion { transform-origin:center; will-change:transform; }
+    .section-bg-blend { position:absolute; left:0; right:0; pointer-events:none; z-index:1; }
+    .section-bg-blend-bottom { bottom:0; }
     @media (prefers-reduced-motion: reduce) {
       .section-bg-motion { animation:none !important; transform:none; }
     }
@@ -89,7 +94,8 @@ function _tcStyleTag(sec, field) {
 // Layer order (bottom→top): image → color overlay → content (z-index:2 on content wrapper)
 function _bgLayers(sec) {
   const bg = _bgs[sec] || {}
-  if (!bg.image && !bg.color) return ''
+  const blendSize = typeof bg.blend === 'number' ? Math.max(0, Math.min(220, bg.blend)) : 0
+  if (!bg.image && !bg.color && !blendSize) return ''
   const colorOp = typeof bg.opacity    === 'number' ? bg.opacity    : 1
   const imgOp   = typeof bg.imgOpacity === 'number' ? bg.imgOpacity : 1
   const motionEnabled = bg.motionEnabled !== false
@@ -112,6 +118,12 @@ function _bgLayers(sec) {
   if (bg.color) {
     const rgba = _hexToRgba(bg.color, colorOp) || bg.color
     html += '<div aria-hidden="true" style="position:absolute;inset:0;background-color:'+rgba+';pointer-events:none;z-index:1;"></div>'
+  }
+  if (blendSize > 0) {
+    const blendColor = /^#[0-9A-Fa-f]{6}$/.test(bg.blendColor || '') ? bg.blendColor : (/^#[0-9A-Fa-f]{6}$/.test(bg.color || '') ? bg.color : '#ffffff')
+    const blendSolid = _hexToRgba(blendColor, 1)
+    const blendClear = _hexToRgba(blendColor, 0)
+    html += '<div aria-hidden="true" class="section-bg-blend section-bg-blend-bottom" style="height:' + blendSize + 'px;background:linear-gradient(to top,' + blendSolid + ',' + blendClear + ');"></div>'
   }
   return html
 }
@@ -140,13 +152,19 @@ function _photoMotion(obj, prefix, uid) {
 %>
 
   <!-- Navbar -->
-  <nav class="fixed top-0 inset-x-0 z-50 bg-white/80 backdrop-blur border-b border-slate-100">
+  <nav class="fixed top-0 inset-x-0 z-50 bg-white/80 backdrop-blur border-b border-slate-100 shadow-[0_1px_2px_rgba(15,23,42,0.06),0_8px_20px_rgba(15,23,42,0.12)]">
     <div class="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
       <a href="#home" class="flex items-center gap-2.5 rounded-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-300 focus-visible:ring-offset-2" aria-label="MindCare home">
+        <% if (content.branding && content.branding.headerLogoImage) { %>
+        <img src="<%= content.branding.headerLogoImage %>" alt="MindCare" class="h-8 w-auto">
+        <% } else { %>
         <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-brand-500 to-ocean-500 flex items-center justify-center">
           <i data-lucide="heart-handshake" class="w-4.5 h-4.5 text-white"></i>
         </div>
+        <% } %>
+        <% if (!(content.branding && content.branding.headerLogoImage)) { %>
         <span class="font-bold text-slate-800 text-lg">MindCare</span>
+        <% } %>
       </a>
       <div id="main-nav-links" class="hidden md:flex items-center gap-1 relative rounded-full p-0.5">
         <span id="main-nav-indicator" class="pointer-events-none absolute left-0 top-0.5 h-[calc(100%-4px)] rounded-full bg-brand-50 shadow-sm opacity-0 transition-all duration-300 ease-out"></span>
@@ -247,6 +265,18 @@ function _photoMotion(obj, prefix, uid) {
     <!-- Full-bleed hero visual replacing the right-side object entirely -->
     <div aria-hidden="true" class="hidden md:block" style="position:absolute;top:0;right:0;bottom:0;width:52%;z-index:1;overflow:hidden;pointer-events:none;">
       <img src="<%= content.hero.visualImage %>" alt="" style="width:100%;height:100%;object-fit:cover;object-position:center;">
+      <%
+        const _heroBg = _bgs.hero || {}
+        const _heroBlend = typeof _heroBg.blend === 'number' ? _heroBg.blend : 0
+      %>
+      <% if (_heroBlend > 0) { %>
+      <%
+        const _heroBlendColor = /^#[0-9A-Fa-f]{6}$/.test(_heroBg.blendColor || '') ? _heroBg.blendColor : '#ffffff'
+        const _heroBlendSolid = _hexToRgba(_heroBlendColor, 1)
+        const _heroBlendClear = _hexToRgba(_heroBlendColor, 0)
+      %>
+      <div aria-hidden="true" style="position:absolute;left:0;right:0;bottom:0;height:<%= _heroBlend %>px;background:linear-gradient(to top,<%= _heroBlendSolid %>,<%= _heroBlendClear %>);"></div>
+      <% } %>
     </div>
     <% } %>
     <div class="max-w-6xl mx-auto px-6 grid md:grid-cols-2 gap-16 items-center" style="position:relative;z-index:2;">
@@ -256,11 +286,11 @@ function _photoMotion(obj, prefix, uid) {
           <span data-i18n="hero-badge"><%= content.hero.badge %></span>
         </span>
         <h1 data-animate="fade-up" data-delay="120ms" class="text-4xl md:text-5xl font-bold text-slate-800 leading-tight mb-6" style="<%- _tc('hero','heading') %>">
-          <span data-i18n="hero-h1"><%= content.hero.heading1 %></span><br>
-          <span class="text-transparent bg-clip-text bg-gradient-to-r from-brand-600 to-ocean-500" data-i18n="hero-h2"><%= content.hero.heading2 %></span>
+          <span data-i18n-html="hero-h1"><%- content.hero.heading1 %></span><br>
+          <span class="text-transparent bg-clip-text bg-gradient-to-r from-brand-600 to-ocean-500" data-i18n-html="hero-h2"><%- content.hero.heading2 %></span>
         </h1>
-        <p data-animate="fade-up" data-delay="240ms" class="text-slate-500 text-lg leading-relaxed mb-8" data-i18n="hero-subtext" style="<%- _tc('hero','subtext') %>">
-          <%= content.hero.subtext %>
+        <p data-animate="fade-up" data-delay="240ms" class="text-slate-500 text-lg leading-relaxed mb-8" data-i18n-html="hero-subtext" style="<%- _tc('hero','subtext') %>">
+          <%- content.hero.subtext %>
         </p>
         <div data-animate="fade-up" data-delay="360ms" class="flex flex-wrap gap-3">
           <a href="#book" class="btn-primary px-7 py-3 text-base">
@@ -315,8 +345,8 @@ function _photoMotion(obj, prefix, uid) {
     <%- _bgLayers('counselors') %>
     <div class="max-w-6xl mx-auto px-6" style="position:relative;z-index:2;">
       <div data-animate="fade-up" class="text-center mb-12">
-        <h2 class="text-3xl font-bold text-slate-800 mb-2" data-i18n="counselors-heading" style="<%- _tc('counselors','heading') %>"><%= content.counselors.heading %></h2>
-        <p class="text-slate-500" data-i18n="counselors-subtext" style="<%- _tc('counselors','subtext') %>"><%= content.counselors.subtext %></p>
+        <h2 class="text-3xl font-bold text-slate-800 mb-2" data-i18n-html="counselors-heading" style="<%- _tc('counselors','heading') %>"><%- content.counselors.heading %></h2>
+        <p class="text-slate-500" data-i18n-html="counselors-subtext" style="<%- _tc('counselors','subtext') %>"><%- content.counselors.subtext %></p>
       </div>
 
       <div data-animate="fade-up" data-delay="120ms" class="relative">
@@ -397,8 +427,8 @@ function _photoMotion(obj, prefix, uid) {
     <div class="max-w-6xl mx-auto px-6" style="position:relative;z-index:2;">
       <div class="grid md:grid-cols-2 gap-12 items-center">
         <div data-animate="fade-right" class="text-white">
-          <h2 class="text-3xl font-bold mb-4" data-i18n="features-heading" style="<%- _tc('features','heading') %>"><%= featureContent.heading || 'ทำไมต้องเลือก MindCare?' %></h2>
-          <p class="text-brand-100 mb-8 leading-relaxed" data-i18n="features-subtext" style="<%- _tc('features','subtext') %>"><%= featureContent.subtext || 'เราเชื่อว่าทุกคนมีสิทธิ์ได้รับการดูแลสุขภาพจิตที่ดี ในสภาพแวดล้อมที่ปลอดภัยและไว้วางใจได้' %></p>
+          <h2 class="text-3xl font-bold mb-4" data-i18n-html="features-heading" style="<%- _tc('features','heading') %>"><%- featureContent.heading || 'ทำไมต้องเลือก MindCare?' %></h2>
+          <p class="text-brand-100 mb-8 leading-relaxed" data-i18n-html="features-subtext" style="<%- _tc('features','subtext') %>"><%- featureContent.subtext || 'เราเชื่อว่าทุกคนมีสิทธิ์ได้รับการดูแลสุขภาพจิตที่ดี ในสภาพแวดล้อมที่ปลอดภัยและไว้วางใจได้' %></p>
           <% const features = featureItems %>
           <ul class="space-y-3">
             <% features.forEach((f, idx) => { %>
@@ -406,7 +436,7 @@ function _photoMotion(obj, prefix, uid) {
               <div class="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center flex-shrink-0">
                 <i data-lucide="<%= f.icon %>" class="w-4 h-4"></i>
               </div>
-              <span class="text-sm" data-i18n="feature-<%= idx %>" style="<%- _tc('features','subtext') %>"><%= f.text %></span>
+              <span class="text-sm" data-i18n-html="feature-<%= idx %>" style="<%- _tc('features','subtext') %>"><%- f.text %></span>
             </li>
             <% }) %>
           </ul>
@@ -466,26 +496,26 @@ function _photoMotion(obj, prefix, uid) {
   <section id="book" class="py-20 bg-white" style="position:relative;overflow:hidden;">
     <%- _bgLayers('book') %>
     <div class="max-w-2xl mx-auto px-6 text-center" style="position:relative;z-index:2;">
-      <h2 data-animate="fade-up" data-delay="100ms" class="text-3xl font-bold text-slate-800 mb-4" data-i18n="book-heading" style="<%- _tc('book','heading') %>"><%= content.book.heading %></h2>
-      <p data-animate="fade-up" data-delay="200ms" class="text-slate-500 mb-8 leading-relaxed" data-i18n="book-subtext" style="<%- _tc('book','subtext') %>"><%= content.book.subtext %></p>
+      <h2 data-animate="fade-up" data-delay="100ms" class="text-3xl font-bold text-slate-800 mb-4" data-i18n-html="book-heading" style="<%- _tc('book','heading') %>"><%- content.book.heading %></h2>
+      <p data-animate="fade-up" data-delay="200ms" class="text-slate-500 mb-8 leading-relaxed" data-i18n-html="book-subtext" style="<%- _tc('book','subtext') %>"><%- content.book.subtext %></p>
       <% if (query && query.sent) { %>
-      <div data-animate="fade-up" data-delay="300ms" class="card border-2 border-brand-100 text-center py-10">
+      <div data-animate="fade-up" data-delay="300ms" class="card rounded-[28px] shadow-md text-center py-10">
         <div class="w-16 h-16 rounded-full bg-brand-50 flex items-center justify-center mx-auto mb-4">
           <i data-lucide="circle-check" class="w-8 h-8 text-brand-500"></i>
         </div>
-        <h3 class="font-semibold text-slate-800 text-lg mb-2" data-i18n="book-success-heading"><%= bookText(bookFormTexts, 'successHeading', 'ส่งคำขอสำเร็จแล้ว!') %></h3>
+        <h3 class="font-semibold text-slate-800 text-lg mb-2" data-i18n-html="book-success-heading"><%- bookText(bookFormTexts, 'successHeading', 'ส่งคำขอสำเร็จแล้ว!') %></h3>
         <p class="text-slate-500 text-sm leading-relaxed" data-i18n-html="book-success-text"><%- bookText(bookFormTexts, 'successText', 'ทีมงานจะติดต่อกลับหาคุณภายใน 1 วันทำการ<br>ขอบคุณที่ไว้วางใจ MindCare') %></p>
       </div>
       <% } else { %>
-      <div data-animate="fade-up" data-delay="300ms" class="card border-2 border-brand-100 text-left">
+      <div data-animate="fade-up" data-delay="300ms" class="card rounded-[28px] shadow-md text-left">
         <h3 class="font-semibold text-slate-700 mb-4 flex items-center gap-2">
           <i data-lucide="send" class="w-4 h-4 text-brand-500"></i>
-          <span data-i18n="form-heading" style="<%- _tc('book','formHeading') %>"><%= content.book.formHeading %></span>
+          <span data-i18n-html="form-heading" style="<%- _tc('book','formHeading') %>"><%- content.book.formHeading %></span>
         </h3>
         <% if (query && query.error === 'missing') { %>
         <div class="flex items-center gap-2 mb-4 px-4 py-3 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm">
           <i data-lucide="alert-circle" class="w-4 h-4 flex-shrink-0"></i>
-          <span data-i18n="form-error"><%= bookText(bookFormTexts, 'errorText', 'กรุณากรอกข้อมูลที่จำเป็นให้ครบทุกช่อง') %></span>
+          <span data-i18n-html="form-error"><%- bookText(bookFormTexts, 'errorText', 'กรุณากรอกข้อมูลที่จำเป็นให้ครบทุกช่อง') %></span>
         </div>
         <% } %>
         <form method="POST" action="/contact" class="space-y-4">
@@ -536,14 +566,14 @@ function _photoMotion(obj, prefix, uid) {
           <div class="bg-gradient-to-r from-brand-50 to-emerald-50 rounded-2xl border border-brand-100" style="padding:15px">
             <div class="flex items-center gap-2 mb-3">
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="w-5 h-5 text-brand-500 flex-shrink-0"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"></path><path d="m9 12 2 2 4-4"></path></svg>
-              <h4 class="font-semibold text-slate-800 text-base"><span data-i18n="pdpa-heading"><%= bookText(bookFormTexts, 'pdpaHeading', 'การยินยอมเปิดเผยข้อมูล') %></span> <span class="text-red-400">*</span></h4>
+              <h4 class="font-semibold text-slate-800 text-base"><span data-i18n-html="pdpa-heading"><%- bookText(bookFormTexts, 'pdpaHeading', 'การยินยอมเปิดเผยข้อมูล') %></span> <span class="text-red-400">*</span></h4>
             </div>
             <div class="text-sm text-slate-600 leading-relaxed mb-4">
-              <p data-i18n="pdpa-text"><%= bookText(bookFormTexts, 'pdpaText', 'ข้าพเจ้า ตกลงและยินยอมให้มหาวิทยาลัยเก็บรวบรวม ใช้ ประมวลผล และเปิดเผยข้อมูลส่วนบุคคลของข้าพเจ้า ทั้งที่ปรากฏในเอกสารฉบับนี้ หรือที่มหาวิทยาลัยรวบรวมจากบุคคลอื่น เพื่อวัตถุประสงค์ในการนัดพบแพทย์ หรือเพื่อใช้ประโยชน์ในกิจการของมหาวิทยาลัย ทั้งนี้ข้าพเจ้ารับทราบ ตกลงและยินยอมว่า มหาวิทยาลัยมีสิทธิ์เก็บรวบรวม ใช้ประมวลผลและเปิดเผยข้อมูลส่วนบุคคลของข้าพเจ้า โดยเป็นไปตามนโยบายคุ้มครองข้อมูลส่วนบุคคลของมหาวิทยาลัย ที่ประกาศใช้ในปัจจุบันหรืออาจเปลี่ยนแปลงแก้ไขในภายหลัง รายละเอียดปรากฏตาม นโยบายคุ้มครองข้อมูลส่วนบุคคล ในเว็บไซต์') %></p>
+              <p data-i18n-html="pdpa-text"><%- bookText(bookFormTexts, 'pdpaText', 'ข้าพเจ้า ตกลงและยินยอมให้มหาวิทยาลัยเก็บรวบรวม ใช้ ประมวลผล และเปิดเผยข้อมูลส่วนบุคคลของข้าพเจ้า ทั้งที่ปรากฏในเอกสารฉบับนี้ หรือที่มหาวิทยาลัยรวบรวมจากบุคคลอื่น เพื่อวัตถุประสงค์ในการนัดพบแพทย์ หรือเพื่อใช้ประโยชน์ในกิจการของมหาวิทยาลัย ทั้งนี้ข้าพเจ้ารับทราบ ตกลงและยินยอมว่า มหาวิทยาลัยมีสิทธิ์เก็บรวบรวม ใช้ประมวลผลและเปิดเผยข้อมูลส่วนบุคคลของข้าพเจ้า โดยเป็นไปตามนโยบายคุ้มครองข้อมูลส่วนบุคคลของมหาวิทยาลัย ที่ประกาศใช้ในปัจจุบันหรืออาจเปลี่ยนแปลงแก้ไขในภายหลัง รายละเอียดปรากฏตาม นโยบายคุ้มครองข้อมูลส่วนบุคคล ในเว็บไซต์') %></p>
             </div>
             <label class="flex items-start gap-3 cursor-pointer group">
               <input type="checkbox" name="pdpa_consent" class="mt-0.5 w-4 h-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500 cursor-pointer" required="">
-              <span class="text-sm text-slate-700 group-hover:text-slate-900 transition-colors" data-i18n="pdpa-checkbox"><%= bookText(bookFormTexts, 'pdpaCheckbox', 'ข้าพเจ้าได้อ่านและยอมรับการยินยอมเปิดเผยข้อมูลแล้ว') %></span>
+              <span class="text-sm text-slate-700 group-hover:text-slate-900 transition-colors" data-i18n-html="pdpa-checkbox"><%- bookText(bookFormTexts, 'pdpaCheckbox', 'ข้าพเจ้าได้อ่านและยอมรับการยินยอมเปิดเผยข้อมูลแล้ว') %></span>
             </label>
           </div>
           <button type="submit" class="btn-primary w-full justify-center py-3 text-base">
@@ -565,7 +595,7 @@ function _photoMotion(obj, prefix, uid) {
         <% content.faqs.forEach((f, i) => { %>
         <details data-animate="fade-up" data-delay="<%= i * 90 %>ms" class="card group cursor-pointer" data-faq-idx="<%= i %>" open="<%= i===0 %>">
           <summary class="font-medium text-slate-700 flex items-center justify-between list-none">
-            <span data-faq-q style="<%- _tc('faq','questions') %>"><%= f.q %></span>
+            <span data-faq-q style="<%- _tc('faq','questions') %>"><%- f.q %></span>
             <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 flex-shrink-0 group-open:rotate-180 transition-transform"></i>
           </summary>
           <p class="mt-3 text-sm text-slate-500 leading-relaxed" data-faq-a style="<%- _tc('faq','answers') %>"><%- f.a %></p>
@@ -582,12 +612,18 @@ function _photoMotion(obj, prefix, uid) {
       <div class="grid md:grid-cols-4 gap-8 mb-8">
         <div class="md:col-span-2">
           <div class="flex items-center gap-2 mb-3">
+            <% if (content.branding && content.branding.footerLogoImage) { %>
+            <img src="<%= content.branding.footerLogoImage %>" alt="MindCare" class="h-7 w-auto">
+            <% } else { %>
             <div class="w-7 h-7 rounded-lg bg-gradient-to-br from-brand-500 to-ocean-500 flex items-center justify-center">
               <i data-lucide="heart-handshake" class="w-4 h-4 text-white"></i>
             </div>
+            <% } %>
+            <% if (!(content.branding && content.branding.footerLogoImage)) { %>
             <span class="font-bold text-white">MindCare</span>
+            <% } %>
           </div>
-          <p class="text-sm leading-relaxed" data-i18n="footer-desc" style="<%- _tc('footer','description') %>"><%= (content.contact && content.contact.description) || 'ระบบจองนัดหมายการให้คำปรึกษาทางสุขภาพจิต เชื่อมต่อผู้ที่ต้องการความช่วยเหลือกับผู้เชี่ยวชาญที่ไว้วางใจได้' %></p>
+          <p class="text-sm leading-relaxed" data-i18n-html="footer-desc" style="<%- _tc('footer','description') %>"><%- (content.contact && content.contact.description) || 'ระบบจองนัดหมายการให้คำปรึกษาทางสุขภาพจิต เชื่อมต่อผู้ที่ต้องการความช่วยเหลือกับผู้เชี่ยวชาญที่ไว้วางใจได้' %></p>
         </div>
         <%- _tcStyleTag('footer','menu') %>
         <%- _tcStyleTag('footer','lineLabel') %>
@@ -613,7 +649,7 @@ function _photoMotion(obj, prefix, uid) {
         </div>
       </div>
       <div class="border-t border-slate-700 pt-6 text-center text-xs">
-        <p data-i18n="footer-copyright" style="<%- _tc('footer','copyright') %>"><%= (content.contact && content.contact.copyright) || '© 2024 MindCare · ข้อมูลทุกอย่างได้รับการคุ้มครองตาม PDPA' %></p>
+        <p data-i18n-html="footer-copyright" style="<%- _tc('footer','copyright') %>"><%- (content.contact && content.contact.copyright) || '© 2024 MindCare · ข้อมูลทุกอย่างได้รับการคุ้มครองตาม PDPA' %></p>
       </div>
     </div>
   </footer>
@@ -1085,7 +1121,7 @@ function _photoMotion(obj, prefix, uid) {
         if (faqItems[idx]) {
           const qEl = el.querySelector('[data-faq-q]');
           const aEl = el.querySelector('[data-faq-a]');
-          if (qEl) qEl.textContent = faqItems[idx].q;
+          if (qEl) qEl.innerHTML = faqItems[idx].q;
           if (aEl) aEl.innerHTML = faqItems[idx].a;
         }
       });

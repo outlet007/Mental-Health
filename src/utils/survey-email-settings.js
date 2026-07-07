@@ -1,43 +1,75 @@
-﻿const fs = require('fs')
+const fs = require('fs')
 const path = require('path')
 
 const settingsFile = path.join(__dirname, '../../data/survey-email-settings.json')
 
+const EMAIL_TYPE_DEFAULTS = {
+  appointmentClient: { enabled: true, recipientMode: 'default', customEmail: '' },
+  appointmentCounselor: { enabled: true, recipientMode: 'default', customEmail: '' },
+  counselorReassigned: { enabled: true, recipientMode: 'default', customEmail: '' },
+  survey: { enabled: true, recipientMode: 'default', customEmail: '' },
+  reminder: { enabled: false, recipientMode: 'default', customEmail: '', hoursBefore: 24 },
+}
+
 const DEFAULT_SETTINGS = {
-  recipientMode: 'client',
-  customEmail: '',
   deliveryMode: 'test',
   gmailUser: '',
   gmailAppPassword: '',
   fromName: 'MindCare Docker',
   fromEmail: 'no-reply@mindcare.local',
+  emailTypes: EMAIL_TYPE_DEFAULTS,
 }
 
 function isEmail(value) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value || '').trim())
 }
 
+function cleanHoursBefore(value, fallback) {
+  const n = parseFloat(value)
+  if (Number.isNaN(n)) return fallback
+  return Math.min(168, Math.max(1, n))
+}
+
+// `input` is undefined when the stored settings file predates this type (or
+// predates the whole emailTypes map) — fall back to that type's own default
+// rather than defaulting every field to false/empty.
+function cleanEmailType(input, fallback) {
+  if (input === undefined) return { ...fallback }
+  const clean = {
+    enabled: input.enabled === true || input.enabled === 'on' || input.enabled === 'true',
+    recipientMode: input.recipientMode === 'custom' ? 'custom' : 'default',
+    customEmail: String(input.customEmail || '').trim(),
+  }
+  if ('hoursBefore' in fallback) clean.hoursBefore = cleanHoursBefore(input.hoursBefore, fallback.hoursBefore)
+  return clean
+}
+
+function cleanEmailTypes(data = {}) {
+  const clean = {}
+  for (const type of Object.keys(EMAIL_TYPE_DEFAULTS)) {
+    clean[type] = cleanEmailType(data[type], EMAIL_TYPE_DEFAULTS[type])
+  }
+  return clean
+}
+
 function cleanSettings(data = {}) {
   const deliveryMode = data.deliveryMode === 'gmail' ? 'gmail' : 'test'
   return {
-    ...DEFAULT_SETTINGS,
-    ...data,
-    recipientMode: data.recipientMode === 'custom' ? 'custom' : 'client',
-    customEmail: String(data.customEmail || '').trim(),
     deliveryMode,
     gmailUser: String(data.gmailUser || '').trim(),
     gmailAppPassword: String(data.gmailAppPassword || '').trim(),
     fromName: String(data.fromName || DEFAULT_SETTINGS.fromName).trim(),
     fromEmail: String(data.fromEmail || '').trim() || (deliveryMode === 'gmail' ? String(data.gmailUser || '').trim() : DEFAULT_SETTINGS.fromEmail),
+    emailTypes: cleanEmailTypes(data.emailTypes || {}),
   }
 }
 
 function readSurveyEmailSettings() {
-  if (!fs.existsSync(settingsFile)) return { ...DEFAULT_SETTINGS }
+  if (!fs.existsSync(settingsFile)) return { ...DEFAULT_SETTINGS, emailTypes: cleanEmailTypes({}) }
   try {
     return cleanSettings(JSON.parse(fs.readFileSync(settingsFile, 'utf8')))
   } catch (error) {
-    return { ...DEFAULT_SETTINGS }
+    return { ...DEFAULT_SETTINGS, emailTypes: cleanEmailTypes({}) }
   }
 }
 
@@ -50,12 +82,56 @@ function writeSurveyEmailSettings(settings) {
   return data
 }
 
-function resolveSurveyEmailRecipient(client, settings = readSurveyEmailSettings()) {
-  const customEmail = String(settings.customEmail || '').trim()
-  if (settings.recipientMode === 'custom' && isEmail(customEmail)) {
-    return { ...client, email: customEmail }
+function writeEmailType(type, values) {
+  if (!(type in EMAIL_TYPE_DEFAULTS)) throw new Error(`Unknown email type: ${type}`)
+  const current = readSurveyEmailSettings()
+  current.emailTypes[type] = cleanEmailType(values, EMAIL_TYPE_DEFAULTS[type])
+  return writeSurveyEmailSettings(current)
+}
+
+// Swaps in the custom override email for a type when configured, otherwise
+// leaves the person's own email untouched.
+function resolveEmailRecipient(type, person, settings = readSurveyEmailSettings()) {
+  const config = settings.emailTypes[type] || EMAIL_TYPE_DEFAULTS[type]
+  const customEmail = String(config.customEmail || '').trim()
+  if (config.recipientMode === 'custom' && isEmail(customEmail)) {
+    return { ...person, email: customEmail }
   }
-  return { ...client, email: client.email || '' }
+  return { ...person, email: person.email || '' }
+}
+
+function isEmailTypeEnabled(type, settings = readSurveyEmailSettings()) {
+  const config = settings.emailTypes[type] || EMAIL_TYPE_DEFAULTS[type]
+  return config.enabled === true
+}
+
+// Bundles the enabled/recipient-override/delivery decisions each call site
+// needs so appointments.js, clients.js, and contacts.js don't each re-derive
+// the same 3 settings lookups by hand.
+function resolveAppointmentEmailOptions(client, counselor, settings = readSurveyEmailSettings()) {
+  return {
+    client: resolveEmailRecipient('appointmentClient', client, settings),
+    counselor: resolveEmailRecipient('appointmentCounselor', counselor, settings),
+    skipClient: !isEmailTypeEnabled('appointmentClient', settings),
+    skipCounselor: !isEmailTypeEnabled('appointmentCounselor', settings),
+    deliveryConfig: getEmailDeliveryConfig(settings),
+  }
+}
+
+function resolveReassignedEmailOptions(counselor, settings = readSurveyEmailSettings()) {
+  return {
+    counselor: resolveEmailRecipient('counselorReassigned', counselor, settings),
+    skip: !isEmailTypeEnabled('counselorReassigned', settings),
+    deliveryConfig: getEmailDeliveryConfig(settings),
+  }
+}
+
+function resolveSurveyEmailOptions(client, settings = readSurveyEmailSettings()) {
+  return {
+    client: resolveEmailRecipient('survey', client, settings),
+    skip: !isEmailTypeEnabled('survey', settings),
+    deliveryConfig: getEmailDeliveryConfig(settings),
+  }
 }
 
 function getEmailDeliveryConfig(settings = readSurveyEmailSettings()) {
@@ -87,9 +163,14 @@ function getEmailDeliveryConfig(settings = readSurveyEmailSettings()) {
 
 module.exports = {
   DEFAULT_SETTINGS,
+  EMAIL_TYPE_DEFAULTS,
   readSurveyEmailSettings,
   writeSurveyEmailSettings,
-  resolveSurveyEmailRecipient,
+  writeEmailType,
+  resolveEmailRecipient,
+  isEmailTypeEnabled,
+  resolveAppointmentEmailOptions,
+  resolveReassignedEmailOptions,
+  resolveSurveyEmailOptions,
   getEmailDeliveryConfig,
 }
-

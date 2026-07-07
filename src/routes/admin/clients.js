@@ -4,6 +4,7 @@ const fs      = require('fs')
 const { matchesSearch } = require('../../utils/search')
 const path    = require('path')
 const { sendAppointmentEmails, sendCounselorReassignedEmail } = require('../../utils/mailer')
+const { resolveAppointmentEmailOptions, resolveReassignedEmailOptions } = require('../../utils/survey-email-settings')
 const { reassignAppointmentCounselor } = require('../../utils/appointment-scheduling')
 const { logDeletion } = require('../../utils/audit-log')
 const { getConcernOptions } = require('../../utils/concern-options')
@@ -232,19 +233,26 @@ router.post('/:id/transfer', (req, res) => {
   write('appointments.json', data)
 
   notifications.forEach(({ confirmAppointment, cancelAppointment, oldCounselor, newCounselor }) => {
+    const emailOptions = resolveAppointmentEmailOptions(
+      { name: client.name, email: client.email || '', phone: client.phone || '' },
+      { name: newCounselor.name, title: newCounselor.title, email: newCounselor.email, phone: newCounselor.phone, specialties: newCounselor.specialties }
+    )
     sendAppointmentEmails({
       appointment: confirmAppointment,
-      client:      { name: client.name, email: client.email || '', phone: client.phone || '' },
-      counselor:   { name: newCounselor.name, title: newCounselor.title, email: newCounselor.email, phone: newCounselor.phone, specialties: newCounselor.specialties },
       concern:     '',
+      ...emailOptions,
     }).catch(err => console.error('[Email] unexpected error:', err.message))
 
     if (oldCounselor) {
-      sendCounselorReassignedEmail({
-        appointment: cancelAppointment,
-        client:      { name: client.name },
-        counselor:   { name: oldCounselor.name, email: oldCounselor.email },
-      }).catch(err => console.error('[Email] unexpected error:', err.message))
+      const reassignedOptions = resolveReassignedEmailOptions({ name: oldCounselor.name, email: oldCounselor.email })
+      if (!reassignedOptions.skip) {
+        sendCounselorReassignedEmail({
+          appointment: cancelAppointment,
+          client:      { name: client.name },
+          counselor:   reassignedOptions.counselor,
+          deliveryConfig: reassignedOptions.deliveryConfig,
+        }).catch(err => console.error('[Email] unexpected error:', err.message))
+      }
     }
   })
 

@@ -29,6 +29,12 @@ function renderIndex(backgrounds) {
   })
 }
 
+test('home page navbar has a persistent drop shadow', async () => {
+  const html = await renderIndex({})
+
+  assert.match(html, /<nav class="[^"]*shadow-\[0_1px_2px_rgba\(15,23,42,0\.06\),0_8px_20px_rgba\(15,23,42,0\.12\)\][^"]*"/)
+})
+
 function postBackgrounds(fields) {
   const app = express()
   app.use(express.urlencoded({ extended: true }))
@@ -69,6 +75,18 @@ test('section background images use configurable slow zoom animation with reduce
   assert.match(html, /prefers-reduced-motion:\s*reduce/)
 })
 
+test('section backgrounds render configurable bottom-only edge blend overlays per section', async () => {
+  const html = await renderIndex({
+    hero: { color: '#ffffff', opacity: 0.2, blend: 120, blendColor: '#f8fafc', textColors: {} },
+    features: { image: '/uploads/content/features.jpg', imgOpacity: 0.7, blend: 80, blendColor: '#05967e', textColors: {} },
+  })
+
+  assert.doesNotMatch(html, /class="section-bg-blend section-bg-blend-top"/)
+  assert.match(html, /class="section-bg-blend section-bg-blend-bottom"/)
+  assert.match(html, /height:120px/)
+  assert.match(html, /height:80px/)
+  assert.match(html, /linear-gradient\(to top,rgba\(5,150,126,1\),rgba\(5,150,126,0\)\)/)
+})
 test('background settings form saves movement controls per section', async () => {
   const before = fs.readFileSync(contentPath, 'utf8')
   try {
@@ -76,17 +94,24 @@ test('background settings form saves movement controls per section', async () =>
       color_hero: '#ffffff',
       opacity_hero: '0.5',
       imgOpacity_hero: '0.8',
+      blend_hero: '180',
+      blendColor_hero: '#f8fafc',
       motionEnabled_hero: 'on',
       motionDuration_hero: '26',
       motionScale_hero: '1.18',
-      color_counselors: '', opacity_counselors: '1', imgOpacity_counselors: '1', motionEnabled_counselors: 'off', motionDuration_counselors: '30', motionScale_counselors: '1.1',
-      color_features: '', opacity_features: '1', imgOpacity_features: '1', motionEnabled_features: 'on', motionDuration_features: '38', motionScale_features: '1.12',
-      color_book: '', opacity_book: '1', imgOpacity_book: '1', motionEnabled_book: 'on', motionDuration_book: '38', motionScale_book: '1.12',
-      color_faq: '', opacity_faq: '1', imgOpacity_faq: '1', motionEnabled_faq: 'on', motionDuration_faq: '38', motionScale_faq: '1.12',
+      color_counselors: '', opacity_counselors: '1', imgOpacity_counselors: '1', blend_counselors: '260', blendColor_counselors: '#badhex', motionEnabled_counselors: 'off', motionDuration_counselors: '30', motionScale_counselors: '1.1',
+      color_features: '', opacity_features: '1', imgOpacity_features: '1', blend_features: '0', blendColor_features: '#ffffff', motionEnabled_features: 'on', motionDuration_features: '38', motionScale_features: '1.12',
+      color_book: '', opacity_book: '1', imgOpacity_book: '1', blend_book: '0', blendColor_book: '#ffffff', motionEnabled_book: 'on', motionDuration_book: '38', motionScale_book: '1.12',
+      color_faq: '', opacity_faq: '1', imgOpacity_faq: '1', blend_faq: '0', blendColor_faq: '#ffffff', motionEnabled_faq: 'on', motionDuration_faq: '38', motionScale_faq: '1.12',
+      color_footer: '', opacity_footer: '1', imgOpacity_footer: '1', blend_footer: '0', blendColor_footer: '#0f172a', motionEnabled_footer: 'on', motionDuration_footer: '38', motionScale_footer: '1.12',
     })
 
     assert.equal(res.statusCode, 302)
     const saved = JSON.parse(fs.readFileSync(contentPath, 'utf8'))
+    assert.equal(saved.backgrounds.hero.blend, 180)
+    assert.equal(saved.backgrounds.hero.blendColor, '#f8fafc')
+    assert.equal(saved.backgrounds.counselors.blend, 220)
+    assert.equal(saved.backgrounds.counselors.blendColor, '')
     assert.equal(saved.backgrounds.hero.motionEnabled, true)
     assert.equal(saved.backgrounds.hero.motionDuration, 26)
     assert.equal(saved.backgrounds.hero.motionScale, 1.18)

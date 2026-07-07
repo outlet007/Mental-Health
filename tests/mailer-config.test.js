@@ -1,5 +1,17 @@
 const assert = require('node:assert/strict')
+const fs = require('node:fs')
+const path = require('node:path')
 const test = require('node:test')
+
+const templatesPath = path.join(__dirname, '..', 'data', 'email-templates.json')
+
+function withTempTemplatesFile(fn) {
+  const before = fs.existsSync(templatesPath) ? fs.readFileSync(templatesPath, 'utf8') : null
+  return Promise.resolve().then(fn).finally(() => {
+    if (before === null) fs.rmSync(templatesPath, { force: true })
+    else fs.writeFileSync(templatesPath, before)
+  })
+}
 
 
 function loadMailerWithCapturedTransport(env) {
@@ -146,6 +158,131 @@ test('survey email uses the same lucide satisfaction icons as the survey form', 
   }
 })
 
+
+test('reminder email renders appointment details and uses the client email', async () => {
+  const harness = loadMailerWithCapturedTransport({})
+
+  try {
+    const result = await harness.mailer.sendReminderEmail({
+      appointment: { id: 'app-test', date: '2026-07-01', time: '10:00', duration: 60, type: 'online' },
+      client: { name: 'Test Client', email: 'client@example.test' },
+      counselor: { name: 'Test Counselor', email: 'counselor@example.test' },
+      concern: 'Stress management',
+    })
+
+    assert.equal(result.sent, true)
+    assert.equal(harness.sentMessages.length, 1)
+    const [message] = harness.sentMessages
+    assert.equal(message.to, 'client@example.test')
+    assert.match(message.subject, /แจ้งเตือนนัดหมายล่วงหน้า/)
+    assert.match(message.html, /Your appointment is coming up soon/)
+    assert.match(message.html, /data-email-icon="calendar"/)
+  } finally {
+    harness.restore()
+  }
+})
+
+test('appointment confirmation closing text and icon differ between online and onsite', async () => {
+  const harness = loadMailerWithCapturedTransport({})
+
+  try {
+    await harness.mailer.sendAppointmentEmails({
+      appointment: { id: 'app-online', date: '2026-07-01', time: '10:00', duration: 60, type: 'online', note: '' },
+      client: { name: 'Test Client', email: 'client@example.test', phone: '' },
+      counselor: { name: 'Test Counselor', email: 'counselor@example.test', phone: '', specialties: [] },
+      concern: '',
+    })
+    await harness.mailer.sendAppointmentEmails({
+      appointment: { id: 'app-onsite', date: '2026-07-01', time: '10:00', duration: 60, type: 'onsite', note: '' },
+      client: { name: 'Test Client', email: 'client@example.test', phone: '' },
+      counselor: { name: 'Test Counselor', email: 'counselor@example.test', phone: '', specialties: [] },
+      concern: '',
+    })
+
+    const [onlineClientMessage, , onsiteClientMessage] = harness.sentMessages
+    assert.match(onlineClientMessage.html, /Please join 5-10 minutes/)
+    assert.match(onlineClientMessage.html, /data-email-icon="video"/)
+    assert.match(onsiteClientMessage.html, /Please arrive 5-10 minutes/)
+    assert.match(onsiteClientMessage.html, /data-email-icon="map-pin"/)
+  } finally {
+    harness.restore()
+  }
+})
+
+test('reminder email closing text differs between online and onsite appointments', async () => {
+  const harness = loadMailerWithCapturedTransport({})
+
+  try {
+    const online = await harness.mailer.sendReminderEmail({
+      appointment: { id: 'app-test', date: '2026-07-01', time: '10:00', duration: 60, type: 'online' },
+      client: { name: 'Test Client', email: 'client@example.test' },
+      counselor: { name: 'Test Counselor', email: 'counselor@example.test' },
+      concern: '',
+    })
+    const onsite = await harness.mailer.sendReminderEmail({
+      appointment: { id: 'app-test-2', date: '2026-07-01', time: '10:00', duration: 60, type: 'onsite' },
+      client: { name: 'Test Client', email: 'client@example.test' },
+      counselor: { name: 'Test Counselor', email: 'counselor@example.test' },
+      concern: '',
+    })
+
+    assert.equal(online.sent, true)
+    assert.equal(onsite.sent, true)
+    assert.match(harness.sentMessages[0].html, /Please join 5-10 minutes/)
+    assert.match(harness.sentMessages[1].html, /Please arrive 5-10 minutes/)
+  } finally {
+    harness.restore()
+  }
+})
+
+test('reminder email is skipped when the client has no email on file', async () => {
+  const harness = loadMailerWithCapturedTransport({})
+
+  try {
+    const result = await harness.mailer.sendReminderEmail({
+      appointment: { id: 'app-test', date: '2026-07-01', time: '10:00', duration: 60, type: 'online' },
+      client: { name: 'Test Client', email: '' },
+      counselor: { name: 'Test Counselor', email: 'counselor@example.test' },
+      concern: '',
+    })
+
+    assert.equal(result.skipped, true)
+    assert.equal(harness.sentMessages.length, 0)
+  } finally {
+    harness.restore()
+  }
+})
+
+test('a saved template override changes the sent email while an untouched type keeps its default text', () => {
+  return withTempTemplatesFile(async () => {
+    const { writeEmailTemplate } = require('../src/utils/email-templates')
+    writeEmailTemplate('appointmentClient', {
+      title: { th: 'ยืนยันนัด (ข้อความใหม่)', en: 'ยืนยันนัด (ข้อความใหม่)' },
+      greeting: { th: 'สวัสดี {{clientName}} นี่คือข้อความที่ admin แก้ไขเอง', en: '' },
+      closing: { th: '', en: '' },
+    })
+
+    const harness = loadMailerWithCapturedTransport({})
+    try {
+      await harness.mailer.sendAppointmentEmails({
+        appointment: { id: 'app-test', date: '2026-07-01', time: '10:00', duration: 60, type: 'online', note: '' },
+        client: { name: 'สมชาย', email: 'client@example.test', phone: '' },
+        counselor: { name: 'Test Counselor', email: 'counselor@example.test', phone: '', specialties: [] },
+        concern: '',
+      })
+
+      assert.equal(harness.sentMessages.length, 2)
+      const [clientMessage, counselorMessage] = harness.sentMessages
+      assert.match(clientMessage.subject, /ยืนยันนัด \(ข้อความใหม่\)/)
+      assert.match(clientMessage.html, /นี่คือข้อความที่ admin แก้ไขเอง/)
+      assert.match(clientMessage.html, /สมชาย/)
+      // Counselor email has no override saved — still renders the built-in default.
+      assert.match(counselorMessage.html, /You have a new appointment from MindCare/)
+    } finally {
+      harness.restore()
+    }
+  })
+})
 
 test('emails include in-email Thai and English toggle without web email view links', async () => {
   const harness = loadMailerWithCapturedTransport({})

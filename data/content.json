@@ -71,8 +71,8 @@
   },
   "backgrounds": {
     "hero": {
-      "color": "#ffffff",
-      "opacity": 0.1,
+      "color": "",
+      "opacity": 1,
       "image": "/uploads/content/1782273930131.png",
       "imgOpacity": 1,
       "textColors": {
@@ -80,23 +80,27 @@
         "subtext": ""
       },
       "motionEnabled": true,
-      "motionDuration": 42,
-      "motionScale": 1.35,
-      "motionStyle": "zoom"
+      "motionDuration": 38,
+      "motionScale": 1.12,
+      "motionStyle": "zoom",
+      "blend": 0,
+      "blendColor": ""
     },
     "counselors": {
-      "color": "#ffffff",
-      "opacity": 0,
+      "color": "",
+      "opacity": 1,
       "image": "/uploads/content/1783317283390.png",
       "imgOpacity": 1,
       "textColors": {
         "heading": "",
-        "subtext": "#5a5f68"
+        "subtext": ""
       },
       "motionEnabled": true,
       "motionDuration": 38,
       "motionScale": 1.12,
-      "motionStyle": "zoom"
+      "motionStyle": "zoom",
+      "blend": 0,
+      "blendColor": ""
     },
     "features": {
       "color": "",
@@ -108,56 +112,64 @@
         "subtext": ""
       },
       "motionEnabled": true,
-      "motionDuration": 17,
-      "motionScale": 1.35,
-      "motionStyle": "zoom"
+      "motionDuration": 38,
+      "motionScale": 1.12,
+      "motionStyle": "zoom",
+      "blend": 0,
+      "blendColor": ""
     },
     "book": {
-      "color": "#dedede",
-      "opacity": 0.7,
-      "image": "/uploads/content/1783335567922.jpg",
-      "imgOpacity": 0.55,
+      "color": "",
+      "opacity": 1,
+      "image": "/uploads/content/1783391389871.png",
+      "imgOpacity": 1,
       "textColors": {
-        "heading": "#001638",
-        "subtext": "#001f4d",
-        "formHeading": "#001638"
+        "heading": "",
+        "subtext": "",
+        "formHeading": ""
       },
       "motionEnabled": true,
-      "motionDuration": 12,
-      "motionScale": 1.19,
-      "motionStyle": "zoom"
+      "motionDuration": 38,
+      "motionScale": 1.12,
+      "motionStyle": "zoom",
+      "blend": 0,
+      "blendColor": ""
     },
     "faq": {
-      "color": "#adafd2",
-      "opacity": 0.25,
-      "image": "/uploads/content/1782272361491.png",
-      "imgOpacity": 0.9,
+      "color": "",
+      "opacity": 1,
+      "image": "/uploads/content/1783402133631.png",
+      "imgOpacity": 1,
       "textColors": {
         "heading": "",
         "questions": "",
         "answers": ""
       },
       "motionEnabled": true,
-      "motionDuration": 8,
-      "motionScale": 1.15,
-      "motionStyle": "zoom"
+      "motionDuration": 38,
+      "motionScale": 1.12,
+      "motionStyle": "zoom",
+      "blend": 0,
+      "blendColor": ""
     },
     "footer": {
-      "color": "#081735",
-      "image": "/uploads/content/1783317283399.jpg",
-      "opacity": 0.9,
-      "imgOpacity": 0.6,
+      "color": "",
+      "image": "/uploads/content/1783410413940.jpg",
+      "opacity": 1,
+      "imgOpacity": 1,
       "motionEnabled": true,
-      "motionDuration": 14,
+      "motionDuration": 38,
       "motionScale": 1.12,
       "textColors": {
-        "description": "#cfcfcf",
-        "menu": "#cfcfcf",
-        "lineLabel": "#cfcfcf",
-        "hours": "#cfcfcf",
-        "copyright": "#cfcfcf"
+        "description": "",
+        "menu": "",
+        "lineLabel": "",
+        "hours": "",
+        "copyright": ""
       },
-      "motionStyle": "zoom"
+      "motionStyle": "zoom",
+      "blend": 0,
+      "blendColor": ""
     }
   },
   "en": {
@@ -175,7 +187,7 @@
     },
     "book": {
       "heading": "Register for Counseling Services",
-      "subtext": "Seeking help is not weakness — it takes courage. Start taking care of your mind today.",
+      "subtext": "Seeking help is not weakness — it takes courage. Start taking care<br>of your mind today.",
       "formHeading": "Please leave your details for our staff to contact you for a counseling appointment.",
       "concernOptions": [
         "Anxiety / Stress",
@@ -202,7 +214,9 @@
         "pdpaHeading": "Data Disclosure Consent",
         "pdpaText": "I agree and consent to the University collecting, using, processing, and disclosing my personal information — both appearing in this document and gathered from other persons — for the purpose of scheduling medical appointments or for University operations. I acknowledge that the University has the right to collect, use, process, and disclose my personal data in accordance with the University's Personal Data Protection Policy as currently published or as may be amended in the future. Details are available in the Personal Data Protection Policy on the website.",
         "pdpaCheckbox": "I have read and accept the data disclosure consent.",
-        "submitLabel": "Submit Registration Request"
+        "submitLabel": "Submit Registration Request",
+        "phonePlaceholder": "08X-XXX-XXXX",
+        "emailPlaceholder": "your@email.com"
       }
     },
     "faqs": [
@@ -242,7 +256,7 @@
   },
   "features": {
     "heading": "ทำไมต้องเลือก MindCare?",
-    "subtext": "เราเชื่อว่าทุกคนมีสิทธิ์ได้รับการดูแลสุขภาพจิตที่ดี ในสภาพแวดล้อมที่ปลอดภัยและไว้วางใจได้",
+    "subtext": "เราเชื่อว่าทุกคนมีสิทธิ์ได้รับการดูแลสุขภาพจิตที่ดี ในสภาพแวดล้อมที่ปลอดภัย<br>และไว้วางใจได้",
     "items": [
       "นักให้คำปรึกษาผ่านการตรวจสอบและรับรองคุณสมบัติ",
       "ข้อมูลทุกอย่างเป็นความลับตาม PDPA",
@@ -261,5 +275,10 @@
     "collageMotionStyle": "float",
     "collageMotionDuration": 8,
     "collageMotionScale": 1.12
+  },
+  "branding": {
+    "headerLogoImage": "",
+    "footerLogoImage": "",
+    "faviconImage": ""
   }
 }

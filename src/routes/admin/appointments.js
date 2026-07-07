@@ -5,7 +5,7 @@ const { matchesSearch } = require('../../utils/search')
 const path    = require('path')
 const crypto = require('crypto')
 const { sendAppointmentEmails, sendSurveyEmail, sendCounselorReassignedEmail } = require('../../utils/mailer')
-const { readSurveyEmailSettings, resolveSurveyEmailRecipient, getEmailDeliveryConfig } = require('../../utils/survey-email-settings')
+const { resolveAppointmentEmailOptions, resolveReassignedEmailOptions, resolveSurveyEmailOptions } = require('../../utils/survey-email-settings')
 const { toMin, timesOverlap } = require('../../utils/appointment-scheduling')
 const { logDeletion } = require('../../utils/audit-log')
 const { getConcernOptions } = require('../../utils/concern-options')
@@ -197,11 +197,14 @@ router.post('/create', async (req, res) => {
   appointments.push(newAppt)
   write('appointments.json', appointments)
 
+  const emailOptions = resolveAppointmentEmailOptions(
+    { name: client.name, email: client.email || '', phone: client.phone || '' },
+    { name: counselor.name, title: counselor.title, email: counselor.email, phone: counselor.phone, specialties: counselor.specialties }
+  )
   sendAppointmentEmails({
     appointment: newAppt,
-    client:      { name: client.name, email: client.email || '', phone: client.phone || '' },
-    counselor:   { name: counselor.name, title: counselor.title, email: counselor.email, phone: counselor.phone, specialties: counselor.specialties },
     concern:     newAppt.concern,
+    ...emailOptions,
   }).catch(err => console.error('[Email] unexpected error:', err.message))
 
   res.redirect('/admin/appointments?created=1')
@@ -252,6 +255,7 @@ router.post('/:id/edit', (req, res) => {
   data[idx].duration      = duration
   data[idx].date          = newDate
   data[idx].time          = newTime
+  if (scheduleChanged) data[idx].reminderSent = false
   if (!counselorRole) {
     if (type)   data[idx].type   = type
     if (status) data[idx].status = status
@@ -265,19 +269,26 @@ router.post('/:id/edit', (req, res) => {
     const client  = clients.find(c => c.id === current.clientId)
 
     if (client) {
+      const emailOptions = resolveAppointmentEmailOptions(
+        { name: client.name, email: client.email || '', phone: client.phone || '' },
+        { name: newCounselor.name, title: newCounselor.title, email: newCounselor.email, phone: newCounselor.phone, specialties: newCounselor.specialties }
+      )
       sendAppointmentEmails({
         appointment: data[idx],
-        client:      { name: client.name, email: client.email || '', phone: client.phone || '' },
-        counselor:   { name: newCounselor.name, title: newCounselor.title, email: newCounselor.email, phone: newCounselor.phone, specialties: newCounselor.specialties },
         concern:     data[idx].concern || '',
+        ...emailOptions,
       }).catch(err => console.error('[Email] unexpected error:', err.message))
 
       if (counselorChanged && oldCounselor) {
-        sendCounselorReassignedEmail({
-          appointment: current,
-          client:      { name: client.name },
-          counselor:   { name: oldCounselor.name, email: oldCounselor.email },
-        }).catch(err => console.error('[Email] unexpected error:', err.message))
+        const reassignedOptions = resolveReassignedEmailOptions({ name: oldCounselor.name, email: oldCounselor.email })
+        if (!reassignedOptions.skip) {
+          sendCounselorReassignedEmail({
+            appointment: current,
+            client:      { name: client.name },
+            counselor:   reassignedOptions.counselor,
+            deliveryConfig: reassignedOptions.deliveryConfig,
+          }).catch(err => console.error('[Email] unexpected error:', err.message))
+        }
       }
     }
   }
@@ -347,14 +358,16 @@ router.post('/:id/complete', (req, res) => {
     const counselor  = counselors.find(c => c.id === appt.counselorId)
     if (client && counselor) {
       const baseUrl = process.env.BASE_URL || 'http://localhost:3000'
-      const settings = readSurveyEmailSettings()
-      sendSurveyEmail({
-        appointment: appt,
-        client: resolveSurveyEmailRecipient(client, settings),
-        counselor,
-        surveyUrl: `${baseUrl}/survey/${appt.surveyToken}`,
-        deliveryConfig: getEmailDeliveryConfig(settings),
-      }).catch(err => console.error('[Email] survey error:', err.message))
+      const surveyOptions = resolveSurveyEmailOptions(client)
+      if (!surveyOptions.skip) {
+        sendSurveyEmail({
+          appointment: appt,
+          client: surveyOptions.client,
+          counselor,
+          surveyUrl: `${baseUrl}/survey/${appt.surveyToken}`,
+          deliveryConfig: surveyOptions.deliveryConfig,
+        }).catch(err => console.error('[Email] survey error:', err.message))
+      }
     }
   }
   res.redirect('/admin/appointments')

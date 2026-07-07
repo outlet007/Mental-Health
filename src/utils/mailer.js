@@ -1,5 +1,6 @@
 require('dotenv').config()
 const nodemailer = require('nodemailer')
+const { renderTemplateFields, hasClosingVariants } = require('./email-templates')
 
 function isPlaceholder(value, placeholders = []) {
   return !value || placeholders.includes(String(value).trim())
@@ -28,15 +29,27 @@ function formatDate(dateStr) {
   return d.toLocaleDateString('th-TH', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
 }
 
+function buildVars({ appointment, client, counselor }) {
+  return {
+    clientName: client?.name || '',
+    counselorName: counselor?.name || '',
+    date: formatDate(appointment.date),
+    time: appointment.time,
+    duration: appointment.duration,
+    appointmentId: appointment.id,
+  }
+}
+
 function typeLabel(type, lang = 'th') {
   if (lang === 'en') return type === 'online' ? 'Online video call' : 'On-site service'
-  return type === 'online' ? '\u0e2d\u0e2d\u0e19\u0e44\u0e25\u0e19\u0e4c (Video Call)' : '\u0e40\u0e02\u0e49\u0e32\u0e23\u0e31\u0e1a\u0e1a\u0e23\u0e34\u0e01\u0e32\u0e23\u0e14\u0e49\u0e27\u0e22\u0e15\u0e19\u0e40\u0e2d\u0e07 (On-site)'
+  return type === 'online' ? 'ออนไลน์ (Video Call)' : 'เข้ารับบริการด้วยตนเอง (On-site)'
 }
 
 function icon(name, color = '#05967e') {
   const paths = {
     'heart-handshake': '<path d="M19.5 12.6 12 20l-7.5-7.4a5 5 0 0 1 7.1-7.1l.4.4.4-.4a5 5 0 0 1 7.1 7.1Z"/><path d="M12 20l-2-2 2-2 2 2-2 2Z"/>',
     video: '<path d="m16 13 5 3V8l-5 3"/><rect width="14" height="12" x="2" y="6" rx="2"/>',
+    'map-pin': '<path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/>',
     calendar: '<path d="M8 2v4M16 2v4M3 10h18"/><rect width="18" height="18" x="3" y="4" rx="2"/>',
     user: '<path d="M19 21a7 7 0 0 0-14 0"/><circle cx="12" cy="7" r="4"/>',
     clipboard: '<rect width="8" height="4" x="8" y="2" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>',
@@ -57,13 +70,17 @@ function card(title, rows, color = '#05967e') {
   return `<div style="border:1px solid #e2e8f0;border-radius:14px;padding:18px;margin:18px 0;background:#ffffff;"><h3 style="margin:0 0 10px;color:${color};font-size:15px;">${title}</h3><table width="100%" cellpadding="0" cellspacing="0">${rows.join('')}</table></div>`
 }
 
+function paragraph(iconName, iconColor, html) {
+  return `<p style="font-size:15px;line-height:1.8;color:#334155;margin:0 0 18px;">${icon(iconName, iconColor)}${html}</p>`
+}
+
 function languageToggle(thHtml, enHtml) {
   return `<input id="email-lang-th" name="email-lang" type="radio" checked style="display:none;"><input id="email-lang-en" name="email-lang" type="radio" style="display:none;"><style>#email-lang-th:checked ~ .email-lang-th{display:block!important}#email-lang-th:checked ~ .email-lang-en{display:none!important}#email-lang-en:checked ~ .email-lang-th{display:none!important}#email-lang-en:checked ~ .email-lang-en{display:block!important}#email-lang-th:checked ~ .lang-switch label[for="email-lang-th"],#email-lang-en:checked ~ .lang-switch label[for="email-lang-en"]{background:#05967e!important;color:#fff!important;border-color:#05967e!important}.lang-switch label{display:inline-block;border:1px solid #cbd5e1;border-radius:999px;padding:7px 14px;margin-right:8px;font-size:13px;font-weight:700;color:#334155;background:#fff;cursor:pointer}</style><div data-email-language-switch="true" class="lang-switch" style="margin:0 0 20px;"><label for="email-lang-th">TH</label><label for="email-lang-en">EN</label></div><div class="email-lang-th" style="display:block;">${thHtml}</div><div class="email-lang-en" style="display:none;">${enHtml}</div>`
 }
 
 function emailWrapper(title, accentColor, thHtml, enHtml) {
   const body = languageToggle(thHtml, enHtml)
-  return `<!DOCTYPE html><html lang="th"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>${title}</title></head><body style="margin:0;padding:0;background:#f1f5f9;font-family:'Noto Sans Thai','Segoe UI',Arial,sans-serif;"><table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f1f5f9;font-family:'Noto Sans Thai','Segoe UI',Arial,sans-serif;"><tr><td align="center" style="padding:28px 14px;"><table width="640" cellpadding="0" cellspacing="0" border="0" style="max-width:640px;width:100%;background:#fff;border-radius:18px;overflow:hidden;box-shadow:0 8px 30px rgba(15,23,42,.08);"><tr><td style="background:linear-gradient(135deg,${accentColor.from},${accentColor.to});padding:30px 36px;color:#fff;"><div style="font-size:13px;font-weight:700;letter-spacing:.08em;margin-bottom:10px;">MindCare</div><h1 style="margin:0;font-size:23px;line-height:1.35;">${title}</h1></td></tr><tr><td style="padding:30px 36px;">${body}</td></tr><tr><td style="border-top:1px solid #e2e8f0;padding:18px 36px;color:#94a3b8;font-size:12px;line-height:1.7;">\u0e2d\u0e35\u0e40\u0e21\u0e25\u0e19\u0e35\u0e49\u0e2a\u0e48\u0e07\u0e08\u0e32\u0e01\u0e23\u0e30\u0e1a\u0e1a MindCare \u0e2d\u0e31\u0e15\u0e42\u0e19\u0e21\u0e31\u0e15\u0e34<br>&copy; ${new Date().getFullYear()} MindCare</td></tr></table></td></tr></table></body></html>`
+  return `<!DOCTYPE html><html lang="th"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>${title}</title></head><body style="margin:0;padding:0;background:#f1f5f9;font-family:'Noto Sans Thai','Segoe UI',Arial,sans-serif;"><table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f1f5f9;font-family:'Noto Sans Thai','Segoe UI',Arial,sans-serif;"><tr><td align="center" style="padding:28px 14px;"><table width="640" cellpadding="0" cellspacing="0" border="0" style="max-width:640px;width:100%;background:#fff;border-radius:18px;overflow:hidden;box-shadow:0 8px 30px rgba(15,23,42,.08);"><tr><td style="background:linear-gradient(135deg,${accentColor.from},${accentColor.to});padding:30px 36px;color:#fff;"><div style="font-size:13px;font-weight:700;letter-spacing:.08em;margin-bottom:10px;">MindCare</div><h1 style="margin:0;font-size:23px;line-height:1.35;">${title}</h1></td></tr><tr><td style="padding:30px 36px;">${body}</td></tr><tr><td style="border-top:1px solid #e2e8f0;padding:18px 36px;color:#94a3b8;font-size:12px;line-height:1.7;">อีเมลนี้ส่งจากระบบ MindCare อัตโนมัติ<br>&copy; ${new Date().getFullYear()} MindCare</td></tr></table></td></tr></table></body></html>`
 }
 
 function appointmentDetails({ appointment, client, counselor, concern }, lang = 'th') {
@@ -73,33 +90,57 @@ function appointmentDetails({ appointment, client, counselor, concern }, lang = 
       row('Appointment ID', appointment.id), row('Date', dateStr), row('Time', `${appointment.time}`), row('Duration', `${appointment.duration} minutes`), row('Type', typeLabel(appointment.type, 'en')), row('Topic', concern || '-')
     ]) + card(`${icon('user')}Counselor`, [row('Name', counselor.name), row('Email', counselor.email || '-'), row('Phone', counselor.phone || '-')])
   }
-  return card(`${icon('calendar')}\u0e23\u0e32\u0e22\u0e25\u0e30\u0e40\u0e2d\u0e35\u0e22\u0e14\u0e01\u0e32\u0e23\u0e19\u0e31\u0e14\u0e2b\u0e21\u0e32\u0e22`, [
-    row('\u0e23\u0e2b\u0e31\u0e2a\u0e01\u0e32\u0e23\u0e19\u0e31\u0e14', appointment.id), row('\u0e27\u0e31\u0e19\u0e17\u0e35\u0e48', dateStr), row('\u0e40\u0e27\u0e25\u0e32', `${appointment.time} \u0e19.`), row('\u0e23\u0e30\u0e22\u0e30\u0e40\u0e27\u0e25\u0e32', `${appointment.duration} \u0e19\u0e32\u0e17\u0e35`), row('\u0e23\u0e39\u0e1b\u0e41\u0e1a\u0e1a', typeLabel(appointment.type)), row('\u0e40\u0e23\u0e37\u0e48\u0e2d\u0e07\u0e17\u0e35\u0e48\u0e1b\u0e23\u0e36\u0e01\u0e29\u0e32', concern || '-')
-  ]) + card(`${icon('user')}\u0e19\u0e31\u0e01\u0e08\u0e34\u0e15\u0e27\u0e34\u0e17\u0e22\u0e32`, [row('\u0e0a\u0e37\u0e48\u0e2d', counselor.name), row('\u0e2d\u0e35\u0e40\u0e21\u0e25', counselor.email || '-'), row('\u0e42\u0e17\u0e23\u0e28\u0e31\u0e1e\u0e17\u0e4c', counselor.phone || '-')])
+  return card(`${icon('calendar')}รายละเอียดการนัดหมาย`, [
+    row('รหัสการนัด', appointment.id), row('วันที่', dateStr), row('เวลา', `${appointment.time} น.`), row('ระยะเวลา', `${appointment.duration} นาที`), row('รูปแบบ', typeLabel(appointment.type)), row('เรื่องที่ปรึกษา', concern || '-')
+  ]) + card(`${icon('user')}นักจิตวิทยา`, [row('ชื่อ', counselor.name), row('อีเมล', counselor.email || '-'), row('โทรศัพท์', counselor.phone || '-')])
 }
 
-function clientEmailHtml(data) {
-  const th = `<p style="font-size:15px;line-height:1.8;color:#334155;margin:0 0 18px;">${icon('heart-handshake')}\u0e2a\u0e27\u0e31\u0e2a\u0e14\u0e35 <strong>${data.client.name}</strong><br>\u0e22\u0e37\u0e19\u0e22\u0e31\u0e19\u0e01\u0e32\u0e23\u0e19\u0e31\u0e14\u0e2b\u0e21\u0e32\u0e22\u0e02\u0e2d\u0e07\u0e04\u0e38\u0e13\u0e40\u0e23\u0e35\u0e22\u0e1a\u0e23\u0e49\u0e2d\u0e22\u0e41\u0e25\u0e49\u0e27</p>${appointmentDetails(data, 'th')}<p>${icon('video')}\u0e42\u0e1b\u0e23\u0e14\u0e40\u0e02\u0e49\u0e32\u0e23\u0e48\u0e27\u0e21\u0e01\u0e48\u0e2d\u0e19\u0e40\u0e27\u0e25\u0e32 5-10 \u0e19\u0e32\u0e17\u0e35</p>`
-  const en = `<p style="font-size:15px;line-height:1.8;color:#334155;margin:0 0 18px;">${icon('heart-handshake')}Hello <strong>${data.client.name}</strong><br>Your appointment has been confirmed.</p>${appointmentDetails(data, 'en')}<p>${icon('video')}Please join 5-10 minutes before the appointment time.</p>`
-  return emailWrapper('\u0e22\u0e37\u0e19\u0e22\u0e31\u0e19\u0e01\u0e32\u0e23\u0e19\u0e31\u0e14\u0e2b\u0e21\u0e32\u0e22', { from: '#05967e', to: '#06b6d4' }, th, en)
+// Shared shape for the 3 email types that are just: greeting paragraph +
+// the standard appointment-details cards + an optional closing paragraph.
+// For appointmentClient/reminder, the closing line (and its icon) depend on
+// whether the appointment is online ("join") or onsite ("arrive").
+function standardEmailHtml(type, data, accentColor, greetingIcon, closingIcon, templateOverride) {
+  const vars = buildVars(data)
+  const apptType = data.appointment.type
+  const resolvedClosingIcon = hasClosingVariants(type)
+    ? (apptType === 'onsite' ? ['map-pin', '#05967e'] : ['video', '#05967e'])
+    : closingIcon
+  const build = lang => {
+    const t = renderTemplateFields(type, lang, vars, templateOverride, apptType)
+    return { title: t.title, html: paragraph(...greetingIcon, t.greeting) + appointmentDetails(data, lang) + (t.closing ? paragraph(...resolvedClosingIcon, t.closing) : '') }
+  }
+  const th = build('th')
+  const en = build('en')
+  return emailWrapper(th.title, accentColor, th.html, en.html)
 }
 
-function counselorEmailHtml(data) {
-  const th = `<p style="font-size:15px;line-height:1.8;color:#334155;margin:0 0 18px;">${icon('heart-handshake')}\u0e2a\u0e27\u0e31\u0e2a\u0e14\u0e35 <strong>${data.counselor.name}</strong><br>\u0e04\u0e38\u0e13\u0e21\u0e35\u0e19\u0e31\u0e14\u0e2b\u0e21\u0e32\u0e22\u0e43\u0e2b\u0e21\u0e48\u0e08\u0e32\u0e01 MindCare</p>${appointmentDetails(data, 'th')}<p>${icon('video')}\u0e42\u0e1b\u0e23\u0e14\u0e15\u0e23\u0e27\u0e08\u0e2a\u0e2d\u0e1a\u0e23\u0e39\u0e1b\u0e41\u0e1a\u0e1a\u0e01\u0e32\u0e23\u0e19\u0e31\u0e14\u0e2b\u0e21\u0e32\u0e22\u0e01\u0e48\u0e2d\u0e19\u0e40\u0e27\u0e25\u0e32</p>`
-  const en = `<p style="font-size:15px;line-height:1.8;color:#334155;margin:0 0 18px;">${icon('heart-handshake')}Hello <strong>${data.counselor.name}</strong><br>You have a new appointment from MindCare.</p>${appointmentDetails(data, 'en')}<p>${icon('video')}Please check the appointment format before the session.</p>`
-  return emailWrapper('\u0e19\u0e31\u0e14\u0e2b\u0e21\u0e32\u0e22\u0e43\u0e2b\u0e21\u0e48', { from: '#3874FF', to: '#6366f1' }, th, en)
+function clientEmailHtml(data, templateOverride) {
+  return standardEmailHtml('appointmentClient', data, { from: '#05967e', to: '#06b6d4' }, ['heart-handshake', '#05967e'], ['video', '#05967e'], templateOverride)
 }
 
-function surveyEmailHtml({ appointment, client, counselor }) {
-  const icons = ['smile-plus', 'smile', 'meh', 'frown', 'circle-alert'].map((name, idx) => `<span style="display:inline-block;margin:4px 5px;padding:10px 12px;border:1px solid #fde68a;border-radius:12px;background:#fffbeb;color:#92400e;">${icon(name, '#f59e0b')}${5 - idx}</span>`).join('')
-  const detailTh = card(`${icon('clipboard')}\u0e23\u0e32\u0e22\u0e25\u0e30\u0e40\u0e2d\u0e35\u0e22\u0e14\u0e01\u0e32\u0e23\u0e19\u0e31\u0e14\u0e2b\u0e21\u0e32\u0e22`, [row('\u0e27\u0e31\u0e19\u0e17\u0e35\u0e48', formatDate(appointment.date)), row('\u0e40\u0e27\u0e25\u0e32', `${appointment.time} \u0e19.`), row('\u0e19\u0e31\u0e01\u0e08\u0e34\u0e15\u0e27\u0e34\u0e17\u0e22\u0e32', counselor.name)])
+function counselorEmailHtml(data, templateOverride) {
+  return standardEmailHtml('appointmentCounselor', data, { from: '#3874FF', to: '#6366f1' }, ['heart-handshake', '#05967e'], ['video', '#05967e'], templateOverride)
+}
+
+function reminderEmailHtml(data, templateOverride) {
+  return standardEmailHtml('reminder', data, { from: '#f59e0b', to: '#fb923c' }, ['calendar', '#f59e0b'], ['video', '#05967e'], templateOverride)
+}
+
+function surveyEmailHtml({ appointment, client, counselor }, templateOverride) {
+  const vars = buildVars({ appointment, client, counselor })
+  const th = renderTemplateFields('survey', 'th', vars, templateOverride)
+  const en = renderTemplateFields('survey', 'en', vars, templateOverride)
+  const ratingIcons = ['smile-plus', 'smile', 'meh', 'frown', 'circle-alert'].map((name, idx) => `<span style="display:inline-block;margin:4px 5px;padding:10px 12px;border:1px solid #fde68a;border-radius:12px;background:#fffbeb;color:#92400e;">${icon(name, '#f59e0b')}${5 - idx}</span>`).join('')
+  const detailTh = card(`${icon('clipboard')}รายละเอียดการนัดหมาย`, [row('วันที่', formatDate(appointment.date)), row('เวลา', `${appointment.time} น.`), row('นักจิตวิทยา', counselor.name)])
   const detailEn = card(`${icon('clipboard')}Appointment details`, [row('Date', formatDate(appointment.date)), row('Time', appointment.time), row('Counselor', counselor.name)])
-  const feedbackTh = `<div style="border:1px solid #fde68a;border-radius:14px;padding:18px;margin-bottom:18px;background:#fff7ed;text-align:center;"><h3 style="margin:0 0 8px;color:#92400e;">${icon('smile-plus', '#f59e0b')}\u0e04\u0e27\u0e32\u0e21\u0e04\u0e34\u0e14\u0e40\u0e2b\u0e47\u0e19\u0e02\u0e2d\u0e07\u0e17\u0e48\u0e32\u0e19\u0e0a\u0e48\u0e27\u0e22\u0e43\u0e2b\u0e49\u0e40\u0e23\u0e32\u0e1e\u0e31\u0e12\u0e19\u0e32\u0e1a\u0e23\u0e34\u0e01\u0e32\u0e23\u0e43\u0e2b\u0e49\u0e14\u0e35\u0e22\u0e34\u0e48\u0e07\u0e02\u0e36\u0e49\u0e19</h3><p style="margin:0 0 12px;color:#b45309;">\u0e17\u0e33\u0e41\u0e1a\u0e1a\u0e1b\u0e23\u0e30\u0e40\u0e21\u0e34\u0e19\u0e04\u0e27\u0e32\u0e21\u0e1e\u0e36\u0e07\u0e1e\u0e2d\u0e43\u0e08</p>${icons}</div>`
-  const feedbackEn = `<div style="border:1px solid #fde68a;border-radius:14px;padding:18px;margin-bottom:18px;background:#fff7ed;text-align:center;"><h3 style="margin:0 0 8px;color:#92400e;">${icon('smile-plus', '#f59e0b')}Your feedback helps us improve our service.</h3><p style="margin:0 0 12px;color:#b45309;">Please rate your satisfaction</p>${icons}</div>`
-  return emailWrapper('\u0e1b\u0e23\u0e30\u0e40\u0e21\u0e34\u0e19\u0e04\u0e27\u0e32\u0e21\u0e1e\u0e36\u0e07\u0e1e\u0e2d\u0e43\u0e08', { from: '#f59e0b', to: '#f97316' }, feedbackTh + detailTh, feedbackEn + detailEn)
+  const feedbackBlock = (heading, subtext) => `<div style="border:1px solid #fde68a;border-radius:14px;padding:18px;margin-bottom:18px;background:#fff7ed;text-align:center;"><h3 style="margin:0 0 8px;color:#92400e;">${icon('smile-plus', '#f59e0b')}${heading}</h3><p style="margin:0 0 12px;color:#b45309;">${subtext}</p>${ratingIcons}</div>`
+  return emailWrapper(th.title, { from: '#f59e0b', to: '#f97316' }, feedbackBlock(th.greeting, th.closing) + detailTh, feedbackBlock(en.greeting, en.closing) + detailEn)
 }
 
-function counselorReassignedEmailHtml({ appointment, client, counselor }) {
+function counselorReassignedEmailHtml({ appointment, client, counselor }, templateOverride) {
+  const vars = buildVars({ appointment, client, counselor })
+  const th = renderTemplateFields('counselorReassigned', 'th', vars, templateOverride)
+  const en = renderTemplateFields('counselorReassigned', 'en', vars, templateOverride)
   const dateStr = formatDate(appointment.date)
   const detailTh = card(`${icon('calendar')}รายละเอียดนัดหมายที่ถูกนำออกจากคิว`, [
     row('รหัสการนัด', appointment.id), row('ผู้รับบริการ', client.name), row('วันที่เดิม', dateStr), row('เวลาเดิม', `${appointment.time} น.`)
@@ -107,21 +148,9 @@ function counselorReassignedEmailHtml({ appointment, client, counselor }) {
   const detailEn = card(`${icon('calendar')}Appointment removed from your schedule`, [
     row('Appointment ID', appointment.id), row('Client', client.name), row('Original date', dateStr), row('Original time', appointment.time)
   ], '#ef4444')
-  const th = `<p style="font-size:15px;line-height:1.8;color:#334155;margin:0 0 18px;">${icon('circle-alert', '#ef4444')}สวัสดี <strong>${counselor.name}</strong><br>นัดหมายนี้ถูกเปลี่ยนไปเป็นนักจิตวิทยาท่านอื่นแล้ว กรุณานำนัดออกจากตารางเวลาของคุณ</p>${detailTh}`
-  const en = `<p style="font-size:15px;line-height:1.8;color:#334155;margin:0 0 18px;">${icon('circle-alert', '#ef4444')}Hello <strong>${counselor.name}</strong><br>This appointment has been reassigned to another counselor. Please remove it from your schedule.</p>${detailEn}`
-  return emailWrapper('ยกเลิกนัดหมาย', { from: '#ef4444', to: '#f97316' }, th, en)
-}
-
-async function sendCounselorReassignedEmail({ appointment, client, counselor }) {
-  const transporter = getTransporter()
-  if (!counselor.email) return { skipped: true }
-  const info = await transporter.sendMail({
-    from: fromAddress(),
-    to: counselor.email,
-    subject: `[MindCare] ยกเลิกนัดหมาย - ${client.name} ${formatDate(appointment.date)} ${appointment.time}`,
-    html: counselorReassignedEmailHtml({ appointment, client, counselor }),
-  })
-  return { sent: true, messageId: info.messageId }
+  const thHtml = paragraph('circle-alert', '#ef4444', th.greeting) + detailTh + (th.closing ? paragraph('video', '#05967e', th.closing) : '')
+  const enHtml = paragraph('circle-alert', '#ef4444', en.greeting) + detailEn + (en.closing ? paragraph('video', '#05967e', en.closing) : '')
+  return emailWrapper(th.title, { from: '#ef4444', to: '#f97316' }, thHtml, enHtml)
 }
 
 function fromAddress(config) {
@@ -131,31 +160,72 @@ function fromAddress(config) {
   return `"${fromName}" <${fromEmail}>`
 }
 
-async function sendSurveyEmail({ appointment, client, counselor, surveyUrl, deliveryConfig }) {
+async function sendReminderEmail({ appointment, client, counselor, concern, deliveryConfig }) {
   const transporter = getTransporter(deliveryConfig)
   if (!client.email) return { skipped: true }
+  const title = renderTemplateFields('reminder', 'th', buildVars({ appointment, client, counselor })).title
   const info = await transporter.sendMail({
     from: fromAddress(deliveryConfig),
     to: client.email,
-    subject: `[MindCare] \u0e1b\u0e23\u0e30\u0e40\u0e21\u0e34\u0e19\u0e04\u0e27\u0e32\u0e21\u0e1e\u0e36\u0e07\u0e1e\u0e2d\u0e43\u0e08 - ${formatDate(appointment.date)}`,
+    subject: `[MindCare] ${title} - ${formatDate(appointment.date)} ${appointment.time}`,
+    html: reminderEmailHtml({ appointment, client, counselor, concern }),
+  })
+  return { sent: true, messageId: info.messageId }
+}
+
+async function sendCounselorReassignedEmail({ appointment, client, counselor, deliveryConfig }) {
+  const transporter = getTransporter(deliveryConfig)
+  if (!counselor.email) return { skipped: true }
+  const title = renderTemplateFields('counselorReassigned', 'th', buildVars({ appointment, client, counselor })).title
+  const info = await transporter.sendMail({
+    from: fromAddress(deliveryConfig),
+    to: counselor.email,
+    subject: `[MindCare] ${title} - ${client.name} ${formatDate(appointment.date)} ${appointment.time}`,
+    html: counselorReassignedEmailHtml({ appointment, client, counselor }),
+  })
+  return { sent: true, messageId: info.messageId }
+}
+
+async function sendSurveyEmail({ appointment, client, counselor, surveyUrl, deliveryConfig }) {
+  const transporter = getTransporter(deliveryConfig)
+  if (!client.email) return { skipped: true }
+  const title = renderTemplateFields('survey', 'th', buildVars({ appointment, client, counselor })).title
+  const info = await transporter.sendMail({
+    from: fromAddress(deliveryConfig),
+    to: client.email,
+    subject: `[MindCare] ${title} - ${formatDate(appointment.date)}`,
     html: surveyEmailHtml({ appointment, client, counselor, surveyUrl }),
   })
   return { sent: true, messageId: info.messageId }
 }
 
-async function sendAppointmentEmails({ appointment, client, counselor, concern }) {
-  const transporter = getTransporter()
+async function sendAppointmentEmails({ appointment, client, counselor, concern, skipClient, skipCounselor, deliveryConfig }) {
+  const transporter = getTransporter(deliveryConfig)
   const bcc = process.env.SMTP_BCC || undefined
   const sent = []
-  if (client.email) {
-    const info = await transporter.sendMail({ from: fromAddress(), to: client.email, bcc, subject: `[MindCare] \u0e22\u0e37\u0e19\u0e22\u0e31\u0e19\u0e01\u0e32\u0e23\u0e19\u0e31\u0e14\u0e2b\u0e21\u0e32\u0e22 - ${formatDate(appointment.date)} ${appointment.time}`, html: clientEmailHtml({ appointment, client, counselor, concern }) })
+  const vars = buildVars({ appointment, client, counselor })
+  if (!skipClient && client.email) {
+    const title = renderTemplateFields('appointmentClient', 'th', vars).title
+    const info = await transporter.sendMail({ from: fromAddress(deliveryConfig), to: client.email, bcc, subject: `[MindCare] ${title} - ${formatDate(appointment.date)} ${appointment.time}`, html: clientEmailHtml({ appointment, client, counselor, concern }) })
     sent.push({ to: 'client', ok: true, messageId: info.messageId })
   }
-  if (counselor.email) {
-    const info = await transporter.sendMail({ from: fromAddress(), to: counselor.email, bcc, subject: `[MindCare] New appointment - ${client.name} ${formatDate(appointment.date)} ${appointment.time}`, html: counselorEmailHtml({ appointment, client, counselor, concern }) })
+  if (!skipCounselor && counselor.email) {
+    const title = renderTemplateFields('appointmentCounselor', 'th', vars).title
+    const info = await transporter.sendMail({ from: fromAddress(deliveryConfig), to: counselor.email, bcc, subject: `[MindCare] ${title} - ${client.name} ${formatDate(appointment.date)} ${appointment.time}`, html: counselorEmailHtml({ appointment, client, counselor, concern }) })
     sent.push({ to: 'counselor', ok: true, messageId: info.messageId })
   }
   return { sent }
 }
 
-module.exports = { sendAppointmentEmails, sendSurveyEmail, sendCounselorReassignedEmail }
+module.exports = {
+  sendAppointmentEmails,
+  sendSurveyEmail,
+  sendCounselorReassignedEmail,
+  sendReminderEmail,
+  clientEmailHtml,
+  counselorEmailHtml,
+  counselorReassignedEmailHtml,
+  surveyEmailHtml,
+  reminderEmailHtml,
+  buildVars,
+}

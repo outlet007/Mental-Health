@@ -4,6 +4,7 @@ const fs      = require('fs')
 const { matchesSearch } = require('../../utils/search')
 const path    = require('path')
 const { sendAppointmentEmails } = require('../../utils/mailer')
+const { resolveAppointmentEmailOptions } = require('../../utils/survey-email-settings')
 const { logDeletion } = require('../../utils/audit-log')
 const { getConcernOptions } = require('../../utils/concern-options')
 
@@ -158,11 +159,14 @@ router.post('/:id/book', async (req, res) => {
   writeData(contacts)
 
   // ส่งอีเมลแจ้งทั้งสองฝ่าย (ไม่รอ — redirect ทันที)
+  const emailOptions = resolveAppointmentEmailOptions(
+    { name: client.name, email: client.email, phone: client.phone },
+    { name: counselor.name, title: counselor.title, email: counselor.email, phone: counselor.phone, specialties: counselor.specialties }
+  )
   sendAppointmentEmails({
     appointment: newAppt,
-    client:      { name: client.name, email: client.email, phone: client.phone },
-    counselor:   { name: counselor.name, title: counselor.title, email: counselor.email, phone: counselor.phone, specialties: counselor.specialties },
     concern:     contact.concern || '',
+    ...emailOptions,
   }).catch(err => console.error('[Email] unexpected error:', err.message))
 
   res.redirect('/admin/contacts?booked=1')

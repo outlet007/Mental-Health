@@ -6,8 +6,14 @@
   <title><%= title %> - MindCare Admin</title>
   <%- include('../partials/head') %>
   <style>
-    .settings-card{background:#fff;border:1px solid #f1f5f9;border-radius:16px;padding:24px;max-width:860px;box-shadow:0 1px 2px rgba(15,23,42,.03)}
-    .section-block{border:1px solid #e2e8f0;border-radius:14px;padding:18px;margin-top:18px;background:#fff}.section-block-soft{background:#f8fafc}.page-note{font-size:13px;color:#64748b;line-height:1.7;margin:0 0 20px}.lbl{display:block;font-size:12px;font-weight:700;color:#64748b;margin-bottom:6px}.inp{width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:13px;color:#334155;outline:none;font-family:inherit;box-sizing:border-box;background:#fff}.inp:focus{border-color:#2dd4b4;box-shadow:0 0 0 3px rgba(45,212,180,.15)}.radio-list{display:grid;gap:10px;margin-bottom:18px}.radio-row{display:flex;gap:10px;align-items:flex-start;border:1px solid #e2e8f0;border-radius:12px;padding:14px;background:#fff}.radio-row input{margin-top:2px}.radio-title{font-size:13px;font-weight:800;color:#1e293b;margin:0 0 3px}.radio-help{font-size:12px;color:#94a3b8;margin:0;line-height:1.5}.mode-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.mode-card{position:relative;display:block;border:1.5px solid #e2e8f0;border-radius:14px;padding:16px;background:#fff;cursor:pointer}.mode-card input{position:absolute;opacity:0;pointer-events:none}.mode-card:has(input:checked){border-color:#05967e;background:#ecfdf9;box-shadow:0 0 0 3px rgba(5,150,126,.12)}.mode-title{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:900;color:#1e293b;margin:0 0 5px}.mode-desc{font-size:12px;color:#64748b;line-height:1.5;margin:0}.field-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.act-btn{display:inline-flex;align-items:center;gap:6px;padding:10px 16px;border-radius:10px;font-size:13px;font-weight:800;cursor:pointer;border:none;transition:all .15s;white-space:nowrap}.ab-primary{background:#05967e;color:#fff}.ab-primary:hover{background:#067866}.alert-ok{margin-bottom:20px;padding:12px 16px;background:#ecfdf9;border:1px solid #a0f3e1;border-radius:12px;color:#065f46;font-size:13px;display:flex;align-items:center;gap:8px}.field-help{font-size:12px;color:#94a3b8;margin:7px 0 0;line-height:1.5}@media(max-width:768px){.admin-main{margin-left:0!important}.settings-card{padding:18px}.mode-grid,.field-grid{grid-template-columns:1fr}}
+    .settings-card{background:#fff;border:1px solid #f1f5f9;border-radius:16px;padding:24px;max-width:920px;box-shadow:0 1px 2px rgba(15,23,42,.03)}
+    .section-block{border:1px solid #e2e8f0;border-radius:14px;padding:18px;margin-top:18px;background:#fff}.section-block-soft{background:#f8fafc}.page-note{font-size:13px;color:#64748b;line-height:1.7;margin:0 0 20px}.lbl{display:block;font-size:12px;font-weight:700;color:#64748b;margin-bottom:6px}.inp{width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:13px;color:#334155;outline:none;font-family:inherit;box-sizing:border-box;background:#fff}.inp:focus{border-color:#2dd4b4;box-shadow:0 0 0 3px rgba(45,212,180,.15)}textarea.inp{resize:vertical;line-height:1.6}.radio-list{display:grid;gap:10px;margin-bottom:18px}.radio-row{display:flex;gap:10px;align-items:flex-start;border:1px solid #e2e8f0;border-radius:12px;padding:14px;background:#fff}.radio-row input{margin-top:2px}.radio-title{font-size:13px;font-weight:800;color:#1e293b;margin:0 0 3px}.radio-help{font-size:12px;color:#94a3b8;margin:0;line-height:1.5}.mode-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.mode-card{position:relative;display:block;border:1.5px solid #e2e8f0;border-radius:14px;padding:16px;background:#fff;cursor:pointer}.mode-card input{position:absolute;opacity:0;pointer-events:none}.mode-card:has(input:checked){border-color:#05967e;background:#ecfdf9;box-shadow:0 0 0 3px rgba(5,150,126,.12)}.mode-title{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:900;color:#1e293b;margin:0 0 5px}.mode-desc{font-size:12px;color:#64748b;line-height:1.5;margin:0}.field-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.act-btn{display:inline-flex;align-items:center;gap:6px;padding:10px 16px;border-radius:10px;font-size:13px;font-weight:800;cursor:pointer;border:none;transition:all .15s;white-space:nowrap}.ab-primary{background:#05967e;color:#fff}.ab-primary:hover{background:#067866}.ab-secondary{background:#fff;color:#05967e;border:1.5px solid #a0f3e1}.ab-secondary:hover{background:#ecfdf9}.alert-ok{margin-bottom:20px;padding:12px 16px;background:#ecfdf9;border:1px solid #a0f3e1;border-radius:12px;color:#065f46;font-size:13px;display:flex;align-items:center;gap:8px}.field-help{font-size:12px;color:#94a3b8;margin:7px 0 0;line-height:1.5}.field-help code{background:#f1f5f9;border-radius:4px;padding:1px 5px;color:#0f172a}
+    .email-type-row{border:1px solid #e2e8f0;border-radius:14px;padding:16px;margin-top:14px}
+    .panel-overlay{position:fixed;inset:0;background:rgba(15,23,42,.45);z-index:40;display:none;backdrop-filter:blur(2px);opacity:0;transition:opacity .2s ease}
+    .panel-overlay.open{opacity:1}
+    .panel-drawer{position:fixed;top:50%;left:50%;width:calc(100% - 48px);max-width:640px;max-height:88vh;background:#fff;border-radius:20px;box-shadow:0 20px 60px rgba(0,0,0,.18);z-index:50;display:flex;flex-direction:column;transform:translate(-50%,-50%) scale(.94);opacity:0;transition:transform .22s cubic-bezier(.34,1.56,.64,1),opacity .18s ease;pointer-events:none}
+    .panel-drawer.open{transform:translate(-50%,-50%) scale(1);opacity:1;pointer-events:auto}
+    @media(max-width:768px){.admin-main{margin-left:0!important}.settings-card{padding:18px}.mode-grid,.field-grid{grid-template-columns:1fr}}
   </style>
 </head>
 <body style="background:#f8fafc;margin:0;">
@@ -15,18 +21,79 @@
 <div class="admin-main" style="margin-left:256px;min-height:100vh;display:flex;flex-direction:column;">
   <div style="height:56px;background:#fff;border-bottom:1px solid #f1f5f9;padding:0 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:20;">
     <h1 style="font-size:15px;font-weight:700;color:#1e293b;margin:0;"><%= title %></h1>
+    <div style="display:flex;align-items:center;gap:12px;">
+      <span style="font-size:12px;color:#94a3b8;"><%= new Date().toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric'}) %></span>
+      <a href="/" target="_blank" style="display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 12px;border-radius:8px;border:1px solid #e2e8f0;background:#f8fafc;font-size:12px;font-weight:500;color:#334155;text-decoration:none;transition:background .15s;" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='#f8fafc'">
+        <i data-lucide="external-link" style="width:13px;height:13px;"></i> ดูหน้าเว็บไซต์
+      </a>
+    </div>
   </div>
   <main style="padding:24px;max-width:1120px;width:100%;box-sizing:border-box;">
     <% if (query.saved) { %>
       <div class="alert-ok"><i data-lucide="check-circle" style="width:16px;height:16px;"></i> บันทึกการตั้งค่าอีเมลสำเร็จ</div>
     <% } %>
+    <% if (query.emailSent) { %>
+      <div class="alert-ok"><i data-lucide="check-circle" style="width:16px;height:16px;"></i> ส่งอีเมลทดสอบสำเร็จ — ตรวจสอบ inbox ของคุณ</div>
+    <% } else if (query.emailError) { %>
+      <div style="margin-bottom:20px;padding:12px 16px;background:#fef2f2;border:1px solid #fca5a5;border-radius:12px;color:#991b1b;font-size:13px;display:flex;align-items:center;gap:8px;">
+        <i data-lucide="alert-circle" style="width:16px;height:16px;"></i>
+        ส่งไม่สำเร็จ: <%= query.emailError === 'missing' ? 'กรุณากรอกอีเมลปลายทาง' : decodeURIComponent(query.emailError) %>
+      </div>
+    <% } %>
 
     <section class="settings-card">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+        <div style="width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;color:#fff;"><i data-lucide="mail" style="width:17px;height:17px;"></i></div>
+        <div>
+          <h2 style="font-size:16px;color:#1e293b;margin:0;">ระบบแจ้งเตือนอีเมล</h2>
+          <p style="font-size:12px;color:#94a3b8;margin:3px 0 0;">ตรวจสอบการเชื่อมต่อ SMTP และส่งอีเมลทดสอบ</p>
+        </div>
+      </div>
+
+      <% const smtpConfigured = process.env && process.env.SMTP_USER && process.env.SMTP_USER !== 'your-email@gmail.com' %>
+      <div style="display:flex;align-items:center;gap:10px;padding:12px 14px;background:<%= smtpConfigured ? '#ecfdf9' : '#fef9c3' %>;border:1px solid <%= smtpConfigured ? '#a0f3e1' : '#fde68a' %>;border-radius:10px;margin-bottom:16px;">
+        <i data-lucide="<%= smtpConfigured ? 'check-circle' : 'alert-triangle' %>" style="width:16px;height:16px;color:<%= smtpConfigured ? '#05967e' : '#92400e' %>;flex-shrink:0;"></i>
+        <div>
+          <% if (smtpConfigured) { %>
+          <span style="font-size:13px;font-weight:600;color:#065f46;">SMTP พร้อมใช้งาน</span>
+          <span style="font-size:12px;color:#64748b;margin-left:8px;">(<%= process.env.SMTP_USER %>)</span>
+          <% } else { %>
+          <span style="font-size:13px;font-weight:600;color:#92400e;">SMTP ยังไม่ได้ตั้งค่า</span>
+          <span style="font-size:12px;color:#64748b;margin-left:8px;">แก้ไขไฟล์ <code style="background:#fff;padding:1px 6px;border-radius:4px;font-family:monospace;">.env</code> เพื่อเปิดใช้งาน</span>
+          <% } %>
+        </div>
+      </div>
+
+      <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:14px 16px;margin-bottom:16px;">
+        <p style="margin:0 0 10px;font-size:12px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:.05em;">ตัวแปรใน .env ที่ต้องตั้งค่า</p>
+        <pre style="margin:0;font-size:12px;color:#334155;font-family:monospace;line-height:1.8;overflow-x:auto;">SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_SECURE=false
+SMTP_USER=your-email@gmail.com
+SMTP_PASS=your-app-password
+SMTP_FROM_NAME=MindCare
+SMTP_FROM_EMAIL=your-email@gmail.com
+SMTP_BCC=   <span style="color:#94a3b8;"># optional สำเนาทุกอีเมล</span></pre>
+        <p style="margin:10px 0 0;font-size:12px;color:#94a3b8;">Gmail: ใช้ App Password จาก <a href="https://myaccount.google.com/apppasswords" target="_blank" style="color:#6366f1;">myaccount.google.com/apppasswords</a> (ต้องเปิด 2-Step Verification)</p>
+      </div>
+
+      <form method="POST" action="/admin/survey-email/test-email" style="display:flex;gap:10px;align-items:flex-end;">
+        <div style="flex:1;">
+          <label class="lbl">ส่งอีเมลทดสอบไปที่</label>
+          <input type="email" name="to" class="inp" placeholder="your@email.com" required value="<%= process.env.SMTP_USER || '' %>">
+        </div>
+        <button type="submit" class="act-btn" style="background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;">
+          <i data-lucide="send" style="width:13px;height:13px;"></i> ส่งทดสอบ
+        </button>
+      </form>
+    </section>
+
+    <section class="settings-card" style="margin-top:24px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
         <div style="width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#05967e,#06b6d4);display:flex;align-items:center;justify-content:center;color:#fff;"><i data-lucide="mail-check" style="width:17px;height:17px;"></i></div>
         <div>
-          <h2 style="font-size:16px;color:#1e293b;margin:0;">อีเมลประเมินความพึงพอใจ</h2>
-          <p style="font-size:12px;color:#94a3b8;margin:3px 0 0;">เลือกโหมดส่งอีเมลระหว่างทดสอบกับใช้งานจริง และกำหนดปลายทางอีเมลแบบประเมิน</p>
+          <h2 style="font-size:16px;color:#1e293b;margin:0;">ช่องทางการส่งอีเมล</h2>
+          <p style="font-size:12px;color:#94a3b8;margin:3px 0 0;">เลือกโหมดส่งอีเมลระหว่างทดสอบกับใช้งานจริง ใช้ร่วมกันทุกอีเมลของระบบ</p>
         </div>
       </div>
 
@@ -55,33 +122,194 @@
           <p class="field-help">ถ้าเลือกใช้งานจริงแต่ยังไม่ได้กรอก Gmail/App Password ระบบจะข้ามการส่งเพื่อป้องกัน error</p>
         </div>
 
-        <div class="section-block">
-          <h3 style="font-size:14px;color:#1e293b;margin:0 0 10px;">ผู้รับอีเมลแบบประเมิน</h3>
-          <p class="page-note">ค่าเริ่มต้นจะส่งลิงก์แบบประเมินไปยังอีเมลของผู้รับบริการ หากต้องการส่งไปยังอีเมลเฉพาะสำหรับทดสอบหรือกล่องกลาง ให้เลือกอีเมลที่กำหนดเอง</p>
-          <div class="radio-list">
-            <label class="radio-row">
-              <input type="radio" name="recipientMode" value="client" <%= settings.recipientMode !== 'custom' ? 'checked' : '' %>>
-              <span><span class="radio-title">ส่งไปยังอีเมลผู้รับบริการ</span><span class="radio-help">ใช้ email จากข้อมูลผู้รับบริการของนัดหมายนั้นโดยตรง</span></span>
-            </label>
-            <label class="radio-row">
-              <input type="radio" name="recipientMode" value="custom" <%= settings.recipientMode === 'custom' ? 'checked' : '' %>>
-              <span><span class="radio-title">ส่งไปยังอีเมลที่กำหนดเอง</span><span class="radio-help">เหมาะสำหรับทดสอบ flow แบบประเมิน หรือส่งเข้ากล่องกลางของหน่วยงาน</span></span>
-            </label>
-          </div>
-          <div>
-            <label class="lbl">อีเมลที่กำหนดเอง</label>
-            <input type="email" name="customEmail" class="inp" value="<%= settings.customEmail || '' %>" placeholder="quality@example.com">
-            <p class="field-help">ถ้าเลือกอีเมลที่กำหนดเองแต่กรอกไม่ถูกต้อง ระบบจะ fallback กลับไปส่งที่อีเมลผู้รับบริการ</p>
-          </div>
-        </div>
-
         <div style="display:flex;justify-content:flex-end;margin-top:18px;">
           <button type="submit" class="act-btn ab-primary"><i data-lucide="save" style="width:14px;height:14px;"></i> บันทึกการตั้งค่า</button>
         </div>
       </form>
     </section>
+
+    <section class="settings-card" style="margin-top:24px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+        <div style="width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#f59e0b,#fb923c);display:flex;align-items:center;justify-content:center;color:#fff;"><i data-lucide="mail-plus" style="width:17px;height:17px;"></i></div>
+        <div>
+          <h2 style="font-size:16px;color:#1e293b;margin:0;">อีเมลที่ระบบส่งออก</h2>
+          <p style="font-size:12px;color:#94a3b8;margin:3px 0 0;">เปิด/ปิดการส่ง กำหนดผู้รับ และแก้ไขข้อความของอีเมลแต่ละประเภท</p>
+        </div>
+      </div>
+
+      <% emailTypeCatalog.forEach(function(t) { const cfg = settings.emailTypes[t.id] %>
+        <div class="email-type-row">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+            <p style="margin:0;font-size:13px;font-weight:800;color:#1e293b;"><%= t.label %></p>
+            <button type="button" class="act-btn ab-secondary edit-template-btn"
+              data-type="<%= t.id %>" data-label="<%= t.label %>"
+              data-tpl='<%- JSON.stringify(templates[t.id]) %>'
+              data-default='<%- JSON.stringify(defaultTemplates[t.id]) %>'>
+              <i data-lucide="pencil" style="width:14px;height:14px;"></i> แก้ไขข้อความ
+            </button>
+          </div>
+
+          <form method="POST" action="/admin/survey-email/types/<%= t.id %>">
+            <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:#334155;cursor:pointer;margin-top:12px;">
+              <input type="checkbox" name="enabled" <%= cfg.enabled ? 'checked' : '' %>>
+              เปิดใช้งานอีเมลนี้
+            </label>
+
+            <div class="field-grid" style="margin-top:10px;">
+              <div>
+                <label class="lbl">ผู้รับ</label>
+                <select name="recipientMode" class="inp">
+                  <option value="default" <%= cfg.recipientMode !== 'custom' ? 'selected' : '' %>>ผู้รับตามค่าเริ่มต้นของนัดหมาย</option>
+                  <option value="custom" <%= cfg.recipientMode === 'custom' ? 'selected' : '' %>>อีเมลที่กำหนดเอง</option>
+                </select>
+              </div>
+              <div>
+                <label class="lbl">อีเมลที่กำหนดเอง (ถ้าเลือกด้านบน)</label>
+                <input type="email" name="customEmail" class="inp" value="<%= cfg.customEmail || '' %>" placeholder="quality@example.com">
+              </div>
+              <% if (t.id === 'reminder') { %>
+                <div>
+                  <label class="lbl">ส่งล่วงหน้ากี่ชั่วโมงก่อนถึงเวลานัดหมาย</label>
+                  <input type="number" name="hoursBefore" class="inp" min="1" max="168" step="1" value="<%= cfg.hoursBefore %>">
+                </div>
+              <% } %>
+            </div>
+
+            <div style="display:flex;justify-content:flex-end;margin-top:12px;">
+              <button type="submit" class="act-btn ab-primary"><i data-lucide="save" style="width:14px;height:14px;"></i> บันทึก</button>
+            </div>
+          </form>
+        </div>
+      <% }) %>
+    </section>
   </main>
 </div>
-<script>lucide.createIcons()</script>
+
+<div id="tplOverlay" class="panel-overlay" onclick="closeTplPanel()"></div>
+<div id="tplPanel" class="panel-drawer">
+  <div style="padding:20px 24px;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;justify-content:space-between;">
+    <h3 id="tplPanelTitle" style="margin:0;font-size:15px;color:#1e293b;">แก้ไขข้อความอีเมล</h3>
+    <button type="button" onclick="closeTplPanel()" style="border:none;background:none;cursor:pointer;color:#94a3b8;padding:4px;"><i data-lucide="x" style="width:18px;height:18px;"></i></button>
+  </div>
+  <form id="tplForm" method="POST" style="padding:20px 24px;overflow-y:auto;flex:1;">
+    <p class="field-help" style="margin:0 0 14px;">แทรกข้อมูลอัตโนมัติได้ด้วย <code>{{clientName}}</code> <code>{{counselorName}}</code> <code>{{date}}</code> <code>{{time}}</code> <code>{{duration}}</code> <code>{{appointmentId}}</code> — เว้นว่างช่องใดไว้เพื่อใช้ข้อความเริ่มต้นของระบบในช่องนั้น (ข้อความจางในช่องคือตัวอย่างข้อความเริ่มต้นปัจจุบัน)</p>
+
+    <label class="lbl">หัวข้ออีเมล</label>
+    <input type="text" name="title" id="tpl_title" class="inp" style="margin-bottom:14px;">
+
+    <div class="field-grid" style="margin-bottom:4px;">
+      <label class="lbl">ข้อความทักทาย (ไทย)</label>
+      <label class="lbl">ข้อความทักทาย (English)</label>
+    </div>
+    <div class="field-grid" style="margin-bottom:14px;">
+      <textarea name="greeting_th" id="tpl_greeting_th" class="inp" rows="3"></textarea>
+      <textarea name="greeting_en" id="tpl_greeting_en" class="inp" rows="3"></textarea>
+    </div>
+
+    <div id="tpl_closing_simple">
+      <div class="field-grid" style="margin-bottom:4px;">
+        <label class="lbl">ข้อความปิดท้าย (ไทย)</label>
+        <label class="lbl">ข้อความปิดท้าย (English)</label>
+      </div>
+      <div class="field-grid">
+        <textarea name="closing_th" id="tpl_closing_th" class="inp" rows="2"></textarea>
+        <textarea name="closing_en" id="tpl_closing_en" class="inp" rows="2"></textarea>
+      </div>
+    </div>
+
+    <div id="tpl_closing_variant" style="display:none;">
+      <p class="field-help" style="margin:0 0 8px;">ข้อความปิดท้ายแยกตามรูปแบบนัดหมาย — ระบบจะเลือกใช้ให้อัตโนมัติตามรูปแบบที่เลือกไว้ในนัดหมายจริง</p>
+      <p class="lbl" style="margin-bottom:6px;">ออนไลน์</p>
+      <div class="field-grid" style="margin-bottom:4px;">
+        <label class="lbl">ไทย</label>
+        <label class="lbl">English</label>
+      </div>
+      <div class="field-grid" style="margin-bottom:14px;">
+        <textarea name="closing_online_th" id="tpl_closing_online_th" class="inp" rows="2"></textarea>
+        <textarea name="closing_online_en" id="tpl_closing_online_en" class="inp" rows="2"></textarea>
+      </div>
+      <p class="lbl" style="margin-bottom:6px;">เข้ารับบริการด้วยตนเอง</p>
+      <div class="field-grid" style="margin-bottom:4px;">
+        <label class="lbl">ไทย</label>
+        <label class="lbl">English</label>
+      </div>
+      <div class="field-grid">
+        <textarea name="closing_onsite_th" id="tpl_closing_onsite_th" class="inp" rows="2"></textarea>
+        <textarea name="closing_onsite_en" id="tpl_closing_onsite_en" class="inp" rows="2"></textarea>
+      </div>
+    </div>
+  </form>
+  <div style="padding:16px 24px;border-top:1px solid #f1f5f9;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;">
+    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+      <button type="submit" form="tplForm" id="tplPreviewBtn" class="act-btn ab-secondary"><i data-lucide="eye" style="width:14px;height:14px;"></i> ดูตัวอย่าง</button>
+      <button type="submit" form="tplForm" id="tplPreviewOnlineBtn" class="act-btn ab-secondary" style="display:none;"><i data-lucide="eye" style="width:14px;height:14px;"></i> ดูตัวอย่าง (ออนไลน์)</button>
+      <button type="submit" form="tplForm" id="tplPreviewOnsiteBtn" class="act-btn ab-secondary" style="display:none;"><i data-lucide="eye" style="width:14px;height:14px;"></i> ดูตัวอย่าง (เข้ารับบริการ)</button>
+    </div>
+    <button type="submit" form="tplForm" id="tplSaveBtn" class="act-btn ab-primary"><i data-lucide="save" style="width:14px;height:14px;"></i> บันทึกข้อความ</button>
+  </div>
+</div>
+<script>
+  var TYPES_WITH_CLOSING_VARIANTS = <%- JSON.stringify(typesWithClosingVariants) %>
+
+  function openTplPanel(type, label, tpl, defaults) {
+    document.getElementById('tplPanelTitle').textContent = 'แก้ไขข้อความ: ' + label
+    document.getElementById('tplForm').action = '/admin/survey-email/templates/' + type
+    document.getElementById('tpl_title').value = (tpl.title && tpl.title.th) || ''
+    document.getElementById('tpl_greeting_th').value = (tpl.greeting && tpl.greeting.th) || ''
+    document.getElementById('tpl_greeting_en').value = (tpl.greeting && tpl.greeting.en) || ''
+    document.getElementById('tpl_title').placeholder = (defaults.title && defaults.title.th) || ''
+    document.getElementById('tpl_greeting_th').placeholder = (defaults.greeting && defaults.greeting.th) || ''
+    document.getElementById('tpl_greeting_en').placeholder = (defaults.greeting && defaults.greeting.en) || ''
+
+    var isVariant = TYPES_WITH_CLOSING_VARIANTS.indexOf(type) !== -1
+    document.getElementById('tpl_closing_simple').style.display = isVariant ? 'none' : 'block'
+    document.getElementById('tpl_closing_variant').style.display = isVariant ? 'block' : 'none'
+    document.getElementById('tplPreviewBtn').style.display = isVariant ? 'none' : 'inline-flex'
+    document.getElementById('tplPreviewOnlineBtn').style.display = isVariant ? 'inline-flex' : 'none'
+    document.getElementById('tplPreviewOnsiteBtn').style.display = isVariant ? 'inline-flex' : 'none'
+
+    if (isVariant) {
+      document.getElementById('tpl_closing_online_th').value = (tpl.closing && tpl.closing.th && tpl.closing.th.online) || ''
+      document.getElementById('tpl_closing_online_en').value = (tpl.closing && tpl.closing.en && tpl.closing.en.online) || ''
+      document.getElementById('tpl_closing_onsite_th').value = (tpl.closing && tpl.closing.th && tpl.closing.th.onsite) || ''
+      document.getElementById('tpl_closing_onsite_en').value = (tpl.closing && tpl.closing.en && tpl.closing.en.onsite) || ''
+      document.getElementById('tpl_closing_online_th').placeholder = (defaults.closing && defaults.closing.th && defaults.closing.th.online) || ''
+      document.getElementById('tpl_closing_online_en').placeholder = (defaults.closing && defaults.closing.en && defaults.closing.en.online) || ''
+      document.getElementById('tpl_closing_onsite_th').placeholder = (defaults.closing && defaults.closing.th && defaults.closing.th.onsite) || ''
+      document.getElementById('tpl_closing_onsite_en').placeholder = (defaults.closing && defaults.closing.en && defaults.closing.en.onsite) || ''
+      document.getElementById('tplPreviewOnlineBtn').setAttribute('formaction', '/admin/survey-email/preview/' + type + '?apptType=online')
+      document.getElementById('tplPreviewOnlineBtn').setAttribute('formtarget', '_blank')
+      document.getElementById('tplPreviewOnsiteBtn').setAttribute('formaction', '/admin/survey-email/preview/' + type + '?apptType=onsite')
+      document.getElementById('tplPreviewOnsiteBtn').setAttribute('formtarget', '_blank')
+    } else {
+      document.getElementById('tpl_closing_th').value = (tpl.closing && tpl.closing.th) || ''
+      document.getElementById('tpl_closing_en').value = (tpl.closing && tpl.closing.en) || ''
+      document.getElementById('tpl_closing_th').placeholder = (defaults.closing && defaults.closing.th) || ''
+      document.getElementById('tpl_closing_en').placeholder = (defaults.closing && defaults.closing.en) || ''
+      document.getElementById('tplPreviewBtn').setAttribute('formaction', '/admin/survey-email/preview/' + type)
+      document.getElementById('tplPreviewBtn').setAttribute('formtarget', '_blank')
+    }
+
+    const ov = document.getElementById('tplOverlay')
+    ov.style.display = 'block'
+    requestAnimationFrame(() => ov.classList.add('open'))
+    document.getElementById('tplPanel').classList.add('open')
+    document.body.style.overflow = 'hidden'
+  }
+
+  function closeTplPanel() {
+    const ov = document.getElementById('tplOverlay')
+    ov.classList.remove('open')
+    document.getElementById('tplPanel').classList.remove('open')
+    document.body.style.overflow = ''
+    setTimeout(() => { ov.style.display = 'none' }, 200)
+  }
+
+  document.querySelectorAll('.edit-template-btn').forEach(btn => {
+    btn.addEventListener('click', () => openTplPanel(btn.dataset.type, btn.dataset.label, JSON.parse(btn.dataset.tpl), JSON.parse(btn.dataset.default)))
+  })
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeTplPanel() })
+  lucide.createIcons()
+</script>
 </body>
 </html>

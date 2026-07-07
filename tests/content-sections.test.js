@@ -233,3 +233,40 @@ test('admin content section cards use the same TH EN toggle pattern as hero', as
   assert.match(body, /id="features-en" style="display:;"/)
   assert.match(body, /id="features-th" style="display:none;"/)
 })
+
+test('email test/SMTP status card has moved to the จัดการอีเมล page and is gone from content management', async () => {
+  const { res, body } = await requestAdminContent('/admin/content')
+
+  assert.equal(res.statusCode, 200)
+  assert.doesNotMatch(body, /ระบบแจ้งเตือนอีเมล/)
+  assert.doesNotMatch(body, /action="\/admin\/content\/test-email"/)
+})
+test('background controls keep the original two-column grid and group text colors under overlay color', async () => {
+  const { res, body } = await requestAdminContent('/admin/content')
+
+  assert.equal(res.statusCode, 200)
+  assert.match(body, /display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start;/)
+  assert.match(body, /grid-column:1 \/ -1;display:flex;align-items:center;gap:8px;padding-top:4px;/)
+  const colorIndex = body.indexOf('<!-- Color picker -->')
+  const textColorIndex = body.indexOf('<!-- Text colors per element -->')
+  const imageIndex = body.indexOf('<!-- Image upload -->')
+  const motionIndex = body.indexOf('<!-- Motion controls -->')
+  const motionEndIndex = body.indexOf('<!-- End motion controls -->')
+  const blendIndex = body.indexOf('<!-- Blend slider -->')
+  assert.ok(colorIndex > -1)
+  assert.ok(textColorIndex > colorIndex)
+  assert.ok(imageIndex > textColorIndex)
+  assert.ok(motionIndex > imageIndex)
+  assert.ok(motionEndIndex > motionIndex)
+  assert.ok(blendIndex > motionEndIndex)
+  ;[
+    '<!-- Section label -->',
+    '<!-- Color picker -->',
+    '<!-- Text colors per element -->',
+    '<!-- Image upload -->',
+    '<!-- Motion controls -->',
+    '<!-- Blend slider -->',
+  ].forEach(marker => {
+    assert.equal(body.split(marker).length - 1, 6)
+  })
+})

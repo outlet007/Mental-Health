@@ -3,15 +3,20 @@ const router  = express.Router()
 const fs      = require('fs')
 const path    = require('path')
 const multer  = require('multer')
-const { sendAppointmentEmails } = require('../../utils/mailer')
+const crypto  = require('crypto')
 
 const dataFile  = path.join(__dirname, '../../../data/content.json')
 const uploadDir = path.join(__dirname, '../../../public/uploads/content')
 if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true })
 
+// Date.now() alone collides when multer processes several files from the same
+// multipart request (e.g. saving all 3 branding images at once) fast enough
+// to land in the same millisecond — same filename means the later file
+// silently overwrites the earlier one on disk. The random suffix guarantees
+// uniqueness regardless of how many files arrive in the same tick.
 const bgStorage = multer.diskStorage({
   destination: uploadDir,
-  filename: (req, file, cb) => cb(null, Date.now() + path.extname(file.originalname)),
+  filename: (req, file, cb) => cb(null, Date.now() + '-' + crypto.randomBytes(4).toString('hex') + path.extname(file.originalname)),
 })
 const bgUpload = multer({ storage: bgStorage, limits: { fileSize: 5 * 1024 * 1024 } }).fields([
   { name: 'img_hero',       maxCount: 1 },
@@ -22,6 +27,11 @@ const bgUpload = multer({ storage: bgStorage, limits: { fileSize: 5 * 1024 * 102
   { name: 'img_footer',     maxCount: 1 },
 ])
 const heroVisualUpload = multer({ storage: bgStorage, limits: { fileSize: 5 * 1024 * 1024 } }).single('heroVisualImage')
+const brandingUpload = multer({ storage: bgStorage, limits: { fileSize: 5 * 1024 * 1024 } }).fields([
+  { name: 'headerLogoImage', maxCount: 1 },
+  { name: 'footerLogoImage', maxCount: 1 },
+  { name: 'faviconImage',    maxCount: 1 },
+])
 const featuresCollageUpload = multer({ storage: bgStorage, limits: { fileSize: 5 * 1024 * 1024 } }).fields([
   { name: 'collagePhoto1', maxCount: 1 },
   { name: 'collagePhoto2', maxCount: 1 },
@@ -62,6 +72,30 @@ router.get('/', (req, res) => {
     page: 'content', title: 'จัดการเนื้อหาเว็บไซต์',
     content, query: req.query,
   })
+})
+
+router.post('/branding', brandingUpload, (req, res) => {
+  const data = readData()
+  const previous = data.branding || {}
+  data.branding = {
+    headerLogoImage: previous.headerLogoImage || '',
+    footerLogoImage: previous.footerLogoImage || '',
+    faviconImage: previous.faviconImage || '',
+  }
+  if (req.body.clear_headerLogoImage) data.branding.headerLogoImage = ''
+  if (req.body.clear_footerLogoImage) data.branding.footerLogoImage = ''
+  if (req.body.clear_faviconImage) data.branding.faviconImage = ''
+  if (req.files && req.files.headerLogoImage && req.files.headerLogoImage[0]) {
+    data.branding.headerLogoImage = '/uploads/content/' + req.files.headerLogoImage[0].filename
+  }
+  if (req.files && req.files.footerLogoImage && req.files.footerLogoImage[0]) {
+    data.branding.footerLogoImage = '/uploads/content/' + req.files.footerLogoImage[0].filename
+  }
+  if (req.files && req.files.faviconImage && req.files.faviconImage[0]) {
+    data.branding.faviconImage = '/uploads/content/' + req.files.faviconImage[0].filename
+  }
+  writeData(data)
+  res.redirect('/admin/content?saved=branding')
 })
 
 // ── TH endpoints ─────────────────────────────────────────────────────────────
@@ -321,6 +355,9 @@ router.post('/backgrounds', bgUpload, (req, res) => {
     data.backgrounds[sec].opacity = isNaN(op) ? 1 : Math.min(1, Math.max(0, op))
     const imgOp = parseFloat(req.body['imgOpacity_' + sec])
     data.backgrounds[sec].imgOpacity = isNaN(imgOp) ? 1 : Math.min(1, Math.max(0, imgOp))
+    data.backgrounds[sec].blend = clampNumber(req.body['blend_' + sec], 0, 0, 220)
+    const blendColor = (req.body['blendColor_' + sec] || '').trim()
+    data.backgrounds[sec].blendColor = _hexRe.test(blendColor) ? blendColor : ''
     data.backgrounds[sec].motionEnabled = req.body['motionEnabled_' + sec] !== 'off'
     data.backgrounds[sec].motionDuration = clampNumber(req.body['motionDuration_' + sec], 38, 8, 90)
     data.backgrounds[sec].motionScale = clampNumber(req.body['motionScale_' + sec], 1.12, 1, 1.35)
@@ -341,35 +378,6 @@ router.post('/backgrounds', bgUpload, (req, res) => {
   })
   writeData(data)
   res.redirect('/admin/content?saved=backgrounds')
-})
-
-// ── Test email ────────────────────────────────────────────────────────────────
-router.post('/test-email', async (req, res) => {
-  const to = (req.body.to || '').trim()
-  if (!to) return res.redirect('/admin/content?emailError=missing')
-
-  const mockAppt = {
-    id: 'test001',
-    date: new Date().toISOString().split('T')[0],
-    time: '10:00',
-    duration: 60,
-    type: 'online',
-    note: 'นัดทดสอบระบบอีเมล',
-    status: 'confirmed',
-    createdAt: new Date().toISOString().split('T')[0],
-  }
-  try {
-    await sendAppointmentEmails({
-      appointment: mockAppt,
-      client:    { name: 'ผู้รับบริการทดสอบ', email: to, phone: '08X-XXX-XXXX' },
-      counselor: { name: 'ดร.ทดสอบ ระบบอีเมล', title: 'นักจิตวิทยาให้คำปรึกษา', email: to, phone: '08X-XXX-XXXX', specialties: ['ทดสอบระบบ'] },
-      concern:   'ทดสอบการส่งอีเมลจากระบบ MindCare',
-    })
-    res.redirect('/admin/content?emailSent=1')
-  } catch (err) {
-    console.error('[Email test]', err.message)
-    res.redirect('/admin/content?emailError=' + encodeURIComponent(err.message))
-  }
 })
 
 module.exports = router

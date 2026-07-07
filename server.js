@@ -4,6 +4,7 @@ const session = require('express-session')
 const path    = require('path')
 const fs      = require('fs')
 const { attachSurveyRatingsToCounselors } = require('./src/utils/counselor-survey-ratings')
+const { sendDueAppointmentReminders } = require('./src/utils/appointment-reminders')
 
 const app = express()
 
@@ -75,5 +76,15 @@ app.use('/admin/reports',        require('./src/routes/admin/reports'))
 app.use('/admin/notifications', require('./src/routes/admin/notifications'))
 app.use('/admin/audit-log',     require('./src/routes/admin/audit-log'))
 
+// Appointment reminder emails — polls periodically instead of exact scheduling
+// since only a JSON file backs appointment state (no job queue).
+const REMINDER_CHECK_INTERVAL_MS = 15 * 60 * 1000
+setInterval(() => {
+  sendDueAppointmentReminders().catch(err => console.error('[Email] reminder check error:', err.message))
+}, REMINDER_CHECK_INTERVAL_MS)
+
 const PORT = process.env.PORT || 3000
-app.listen(PORT, () => console.log(`MindCare running -> http://localhost:${PORT}`))
+app.listen(PORT, () => {
+  console.log(`MindCare running -> http://localhost:${PORT}`)
+  sendDueAppointmentReminders().catch(err => console.error('[Email] reminder check error:', err.message))
+})

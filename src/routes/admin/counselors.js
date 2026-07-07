@@ -4,6 +4,7 @@ const fs      = require('fs')
 const { matchesSearch } = require('../../utils/search')
 const path    = require('path')
 const multer  = require('multer')
+const crypto  = require('crypto')
 const bcrypt  = require('bcryptjs')
 const { logDeletion } = require('../../utils/audit-log')
 
@@ -14,7 +15,7 @@ const storage = multer.diskStorage({
   destination: uploadDir,
   filename: (req, file, cb) => {
     const ext = path.extname(file.originalname).toLowerCase()
-    cb(null, Date.now() + ext)
+    cb(null, Date.now() + '-' + crypto.randomBytes(4).toString('hex') + ext)
   },
 })
 const upload = multer({

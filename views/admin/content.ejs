@@ -9,6 +9,10 @@
     .inp { width:100%; padding:9px 12px; border:1.5px solid #e2e8f0; border-radius:10px; font-size:13px; color:#334155; outline:none; font-family:inherit; box-sizing:border-box; }
     .inp:focus { border-color:#2dd4b4; box-shadow:0 0 0 3px rgba(45,212,180,.15); }
     .lbl { display:block; font-size:12px; font-weight:500; color:#64748b; margin-bottom:5px; }
+    .file-btn-wrap { position:relative; display:inline-flex; }
+    .file-btn-wrap input[type=file] { position:absolute; inset:0; width:100%; height:100%; opacity:0; cursor:pointer; }
+    .file-btn { display:inline-flex; align-items:center; gap:6px; padding:8px 14px; border-radius:8px; border:1.5px solid #e2e8f0; background:#f8fafc; font-size:12px; font-weight:600; color:#334155; white-space:nowrap; pointer-events:none; }
+    .file-btn-wrap:hover .file-btn { background:#f1f5f9; border-color:#cbd5e1; }
     .section-card { background:#fff; border:1px solid #f1f5f9; border-radius:16px; padding:24px; margin-bottom:24px; }
     .section-title { font-size:14px; font-weight:600; color:#1e293b; display:flex; align-items:center; gap:8px; margin-bottom:20px; padding-bottom:14px; border-bottom:1px solid #f1f5f9; }
     .act-btn { display:inline-flex; align-items:center; gap:4px; padding:8px 16px; border-radius:10px; font-size:13px; font-weight:500; cursor:pointer; border:none; transition:all .15s; white-space:nowrap; }
@@ -85,7 +89,7 @@
           '<input type="checkbox" name="clear_' + fieldName + '" style="accent-color:#ef4444;"> ลบรูป' +
         '</label>' +
       '</div>' +
-      '<input type="file" name="' + fieldName + '" class="inp" accept="image/jpeg,image/png,image/webp,image/gif" style="padding:6px;font-size:12px;" onchange="previewBgImage(this,\'' + fieldName + '\')">' +
+      '<div class="file-btn-wrap"><input type="file" name="' + fieldName + '" accept="image/jpeg,image/png,image/webp,image/gif" onchange="previewBgImage(this,\'' + fieldName + '\')"><span class="file-btn"><i data-lucide="image-plus" style="width:14px;height:14px;"></i> เลือกรูป</span></div>' +
       '<div id="newimgbox_' + fieldName + '" style="display:none;align-items:center;gap:8px;margin-top:8px;padding:8px 10px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;">' +
         '<img style="width:56px;height:56px;object-fit:cover;border-radius:5px;border:1px solid #bbf7d0;flex-shrink:0;">' +
         '<span style="font-size:12px;color:#16a34a;font-weight:600;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">รูปใหม่ที่เลือก (ยังไม่บันทึก)</span>' +
@@ -132,9 +136,12 @@
 
   <div style="height:56px; background:#fff; border-bottom:1px solid #f1f5f9; padding:0 24px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:20;">
     <h1 style="font-size:15px; font-weight:600; color:#1e293b; margin:0;"><%= title %></h1>
-    <a href="/" target="_blank" style="display:inline-flex;align-items:center;gap:6px;font-size:12px;color:#05967e;text-decoration:none;">
-      <i data-lucide="external-link" style="width:13px;height:13px;"></i> ดูหน้าเว็บไซต์
-    </a>
+    <div style="display:flex;align-items:center;gap:12px;">
+      <span style="font-size:12px;color:#94a3b8;"><%= new Date().toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric'}) %></span>
+      <a href="/" target="_blank" style="display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 12px;border-radius:8px;border:1px solid #e2e8f0;background:#f8fafc;font-size:12px;font-weight:500;color:#334155;text-decoration:none;transition:background .15s;" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='#f8fafc'">
+        <i data-lucide="external-link" style="width:13px;height:13px;"></i> ดูหน้าเว็บไซต์
+      </a>
+    </div>
   </div>
 
   <div style="padding:24px;">
@@ -148,62 +155,33 @@
     </div>
     <% } %>
 
-    <!-- Email / SMTP Status -->
-    <div class="section-card" style="border-color:#e0e7ff;">
+    <!-- ── Logo & Favicon ── -->
+    <% const branding = content.branding || {} %>
+    <div class="section-card">
       <div class="section-title">
         <div style="width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;">
-          <i data-lucide="mail" style="width:14px;height:14px;color:#fff;"></i>
+          <i data-lucide="image" style="width:14px;height:14px;color:#fff;"></i>
         </div>
-        ระบบแจ้งเตือนอีเมล
+        โลโก้และไอคอนเว็บไซต์
       </div>
-
-      <% if (query.emailSent) { %>
-      <div style="margin-bottom:16px;padding:12px 16px;background:#ecfdf9;border:1px solid #a0f3e1;border-radius:10px;color:#065f46;font-size:13px;display:flex;align-items:center;gap:8px;">
-        <i data-lucide="check-circle" style="width:15px;height:15px;flex-shrink:0;"></i>
-        ส่งอีเมลทดสอบสำเร็จ — ตรวจสอบ inbox ของคุณ
-      </div>
-      <% } else if (query.emailError) { %>
-      <div style="margin-bottom:16px;padding:12px 16px;background:#fef2f2;border:1px solid #fca5a5;border-radius:10px;color:#991b1b;font-size:13px;display:flex;align-items:center;gap:8px;">
-        <i data-lucide="alert-circle" style="width:15px;height:15px;flex-shrink:0;"></i>
-        ส่งไม่สำเร็จ: <%= query.emailError === 'missing' ? 'กรุณากรอกอีเมลปลายทาง' : decodeURIComponent(query.emailError) %>
-      </div>
-      <% } %>
-
-      <% const smtpConfigured = process.env && process.env.SMTP_USER && process.env.SMTP_USER !== 'your-email@gmail.com' %>
-      <div style="display:flex;align-items:center;gap:10px;padding:12px 14px;background:<%= smtpConfigured ? '#ecfdf9' : '#fef9c3' %>;border:1px solid <%= smtpConfigured ? '#a0f3e1' : '#fde68a' %>;border-radius:10px;margin-bottom:16px;">
-        <i data-lucide="<%= smtpConfigured ? 'check-circle' : 'alert-triangle' %>" style="width:16px;height:16px;color:<%= smtpConfigured ? '#05967e' : '#92400e' %>;flex-shrink:0;"></i>
-        <div>
-          <% if (smtpConfigured) { %>
-          <span style="font-size:13px;font-weight:600;color:#065f46;">SMTP พร้อมใช้งาน</span>
-          <span style="font-size:12px;color:#64748b;margin-left:8px;">(<%= process.env.SMTP_USER %>)</span>
-          <% } else { %>
-          <span style="font-size:13px;font-weight:600;color:#92400e;">SMTP ยังไม่ได้ตั้งค่า</span>
-          <span style="font-size:12px;color:#64748b;margin-left:8px;">แก้ไขไฟล์ <code style="background:#fff;padding:1px 6px;border-radius:4px;font-family:monospace;">.env</code> เพื่อเปิดใช้งาน</span>
-          <% } %>
+      <form method="POST" action="/admin/content/branding" enctype="multipart/form-data">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;">
+          <div>
+            <%- photoField('headerLogoImage', 'โลโก้ที่เมนูบนสุด (Header)', branding.headerLogoImage) %>
+            <p class="field-help" style="font-size:12px;color:#94a3b8;margin:6px 0 0;">ไม่ตั้งค่า = ใช้ไอคอนหัวใจ + ข้อความ "MindCare" เหมือนเดิม</p>
+          </div>
+          <div>
+            <%- photoField('footerLogoImage', 'โลโก้ที่ Footer', branding.footerLogoImage) %>
+            <p class="field-help" style="font-size:12px;color:#94a3b8;margin:6px 0 0;">พื้นหลัง footer เป็นสีเข้ม แนะนำใช้โลโก้เวอร์ชันขาว/สว่าง แยกจากโลโก้ header</p>
+          </div>
+          <div>
+            <%- photoField('faviconImage', 'Favicon (ไอคอนแท็บเบราว์เซอร์)', branding.faviconImage) %>
+            <p class="field-help" style="font-size:12px;color:#94a3b8;margin:6px 0 0;">แนะนำไฟล์สี่เหลี่ยมจัตุรัส เช่น 512×512px (PNG/ICO/SVG)</p>
+          </div>
         </div>
-      </div>
-
-      <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:14px 16px;margin-bottom:16px;">
-        <p style="margin:0 0 10px;font-size:12px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:.05em;">ตัวแปรใน .env ที่ต้องตั้งค่า</p>
-        <pre style="margin:0;font-size:12px;color:#334155;font-family:monospace;line-height:1.8;overflow-x:auto;">SMTP_HOST=smtp.gmail.com
-SMTP_PORT=587
-SMTP_SECURE=false
-SMTP_USER=your-email@gmail.com
-SMTP_PASS=your-app-password
-SMTP_FROM_NAME=MindCare
-SMTP_FROM_EMAIL=your-email@gmail.com
-SMTP_BCC=   <span style="color:#94a3b8;"># optional สำเนาทุกอีเมล</span></pre>
-        <p style="margin:10px 0 0;font-size:12px;color:#94a3b8;">Gmail: ใช้ App Password จาก <a href="https://myaccount.google.com/apppasswords" target="_blank" style="color:#6366f1;">myaccount.google.com/apppasswords</a> (ต้องเปิด 2-Step Verification)</p>
-      </div>
-
-      <form method="POST" action="/admin/content/test-email" style="display:flex;gap:10px;align-items:flex-end;">
-        <div style="flex:1;">
-          <label class="lbl">ส่งอีเมลทดสอบไปที่</label>
-          <input type="email" name="to" class="inp" placeholder="your@email.com" required value="<%= process.env.SMTP_USER || '' %>">
+        <div style="display:flex;justify-content:flex-end;margin-top:16px;">
+          <button type="submit" class="act-btn ab-primary"><i data-lucide="save" style="width:14px;height:14px;"></i> บันทึก</button>
         </div>
-        <button type="submit" class="act-btn" style="background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;padding:9px 18px;border-radius:10px;font-size:13px;font-weight:500;cursor:pointer;border:none;white-space:nowrap;flex-shrink:0;">
-          <i data-lucide="send" style="width:13px;height:13px;"></i> ส่งทดสอบ
-        </button>
       </form>
     </div>
 
@@ -254,7 +232,7 @@ SMTP_BCC=   <span style="color:#94a3b8;"># optional สำเนาทุกอ�
                   <input type="checkbox" name="clearVisualImage" style="accent-color:#ef4444;"> ลบรูป (ใช้ไอคอนเริ่มต้น)
                 </label>
               </div>
-              <input type="file" name="heroVisualImage" class="inp" accept="image/jpeg,image/png,image/webp,image/gif" style="padding:6px;font-size:12px;" onchange="previewBgImage(this,'herovisual')">
+              <div class="file-btn-wrap"><input type="file" name="heroVisualImage" accept="image/jpeg,image/png,image/webp,image/gif" onchange="previewBgImage(this,'herovisual')"><span class="file-btn"><i data-lucide="image-plus" style="width:14px;height:14px;"></i> เลือกรูป</span></div>
               <div id="newimgbox_herovisual" style="display:none;align-items:center;gap:8px;margin-top:8px;padding:8px 10px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;">
                 <img style="width:56px;height:56px;object-fit:cover;border-radius:5px;border:1px solid #bbf7d0;flex-shrink:0;">
                 <span style="font-size:12px;color:#16a34a;font-weight:600;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">รูปใหม่ที่เลือก (ยังไม่บันทึก)</span>
@@ -573,10 +551,10 @@ SMTP_BCC=   <span style="color:#94a3b8;"># optional สำเนาทุกอ�
           <% _bgSections.forEach((s, idx) => {
             const bg = _bgs[s.key] || {}
           %>
-          <div style="display:grid;grid-template-columns:150px 1fr 1fr 220px;gap:16px;align-items:start;padding:16px 0;<%= idx > 0 ? 'border-top:1px solid #f1f5f9;' : '' %>">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start;padding:16px 0;<%= idx > 0 ? 'border-top:1px solid #f1f5f9;' : '' %>">
 
             <!-- Section label -->
-            <div style="display:flex;align-items:center;gap:8px;padding-top:4px;">
+            <div style="grid-column:1 / -1;display:flex;align-items:center;gap:8px;padding-top:4px;">
               <div style="width:22px;height:22px;border-radius:6px;background:#f1f5f9;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
                 <i data-lucide="<%= s.icon %>" style="width:12px;height:12px;color:#64748b;"></i>
               </div>
@@ -612,6 +590,39 @@ SMTP_BCC=   <span style="color:#94a3b8;"># optional สำเนาทุกอ�
                   <%= typeof bg.opacity === 'number' ? Math.round(bg.opacity * 100) : 100 %>%
                 </span>
               </div>
+
+              <!-- Text colors per element -->
+              <div style="margin-top:10px;">
+                <label class="lbl">สีข้อความ</label>
+                <div style="display:flex;flex-direction:column;gap:10px;">
+                  <% const _tc = bg.textColors || {};
+                     const _hexRe = /^#[0-9A-Fa-f]{6}$/;
+                     s.fields.forEach(function(fd) {
+                       const _tcVal = _hexRe.test(_tc[fd.f] || '') ? _tc[fd.f] : '';
+                       const _tcPick = _tcVal || '#1e293b';
+                     %>
+                  <div>
+                    <span style="font-size:12px;font-weight:600;color:#64748b;display:block;margin-bottom:4px;"><%= fd.l %></span>
+                    <div style="display:flex;align-items:center;gap:5px;">
+                      <input type="color" id="tcpicker_<%= s.key %>_<%= fd.f %>"
+                        value="<%= _tcPick %>"
+                        style="width:32px;height:28px;border:1.5px solid #e2e8f0;border-radius:6px;cursor:pointer;padding:2px;flex-shrink:0;"
+                        oninput="document.getElementById('tctext_<%= s.key %>_<%= fd.f %>').value=this.value">
+                      <input type="text" id="tctext_<%= s.key %>_<%= fd.f %>" name="textColor_<%= s.key %>_<%= fd.f %>" class="inp"
+                        value="<%= _tcVal %>" placeholder="ค่าเริ่มต้น"
+                        style="flex:1;min-width:0;font-size:12px;"
+                        oninput="if(/^#[0-9A-Fa-f]{6}$/.test(this.value))document.getElementById('tcpicker_<%= s.key %>_<%= fd.f %>').value=this.value">
+                      <button type="button"
+                        onclick="document.getElementById('tctext_<%= s.key %>_<%= fd.f %>').value='';document.getElementById('tcpicker_<%= s.key %>_<%= fd.f %>').value='#1e293b';"
+                        style="padding:4px 7px;font-size:12px;border:1px solid #e2e8f0;border-radius:6px;background:#fff;color:#94a3b8;cursor:pointer;flex-shrink:0;">x</button>
+                    </div>
+                  </div>
+                  <% }) %>
+                  <% if (!s.fields.length) { %>
+                  <span style="font-size:12px;color:#cbd5e1;">- ไม่มีข้อความให้ปรับสีในส่วนนี้ -</span>
+                  <% } %>
+                </div>
+              </div>
             </div>
 
             <!-- Image upload -->
@@ -624,7 +635,7 @@ SMTP_BCC=   <span style="color:#94a3b8;"># optional สำเนาทุกอ�
                   <input type="checkbox" name="clear_<%= s.key %>" style="accent-color:#ef4444;"> ลบรูป
                 </label>
               </div>
-              <input type="file" name="img_<%= s.key %>" class="inp" accept="image/jpeg,image/png,image/webp,image/gif" style="padding:6px;font-size:12px;" onchange="previewBgImage(this,'<%= s.key %>')">
+              <div class="file-btn-wrap"><input type="file" name="img_<%= s.key %>" accept="image/jpeg,image/png,image/webp,image/gif" onchange="previewBgImage(this,'<%= s.key %>')"><span class="file-btn"><i data-lucide="image-plus" style="width:14px;height:14px;"></i> เลือกรูป</span></div>
               <div id="newimgbox_<%= s.key %>" style="display:none;align-items:center;gap:8px;margin-top:8px;padding:8px 10px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;">
                 <img style="width:56px;height:36px;object-fit:cover;border-radius:5px;border:1px solid #bbf7d0;flex-shrink:0;">
                 <span style="font-size:12px;color:#16a34a;font-weight:600;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">รูปใหม่ที่เลือก (ยังไม่บันทึก)</span>
@@ -641,6 +652,8 @@ SMTP_BCC=   <span style="color:#94a3b8;"># optional สำเนาทุกอ�
                   <%= typeof bg.imgOpacity === 'number' ? Math.round(bg.imgOpacity * 100) : 100 %>%
                 </span>
               </div>
+
+              <!-- Motion controls -->
               <div style="margin-top:10px;padding:10px;border:1px solid #e2e8f0;border-radius:10px;background:#fff;display:grid;gap:8px;">
                 <label style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:#475569;">
                   <input type="hidden" name="motionEnabled_<%= s.key %>" value="off">
@@ -678,38 +691,32 @@ SMTP_BCC=   <span style="color:#94a3b8;"># optional สำเนาทุกอ�
                   </span>
                 </div>
               </div>
-            </div>
+              <!-- End motion controls -->
 
-            <!-- Text colors per element -->
-            <div>
-              <label class="lbl">สีข้อความ</label>
-              <div style="display:flex;flex-direction:column;gap:10px;">
-                <% const _tc = bg.textColors || {};
-                   const _hexRe = /^#[0-9A-Fa-f]{6}$/;
-                   s.fields.forEach(function(fd) {
-                     const _tcVal = _hexRe.test(_tc[fd.f] || '') ? _tc[fd.f] : '';
-                     const _tcPick = _tcVal || '#1e293b';
-                   %>
-                <div>
-                  <span style="font-size:12px;font-weight:600;color:#64748b;display:block;margin-bottom:4px;"><%= fd.l %></span>
-                  <div style="display:flex;align-items:center;gap:5px;">
-                    <input type="color" id="tcpicker_<%= s.key %>_<%= fd.f %>"
-                      value="<%= _tcPick %>"
-                      style="width:32px;height:28px;border:1.5px solid #e2e8f0;border-radius:6px;cursor:pointer;padding:2px;flex-shrink:0;"
-                      oninput="document.getElementById('tctext_<%= s.key %>_<%= fd.f %>').value=this.value">
-                    <input type="text" id="tctext_<%= s.key %>_<%= fd.f %>" name="textColor_<%= s.key %>_<%= fd.f %>" class="inp"
-                      value="<%= _tcVal %>" placeholder="ค่าเริ่มต้น"
-                      style="flex:1;min-width:0;font-size:12px;"
-                      oninput="if(/^#[0-9A-Fa-f]{6}$/.test(this.value))document.getElementById('tcpicker_<%= s.key %>_<%= fd.f %>').value=this.value">
-                    <button type="button"
-                      onclick="document.getElementById('tctext_<%= s.key %>_<%= fd.f %>').value='';document.getElementById('tcpicker_<%= s.key %>_<%= fd.f %>').value='#1e293b';"
-                      style="padding:4px 7px;font-size:12px;border:1px solid #e2e8f0;border-radius:6px;background:#fff;color:#94a3b8;cursor:pointer;flex-shrink:0;">✕</button>
-                  </div>
+              <!-- Blend slider -->
+              <div style="margin-top:10px;padding:10px;border:1px solid #e2e8f0;border-radius:10px;background:#fff;display:grid;gap:8px;">
+                <label class="lbl" style="margin-bottom:0;">Blend edge</label>
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <span style="font-size:12px;color:#64748b;white-space:nowrap;">Size:</span>
+                  <input type="range" id="blend_<%= s.key %>" name="blend_<%= s.key %>" min="0" max="220" step="5"
+                    value="<%= typeof bg.blend === 'number' ? bg.blend : 0 %>"
+                    style="flex:1;accent-color:#14b8a6;height:4px;cursor:pointer;"
+                    oninput="document.getElementById('blendval_<%= s.key %>').textContent=this.value+'px'">
+                  <span id="blendval_<%= s.key %>" style="font-size:12px;font-weight:700;color:#1e293b;width:46px;text-align:right;">
+                    <%= typeof bg.blend === 'number' ? bg.blend : 0 %>px
+                  </span>
                 </div>
-                <% }) %>
-                <% if (!s.fields.length) { %>
-                <span style="font-size:12px;color:#cbd5e1;">— ไม่มีข้อความให้ปรับสีในส่วนนี้ —</span>
-                <% } %>
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <span style="font-size:12px;color:#64748b;white-space:nowrap;">Color:</span>
+                  <input type="color" id="blendpicker_<%= s.key %>"
+                    value="<%= /^#[0-9A-Fa-f]{6}$/.test(bg.blendColor || '') ? bg.blendColor : (bg.color || '#ffffff') %>"
+                    style="width:34px;height:30px;border:1.5px solid #e2e8f0;border-radius:7px;cursor:pointer;padding:2px;flex-shrink:0;"
+                    oninput="document.getElementById('blendcolor_<%= s.key %>').value=this.value">
+                  <input type="text" id="blendcolor_<%= s.key %>" name="blendColor_<%= s.key %>" class="inp"
+                    value="<%= bg.blendColor || '' %>" placeholder="#ffffff"
+                    style="flex:1;min-width:0;font-size:12px;"
+                    oninput="if(/^#[0-9A-Fa-f]{6}$/.test(this.value))document.getElementById('blendpicker_<%= s.key %>').value=this.value">
+                </div>
               </div>
             </div>
           </div>
