@@ -25,6 +25,11 @@
   </style>
 </head>
 <body style="background:#f8fafc;margin:0;">
+<%
+  const sessionTypes = { online: true, phone: false, onsite: true, ...(appointmentSessionTypes || {}) }
+  const enabledSessionTypeList = ['online', 'phone', 'onsite'].filter(type => sessionTypes[type])
+  const defaultSessionType = enabledSessionTypeList[0] || 'online'
+%>
 <%- include('../partials/admin-sidebar') %>
 
 <div style="margin-left:256px;min-height:100vh;display:flex;flex-direction:column;">
@@ -229,8 +234,10 @@
               <td>
                 <% if (c.sessionType==='online') { %>
                 <div style="display:flex;align-items:center;gap:4px;"><i data-lucide="video" style="width:13px;height:13px;color:#0891b2;"></i><span style="font-size:12px;color:#0891b2;">ออนไลน์</span></div>
+                <% } else if (c.sessionType==='phone') { %>
+                <div style="display:flex;align-items:center;gap:4px;"><i data-lucide="phone" style="width:13px;height:13px;color:#05967e;"></i><span style="font-size:12px;color:#05967e;">โทรศัพท์</span></div>
                 <% } else { %>
-                <div style="display:flex;align-items:center;gap:4px;"><i data-lucide="map-pin" style="width:13px;height:13px;color:#05967e;"></i><span style="font-size:12px;color:#05967e;">เข้ารับบริการด้วยตนเอง</span></div>
+                <div style="display:flex;align-items:center;gap:4px;"><i data-lucide="map-pin" style="width:13px;height:13px;color:#3874FF;"></i><span style="font-size:12px;color:#3874FF;">เข้ารับบริการด้วยตนเอง</span></div>
                 <% } %>
               </td>
               <td style="font-size:12px;color:#64748b;white-space:nowrap;"><%= c.createdAt %></td>
@@ -354,12 +361,21 @@
         <div>
           <label class="lbl">รูปแบบที่ต้องการ</label>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+            <% if (sessionTypes.online) { %>
             <label style="display:flex;align-items:center;gap:8px;padding:10px;border:1.5px solid #e2e8f0;border-radius:10px;cursor:pointer;">
               <input type="radio" name="sessionType" value="online" id="er_typeOnline" style="accent-color:#0891b2;"><i data-lucide="video" style="width:14px;height:14px;color:#0891b2;flex-shrink:0;"></i><span style="font-size:13px;font-weight:500;">ออนไลน์</span>
             </label>
+            <% } %>
+            <% if (sessionTypes.phone) { %>
             <label style="display:flex;align-items:center;gap:8px;padding:10px;border:1.5px solid #e2e8f0;border-radius:10px;cursor:pointer;">
-              <input type="radio" name="sessionType" value="onsite" id="er_typeOnsite" style="accent-color:#05967e;"><i data-lucide="map-pin" style="width:14px;height:14px;color:#05967e;flex-shrink:0;"></i><span style="font-size:13px;font-weight:500;">เข้ารับบริการด้วยตนเอง</span>
+              <input type="radio" name="sessionType" value="phone" id="er_typePhone" style="accent-color:#05967e;"><i data-lucide="phone" style="width:14px;height:14px;color:#05967e;flex-shrink:0;"></i><span style="font-size:13px;font-weight:500;">โทรศัพท์</span>
             </label>
+            <% } %>
+            <% if (sessionTypes.onsite) { %>
+            <label style="display:flex;align-items:center;gap:8px;padding:10px;border:1.5px solid #e2e8f0;border-radius:10px;cursor:pointer;">
+              <input type="radio" name="sessionType" value="onsite" id="er_typeOnsite" style="accent-color:#3874FF;"><i data-lucide="map-pin" style="width:14px;height:14px;color:#3874FF;flex-shrink:0;"></i><span style="font-size:13px;font-weight:500;">เข้ารับบริการด้วยตนเอง</span>
+            </label>
+            <% } %>
           </div>
         </div>
       </div>
@@ -472,13 +488,26 @@
           <div>
             <label class="lbl">รูปแบบ</label>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+              <% if (sessionTypes.online) { %>
               <label style="display:flex;align-items:center;gap:8px;padding:10px;border:1.5px solid #a5f3fc;border-radius:10px;cursor:pointer;background:#ecfeff;">
-                <input type="radio" name="type" value="online" id="typeOnline" checked style="accent-color:#0891b2;"><i data-lucide="video" style="width:14px;height:14px;color:#0891b2;flex-shrink:0;"></i><span style="font-size:13px;font-weight:500;">ออนไลน์</span>
+                <input type="radio" name="type" value="online" id="typeOnline" <%= defaultSessionType === 'online' ? 'checked' : '' %> style="accent-color:#0891b2;" onchange="toggleContactMeetingLinkField()"><i data-lucide="video" style="width:14px;height:14px;color:#0891b2;flex-shrink:0;"></i><span style="font-size:13px;font-weight:500;">ออนไลน์</span>
               </label>
+              <% } %>
+              <% if (sessionTypes.phone) { %>
               <label style="display:flex;align-items:center;gap:8px;padding:10px;border:1.5px solid #e2e8f0;border-radius:10px;cursor:pointer;">
-                <input type="radio" name="type" value="onsite" id="typeOnsite" style="accent-color:#05967e;"><i data-lucide="map-pin" style="width:14px;height:14px;color:#05967e;flex-shrink:0;"></i><span style="font-size:13px;font-weight:500;">เข้ารับบริการด้วยตนเอง</span>
+                <input type="radio" name="type" value="phone" id="typePhone" <%= defaultSessionType === 'phone' ? 'checked' : '' %> style="accent-color:#05967e;" onchange="toggleContactMeetingLinkField()"><i data-lucide="phone" style="width:14px;height:14px;color:#05967e;flex-shrink:0;"></i><span style="font-size:13px;font-weight:500;">โทรศัพท์</span>
               </label>
+              <% } %>
+              <% if (sessionTypes.onsite) { %>
+              <label style="display:flex;align-items:center;gap:8px;padding:10px;border:1.5px solid #e2e8f0;border-radius:10px;cursor:pointer;">
+                <input type="radio" name="type" value="onsite" id="typeOnsite" <%= defaultSessionType === 'onsite' ? 'checked' : '' %> style="accent-color:#3874FF;" onchange="toggleContactMeetingLinkField()"><i data-lucide="map-pin" style="width:14px;height:14px;color:#3874FF;flex-shrink:0;"></i><span style="font-size:13px;font-weight:500;">เข้ารับบริการด้วยตนเอง</span>
+              </label>
+              <% } %>
             </div>
+          </div>
+          <div id="contactMeetingLinkWrap">
+            <label class="lbl">ลิงก์สำหรับเข้าร่วมวิดีโอคอล</label>
+            <input type="url" name="meetingLink" id="contactMeetingLink" class="inp" placeholder="Google Meet, Zoom, Microsoft Teams, LINE Meeting">
           </div>
           <div>
             <label class="lbl">หมายเหตุ (ถ้ามี)</label>
@@ -557,6 +586,7 @@
   const CLIENTS = <%- JSON.stringify(clients) %>
   const COUNSELOR_COLORS = <%- JSON.stringify(counselorColors) %>
   const APPOINTMENTS = <%- JSON.stringify(appointments) %>
+  const DEFAULT_SESSION_TYPE = '<%= defaultSessionType %>'
   let bCounselor = null, bTime = null
 
   // ── Concern (เรื่องที่ต้องการความช่วยเหลือ) pill badge ────────────────────────
@@ -602,6 +632,18 @@
   }
 
   // ── Status panel ──────────────────────────────────────────────────────────────
+  function contactSessionTypeLabel(type) {
+    if (type === 'phone') return 'โทรศัพท์'
+    if (type === 'onsite') return 'เข้ารับบริการด้วยตนเอง'
+    return 'ออนไลน์'
+  }
+
+  function toggleContactMeetingLinkField() {
+    const selected = document.querySelector('#bookForm input[name="type"]:checked')
+    const wrap = document.getElementById('contactMeetingLinkWrap')
+    if (wrap) wrap.style.display = selected && selected.value === 'online' ? '' : 'none'
+  }
+
   document.querySelectorAll('.edit-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       const c = JSON.parse(btn.dataset.rec)
@@ -609,7 +651,7 @@
       document.getElementById('statusForm').action          = '/admin/contacts/' + c.id + '/status'
       document.getElementById('f_status').value             = c.status || 'new'
       document.getElementById('f_note').value               = c.note   || ''
-      const typeLabel = c.sessionType==='online' ? 'ออนไลน์' : 'เข้ารับบริการด้วยตนเอง'
+      const typeLabel = contactSessionTypeLabel(c.sessionType)
       const linkedAppt = (c.status === 'converted' && c.appointmentId)
         ? APPOINTMENTS.find(a => a.id === c.appointmentId)
         : null
@@ -643,8 +685,10 @@
       document.getElementById('er_phone').value     = c.phone || ''
       document.getElementById('er_email').value      = c.email || ''
       document.getElementById('er_concern').value    = c.concern || ''
-      if (c.sessionType === 'onsite') { document.getElementById('er_typeOnsite').checked = true; document.getElementById('er_typeOnline').checked = false }
-      else { document.getElementById('er_typeOnline').checked = true; document.getElementById('er_typeOnsite').checked = false }
+      const editTypeInput = document.getElementById(c.sessionType === 'phone' ? 'er_typePhone' : (c.sessionType === 'onsite' ? 'er_typeOnsite' : 'er_typeOnline'))
+      const editTypeFallback = document.querySelector('#editRequestForm input[name="sessionType"]')
+      if (editTypeInput) editTypeInput.checked = true
+      else if (editTypeFallback) editTypeFallback.checked = true
       openOverlay(); document.getElementById('editRequestPanel').classList.add('open')
     })
   })
@@ -661,9 +705,15 @@
       const c = JSON.parse(btn.dataset.rec)
       document.getElementById('bookPanelSub').textContent = 'สำหรับ ' + c.name
       document.getElementById('bookForm').action           = '/admin/contacts/' + c.id + '/book'
-      if (c.sessionType==='onsite') { document.getElementById('typeOnsite').checked=true; document.getElementById('typeOnline').checked=false }
-      else { document.getElementById('typeOnline').checked=true; document.getElementById('typeOnsite').checked=false }
-      const typeLabel = c.sessionType==='online' ? 'ออนไลน์' : 'เข้ารับบริการด้วยตนเอง'
+      const requestedType = c.sessionType || DEFAULT_SESSION_TYPE
+      const bookTypeInput = document.getElementById(requestedType === 'phone' ? 'typePhone' : (requestedType === 'onsite' ? 'typeOnsite' : 'typeOnline'))
+      const bookTypeFallback = document.querySelector('#bookForm input[name="type"]')
+      if (bookTypeInput) bookTypeInput.checked = true
+      else if (bookTypeFallback) bookTypeFallback.checked = true
+      const meetingLinkInput = document.getElementById('contactMeetingLink')
+      if (meetingLinkInput) meetingLinkInput.value = ''
+      toggleContactMeetingLinkField()
+      const typeLabel = contactSessionTypeLabel(c.sessionType)
       document.getElementById('contactSummary').innerHTML = `
         <div style="font-size:12px;font-weight:600;color:#64748b;margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em;">ผู้ร้องขอ</div>
         <div style="display:flex;gap:8px;"><span style="color:#94a3b8;min-width:72px;">ชื่อ-นามสกุล</span><strong>${esc(c.name)}</strong></div>

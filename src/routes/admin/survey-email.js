@@ -10,6 +10,9 @@ const {
   EMAIL_TYPE_IDS,
   PLACEHOLDERS,
   TYPES_WITH_CLOSING_VARIANTS,
+  CLOSING_VARIANTS,
+  TYPES_WITH_ACCESS_DETAILS,
+  ACCESS_DETAIL_FIELD_KEYS,
   hasClosingVariants,
   readEmailTemplates,
   writeEmailTemplate,
@@ -34,7 +37,7 @@ const TYPE_BUILDERS = {
 
 function mockEmailData() {
   return {
-    appointment: { id: 'app-00000', date: new Date().toISOString().split('T')[0], time: '10:00', duration: 60, type: 'online' },
+    appointment: { id: 'app-00000', date: new Date().toISOString().split('T')[0], time: '10:00', duration: 60, type: 'online', meetingLink: 'https://meet.example.test/mindcare' },
     client: { name: 'ผู้รับบริการตัวอย่าง', email: 'preview@example.test', phone: '08X-XXX-XXXX' },
     counselor: { name: 'ดร.ตัวอย่าง ระบบอีเมล', title: 'นักจิตวิทยาให้คำปรึกษา', email: 'preview@example.test', phone: '08X-XXX-XXXX', specialties: ['ตัวอย่าง'] },
     concern: 'ตัวอย่างเรื่องที่ปรึกษา',
@@ -50,6 +53,9 @@ router.get('/', (req, res) => {
     defaultTemplates: getPlainDefaultTemplates(),
     emailTypeCatalog: EMAIL_TYPES,
     typesWithClosingVariants: TYPES_WITH_CLOSING_VARIANTS,
+    closingVariants: CLOSING_VARIANTS,
+    typesWithAccessDetails: TYPES_WITH_ACCESS_DETAILS,
+    accessDetailFieldKeys: ACCESS_DETAIL_FIELD_KEYS,
     placeholders: PLACEHOLDERS,
     query: req.query,
   })
@@ -90,10 +96,28 @@ function draftTemplateFromBody(body, type) {
   }
   draft.closing = hasClosingVariants(type)
     ? {
-        th: { online: body.closing_online_th, onsite: body.closing_onsite_th },
-        en: { online: body.closing_online_en, onsite: body.closing_onsite_en },
+        th: { online: body.closing_online_th, phone: body.closing_phone_th, onsite: body.closing_onsite_th },
+        en: { online: body.closing_online_en, phone: body.closing_phone_en, onsite: body.closing_onsite_en },
       }
     : { th: body.closing_th, en: body.closing_en }
+  draft.accessDetails = {
+    th: {
+      onlineTitle: body.access_online_title_th,
+      onlineLinkLabel: body.access_online_link_label_th,
+      phoneTitle: body.access_phone_title_th,
+      phoneCounselorPhoneLabel: body.access_phone_counselor_phone_label_th,
+      phoneClientNoticeLabel: body.access_phone_client_notice_label_th,
+      phoneClientNoticeText: body.access_phone_client_notice_text_th,
+    },
+    en: {
+      onlineTitle: body.access_online_title_en,
+      onlineLinkLabel: body.access_online_link_label_en,
+      phoneTitle: body.access_phone_title_en,
+      phoneCounselorPhoneLabel: body.access_phone_counselor_phone_label_en,
+      phoneClientNoticeLabel: body.access_phone_client_notice_label_en,
+      phoneClientNoticeText: body.access_phone_client_notice_text_en,
+    },
+  }
   return draft
 }
 
@@ -109,6 +133,7 @@ router.post('/preview/:type', (req, res) => {
   if (!EMAIL_TYPE_IDS.includes(type)) return res.status(404).send('Unknown email type')
   const mock = mockEmailData()
   if (req.query.apptType === 'onsite') mock.appointment.type = 'onsite'
+  if (req.query.apptType === 'phone') mock.appointment.type = 'phone'
   const html = TYPE_BUILDERS[type](mock, draftTemplateFromBody(req.body || {}, type))
   res.send(html)
 })

@@ -209,6 +209,40 @@ test('appointment confirmation closing text and icon differ between online and o
   }
 })
 
+
+test('appointment emails include online meeting links and phone call details by audience', async () => {
+  const harness = loadMailerWithCapturedTransport({})
+
+  try {
+    await harness.mailer.sendAppointmentEmails({
+      appointment: { id: 'app-online-link', date: '2026-07-01', time: '10:00', duration: 60, type: 'online', meetingLink: 'https://meet.example.test/abc', note: '' },
+      client: { name: 'Test Client', email: 'client@example.test', phone: '0812345678' },
+      counselor: { name: 'Test Counselor', email: 'counselor@example.test', phone: '', specialties: [] },
+      concern: '',
+    })
+    await harness.mailer.sendAppointmentEmails({
+      appointment: { id: 'app-phone', date: '2026-07-01', time: '11:00', duration: 60, type: 'phone', note: '' },
+      client: { name: 'Phone Client', email: 'phone-client@example.test', phone: '0899999999' },
+      counselor: { name: 'Phone Counselor', email: 'phone-counselor@example.test', phone: '', specialties: [] },
+      concern: '',
+    })
+
+    const [onlineClient, onlineCounselor, phoneClient, phoneCounselor] = harness.sentMessages
+    const thaiClientNotice = "จิตแพทย์จะโทรติดต่อกลับเพื่อให้คำปรึกษา"
+    const thaiLinkTitle = "ลิงก์เข้าร่วมวิดีโอคอล"
+    assert.equal((onlineClient.html.match(/https:\/\/meet\.example\.test\/abc/g) || []).length, 2)
+    assert.equal((onlineCounselor.html.match(/https:\/\/meet\.example\.test\/abc/g) || []).length, 2)
+    assert.match(onlineClient.html, new RegExp(thaiLinkTitle))
+    assert.match(onlineCounselor.html, new RegExp(thaiLinkTitle))
+    assert.equal((phoneCounselor.html.match(/0899999999/g) || []).length, 2)
+    assert.match(phoneCounselor.html, /Client phone/)
+    assert.match(phoneClient.html, /counselor will call you/)
+    assert.match(phoneClient.html, new RegExp(thaiClientNotice))
+  } finally {
+    harness.restore()
+  }
+})
+
 test('reminder email closing text differs between online and onsite appointments', async () => {
   const harness = loadMailerWithCapturedTransport({})
 
@@ -336,3 +370,64 @@ test('emails include in-email Thai and English toggle without web email view lin
   }
 })
 
+test('saved access detail template overrides change appointment emails', () => {
+  return withTempTemplatesFile(async () => {
+    const { writeEmailTemplate } = require('../src/utils/email-templates')
+    writeEmailTemplate('appointmentClient', {
+      title: { th: '', en: '' },
+      greeting: { th: '', en: '' },
+      closing: { th: { online: '', phone: '', onsite: '' }, en: { online: '', phone: '', onsite: '' } },
+      accessDetails: {
+        en: {
+          onlineTitle: 'Custom video room',
+          onlineLinkLabel: 'Custom join label',
+          phoneTitle: 'Custom phone card',
+          phoneClientNoticeLabel: 'Custom notice label',
+          phoneClientNoticeText: 'Custom phone notice for client',
+        },
+      },
+    })
+    writeEmailTemplate('appointmentCounselor', {
+      title: { th: '', en: '' },
+      greeting: { th: '', en: '' },
+      closing: { th: '', en: '' },
+      accessDetails: {
+        en: {
+          phoneTitle: 'Counselor phone card',
+          phoneCounselorPhoneLabel: 'Custom client phone label',
+        },
+      },
+    })
+
+    const onlineHarness = loadMailerWithCapturedTransport({})
+    try {
+      await onlineHarness.mailer.sendAppointmentEmails({
+        appointment: { id: 'app-online', date: '2026-07-01', time: '10:00', duration: 60, type: 'online', meetingLink: 'https://meet.example.test/custom', note: '' },
+        client: { name: 'Client', email: 'client@example.test', phone: '0812345678' },
+        counselor: { name: 'Counselor', email: 'counselor@example.test', phone: '021234567', specialties: [] },
+        concern: '',
+      })
+      assert.match(onlineHarness.sentMessages[0].html, /Custom video room/)
+      assert.match(onlineHarness.sentMessages[0].html, /Custom join label/)
+      assert.match(onlineHarness.sentMessages[0].html, /https:\/\/meet\.example\.test\/custom/)
+    } finally {
+      onlineHarness.restore()
+    }
+
+    const phoneHarness = loadMailerWithCapturedTransport({})
+    try {
+      await phoneHarness.mailer.sendAppointmentEmails({
+        appointment: { id: 'app-phone', date: '2026-07-01', time: '10:00', duration: 60, type: 'phone', note: '' },
+        client: { name: 'Client', email: 'client@example.test', phone: '0812345678' },
+        counselor: { name: 'Counselor', email: 'counselor@example.test', phone: '021234567', specialties: [] },
+        concern: '',
+      })
+      assert.match(phoneHarness.sentMessages[0].html, /Custom phone notice for client/)
+      assert.match(phoneHarness.sentMessages[1].html, /Counselor phone card/)
+      assert.match(phoneHarness.sentMessages[1].html, /Custom client phone label/)
+      assert.match(phoneHarness.sentMessages[1].html, /0812345678/)
+    } finally {
+      phoneHarness.restore()
+    }
+  })
+})

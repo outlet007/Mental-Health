@@ -1,10 +1,36 @@
 {
-  "recipientMode": "client",
-  "customEmail": "",
-  "deliveryMode": "test",
-  "gmailUser": "",
-  "gmailAppPassword": "",
+  "deliveryMode": "gmail",
+  "gmailUser": "arluck.y@bu.ac.th",
+  "gmailAppPassword": "edbj dhqr svup sypt",
   "fromName": "MindCare Docker",
   "fromEmail": "no-reply@mindcare.local",
-  "updatedAt": "2026-07-06T02:49:43.202Z"
+  "emailTypes": {
+    "appointmentClient": {
+      "enabled": true,
+      "recipientMode": "default",
+      "customEmail": ""
+    },
+    "appointmentCounselor": {
+      "enabled": true,
+      "recipientMode": "default",
+      "customEmail": ""
+    },
+    "counselorReassigned": {
+      "enabled": true,
+      "recipientMode": "default",
+      "customEmail": ""
+    },
+    "survey": {
+      "enabled": true,
+      "recipientMode": "default",
+      "customEmail": ""
+    },
+    "reminder": {
+      "enabled": false,
+      "recipientMode": "default",
+      "customEmail": "",
+      "hoursBefore": 24
+    }
+  },
+  "updatedAt": "2026-07-08T12:12:00.340Z"
 }

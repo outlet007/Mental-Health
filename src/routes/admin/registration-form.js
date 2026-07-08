@@ -26,6 +26,7 @@ const FORM_TEXT_FIELDS = [
   'concernLabel',
   'typeLabel',
   'onlineLabel',
+  'phoneSessionLabel',
   'onsiteLabel',
   'pdpaHeading',
   'pdpaText',
@@ -42,6 +43,14 @@ function readFormTexts(body, current = {}) {
   return formTexts
 }
 
+function readSessionTypes(body) {
+  return {
+    online: body.sessionTypeEnabled_online === 'on',
+    phone:  body.sessionTypeEnabled_phone === 'on',
+    onsite: body.sessionTypeEnabled_onsite === 'on',
+  }
+}
+
 function readBookSettings(body, currentBook, concernField) {
   return {
     ...currentBook,
@@ -49,6 +58,7 @@ function readBookSettings(body, currentBook, concernField) {
     subtext: (body.bookSubtext || '').trim(),
     formHeading: (body.bookFormHeading || '').trim(),
     concernOptions: readItems(body[concernField]),
+    sessionTypes: readSessionTypes(body),
     formTexts: readFormTexts(body, currentBook.formTexts || {}),
   }
 }

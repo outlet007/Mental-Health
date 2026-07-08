@@ -20,9 +20,42 @@ const PLACEHOLDERS = ['clientName', 'counselorName', 'date', 'time', 'duration',
 // The other types (counselor notice, reassignment, survey) read the same
 // either way, so their `closing` stays a plain {th, en} string.
 const TYPES_WITH_CLOSING_VARIANTS = ['appointmentClient', 'reminder']
+const CLOSING_VARIANTS = ['online', 'phone', 'onsite']
+const TYPES_WITH_ACCESS_DETAILS = ['appointmentClient', 'appointmentCounselor', 'reminder']
+const ACCESS_DETAIL_FIELD_KEYS = [
+  'onlineTitle',
+  'onlineLinkLabel',
+  'phoneTitle',
+  'phoneCounselorPhoneLabel',
+  'phoneClientNoticeLabel',
+  'phoneClientNoticeText',
+]
+
+const DEFAULT_APPOINTMENT_ACCESS_DETAILS = {
+  th: {
+    onlineTitle: '\u0e25\u0e34\u0e07\u0e01\u0e4c\u0e40\u0e02\u0e49\u0e32\u0e23\u0e48\u0e27\u0e21\u0e27\u0e34\u0e14\u0e35\u0e42\u0e2d\u0e04\u0e2d\u0e25',
+    onlineLinkLabel: '\u0e25\u0e34\u0e07\u0e01\u0e4c',
+    phoneTitle: '\u0e01\u0e32\u0e23\u0e43\u0e2b\u0e49\u0e04\u0e33\u0e1b\u0e23\u0e36\u0e01\u0e29\u0e32\u0e17\u0e32\u0e07\u0e42\u0e17\u0e23\u0e28\u0e31\u0e1e\u0e17\u0e4c',
+    phoneCounselorPhoneLabel: '\u0e40\u0e1a\u0e2d\u0e23\u0e4c\u0e42\u0e17\u0e23\u0e1c\u0e39\u0e49\u0e23\u0e31\u0e1a\u0e1a\u0e23\u0e34\u0e01\u0e32\u0e23',
+    phoneClientNoticeLabel: '\u0e02\u0e49\u0e2d\u0e04\u0e27\u0e32\u0e21',
+    phoneClientNoticeText: '\u0e08\u0e34\u0e15\u0e41\u0e1e\u0e17\u0e22\u0e4c\u0e08\u0e30\u0e42\u0e17\u0e23\u0e15\u0e34\u0e14\u0e15\u0e48\u0e2d\u0e01\u0e25\u0e31\u0e1a\u0e40\u0e1e\u0e37\u0e48\u0e2d\u0e43\u0e2b\u0e49\u0e04\u0e33\u0e1b\u0e23\u0e36\u0e01\u0e29\u0e32',
+  },
+  en: {
+    onlineTitle: 'Video call link',
+    onlineLinkLabel: 'Join link',
+    phoneTitle: 'Phone counseling',
+    phoneCounselorPhoneLabel: 'Client phone',
+    phoneClientNoticeLabel: 'Notice',
+    phoneClientNoticeText: 'The counselor will call you for counseling.',
+  },
+}
 
 function hasClosingVariants(type) {
   return TYPES_WITH_CLOSING_VARIANTS.includes(type)
+}
+
+function hasAccessDetails(type) {
+  return TYPES_WITH_ACCESS_DETAILS.includes(type)
 }
 
 // Matches the text currently hardcoded in mailer.js — used whenever an admin
@@ -35,9 +68,10 @@ const DEFAULT_TEMPLATES = {
       en: 'Hello <strong>{{clientName}}</strong><br>Your appointment has been confirmed.',
     },
     closing: {
-      th: { online: 'โปรดเข้าร่วมก่อนเวลา 5-10 นาที', onsite: 'โปรดมาถึงก่อนเวลา 5-10 นาที' },
-      en: { online: 'Please join 5-10 minutes before the appointment time.', onsite: 'Please arrive 5-10 minutes before the appointment time.' },
+      th: { online: 'โปรดเข้าร่วมก่อนเวลา 5-10 นาที', phone: '\u0e42\u0e1b\u0e23\u0e14\u0e23\u0e2d\u0e23\u0e31\u0e1a\u0e2a\u0e32\u0e22\u0e08\u0e32\u0e01\u0e19\u0e31\u0e01\u0e08\u0e34\u0e15\u0e27\u0e34\u0e17\u0e22\u0e32\u0e15\u0e32\u0e21\u0e40\u0e27\u0e25\u0e32\u0e19\u0e31\u0e14', onsite: 'โปรดมาถึงก่อนเวลา 5-10 นาที' },
+      en: { online: 'Please join 5-10 minutes before the appointment time.', phone: 'Please keep your phone available at the appointment time.', onsite: 'Please arrive 5-10 minutes before the appointment time.' },
     },
+    accessDetails: DEFAULT_APPOINTMENT_ACCESS_DETAILS,
   },
   appointmentCounselor: {
     title: { th: 'นัดหมายใหม่', en: 'นัดหมายใหม่' },
@@ -49,6 +83,7 @@ const DEFAULT_TEMPLATES = {
       th: 'โปรดตรวจสอบรูปแบบการนัดหมายก่อนเวลา',
       en: 'Please check the appointment format before the session.',
     },
+    accessDetails: DEFAULT_APPOINTMENT_ACCESS_DETAILS,
   },
   counselorReassigned: {
     title: { th: 'ยกเลิกนัดหมาย', en: 'ยกเลิกนัดหมาย' },
@@ -76,30 +111,54 @@ const DEFAULT_TEMPLATES = {
       en: "Hello <strong>{{clientName}}</strong><br>Your appointment is coming up soon. Please don't forget!",
     },
     closing: {
-      th: { online: 'โปรดเข้าร่วมก่อนเวลา 5-10 นาที', onsite: 'โปรดมาถึงก่อนเวลา 5-10 นาที' },
-      en: { online: 'Please join 5-10 minutes before the appointment time.', onsite: 'Please arrive 5-10 minutes before the appointment time.' },
+      th: { online: 'โปรดเข้าร่วมก่อนเวลา 5-10 นาที', phone: '\u0e42\u0e1b\u0e23\u0e14\u0e23\u0e2d\u0e23\u0e31\u0e1a\u0e2a\u0e32\u0e22\u0e08\u0e32\u0e01\u0e19\u0e31\u0e01\u0e08\u0e34\u0e15\u0e27\u0e34\u0e17\u0e22\u0e32\u0e15\u0e32\u0e21\u0e40\u0e27\u0e25\u0e32\u0e19\u0e31\u0e14', onsite: 'โปรดมาถึงก่อนเวลา 5-10 นาที' },
+      en: { online: 'Please join 5-10 minutes before the appointment time.', phone: 'Please keep your phone available at the appointment time.', onsite: 'Please arrive 5-10 minutes before the appointment time.' },
     },
+    accessDetails: DEFAULT_APPOINTMENT_ACCESS_DETAILS,
   },
 }
 
 function emptyClosingField(type) {
-  return hasClosingVariants(type) ? { online: '', onsite: '' } : ''
+  if (!hasClosingVariants(type)) return ''
+  return Object.fromEntries(CLOSING_VARIANTS.map(variant => [variant, '']))
+}
+
+function emptyAccessDetailsField(type) {
+  if (!hasAccessDetails(type)) return undefined
+  return {
+    th: Object.fromEntries(ACCESS_DETAIL_FIELD_KEYS.map(key => [key, ''])),
+    en: Object.fromEntries(ACCESS_DETAIL_FIELD_KEYS.map(key => [key, ''])),
+  }
 }
 
 function emptyTemplate(type) {
-  return {
+  const template = {
     title: { th: '', en: '' },
     greeting: { th: '', en: '' },
     closing: { th: emptyClosingField(type), en: emptyClosingField(type) },
   }
+  if (hasAccessDetails(type)) template.accessDetails = emptyAccessDetailsField(type)
+  return template
 }
 
 function cleanClosingField(value, type) {
   if (hasClosingVariants(type)) {
     const v = value || {}
-    return { online: String(v.online || '').trim(), onsite: String(v.onsite || '').trim() }
+    return Object.fromEntries(CLOSING_VARIANTS.map(variant => [variant, String(v[variant] || '').trim()]))
   }
   return String(value || '').trim()
+}
+
+function cleanAccessDetailsField(value, type) {
+  if (!hasAccessDetails(type)) return undefined
+  const v = value || {}
+  const clean = emptyAccessDetailsField(type)
+  for (const lang of ['th', 'en']) {
+    for (const key of ACCESS_DETAIL_FIELD_KEYS) {
+      clean[lang][key] = String((v[lang] && v[lang][key]) || '').trim()
+    }
+  }
+  return clean
 }
 
 function cleanTemplate(type, data = {}) {
@@ -116,6 +175,7 @@ function cleanTemplate(type, data = {}) {
     th: cleanClosingField(closingData.th, type),
     en: cleanClosingField(closingData.en, type),
   }
+  if (hasAccessDetails(type)) clean.accessDetails = cleanAccessDetailsField(data.accessDetails, type)
   return clean
 }
 
@@ -154,18 +214,28 @@ function stripHtml(text) {
 
 function stripClosingField(value, type) {
   if (hasClosingVariants(type)) {
-    return { online: stripHtml(value.online), onsite: stripHtml(value.onsite) }
+    return Object.fromEntries(CLOSING_VARIANTS.map(variant => [variant, stripHtml(value[variant])]))
   }
   return stripHtml(value)
 }
 
+function stripAccessDetailsField(value, type) {
+  if (!hasAccessDetails(type)) return undefined
+  return {
+    th: Object.fromEntries(ACCESS_DETAIL_FIELD_KEYS.map(key => [key, stripHtml(value.th[key])])),
+    en: Object.fromEntries(ACCESS_DETAIL_FIELD_KEYS.map(key => [key, stripHtml(value.en[key])])),
+  }
+}
+
 function plainDefaultTemplate(type) {
   const d = DEFAULT_TEMPLATES[type]
-  return {
+  const plain = {
     title: { th: stripHtml(d.title.th), en: stripHtml(d.title.en) },
     greeting: { th: stripHtml(d.greeting.th), en: stripHtml(d.greeting.en) },
     closing: { th: stripClosingField(d.closing.th, type), en: stripClosingField(d.closing.en, type) },
   }
+  if (hasAccessDetails(type)) plain.accessDetails = stripAccessDetailsField(d.accessDetails, type)
+  return plain
 }
 
 function getPlainDefaultTemplates() {
@@ -191,8 +261,16 @@ function resolveField(override, defaultValue, vars) {
 // any unrecognized/missing value) before resolving the text.
 function resolveClosingField(override, defaultValue, vars, type, apptType) {
   if (!hasClosingVariants(type)) return resolveField(override, defaultValue, vars)
-  const variant = apptType === 'onsite' ? 'onsite' : 'online'
+  const variant = CLOSING_VARIANTS.includes(apptType) ? apptType : 'online'
   return resolveField(override && override[variant], defaultValue[variant], vars)
+}
+
+function resolveAccessDetailsField(override, defaultValue, vars, type, lang) {
+  if (!hasAccessDetails(type)) return undefined
+  return Object.fromEntries(ACCESS_DETAIL_FIELD_KEYS.map(key => [
+    key,
+    resolveField(override && override[lang] && override[lang][key], defaultValue[lang][key], vars),
+  ]))
 }
 
 // `draftOverride` lets the preview endpoint render unsaved text the admin is
@@ -201,11 +279,13 @@ function resolveClosingField(override, defaultValue, vars, type, apptType) {
 function renderTemplateFields(type, lang, vars, draftOverride, apptType) {
   const override = draftOverride ? cleanTemplate(type, draftOverride) : (readEmailTemplates()[type] || emptyTemplate(type))
   const defaults = DEFAULT_TEMPLATES[type]
-  return {
+  const fields = {
     title: resolveField(override.title[lang], defaults.title[lang], vars),
     greeting: resolveField(override.greeting[lang], defaults.greeting[lang], vars),
     closing: resolveClosingField(override.closing[lang], defaults.closing[lang], vars, type, apptType),
   }
+  if (hasAccessDetails(type)) fields.accessDetails = resolveAccessDetailsField(override.accessDetails, defaults.accessDetails, vars, type, lang)
+  return fields
 }
 
 module.exports = {
@@ -214,7 +294,11 @@ module.exports = {
   PLACEHOLDERS,
   DEFAULT_TEMPLATES,
   TYPES_WITH_CLOSING_VARIANTS,
+  CLOSING_VARIANTS,
+  TYPES_WITH_ACCESS_DETAILS,
+  ACCESS_DETAIL_FIELD_KEYS,
   hasClosingVariants,
+  hasAccessDetails,
   readEmailTemplates,
   writeEmailTemplate,
   applyPlaceholders,

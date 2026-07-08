@@ -1,0 +1,141 @@
+﻿diff --git a/src/routes/admin/appointments.js b/src/routes/admin/appointments.js
+index 38be75a..e868e50 100644
+--- a/src/routes/admin/appointments.js
++++ b/src/routes/admin/appointments.js
+@@ -152,7 +152,7 @@ router.get('/slots', (req, res) => {
+ 
+ // ── CREATE ────────────────────────────────────────────────────────────────────
+ router.post('/create', async (req, res) => {
+-  const { counselorId, clientId, date, time, type, note, concern } = req.body
++  const { counselorId, clientId, date, time, type, note, concern, meetingLink } = req.body
+ 
+   if (!canUseCounselor(req, counselorId) || !canUseClient(req, clientId)) return forbidden(res)
+ 
+@@ -212,7 +212,7 @@ router.post('/create', async (req, res) => {
+ 
+ // ── EDIT ──────────────────────────────────────────────────────────────────────
+ router.post('/:id/edit', (req, res) => {
+-  const { counselorId, date, time, type, status, note, concern } = req.body
++  const { counselorId, date, time, type, status, note, concern, meetingLink } = req.body
+   const data = read('appointments.json')
+   const idx  = data.findIndex(a => a.id === req.params.id)
+   if (idx === -1) return res.redirect('/admin/appointments?updated=1')
+diff --git a/tests/appointments-page.test.js b/tests/appointments-page.test.js
+index 0ebe4a5..8d965ae 100644
+--- a/tests/appointments-page.test.js
++++ b/tests/appointments-page.test.js
+@@ -93,6 +93,19 @@ test('appointments table separates status action buttons into the final column',
+   assert.match(row, new RegExp(PENDING_TABLE_LABEL))
+ })
+ 
++
++test('appointment create and edit panels support phone type and online meeting link field', async () => {
++  const html = await renderAppointments()
++
++  assert.match(html, /name="type" value="phone"/)
++  assert.match(html, /id="meetingLinkWrap"/)
++  assert.match(html, /name="meetingLink"/)
++  assert.match(html, /Google Meet, Zoom, Microsoft Teams, LINE Meeting/)
++  assert.match(html, /function toggleMeetingLinkField/)
++  assert.match(html, /id="e_phone"/)
++  assert.match(html, /id="e_meetingLink"/)
++})
++
+ test('appointments header links to the public website', async () => {
+   const html = await renderAppointments()
+ 
+diff --git a/views/admin/appointments.ejs b/views/admin/appointments.ejs
+index 5cf9744..b3e9fe7 100644
+--- a/views/admin/appointments.ejs
++++ b/views/admin/appointments.ejs
+@@ -470,20 +470,30 @@
+ 
+           <div>
+             <label class="lbl">รูปแบบการให้คำปรึกษา</label>
+-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
++            <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:10px;">
+               <label style="display:flex; align-items:center; gap:8px; padding:10px; border:1.5px solid #a5f3fc; border-radius:10px; cursor:pointer; background:#ecfeff;">
+-                <input type="radio" name="type" value="online" checked style="accent-color:#0891b2;">
++                <input type="radio" name="type" value="online" checked style="accent-color:#0891b2;" onchange="toggleMeetingLinkField()">
+                 <i data-lucide="video" style="width:14px;height:14px;color:#0891b2;flex-shrink:0;"></i>
+                 <span style="font-size:13px; font-weight:500; color:#1e293b;">ออนไลน์</span>
+               </label>
+               <label style="display:flex; align-items:center; gap:8px; padding:10px; border:1.5px solid #e2e8f0; border-radius:10px; cursor:pointer;">
+-                <input type="radio" name="type" value="onsite" style="accent-color:#3874FF;">
++                <input type="radio" name="type" value="phone" style="accent-color:#05967e;" onchange="toggleMeetingLinkField()">
++                <i data-lucide="phone" style="width:14px;height:14px;color:#05967e;flex-shrink:0;"></i>
++                <span style="font-size:13px; font-weight:500; color:#1e293b;">โทรศัพท์</span>
++              </label>
++              <label style="display:flex; align-items:center; gap:8px; padding:10px; border:1.5px solid #e2e8f0; border-radius:10px; cursor:pointer;">
++                <input type="radio" name="type" value="onsite" style="accent-color:#3874FF;" onchange="toggleMeetingLinkField()">
+                 <i data-lucide="map-pin" style="width:14px;height:14px;color:#3874FF;flex-shrink:0;"></i>
+                 <span style="font-size:13px; font-weight:500; color:#1e293b;">เข้ารับบริการด้วยตนเอง</span>
+               </label>
+             </div>
+           </div>
+ 
++          <div id="meetingLinkWrap">
++            <label class="lbl">ลิงก์สำหรับเข้าร่วมวิดีโอคอล</label>
++            <input type="url" name="meetingLink" id="meetingLink" class="inp" placeholder="Google Meet, Zoom, Microsoft Teams, LINE Meeting">
++          </div>
++
+           <div>
+             <label class="lbl">เรื่องที่ต้องการความช่วยเหลือ</label>
+             <textarea name="concern" rows="2" class="inp" style="resize:none;"
+@@ -758,20 +768,30 @@
+         <div style="display:grid; gap:14px;">
+           <div>
+             <label class="lbl">รูปแบบการให้คำปรึกษา</label>
+-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+-              <label style="display:flex; align-items:center; gap:8px; padding:10px; border:1.5px solid #e2e8f0; border-radius:10px; cursor:pointer;">
+-                <input type="radio" name="type" value="online" id="e_online" style="accent-color:#0891b2;">
++            <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:10px;">
++              <label style="display:flex; align-items:center; gap:8px; padding:10px; border:1.5px solid #a5f3fc; border-radius:10px; cursor:pointer; background:#ecfeff;">
++                <input type="radio" name="type" value="online" id="e_online" style="accent-color:#0891b2;" onchange="toggleMeetingLinkField()">
+                 <i data-lucide="video" style="width:14px;height:14px;color:#0891b2;flex-shrink:0;"></i>
+                 <span style="font-size:13px; font-weight:500; color:#1e293b;">ออนไลน์</span>
+               </label>
+               <label style="display:flex; align-items:center; gap:8px; padding:10px; border:1.5px solid #e2e8f0; border-radius:10px; cursor:pointer;">
+-                <input type="radio" name="type" value="onsite" id="e_onsite" style="accent-color:#3874FF;">
++                <input type="radio" name="type" value="phone" id="e_phone" style="accent-color:#05967e;" onchange="toggleMeetingLinkField()">
++                <i data-lucide="phone" style="width:14px;height:14px;color:#05967e;flex-shrink:0;"></i>
++                <span style="font-size:13px; font-weight:500; color:#1e293b;">โทรศัพท์</span>
++              </label>
++              <label style="display:flex; align-items:center; gap:8px; padding:10px; border:1.5px solid #e2e8f0; border-radius:10px; cursor:pointer;">
++                <input type="radio" name="type" value="onsite" id="e_onsite" style="accent-color:#3874FF;" onchange="toggleMeetingLinkField()">
+                 <i data-lucide="map-pin" style="width:14px;height:14px;color:#3874FF;flex-shrink:0;"></i>
+                 <span style="font-size:13px; font-weight:500; color:#1e293b;">เข้ารับบริการด้วยตนเอง</span>
+               </label>
+             </div>
+           </div>
+ 
++          <div id="e_meetingLinkWrap">
++            <label class="lbl">ลิงก์สำหรับเข้าร่วมวิดีโอคอล</label>
++            <input type="url" name="meetingLink" id="e_meetingLink" class="inp" placeholder="Google Meet, Zoom, Microsoft Teams, LINE Meeting">
++          </div>
++
+           <div>
+             <label class="lbl">สถานะ</label>
+             <select name="status" id="e_status" class="inp">
+@@ -1192,6 +1212,21 @@
+ 
+   // ── View Panel ───────────────────────────────────────────────
+   const STATUS_LABELS = { pending:'รอยืนยัน', confirmed:'ยืนยันแล้ว', completed:'เสร็จสิ้น', cancelled:'ยกเลิก' }
++  function appointmentTypeLabel(type) {
++    if (type === 'phone') return 'โทรศัพท์'
++    if (type === 'onsite') return 'เข้ารับบริการด้วยตนเอง'
++    return 'ออนไลน์'
++  }
++
++  function toggleMeetingLinkField() {
++    const selected = document.querySelector('input[name="type"]:checked')
++    const wrap = document.getElementById('meetingLinkWrap')
++    const editSelected = document.querySelector('#editForm input[name="type"]:checked')
++    const editWrap = document.getElementById('e_meetingLinkWrap')
++    if (wrap) wrap.style.display = selected && selected.value === 'online' ? '' : 'none'
++    if (editWrap) editWrap.style.display = editSelected && editSelected.value === 'online' ? '' : 'none'
++  }
++
+   const STATUS_COLORS = {
+     pending:   { bg:'#fef3c7', color:'#92400e' },
+     confirmed: { bg:'#dbeafe', color:'#1e40af' },

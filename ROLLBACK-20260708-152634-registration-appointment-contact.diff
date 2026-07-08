@@ -1,0 +1,20 @@
+﻿diff --git a/views/index.ejs b/views/index.ejs
+index 4036181..b5956e0 100644
+--- a/views/index.ejs
++++ b/views/index.ejs
+@@ -626,12 +626,13 @@ function _photoMotion(obj, prefix, uid) {
+           <p class="text-sm leading-relaxed" data-i18n-html="footer-desc" style="<%- _tc('footer','description') %>"><%- (content.contact && content.contact.description) || 'ระบบจองนัดหมายการให้คำปรึกษาทางสุขภาพจิต เชื่อมต่อผู้ที่ต้องการความช่วยเหลือกับผู้เชี่ยวชาญที่ไว้วางใจได้' %></p>
+         </div>
+         <%- _tcStyleTag('footer','menu') %>
++        <%- _tcStyleTag('footer','menuLink') %>
+         <%- _tcStyleTag('footer','lineLabel') %>
+         <div>
+           <p class="text-white font-medium mb-3 <%= _tcClass('footer','menu') %>" data-i18n="footer-services">บริการ</p>
+           <ul class="space-y-2 text-sm">
+-            <li><a href="#counselors" class="hover:text-brand-400 transition-colors <%= _tcClass('footer','menu') %>" data-i18n="footer-link-1">นักให้คำปรึกษาของเรา</a></li>
+-            <li><a href="#book" class="hover:text-brand-400 transition-colors <%= _tcClass('footer','menu') %>" data-i18n="footer-link-2">ลงทะเบียนเพื่อขอรับบริการ</a></li>
++            <li><a href="#counselors" class="hover:text-brand-400 transition-colors <%= _tcClass('footer','menuLink') %>" data-i18n="footer-link-1">นักให้คำปรึกษาของเรา</a></li>
++            <li><a href="#book" class="hover:text-brand-400 transition-colors <%= _tcClass('footer','menuLink') %>" data-i18n="footer-link-2">ลงทะเบียนเพื่อขอรับบริการ</a></li>
+           </ul>
+         </div>
+         <div>

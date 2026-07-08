@@ -120,3 +120,35 @@ test('background settings form saves movement controls per section', async () =>
     fs.writeFileSync(contentPath, before)
   }
 })
+
+// Regression test for a real incident: a partial POST to /backgrounds (e.g. a
+// script or test that only submits fields for one section) used to reset
+// every *other* section's color/blend/opacity to hardcoded defaults, because
+// the handler defaulted missing fields instead of preserving the saved value.
+// This wiped real, user-tuned blend/color settings for several sections and
+// the corrupted state got committed before anyone noticed.
+test('a partial background save only touches the submitted section, leaving other sections and their untouched fields intact', async () => {
+  const before = fs.readFileSync(contentPath, 'utf8')
+  try {
+    const seeded = JSON.parse(before)
+    seeded.backgrounds = {
+      hero: { color: '#f1eff5', opacity: 0.3, imgOpacity: 0.9, blend: 160, blendColor: '#f1eff5', motionEnabled: true, motionDuration: 40, motionScale: 1.15, motionStyle: 'zoom', textColors: {} },
+      counselors: { color: '#04837b', opacity: 0.4, imgOpacity: 0.8, blend: 160, blendColor: '#04837b', motionEnabled: true, motionDuration: 30, motionScale: 1.1, motionStyle: 'float', textColors: {} },
+    }
+    fs.writeFileSync(contentPath, JSON.stringify(seeded, null, 2))
+
+    // Only submit hero's blend field — nothing else for hero, nothing at all for counselors.
+    const res = await postBackgrounds({ blend_hero: '180' })
+    assert.equal(res.statusCode, 302)
+
+    const saved = JSON.parse(fs.readFileSync(contentPath, 'utf8'))
+    assert.equal(saved.backgrounds.hero.blend, 180, 'the submitted field should update')
+    assert.equal(saved.backgrounds.hero.color, '#f1eff5', 'unsubmitted hero fields must be preserved, not reset to default')
+    assert.equal(saved.backgrounds.hero.blendColor, '#f1eff5')
+    assert.equal(saved.backgrounds.hero.opacity, 0.3)
+
+    assert.deepEqual(saved.backgrounds.counselors, seeded.backgrounds.counselors, 'a section not mentioned in the request must be completely untouched')
+  } finally {
+    fs.writeFileSync(contentPath, before)
+  }
+})

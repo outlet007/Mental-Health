@@ -108,6 +108,10 @@ test('registration form admin page renders editable TH and EN form controls', as
   assert.match(body, /name="formText_phonePlaceholder"/)
   assert.match(body, /name="formText_emailPlaceholder"/)
   assert.match(body, /name="formText_submitLabel"/)
+  assert.match(body, /name="formText_phoneSessionLabel"/)
+  assert.match(body, /name="sessionTypeEnabled_online"/)
+  assert.match(body, /name="sessionTypeEnabled_phone"/)
+  assert.match(body, /name="sessionTypeEnabled_onsite"/)
   assert.doesNotMatch(body, /name="formText_errorText"/)
   assert.doesNotMatch(body, /ข้อความแจ้งเตือนเมื่อกรอกไม่ครบ/)
   assert.match(body, /id="registration-en" style="display:;"/)
@@ -179,6 +183,35 @@ test('registration concern options support drag and drop ordering', async () => 
   assert.match(body, /function handleConcernDrop/)
   assert.match(body, /function moveConcernRow/)
 })
+
+test('registration form admin saves enabled session type settings for all formats', async () => {
+  const before = fs.readFileSync(contentPath, 'utf8')
+  try {
+    const res = await postRegistrationForm('/admin/registration-form', {
+      bookHeading: 'Custom registration heading',
+      bookSubtext: 'Custom registration subtext',
+      bookFormHeading: 'Custom form heading',
+      bookConcernOption: ['Stress option'],
+      formText_onlineLabel: 'Online option',
+      formText_phoneSessionLabel: 'Phone option',
+      formText_onsiteLabel: 'Onsite option',
+      sessionTypeEnabled_online: 'on',
+      sessionTypeEnabled_phone: 'on',
+    })
+
+    assert.equal(res.statusCode, 302)
+    const saved = JSON.parse(fs.readFileSync(contentPath, 'utf8'))
+    assert.deepEqual(saved.book.sessionTypes, {
+      online: true,
+      phone: true,
+      onsite: false,
+    })
+    assert.equal(saved.book.formTexts.phoneSessionLabel, 'Phone option')
+  } finally {
+    fs.writeFileSync(contentPath, before)
+  }
+})
+
 
 test('registration form page saves all visible Thai form settings', async () => {
   const before = fs.readFileSync(contentPath, 'utf8')
@@ -292,6 +325,42 @@ test('home page renders registration form text from content data', async () => {
   assert.match(html, /'form-ph-email': "Rendered English email placeholder"/)
   assert.match(html, /'form-submit': "Rendered English submit label"/)
 })
+
+test('home page renders only enabled registration session type options', async () => {
+  const base = JSON.parse(fs.readFileSync(contentPath, 'utf8'))
+  base.book = {
+    ...base.book,
+    sessionTypes: { online: false, phone: true, onsite: true },
+    formTexts: {
+      ...(base.book.formTexts || {}),
+      onlineLabel: 'Rendered online option',
+      phoneSessionLabel: 'Rendered phone option',
+      onsiteLabel: 'Rendered onsite option',
+    },
+  }
+  base.en = base.en || {}
+  base.en.book = {
+    ...(base.en.book || {}),
+    sessionTypes: { online: false, phone: true, onsite: true },
+    formTexts: {
+      ...((base.en.book && base.en.book.formTexts) || {}),
+      onlineLabel: 'Rendered English online option',
+      phoneSessionLabel: 'Rendered English phone option',
+      onsiteLabel: 'Rendered English onsite option',
+    },
+  }
+
+  const html = await renderIndex(base)
+
+  assert.doesNotMatch(html, /name="type" value="online"/)
+  assert.match(html, /name="type" value="phone" required/)
+  assert.match(html, /name="type" value="onsite"/)
+  assert.match(html, /Rendered phone option/)
+  assert.match(html, /Rendered onsite option/)
+  assert.match(html, /'form-type-phone': "Rendered English phone option"/)
+  assert.doesNotMatch(html, /'form-type-online': "Rendered English online option"/)
+})
+
 
 test('website content page no longer contains registration form management controls', async () => {
   const app = express()

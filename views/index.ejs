@@ -57,6 +57,17 @@ const enBookFormTexts = enBookContent.formTexts || {}
 function bookText(texts, key, fallback) {
   return texts[key] || fallback
 }
+function sessionTypeEnabled(bookData, key) {
+  const settings = (bookData && bookData.sessionTypes) || {}
+  return settings[key] !== false
+}
+const sessionTypeMeta = [
+  { key:'online', icon:'video', textKey:'onlineLabel', i18n:'form-type-online', fallback:'ออนไลน์', enFallback:'Online' },
+  { key:'phone', icon:'phone', textKey:'phoneSessionLabel', i18n:'form-type-phone', fallback:'โทรศัพท์', enFallback:'Phone call' },
+  { key:'onsite', icon:'map-pin', textKey:'onsiteLabel', i18n:'form-type-onsite', fallback:'เข้ารับบริการด้วยตนเอง', enFallback:'In-Person' },
+]
+const enabledSessionTypes = sessionTypeMeta.filter(item => sessionTypeEnabled(content.book || {}, item.key))
+const enabledEnSessionTypes = sessionTypeMeta.filter(item => sessionTypeEnabled(enBookContent || {}, item.key))
 function _featureText(items, idx, fallback) {
   return items[idx] || fallback
 }
@@ -551,16 +562,13 @@ function _photoMotion(obj, prefix, uid) {
           <div>
             <label class="form-label"><span data-i18n="form-label-type"><%= bookText(bookFormTexts, 'typeLabel', 'รูปแบบที่ต้องการ') %></span> <span class="text-red-400">*</span></label>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <% enabledSessionTypes.forEach((item, idx) => { %>
               <label class="flex items-center gap-2 p-3 border border-slate-200 rounded-xl cursor-pointer hover:border-brand-300 hover:bg-brand-50 transition-colors">
-                <input type="radio" name="type" value="online" required class="accent-brand-600">
-                <i data-lucide="video" class="w-4 h-4 text-brand-500"></i>
-                <span class="text-sm font-medium" data-i18n="form-type-online">ออนไลน์</span>
+                <input type="radio" name="type" value="<%= item.key %>" <%= idx === 0 ? 'required' : '' %> class="accent-brand-600">
+                <i data-lucide="<%= item.icon %>" class="w-4 h-4 text-brand-500"></i>
+                <span class="text-sm font-medium" data-i18n="<%= item.i18n %>"><%= bookText(bookFormTexts, item.textKey, item.fallback) %></span>
               </label>
-              <label class="flex items-center gap-2 p-3 border border-slate-200 rounded-xl cursor-pointer hover:border-brand-300 hover:bg-brand-50 transition-colors">
-                <input type="radio" name="type" value="onsite" class="accent-brand-600">
-                <i data-lucide="map-pin" class="w-4 h-4 text-brand-500"></i>
-                <span class="text-sm font-medium" data-i18n="form-type-onsite">เข้ารับบริการด้วยตนเอง</span>
-              </label>
+              <% }) %>
             </div>
           </div>
           <div class="bg-gradient-to-r from-brand-50 to-emerald-50 rounded-2xl border border-brand-100" style="padding:15px">
@@ -626,12 +634,13 @@ function _photoMotion(obj, prefix, uid) {
           <p class="text-sm leading-relaxed" data-i18n-html="footer-desc" style="<%- _tc('footer','description') %>"><%- (content.contact && content.contact.description) || 'ระบบจองนัดหมายการให้คำปรึกษาทางสุขภาพจิต เชื่อมต่อผู้ที่ต้องการความช่วยเหลือกับผู้เชี่ยวชาญที่ไว้วางใจได้' %></p>
         </div>
         <%- _tcStyleTag('footer','menu') %>
+        <%- _tcStyleTag('footer','menuLink') %>
         <%- _tcStyleTag('footer','lineLabel') %>
         <div>
           <p class="text-white font-medium mb-3 <%= _tcClass('footer','menu') %>" data-i18n="footer-services">บริการ</p>
           <ul class="space-y-2 text-sm">
-            <li><a href="#counselors" class="hover:text-brand-400 transition-colors <%= _tcClass('footer','menu') %>" data-i18n="footer-link-1">นักให้คำปรึกษาของเรา</a></li>
-            <li><a href="#book" class="hover:text-brand-400 transition-colors <%= _tcClass('footer','menu') %>" data-i18n="footer-link-2">ลงทะเบียนเพื่อขอรับบริการ</a></li>
+            <li><a href="#counselors" class="hover:text-brand-400 transition-colors <%= _tcClass('footer','menuLink') %>" data-i18n="footer-link-1">นักให้คำปรึกษาของเรา</a></li>
+            <li><a href="#book" class="hover:text-brand-400 transition-colors <%= _tcClass('footer','menuLink') %>" data-i18n="footer-link-2">ลงทะเบียนเพื่อขอรับบริการ</a></li>
           </ul>
         </div>
         <div>
@@ -967,8 +976,9 @@ function _photoMotion(obj, prefix, uid) {
         'concern-<%= idx + 1 %>': <%- JSON.stringify(item) %>,
         <% }) %>
         'form-label-type': <%- JSON.stringify(bookText(bookFormTexts, 'typeLabel', 'รูปแบบที่ต้องการ')) %>,
-        'form-type-online': <%- JSON.stringify(bookText(bookFormTexts, 'onlineLabel', 'ออนไลน์')) %>,
-        'form-type-onsite': <%- JSON.stringify(bookText(bookFormTexts, 'onsiteLabel', 'เข้ารับบริการด้วยตนเอง')) %>,
+        <% enabledSessionTypes.forEach(item => { %>
+        '<%= item.i18n %>': <%- JSON.stringify(bookText(bookFormTexts, item.textKey, item.fallback)) %>,
+        <% }) %>
         'pdpa-heading': <%- JSON.stringify(bookText(bookFormTexts, 'pdpaHeading', 'การยินยอมเปิดเผยข้อมูล')) %>,
         'pdpa-text': <%- JSON.stringify(bookText(bookFormTexts, 'pdpaText', 'ข้าพเจ้า ตกลงและยินยอมให้มหาวิทยาลัยเก็บรวบรวม ใช้ ประมวลผล และเปิดเผยข้อมูลส่วนบุคคลของข้าพเจ้า ทั้งที่ปรากฏในเอกสารฉบับนี้ หรือที่มหาวิทยาลัยรวบรวมจากบุคคลอื่น เพื่อวัตถุประสงค์ในการนัดพบแพทย์ หรือเพื่อใช้ประโยชน์ในกิจการของมหาวิทยาลัย ทั้งนี้ข้าพเจ้ารับทราบ ตกลงและยินยอมว่า มหาวิทยาลัยมีสิทธิ์เก็บรวบรวม ใช้ประมวลผลและเปิดเผยข้อมูลส่วนบุคคลของข้าพเจ้า โดยเป็นไปตามนโยบายคุ้มครองข้อมูลส่วนบุคคลของมหาวิทยาลัย ที่ประกาศใช้ในปัจจุบันหรืออาจเปลี่ยนแปลงแก้ไขในภายหลัง รายละเอียดปรากฏตาม นโยบายคุ้มครองข้อมูลส่วนบุคคล ในเว็บไซต์')) %>,
         'pdpa-checkbox': <%- JSON.stringify(bookText(bookFormTexts, 'pdpaCheckbox', 'ข้าพเจ้าได้อ่านและยอมรับการยินยอมเปิดเผยข้อมูลแล้ว')) %>,
@@ -1037,8 +1047,9 @@ function _photoMotion(obj, prefix, uid) {
         'concern-<%= idx + 1 %>': <%- JSON.stringify(item) %>,
         <% }) %>
         'form-label-type': <%- JSON.stringify(bookText(enBookFormTexts, 'typeLabel', 'Preferred Format')) %>,
-        'form-type-online': <%- JSON.stringify(bookText(enBookFormTexts, 'onlineLabel', 'Online')) %>,
-        'form-type-onsite': <%- JSON.stringify(bookText(enBookFormTexts, 'onsiteLabel', 'In-Person')) %>,
+        <% enabledEnSessionTypes.forEach(item => { %>
+        '<%= item.i18n %>': <%- JSON.stringify(bookText(enBookFormTexts, item.textKey, item.enFallback)) %>,
+        <% }) %>
         'pdpa-heading': <%- JSON.stringify(bookText(enBookFormTexts, 'pdpaHeading', 'Data Disclosure Consent')) %>,
         'pdpa-text': <%- JSON.stringify(bookText(enBookFormTexts, 'pdpaText', "I agree and consent to the University collecting, using, processing, and disclosing my personal information — both appearing in this document and gathered from other persons — for the purpose of scheduling medical appointments or for University operations. I acknowledge that the University has the right to collect, use, process, and disclose my personal data in accordance with the University's Personal Data Protection Policy as currently published or as may be amended in the future. Details are available in the Personal Data Protection Policy on the website.")) %>,
         'pdpa-checkbox': <%- JSON.stringify(bookText(enBookFormTexts, 'pdpaCheckbox', 'I have read and accept the data disclosure consent.')) %>,

@@ -1,0 +1,46 @@
+## version-1.7...origin/version-1.7
+ M data/appointments.json
+ M data/contacts.json
+ M data/content.json
+ M data/survey-email-settings.json
+ M server.js
+ M src/routes/admin/appointments.js
+ M src/routes/admin/content.js
+ M src/routes/admin/registration-form.js
+ M src/utils/mailer.js
+ M tests/appointments-page.test.js
+ M tests/background-animation.test.js
+ M tests/branding.test.js
+ M tests/mailer-config.test.js
+ M tests/registration-form-admin.test.js
+ M views/admin/appointments.ejs
+ M views/admin/content.ejs
+ M views/admin/login.ejs
+ M views/admin/registration-form.ejs
+ M views/index.ejs
+ M views/partials/admin-sidebar.ejs
+?? .vscode/
+?? ROLLBACK-20260708-152634-registration-appointment-contact-status.txt
+?? ROLLBACK-20260708-152634-registration-appointment-contact.diff
+?? ROLLBACK-20260708-160036-create-appointment-modal-status.txt
+?? ROLLBACK-20260708-160036-create-appointment-modal.diff
+?? ROLLBACK-20260708-appointment-modal-backend-before-status.txt
+?? ROLLBACK-20260708-appointment-modal-backend-before.diff
+?? data/email-view-tokens.json
+?? public/uploads/content/1783401986367.png
+?? public/uploads/content/1783402013145.png
+?? public/uploads/content/1783402053356.png
+?? public/uploads/content/1783402067469.png
+?? public/uploads/content/1783402081492.png
+?? public/uploads/content/1783402105960.png
+?? public/uploads/content/1783410374908.png
+?? public/uploads/content/1783417774925.webp
+?? public/uploads/content/1783417819655.webp
+?? public/uploads/content/1783418198609.webp
+?? public/uploads/content/1783418349724.webp
+?? public/uploads/content/1783419833149.webp
+?? public/uploads/content/1783419870413.webp
+?? public/uploads/content/1783419888672.webp
+?? public/uploads/content/1783430241417-37be3778.webp
+?? public/uploads/content/1783430241418-0d98ecab.webp
+?? public/uploads/content/1783430241418-4e2ae4f5.webp

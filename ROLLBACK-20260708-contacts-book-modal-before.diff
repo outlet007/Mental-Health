@@ -1,0 +1,506 @@
+diff --git a/src/routes/admin/appointments.js b/src/routes/admin/appointments.js
+index 38be75a..22ba14d 100644
+--- a/src/routes/admin/appointments.js
++++ b/src/routes/admin/appointments.js
+@@ -11,6 +11,7 @@ const { logDeletion } = require('../../utils/audit-log')
+ const { getConcernOptions } = require('../../utils/concern-options')
+ 
+ const dataDir = path.join(__dirname, '../../../data')
++const DEFAULT_SESSION_TYPES = { online: true, phone: false, onsite: true }
+ 
+ // สีอ้างอิงต่อนักจิตวิทยา — ต้องตรงกับ COLORS ใน src/routes/admin/schedules.js
+ const COUNSELOR_COLORS = ['#6366f1','#05967e','#f59e0b','#ef4444','#06b6d4','#8b5cf6','#10b981','#f43f5e']
+@@ -18,6 +19,27 @@ const COUNSELOR_COLORS = ['#6366f1','#05967e','#f59e0b','#ef4444','#06b6d4','#8b
+ function read(file) { return JSON.parse(fs.readFileSync(path.join(dataDir, file), 'utf8')) }
+ function write(file, d) { fs.writeFileSync(path.join(dataDir, file), JSON.stringify(d, null, 2)) }
+ 
++function readAppointmentSessionTypes() {
++  try {
++    const content = read('content.json')
++    return { ...DEFAULT_SESSION_TYPES, ...(content.book?.sessionTypes || {}) }
++  } catch {
++    return { ...DEFAULT_SESSION_TYPES }
++  }
++}
++
++function firstEnabledSessionType(sessionTypes) {
++  return ['online', 'phone', 'onsite'].find(type => sessionTypes[type]) || 'online'
++}
++
++function normalizeAppointmentType(type, sessionTypes) {
++  return sessionTypes[type] ? type : firstEnabledSessionType(sessionTypes)
++}
++
++function cleanMeetingLink(type, meetingLink) {
++  return type === 'online' ? (meetingLink || '').trim() : ''
++}
++
+ function isCounselor(req) {
+   return req.session.userType === 'counselor'
+ }
+@@ -116,6 +138,7 @@ router.get('/', (req, res) => {
+   const schedules = isCounselor(req)
+     ? read('schedules.json').filter(s => s.counselorId === req.session.counselorId)
+     : read('schedules.json')
++  const appointmentSessionTypes = readAppointmentSessionTypes()
+ 
+   const counselorActiveCounts = {}
+   appointments.forEach(a => {
+@@ -134,6 +157,7 @@ router.get('/', (req, res) => {
+     counselors,
+     clients,
+     schedules,
++    appointmentSessionTypes,
+     counselorActiveCounts,
+     myStatusCounts,
+     query: req.query,
+@@ -152,7 +176,9 @@ router.get('/slots', (req, res) => {
+ 
+ // ── CREATE ────────────────────────────────────────────────────────────────────
+ router.post('/create', async (req, res) => {
+-  const { counselorId, clientId, date, time, type, note, concern } = req.body
++  const { counselorId, clientId, date, time, type, note, concern, meetingLink } = req.body
++  const sessionTypes = readAppointmentSessionTypes()
++  const appointmentType = normalizeAppointmentType(type || 'online', sessionTypes)
+ 
+   if (!canUseCounselor(req, counselorId) || !canUseClient(req, clientId)) return forbidden(res)
+ 
+@@ -187,7 +213,8 @@ router.post('/create', async (req, res) => {
+     date,
+     time,
+     duration,
+-    type:          type || 'online',
++    type:          appointmentType,
++    meetingLink:   cleanMeetingLink(appointmentType, meetingLink),
+     status:        'confirmed',
+     note:          note || '',
+     concern:       (concern || '').trim(),
+@@ -212,7 +239,8 @@ router.post('/create', async (req, res) => {
+ 
+ // ── EDIT ──────────────────────────────────────────────────────────────────────
+ router.post('/:id/edit', (req, res) => {
+-  const { counselorId, date, time, type, status, note, concern } = req.body
++  const { counselorId, date, time, type, status, note, concern, meetingLink } = req.body
++  const sessionTypes = readAppointmentSessionTypes()
+   const data = read('appointments.json')
+   const idx  = data.findIndex(a => a.id === req.params.id)
+   if (idx === -1) return res.redirect('/admin/appointments?updated=1')
+@@ -257,7 +285,10 @@ router.post('/:id/edit', (req, res) => {
+   data[idx].time          = newTime
+   if (scheduleChanged) data[idx].reminderSent = false
+   if (!counselorRole) {
+-    if (type)   data[idx].type   = type
++    if (type) {
++      data[idx].type = normalizeAppointmentType(type, sessionTypes)
++      data[idx].meetingLink = cleanMeetingLink(data[idx].type, meetingLink)
++    }
+     if (status) data[idx].status = status
+     if (note !== undefined) data[idx].note = note.trim()
+     if (concern !== undefined) data[idx].concern = concern.trim()
+diff --git a/tests/appointments-page.test.js b/tests/appointments-page.test.js
+index 0ebe4a5..b72302c 100644
+--- a/tests/appointments-page.test.js
++++ b/tests/appointments-page.test.js
+@@ -55,6 +55,7 @@ function renderAppointments(locals = {}) {
+         myStatusCounts: {},
+         clientAppointments: [],
+         concernOptions: ['ความวิตกกังวล / ความเครียด', 'ภาวะซึมเศร้า', 'ปัญหาความสัมพันธ์', 'ปัญหาครอบครัว', 'ความเศร้าโศก / การสูญเสีย', 'อื่นๆ'],
++        appointmentSessionTypes: { online: true, phone: true, onsite: true },
+         ...locals,
+       },
+       {},
+@@ -93,6 +94,32 @@ test('appointments table separates status action buttons into the final column',
+   assert.match(row, new RegExp(PENDING_TABLE_LABEL))
+ })
+ 
++
++test('appointment create and edit panels support phone type and online meeting link field', async () => {
++  const html = await renderAppointments()
++
++  const createFormatSection = html.match(/data-create-format-note-section="true"[\s\S]*?<div id="apptSummary"/)?.[0] || ''
++  assert.match(createFormatSection, /name="type" value="phone"/)
++  assert.match(createFormatSection, /id="meetingLinkWrap"/)
++  assert.match(createFormatSection, /name="meetingLink"/)
++  assert.match(createFormatSection, /name="note"/)
++  assert.match(createFormatSection, /Google Meet, Zoom, Microsoft Teams, LINE Meeting/)
++  assert.match(html, /function toggleMeetingLinkField/)
++  assert.match(html, /id="e_phone"/)
++  assert.match(html, /id="e_meetingLink"/)
++})
++
++test('appointment panels hide disabled session types from backend settings', async () => {
++  const html = await renderAppointments({ appointmentSessionTypes: { online: true, phone: false, onsite: false } })
++  const createFormatSection = html.match(/data-create-format-note-section="true"[\s\S]*?<div id="apptSummary"/)?.[0] || ''
++
++  assert.match(createFormatSection, /name="type" value="online"/)
++  assert.doesNotMatch(createFormatSection, /name="type" value="phone"/)
++  assert.doesNotMatch(createFormatSection, /name="type" value="onsite"/)
++  assert.doesNotMatch(html, /id="e_phone"/)
++  assert.doesNotMatch(html, /id="e_onsite"/)
++})
++
+ test('appointments header links to the public website', async () => {
+   const html = await renderAppointments()
+ 
+diff --git a/tests/mailer-config.test.js b/tests/mailer-config.test.js
+index 241915d..7cd534d 100644
+--- a/tests/mailer-config.test.js
++++ b/tests/mailer-config.test.js
+@@ -209,6 +209,35 @@ test('appointment confirmation closing text and icon differ between online and o
+   }
+ })
+ 
++
++test('appointment emails include online meeting links and phone call details by audience', async () => {
++  const harness = loadMailerWithCapturedTransport({})
++
++  try {
++    await harness.mailer.sendAppointmentEmails({
++      appointment: { id: 'app-online-link', date: '2026-07-01', time: '10:00', duration: 60, type: 'online', meetingLink: 'https://meet.example.test/abc', note: '' },
++      client: { name: 'Test Client', email: 'client@example.test', phone: '0812345678' },
++      counselor: { name: 'Test Counselor', email: 'counselor@example.test', phone: '', specialties: [] },
++      concern: '',
++    })
++    await harness.mailer.sendAppointmentEmails({
++      appointment: { id: 'app-phone', date: '2026-07-01', time: '11:00', duration: 60, type: 'phone', note: '' },
++      client: { name: 'Phone Client', email: 'phone-client@example.test', phone: '0899999999' },
++      counselor: { name: 'Phone Counselor', email: 'phone-counselor@example.test', phone: '', specialties: [] },
++      concern: '',
++    })
++
++    const [onlineClient, onlineCounselor, phoneClient, phoneCounselor] = harness.sentMessages
++    assert.ok(onlineClient.html.includes('https://meet.example.test/abc'))
++    assert.ok(onlineCounselor.html.includes('https://meet.example.test/abc'))
++    assert.match(phoneCounselor.html, /0899999999/)
++    assert.match(phoneCounselor.html, /Client phone/)
++    assert.match(phoneClient.html, /counselor will call you/)
++  } finally {
++    harness.restore()
++  }
++})
++
+ test('reminder email closing text differs between online and onsite appointments', async () => {
+   const harness = loadMailerWithCapturedTransport({})
+ 
+diff --git a/tests/registration-form-admin.test.js b/tests/registration-form-admin.test.js
+index 434ae03..f82f52f 100644
+--- a/tests/registration-form-admin.test.js
++++ b/tests/registration-form-admin.test.js
+@@ -108,6 +108,10 @@ test('registration form admin page renders editable TH and EN form controls', as
+   assert.match(body, /name="formText_phonePlaceholder"/)
+   assert.match(body, /name="formText_emailPlaceholder"/)
+   assert.match(body, /name="formText_submitLabel"/)
++  assert.match(body, /name="formText_phoneSessionLabel"/)
++  assert.match(body, /name="sessionTypeEnabled_online"/)
++  assert.match(body, /name="sessionTypeEnabled_phone"/)
++  assert.match(body, /name="sessionTypeEnabled_onsite"/)
+   assert.doesNotMatch(body, /name="formText_errorText"/)
+   assert.doesNotMatch(body, /ข้อความแจ้งเตือนเมื่อกรอกไม่ครบ/)
+   assert.match(body, /id="registration-en" style="display:;"/)
+@@ -180,6 +184,35 @@ test('registration concern options support drag and drop ordering', async () =>
+   assert.match(body, /function moveConcernRow/)
+ })
+ 
++test('registration form admin saves enabled session type settings for all formats', async () => {
++  const before = fs.readFileSync(contentPath, 'utf8')
++  try {
++    const res = await postRegistrationForm('/admin/registration-form', {
++      bookHeading: 'Custom registration heading',
++      bookSubtext: 'Custom registration subtext',
++      bookFormHeading: 'Custom form heading',
++      bookConcernOption: ['Stress option'],
++      formText_onlineLabel: 'Online option',
++      formText_phoneSessionLabel: 'Phone option',
++      formText_onsiteLabel: 'Onsite option',
++      sessionTypeEnabled_online: 'on',
++      sessionTypeEnabled_phone: 'on',
++    })
++
++    assert.equal(res.statusCode, 302)
++    const saved = JSON.parse(fs.readFileSync(contentPath, 'utf8'))
++    assert.deepEqual(saved.book.sessionTypes, {
++      online: true,
++      phone: true,
++      onsite: false,
++    })
++    assert.equal(saved.book.formTexts.phoneSessionLabel, 'Phone option')
++  } finally {
++    fs.writeFileSync(contentPath, before)
++  }
++})
++
++
+ test('registration form page saves all visible Thai form settings', async () => {
+   const before = fs.readFileSync(contentPath, 'utf8')
+   try {
+@@ -293,6 +326,42 @@ test('home page renders registration form text from content data', async () => {
+   assert.match(html, /'form-submit': "Rendered English submit label"/)
+ })
+ 
++test('home page renders only enabled registration session type options', async () => {
++  const base = JSON.parse(fs.readFileSync(contentPath, 'utf8'))
++  base.book = {
++    ...base.book,
++    sessionTypes: { online: false, phone: true, onsite: true },
++    formTexts: {
++      ...(base.book.formTexts || {}),
++      onlineLabel: 'Rendered online option',
++      phoneSessionLabel: 'Rendered phone option',
++      onsiteLabel: 'Rendered onsite option',
++    },
++  }
++  base.en = base.en || {}
++  base.en.book = {
++    ...(base.en.book || {}),
++    sessionTypes: { online: false, phone: true, onsite: true },
++    formTexts: {
++      ...((base.en.book && base.en.book.formTexts) || {}),
++      onlineLabel: 'Rendered English online option',
++      phoneSessionLabel: 'Rendered English phone option',
++      onsiteLabel: 'Rendered English onsite option',
++    },
++  }
++
++  const html = await renderIndex(base)
++
++  assert.doesNotMatch(html, /name="type" value="online"/)
++  assert.match(html, /name="type" value="phone" required/)
++  assert.match(html, /name="type" value="onsite"/)
++  assert.match(html, /Rendered phone option/)
++  assert.match(html, /Rendered onsite option/)
++  assert.match(html, /'form-type-phone': "Rendered English phone option"/)
++  assert.doesNotMatch(html, /'form-type-online': "Rendered English online option"/)
++})
++
++
+ test('website content page no longer contains registration form management controls', async () => {
+   const app = express()
+   app.set('view engine', 'ejs')
+diff --git a/views/admin/appointments.ejs b/views/admin/appointments.ejs
+index 5cf9744..48d8b48 100644
+--- a/views/admin/appointments.ejs
++++ b/views/admin/appointments.ejs
+@@ -46,6 +46,11 @@
+   </style>
+ </head>
+ <body style="background:#f8fafc; margin:0;">
++<%
++  const sessionTypes = { online: true, phone: false, onsite: true, ...(appointmentSessionTypes || {}) }
++  const enabledSessionTypeList = ['online', 'phone', 'onsite'].filter(type => sessionTypes[type])
++  const defaultSessionType = enabledSessionTypeList[0] || 'online'
++%>
+ <%- include('../partials/admin-sidebar') %>
+ 
+ <div style="margin-left:256px; min-height:100vh; display:flex; flex-direction:column;">
+@@ -169,8 +174,9 @@
+         <label class="lbl">รูปแบบ</label>
+         <select name="type" class="inp" style="width:120px;">
+           <option value="">ทั้งหมด</option>
+-          <option value="online" <%=query.type==='online'?'selected':''%>>ออนไลน์</option>
+-          <option value="onsite" <%=query.type==='onsite'?'selected':''%>>เข้ารับบริการด้วยตนเอง</option>
++          <% if (sessionTypes.online) { %><option value="online" <%=query.type==='online'?'selected':''%>>ออนไลน์</option><% } %>
++          <% if (sessionTypes.phone) { %><option value="phone" <%=query.type==='phone'?'selected':''%>>โทรศัพท์</option><% } %>
++          <% if (sessionTypes.onsite) { %><option value="onsite" <%=query.type==='onsite'?'selected':''%>>เข้ารับบริการด้วยตนเอง</option><% } %>
+         </select>
+       </div>
+       <button type="submit" class="act-btn ab-primary">
+@@ -242,10 +248,15 @@
+                   <i data-lucide="video" style="width:13px;height:13px;color:#0891b2;"></i>
+                   <span style="font-size:12px; color:#0891b2;">ออนไลน์</span>
+                 </div>
++                <% } else if(a.type==='phone') { %>
++                <div style="display:flex; align-items:center; gap:4px;">
++                  <i data-lucide="phone" style="width:13px;height:13px;color:#05967e;"></i>
++                  <span style="font-size:12px; color:#05967e;">โทรศัพท์</span>
++                </div>
+                 <% } else { %>
+                 <div style="display:flex; align-items:center; gap:4px;">
+-                  <i data-lucide="map-pin" style="width:13px;height:13px;color:#05967e;"></i>
+-                  <span style="font-size:12px; color:#05967e;">เข้ารับบริการด้วยตนเอง</span>
++                  <i data-lucide="map-pin" style="width:13px;height:13px;color:#3874FF;"></i>
++                  <span style="font-size:12px; color:#3874FF;">เข้ารับบริการด้วยตนเอง</span>
+                 </div>
+                 <% } %>
+               </td>
+@@ -468,22 +479,51 @@
+             </select>
+           </div>
+ 
++          <div data-create-format-note-section="true" style="display:grid;gap:14px;padding:12px;border:1px solid #f1f5f9;border-radius:12px;background:#fff;">
++            <div style="font-size:12px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.05em;">รูปแบบและหมายเหตุ</div>
+           <div>
+             <label class="lbl">รูปแบบการให้คำปรึกษา</label>
+             <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
++              <% if (sessionTypes.online) { %>
++
+               <label style="display:flex; align-items:center; gap:8px; padding:10px; border:1.5px solid #a5f3fc; border-radius:10px; cursor:pointer; background:#ecfeff;">
+-                <input type="radio" name="type" value="online" checked style="accent-color:#0891b2;">
++
++                <input type="radio" name="type" value="online" <%= defaultSessionType === 'online' ? 'checked' : '' %> style="accent-color:#0891b2;" onchange="toggleMeetingLinkField()">
+                 <i data-lucide="video" style="width:14px;height:14px;color:#0891b2;flex-shrink:0;"></i>
+                 <span style="font-size:13px; font-weight:500; color:#1e293b;">ออนไลน์</span>
+               </label>
++
++              <% } %>
++
++              <% if (sessionTypes.phone) { %>
++
++              <label style="display:flex; align-items:center; gap:8px; padding:10px; border:1.5px solid #e2e8f0; border-radius:10px; cursor:pointer;">
++
++                <input type="radio" name="type" value="phone" <%= defaultSessionType === 'phone' ? 'checked' : '' %> style="accent-color:#05967e;" onchange="toggleMeetingLinkField()">
++                <i data-lucide="phone" style="width:14px;height:14px;color:#05967e;flex-shrink:0;"></i>
++                <span style="font-size:13px; font-weight:500; color:#1e293b;">โทรศัพท์</span>
++              </label>
++
++              <% } %>
++
++              <% if (sessionTypes.onsite) { %>
++
+               <label style="display:flex; align-items:center; gap:8px; padding:10px; border:1.5px solid #e2e8f0; border-radius:10px; cursor:pointer;">
+-                <input type="radio" name="type" value="onsite" style="accent-color:#3874FF;">
++
++                <input type="radio" name="type" value="onsite" <%= defaultSessionType === 'onsite' ? 'checked' : '' %> style="accent-color:#3874FF;" onchange="toggleMeetingLinkField()">
+                 <i data-lucide="map-pin" style="width:14px;height:14px;color:#3874FF;flex-shrink:0;"></i>
+                 <span style="font-size:13px; font-weight:500; color:#1e293b;">เข้ารับบริการด้วยตนเอง</span>
+               </label>
++
++              <% } %>
+             </div>
+           </div>
+ 
++          <div id="meetingLinkWrap">
++            <label class="lbl">ลิงก์สำหรับเข้าร่วมวิดีโอคอล</label>
++            <input type="url" name="meetingLink" id="meetingLink" class="inp" placeholder="Google Meet, Zoom, Microsoft Teams, LINE Meeting">
++          </div>
++
+           <div>
+             <label class="lbl">เรื่องที่ต้องการความช่วยเหลือ</label>
+             <textarea name="concern" rows="2" class="inp" style="resize:none;"
+@@ -496,6 +536,8 @@
+                       placeholder="เช่น ครั้งแรก, ติดตามอาการ ฯลฯ"></textarea>
+           </div>
+ 
++          </div>
++
+           <div id="apptSummary" style="display:none; padding:14px; background:#eaf1ff; border:1px solid #b9d0ff; border-radius:12px;">
+             <div style="font-size:12px; font-weight:600; color:#64748b; margin-bottom:10px; text-transform:uppercase; letter-spacing:.05em;">สรุปการนัดหมาย</div>
+             <div style="display:flex; justify-content:space-between; font-size:13px; margin-bottom:6px;">
+@@ -759,19 +801,46 @@
+           <div>
+             <label class="lbl">รูปแบบการให้คำปรึกษา</label>
+             <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+-              <label style="display:flex; align-items:center; gap:8px; padding:10px; border:1.5px solid #e2e8f0; border-radius:10px; cursor:pointer;">
+-                <input type="radio" name="type" value="online" id="e_online" style="accent-color:#0891b2;">
++              <% if (sessionTypes.online) { %>
++
++              <label style="display:flex; align-items:center; gap:8px; padding:10px; border:1.5px solid #a5f3fc; border-radius:10px; cursor:pointer; background:#ecfeff;">
++
++                <input type="radio" name="type" value="online" id="e_online" style="accent-color:#0891b2;" onchange="toggleMeetingLinkField()">
+                 <i data-lucide="video" style="width:14px;height:14px;color:#0891b2;flex-shrink:0;"></i>
+                 <span style="font-size:13px; font-weight:500; color:#1e293b;">ออนไลน์</span>
+               </label>
++
++              <% } %>
++
++              <% if (sessionTypes.phone) { %>
++
+               <label style="display:flex; align-items:center; gap:8px; padding:10px; border:1.5px solid #e2e8f0; border-radius:10px; cursor:pointer;">
+-                <input type="radio" name="type" value="onsite" id="e_onsite" style="accent-color:#3874FF;">
++
++                <input type="radio" name="type" value="phone" id="e_phone" style="accent-color:#05967e;" onchange="toggleMeetingLinkField()">
++                <i data-lucide="phone" style="width:14px;height:14px;color:#05967e;flex-shrink:0;"></i>
++                <span style="font-size:13px; font-weight:500; color:#1e293b;">โทรศัพท์</span>
++              </label>
++
++              <% } %>
++
++              <% if (sessionTypes.onsite) { %>
++
++              <label style="display:flex; align-items:center; gap:8px; padding:10px; border:1.5px solid #e2e8f0; border-radius:10px; cursor:pointer;">
++
++                <input type="radio" name="type" value="onsite" id="e_onsite" style="accent-color:#3874FF;" onchange="toggleMeetingLinkField()">
+                 <i data-lucide="map-pin" style="width:14px;height:14px;color:#3874FF;flex-shrink:0;"></i>
+                 <span style="font-size:13px; font-weight:500; color:#1e293b;">เข้ารับบริการด้วยตนเอง</span>
+               </label>
++
++              <% } %>
+             </div>
+           </div>
+ 
++          <div id="e_meetingLinkWrap">
++            <label class="lbl">ลิงก์สำหรับเข้าร่วมวิดีโอคอล</label>
++            <input type="url" name="meetingLink" id="e_meetingLink" class="inp" placeholder="Google Meet, Zoom, Microsoft Teams, LINE Meeting">
++          </div>
++
+           <div>
+             <label class="lbl">สถานะ</label>
+             <select name="status" id="e_status" class="inp">
+@@ -990,7 +1059,7 @@
+       document.getElementById('cdApptList').innerHTML = appts.map((a, i) => {
+         const sc = STATUS_COLORS[a.status] || { bg:'#f1f5f9', color:'#64748b' }
+         const sl = STATUS_LABELS[a.status] || a.status
+-        const typeLabel = a.type === 'online' ? 'ออนไลน์' : 'เข้ารับบริการด้วยตนเอง'
++        const typeLabel = appointmentTypeLabel(a.type)
+         const cCol = COUNSELOR_COLORS[a.counselorId] || '#64748b'
+         return `
+           <div class="appt-row" onclick="toggleCdAppt(this)">
+@@ -1104,6 +1173,7 @@
+     requestAnimationFrame(() => { ov.classList.add('open') })
+     document.getElementById('panel').classList.add('open')
+     document.body.style.overflow = 'hidden'
++    toggleMeetingLinkField()
+   }
+   function closePanel() {
+     const ov = document.getElementById('overlay')
+@@ -1192,6 +1262,21 @@
+ 
+   // ── View Panel ───────────────────────────────────────────────
+   const STATUS_LABELS = { pending:'รอยืนยัน', confirmed:'ยืนยันแล้ว', completed:'เสร็จสิ้น', cancelled:'ยกเลิก' }
++  function appointmentTypeLabel(type) {
++    if (type === 'phone') return 'โทรศัพท์'
++    if (type === 'onsite') return 'เข้ารับบริการด้วยตนเอง'
++    return 'ออนไลน์'
++  }
++
++  function toggleMeetingLinkField() {
++    const selected = document.querySelector('input[name="type"]:checked')
++    const wrap = document.getElementById('meetingLinkWrap')
++    const editSelected = document.querySelector('#editForm input[name="type"]:checked')
++    const editWrap = document.getElementById('e_meetingLinkWrap')
++    if (wrap) wrap.style.display = selected && selected.value === 'online' ? '' : 'none'
++    if (editWrap) editWrap.style.display = editSelected && editSelected.value === 'online' ? '' : 'none'
++  }
++
+   const STATUS_COLORS = {
+     pending:   { bg:'#fef3c7', color:'#92400e' },
+     confirmed: { bg:'#dbeafe', color:'#1e40af' },
+@@ -1209,7 +1294,7 @@
+     document.getElementById('v_counselorName').textContent = a.counselorName
+     document.getElementById('v_date').textContent = a.date
+     document.getElementById('v_time').textContent = a.time + ' น.'
+-    document.getElementById('v_type').textContent = a.type === 'online' ? 'ออนไลน์' : 'เข้ารับบริการด้วยตนเอง'
++    document.getElementById('v_type').textContent = appointmentTypeLabel(a.type)
+     document.getElementById('v_duration').textContent = (a.duration || 60) + ' นาที'
+     const sc = STATUS_COLORS[a.status] || { bg:'#f1f5f9', color:'#64748b' }
+     document.getElementById('v_status').innerHTML =
+@@ -1288,13 +1373,17 @@
+     const statusEl  = document.getElementById('e_status')
+     const noteEl    = document.getElementById('e_note')
+     const concernEl = document.getElementById('e_concern')
++    const meetingLinkEl = document.getElementById('e_meetingLink')
+     const summaryEl = document.getElementById('e_apptSummary')
+     if (statusEl)  statusEl.value  = a.status  || 'pending'
+     if (noteEl)    noteEl.value    = a.note    || ''
+     if (concernEl) concernEl.value = a.concern || ''
+-    if (document.getElementById('e_online') && document.getElementById('e_onsite')) {
+-      document.getElementById(a.type === 'onsite' ? 'e_onsite' : 'e_online').checked = true
+-    }
++    if (meetingLinkEl) meetingLinkEl.value = a.meetingLink || ''
++    const typeInput = document.getElementById(a.type === 'phone' ? 'e_phone' : (a.type === 'onsite' ? 'e_onsite' : 'e_online'))
++    const fallbackTypeInput = document.querySelector('#editForm input[name="type"]')
++    if (typeInput) typeInput.checked = true
++    else if (fallbackTypeInput) fallbackTypeInput.checked = true
++    toggleMeetingLinkField()
+     if (summaryEl) summaryEl.style.display = 'none'
+ 
+     eLoadSlots()

@@ -374,3 +374,65 @@ test('preview route rejects unknown email types', async () => {
   const result = await requestSurveyEmail('/admin/survey-email/preview/not-a-type', 'POST', {})
   assert.equal(result.res.statusCode, 404)
 })
+
+test('template edit route saves access detail text and phone closing for appointment emails', async () => {
+  const templatesPath = path.join(__dirname, '..', 'data', 'email-templates.json')
+  const before = fs.existsSync(templatesPath) ? fs.readFileSync(templatesPath, 'utf8') : null
+  try {
+    const getResult = await requestSurveyEmail()
+    assert.match(getResult.body, /name="closing_phone_th"/)
+    assert.match(getResult.body, /name="access_online_title_th"/)
+    assert.match(getResult.body, /name="access_phone_client_notice_text_en"/)
+
+    const postResult = await requestSurveyEmail('/admin/survey-email/templates/appointmentClient', 'POST', {
+      title: 'Appointment template test',
+      greeting_th: '', greeting_en: '',
+      closing_online_th: '', closing_online_en: '',
+      closing_phone_th: '', closing_phone_en: 'Phone closing from admin',
+      closing_onsite_th: '', closing_onsite_en: '',
+      access_online_title_th: '', access_online_title_en: 'Admin video room',
+      access_online_link_label_th: '', access_online_link_label_en: 'Admin join label',
+      access_phone_title_th: '', access_phone_title_en: 'Admin phone card',
+      access_phone_counselor_phone_label_th: '', access_phone_counselor_phone_label_en: 'Admin client phone',
+      access_phone_client_notice_label_th: '', access_phone_client_notice_label_en: 'Admin notice',
+      access_phone_client_notice_text_th: '', access_phone_client_notice_text_en: 'Admin phone notice',
+    })
+    assert.equal(postResult.res.statusCode, 302)
+
+    const saved = JSON.parse(fs.readFileSync(templatesPath, 'utf8'))
+    assert.equal(saved.appointmentClient.closing.en.phone, 'Phone closing from admin')
+    assert.equal(saved.appointmentClient.accessDetails.en.onlineTitle, 'Admin video room')
+    assert.equal(saved.appointmentClient.accessDetails.en.onlineLinkLabel, 'Admin join label')
+    assert.equal(saved.appointmentClient.accessDetails.en.phoneClientNoticeText, 'Admin phone notice')
+  } finally {
+    if (before === null) fs.rmSync(templatesPath, { force: true })
+    else fs.writeFileSync(templatesPath, before)
+  }
+})
+
+test('preview route renders phone-specific appointment template text', async () => {
+  const result = await requestSurveyEmail('/admin/survey-email/preview/appointmentClient?apptType=phone', 'POST', {
+    title: 'Phone preview title', greeting_th: '', greeting_en: '',
+    closing_online_th: '', closing_online_en: '',
+    closing_phone_th: '', closing_phone_en: 'Phone preview closing',
+    closing_onsite_th: '', closing_onsite_en: '',
+    access_phone_title_en: 'Phone preview card',
+    access_phone_client_notice_label_en: 'Phone preview label',
+    access_phone_client_notice_text_en: 'Phone preview notice',
+  })
+  assert.equal(result.res.statusCode, 200)
+  assert.match(result.body, /Phone preview card/)
+  assert.match(result.body, /Phone preview notice/)
+  assert.match(result.body, /Phone preview closing/)
+})
+
+test('survey email template editor renders Thai labels without placeholder question marks', async () => {
+  const result = await requestSurveyEmail()
+  assert.equal(result.res.statusCode, 200)
+  const questionMarks = String.fromCharCode(63, 63, 63)
+  assert.equal(result.body.includes(questionMarks), false)
+  assert.equal(result.body.includes('(' + questionMarks + ')'), false)
+  assert.equal(result.body.includes(String.fromCharCode(32, 63, 32) + '&#x0E23;'), false)
+  assert.match(result.body, /&#x0E44;&#x0E17;&#x0E22;/)
+  assert.match(result.body, /&mdash;/)
+})

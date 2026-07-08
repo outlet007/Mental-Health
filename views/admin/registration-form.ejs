@@ -24,6 +24,10 @@
   const formTexts = book.formTexts || {}
   const enFormTexts = enBook.formTexts || {}
   function val(obj, key, fallback) { return obj[key] || fallback }
+  function sessionTypeEnabled(bookData, key) {
+    const settings = bookData.sessionTypes || {}
+    return settings[key] !== false
+  }
   function isWideField(key) { return ['successText', 'typeLabel', 'pdpaHeading', 'pdpaText'].includes(key) }
   const thFields = [
     ['successHeading', 'หัวข้อเมื่อส่งคำขอสำเร็จ', 'ส่งคำขอสำเร็จแล้ว!'],
@@ -39,6 +43,7 @@
     ['concernLabel', 'Label: เรื่องที่ต้องการความช่วยเหลือ', 'คุณต้องการความช่วยเหลือเรื่องอะไร?'],
     ['typeLabel', 'Label: รูปแบบที่ต้องการ', 'รูปแบบที่ต้องการ'],
     ['onlineLabel', 'ตัวเลือก: ออนไลน์', 'ออนไลน์'],
+    ['phoneSessionLabel', 'ตัวเลือก: โทรศัพท์', 'โทรศัพท์'],
     ['onsiteLabel', 'ตัวเลือก: เข้ารับบริการด้วยตนเอง', 'เข้ารับบริการด้วยตนเอง'],
     ['pdpaHeading', 'หัวข้อ PDPA', 'การยินยอมเปิดเผยข้อมูล'],
     ['pdpaText', 'ข้อความ PDPA', 'ข้าพเจ้า ตกลงและยินยอมให้มหาวิทยาลัยเก็บรวบรวม ใช้ ประมวลผล และเปิดเผยข้อมูลส่วนบุคคลของข้าพเจ้า ทั้งที่ปรากฏในเอกสารฉบับนี้ หรือที่มหาวิทยาลัยรวบรวมจากบุคคลอื่น เพื่อวัตถุประสงค์ในการนัดพบแพทย์ หรือเพื่อใช้ประโยชน์ในกิจการของมหาวิทยาลัย ทั้งนี้ข้าพเจ้ารับทราบ ตกลงและยินยอมว่า มหาวิทยาลัยมีสิทธิ์เก็บรวบรวม ใช้ประมวลผลและเปิดเผยข้อมูลส่วนบุคคลของข้าพเจ้า โดยเป็นไปตามนโยบายคุ้มครองข้อมูลส่วนบุคคลของมหาวิทยาลัย ที่ประกาศใช้ในปัจจุบันหรืออาจเปลี่ยนแปลงแก้ไขในภายหลัง รายละเอียดปรากฏตาม นโยบายคุ้มครองข้อมูลส่วนบุคคล ในเว็บไซต์'],
@@ -59,6 +64,7 @@
     ['concernLabel', 'Label: Concern', 'What would you like help with?'],
     ['typeLabel', 'Label: Preferred format', 'Preferred Format'],
     ['onlineLabel', 'Option: Online', 'Online'],
+    ['phoneSessionLabel', 'Option: Phone call', 'Phone call'],
     ['onsiteLabel', 'Option: In person', 'In-person'],
     ['pdpaHeading', 'PDPA heading', 'Data Disclosure Consent'],
     ['pdpaText', 'PDPA text', "I agree and consent to the University collecting, using, processing, and disclosing my personal information — both appearing in this document and gathered from other persons — for the purpose of scheduling medical appointments or for University operations. I acknowledge that the University has the right to collect, use, process, and disclose my personal data in accordance with the University's Personal Data Protection Policy as currently published or as may be amended in the future. Details are available in the Personal Data Protection Policy on the website."],
@@ -160,6 +166,21 @@
               </div>
             </div>
           </div>
+
+          <div class="form-frame" data-layout-frame="registration-session-types-th">
+            <div class="form-frame-header">
+              <div class="form-frame-icon"><i data-lucide="sliders-horizontal" style="width:15px;height:15px;"></i></div>
+              <div>
+                <p class="form-frame-title">เปิด/ปิดรูปแบบการให้บริการ</p>
+                <p class="form-frame-note">ควบคุมตัวเลือกที่แสดงในฟอร์มลงทะเบียนหน้าเว็บไซต์</p>
+              </div>
+            </div>
+            <div class="field-grid">
+              <label class="inp" style="display:flex;align-items:center;gap:8px;"><input type="checkbox" name="sessionTypeEnabled_online" <%= sessionTypeEnabled(book, 'online') ? 'checked' : '' %>> ออนไลน์</label>
+              <label class="inp" style="display:flex;align-items:center;gap:8px;"><input type="checkbox" name="sessionTypeEnabled_phone" <%= sessionTypeEnabled(book, 'phone') ? 'checked' : '' %>> โทรศัพท์</label>
+              <label class="inp" style="display:flex;align-items:center;gap:8px;"><input type="checkbox" name="sessionTypeEnabled_onsite" <%= sessionTypeEnabled(book, 'onsite') ? 'checked' : '' %>> เข้ารับบริการด้วยตนเอง</label>
+            </div>
+          </div>
           <div style="display:flex;justify-content:flex-end;"><button type="submit" class="act-btn ab-primary"><i data-lucide="save" style="width:14px;height:14px;"></i> บันทึกฟอร์ม (TH)</button></div>
         </form>
       </div>
@@ -232,6 +253,21 @@
             <% }) %>
           </div>
               </div>
+            </div>
+          </div>
+
+          <div class="form-frame" data-layout-frame="registration-session-types-en">
+            <div class="form-frame-header">
+              <div class="form-frame-icon"><i data-lucide="sliders-horizontal" style="width:15px;height:15px;"></i></div>
+              <div>
+                <p class="form-frame-title">Service format visibility</p>
+                <p class="form-frame-note">Control which options appear in the public registration form.</p>
+              </div>
+            </div>
+            <div class="field-grid">
+              <label class="inp" style="display:flex;align-items:center;gap:8px;"><input type="checkbox" name="sessionTypeEnabled_online" <%= sessionTypeEnabled(enBook, 'online') ? 'checked' : '' %>> Online</label>
+              <label class="inp" style="display:flex;align-items:center;gap:8px;"><input type="checkbox" name="sessionTypeEnabled_phone" <%= sessionTypeEnabled(enBook, 'phone') ? 'checked' : '' %>> Phone call</label>
+              <label class="inp" style="display:flex;align-items:center;gap:8px;"><input type="checkbox" name="sessionTypeEnabled_onsite" <%= sessionTypeEnabled(enBook, 'onsite') ? 'checked' : '' %>> In-person</label>
             </div>
           </div>
           <div style="display:flex;justify-content:flex-end;"><button type="submit" class="act-btn ab-primary"><i data-lucide="save" style="width:14px;height:14px;"></i> Save form (EN)</button></div>

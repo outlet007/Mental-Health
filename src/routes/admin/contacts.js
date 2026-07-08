@@ -10,6 +10,7 @@ const { getConcernOptions } = require('../../utils/concern-options')
 
 const dataDir  = path.join(__dirname, '../../../data')
 const dataFile = path.join(dataDir, 'contacts.json')
+const DEFAULT_SESSION_TYPES = { online: true, phone: false, onsite: true }
 
 // สีอ้างอิงต่อนักจิตวิทยา — ต้องตรงกับ COLORS ใน src/routes/admin/schedules.js
 const COUNSELOR_COLORS = ['#6366f1','#05967e','#f59e0b','#ef4444','#06b6d4','#8b5cf6','#10b981','#f43f5e']
@@ -17,6 +18,27 @@ const COUNSELOR_COLORS = ['#6366f1','#05967e','#f59e0b','#ef4444','#06b6d4','#8b
 function readFile(file) { return JSON.parse(fs.readFileSync(path.join(dataDir, file), 'utf8')) }
 function readData()     { return JSON.parse(fs.readFileSync(dataFile, 'utf8')) }
 function writeData(d)   { fs.writeFileSync(dataFile, JSON.stringify(d, null, 2)) }
+
+function readAppointmentSessionTypes() {
+  try {
+    const content = readFile('content.json')
+    return { ...DEFAULT_SESSION_TYPES, ...(content.book?.sessionTypes || {}) }
+  } catch {
+    return { ...DEFAULT_SESSION_TYPES }
+  }
+}
+
+function firstEnabledSessionType(sessionTypes) {
+  return ['online', 'phone', 'onsite'].find(type => sessionTypes[type]) || 'online'
+}
+
+function normalizeAppointmentType(type, sessionTypes) {
+  return sessionTypes[type] ? type : firstEnabledSessionType(sessionTypes)
+}
+
+function cleanMeetingLink(type, meetingLink) {
+  return type === 'online' ? (meetingLink || '').trim() : ''
+}
 
 router.get('/', (req, res) => {
   const contacts     = readData()
@@ -30,6 +52,7 @@ router.get('/', (req, res) => {
   const appointments = readFile('appointments.json')
 
   const concernOptions = getConcernOptions()
+  const appointmentSessionTypes = readAppointmentSessionTypes()
 
   const { search, status, concern } = req.query
   let filtered = contacts
@@ -60,7 +83,7 @@ router.get('/', (req, res) => {
     page: 'contacts', title: 'คำขอเพื่อทำนัดหมาย',
     contacts: filtered, query: req.query,
     total: contacts.length, statusCounts, concernOptions, counselorColors,
-    counselors, schedules, clients, appointments, counselorActiveCounts,
+    counselors, schedules, clients, appointments, counselorActiveCounts, appointmentSessionTypes,
   })
 })
 
@@ -78,6 +101,7 @@ router.post('/:id/status', (req, res) => {
 
 router.post('/:id/edit', (req, res) => {
   const { name, studentId, phone, email, concern, sessionType } = req.body
+  const sessionTypes = readAppointmentSessionTypes()
   const data = readData()
   const idx  = data.findIndex(c => c.id === req.params.id)
   if (idx !== -1) {
@@ -86,14 +110,16 @@ router.post('/:id/edit', (req, res) => {
     data[idx].phone        = (phone || '').trim()
     data[idx].email        = (email || '').trim()
     data[idx].concern      = concern || ''
-    data[idx].sessionType  = sessionType || data[idx].sessionType || 'online'
+    data[idx].sessionType  = normalizeAppointmentType(sessionType || data[idx].sessionType || 'online', sessionTypes)
     writeData(data)
   }
   res.redirect('/admin/contacts?updated=1')
 })
 
 router.post('/:id/book', async (req, res) => {
-  const { counselorId, date, time, type, note, existingClientId } = req.body
+  const { counselorId, date, time, type, note, existingClientId, meetingLink } = req.body
+  const sessionTypes = readAppointmentSessionTypes()
+  const appointmentType = normalizeAppointmentType(type || 'online', sessionTypes)
   const contacts = readData()
   const idx      = contacts.findIndex(c => c.id === req.params.id)
   if (idx === -1) return res.redirect('/admin/contacts?error=notfound')
@@ -145,7 +171,8 @@ router.post('/:id/book', async (req, res) => {
     counselorName: counselor.name,
     date, time,
     duration:      counselor.sessionDuration || 60,
-    type:          type || contact.sessionType || 'online',
+    type:          normalizeAppointmentType(type || contact.sessionType || appointmentType, sessionTypes),
+    meetingLink:   cleanMeetingLink(normalizeAppointmentType(type || contact.sessionType || appointmentType, sessionTypes), meetingLink),
     status:        'confirmed',
     note:          note || '',
     concern:       contact.concern || '',

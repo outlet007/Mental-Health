@@ -1,0 +1,705 @@
+diff --git a/src/utils/email-templates.js b/src/utils/email-templates.js
+index 7ef19f6..a71404b 100644
+--- a/src/utils/email-templates.js
++++ b/src/utils/email-templates.js
+@@ -20,11 +20,44 @@ const PLACEHOLDERS = ['clientName', 'counselorName', 'date', 'time', 'duration',
+ // The other types (counselor notice, reassignment, survey) read the same
+ // either way, so their `closing` stays a plain {th, en} string.
+ const TYPES_WITH_CLOSING_VARIANTS = ['appointmentClient', 'reminder']
++const CLOSING_VARIANTS = ['online', 'phone', 'onsite']
++const TYPES_WITH_ACCESS_DETAILS = ['appointmentClient', 'appointmentCounselor', 'reminder']
++const ACCESS_DETAIL_FIELD_KEYS = [
++  'onlineTitle',
++  'onlineLinkLabel',
++  'phoneTitle',
++  'phoneCounselorPhoneLabel',
++  'phoneClientNoticeLabel',
++  'phoneClientNoticeText',
++]
++
++const DEFAULT_APPOINTMENT_ACCESS_DETAILS = {
++  th: {
++    onlineTitle: '\u0e25\u0e34\u0e07\u0e01\u0e4c\u0e40\u0e02\u0e49\u0e32\u0e23\u0e48\u0e27\u0e21\u0e27\u0e34\u0e14\u0e35\u0e42\u0e2d\u0e04\u0e2d\u0e25',
++    onlineLinkLabel: '\u0e25\u0e34\u0e07\u0e01\u0e4c',
++    phoneTitle: '\u0e01\u0e32\u0e23\u0e43\u0e2b\u0e49\u0e04\u0e33\u0e1b\u0e23\u0e36\u0e01\u0e29\u0e32\u0e17\u0e32\u0e07\u0e42\u0e17\u0e23\u0e28\u0e31\u0e1e\u0e17\u0e4c',
++    phoneCounselorPhoneLabel: '\u0e40\u0e1a\u0e2d\u0e23\u0e4c\u0e42\u0e17\u0e23\u0e1c\u0e39\u0e49\u0e23\u0e31\u0e1a\u0e1a\u0e23\u0e34\u0e01\u0e32\u0e23',
++    phoneClientNoticeLabel: '\u0e02\u0e49\u0e2d\u0e04\u0e27\u0e32\u0e21',
++    phoneClientNoticeText: '\u0e08\u0e34\u0e15\u0e41\u0e1e\u0e17\u0e22\u0e4c\u0e08\u0e30\u0e42\u0e17\u0e23\u0e15\u0e34\u0e14\u0e15\u0e48\u0e2d\u0e01\u0e25\u0e31\u0e1a\u0e40\u0e1e\u0e37\u0e48\u0e2d\u0e43\u0e2b\u0e49\u0e04\u0e33\u0e1b\u0e23\u0e36\u0e01\u0e29\u0e32',
++  },
++  en: {
++    onlineTitle: 'Video call link',
++    onlineLinkLabel: 'Join link',
++    phoneTitle: 'Phone counseling',
++    phoneCounselorPhoneLabel: 'Client phone',
++    phoneClientNoticeLabel: 'Notice',
++    phoneClientNoticeText: 'The counselor will call you for counseling.',
++  },
++}
+ 
+ function hasClosingVariants(type) {
+   return TYPES_WITH_CLOSING_VARIANTS.includes(type)
+ }
+ 
++function hasAccessDetails(type) {
++  return TYPES_WITH_ACCESS_DETAILS.includes(type)
++}
++
+ // Matches the text currently hardcoded in mailer.js — used whenever an admin
+ // hasn't overridden a field, so turning this feature on changes nothing by default.
+ const DEFAULT_TEMPLATES = {
+@@ -35,9 +68,10 @@ const DEFAULT_TEMPLATES = {
+       en: 'Hello <strong>{{clientName}}</strong><br>Your appointment has been confirmed.',
+     },
+     closing: {
+-      th: { online: 'โปรดเข้าร่วมก่อนเวลา 5-10 นาที', onsite: 'โปรดมาถึงก่อนเวลา 5-10 นาที' },
+-      en: { online: 'Please join 5-10 minutes before the appointment time.', onsite: 'Please arrive 5-10 minutes before the appointment time.' },
++      th: { online: 'โปรดเข้าร่วมก่อนเวลา 5-10 นาที', phone: '\u0e42\u0e1b\u0e23\u0e14\u0e23\u0e2d\u0e23\u0e31\u0e1a\u0e2a\u0e32\u0e22\u0e08\u0e32\u0e01\u0e08\u0e34\u0e15\u0e41\u0e1e\u0e17\u0e22\u0e4c\u0e15\u0e32\u0e21\u0e40\u0e27\u0e25\u0e32\u0e19\u0e31\u0e14', onsite: 'โปรดมาถึงก่อนเวลา 5-10 นาที' },
++      en: { online: 'Please join 5-10 minutes before the appointment time.', phone: 'Please keep your phone available at the appointment time.', onsite: 'Please arrive 5-10 minutes before the appointment time.' },
+     },
++    accessDetails: DEFAULT_APPOINTMENT_ACCESS_DETAILS,
+   },
+   appointmentCounselor: {
+     title: { th: 'นัดหมายใหม่', en: 'นัดหมายใหม่' },
+@@ -49,6 +83,7 @@ const DEFAULT_TEMPLATES = {
+       th: 'โปรดตรวจสอบรูปแบบการนัดหมายก่อนเวลา',
+       en: 'Please check the appointment format before the session.',
+     },
++    accessDetails: DEFAULT_APPOINTMENT_ACCESS_DETAILS,
+   },
+   counselorReassigned: {
+     title: { th: 'ยกเลิกนัดหมาย', en: 'ยกเลิกนัดหมาย' },
+@@ -76,32 +111,56 @@ const DEFAULT_TEMPLATES = {
+       en: "Hello <strong>{{clientName}}</strong><br>Your appointment is coming up soon. Please don't forget!",
+     },
+     closing: {
+-      th: { online: 'โปรดเข้าร่วมก่อนเวลา 5-10 นาที', onsite: 'โปรดมาถึงก่อนเวลา 5-10 นาที' },
+-      en: { online: 'Please join 5-10 minutes before the appointment time.', onsite: 'Please arrive 5-10 minutes before the appointment time.' },
++      th: { online: 'โปรดเข้าร่วมก่อนเวลา 5-10 นาที', phone: '\u0e42\u0e1b\u0e23\u0e14\u0e23\u0e2d\u0e23\u0e31\u0e1a\u0e2a\u0e32\u0e22\u0e08\u0e32\u0e01\u0e08\u0e34\u0e15\u0e41\u0e1e\u0e17\u0e22\u0e4c\u0e15\u0e32\u0e21\u0e40\u0e27\u0e25\u0e32\u0e19\u0e31\u0e14', onsite: 'โปรดมาถึงก่อนเวลา 5-10 นาที' },
++      en: { online: 'Please join 5-10 minutes before the appointment time.', phone: 'Please keep your phone available at the appointment time.', onsite: 'Please arrive 5-10 minutes before the appointment time.' },
+     },
++    accessDetails: DEFAULT_APPOINTMENT_ACCESS_DETAILS,
+   },
+ }
+ 
+ function emptyClosingField(type) {
+-  return hasClosingVariants(type) ? { online: '', onsite: '' } : ''
++  if (!hasClosingVariants(type)) return ''
++  return Object.fromEntries(CLOSING_VARIANTS.map(variant => [variant, '']))
+ }
+ 
+-function emptyTemplate(type) {
++function emptyAccessDetailsField(type) {
++  if (!hasAccessDetails(type)) return undefined
+   return {
++    th: Object.fromEntries(ACCESS_DETAIL_FIELD_KEYS.map(key => [key, ''])),
++    en: Object.fromEntries(ACCESS_DETAIL_FIELD_KEYS.map(key => [key, ''])),
++  }
++}
++
++function emptyTemplate(type) {
++  const template = {
+     title: { th: '', en: '' },
+     greeting: { th: '', en: '' },
+     closing: { th: emptyClosingField(type), en: emptyClosingField(type) },
+   }
++  if (hasAccessDetails(type)) template.accessDetails = emptyAccessDetailsField(type)
++  return template
+ }
+ 
+ function cleanClosingField(value, type) {
+   if (hasClosingVariants(type)) {
+     const v = value || {}
+-    return { online: String(v.online || '').trim(), onsite: String(v.onsite || '').trim() }
++    return Object.fromEntries(CLOSING_VARIANTS.map(variant => [variant, String(v[variant] || '').trim()]))
+   }
+   return String(value || '').trim()
+ }
+ 
++function cleanAccessDetailsField(value, type) {
++  if (!hasAccessDetails(type)) return undefined
++  const v = value || {}
++  const clean = emptyAccessDetailsField(type)
++  for (const lang of ['th', 'en']) {
++    for (const key of ACCESS_DETAIL_FIELD_KEYS) {
++      clean[lang][key] = String((v[lang] && v[lang][key]) || '').trim()
++    }
++  }
++  return clean
++}
++
+ function cleanTemplate(type, data = {}) {
+   const clean = emptyTemplate(type)
+   for (const field of ['title', 'greeting']) {
+@@ -116,6 +175,7 @@ function cleanTemplate(type, data = {}) {
+     th: cleanClosingField(closingData.th, type),
+     en: cleanClosingField(closingData.en, type),
+   }
++  if (hasAccessDetails(type)) clean.accessDetails = cleanAccessDetailsField(data.accessDetails, type)
+   return clean
+ }
+ 
+@@ -154,18 +214,28 @@ function stripHtml(text) {
+ 
+ function stripClosingField(value, type) {
+   if (hasClosingVariants(type)) {
+-    return { online: stripHtml(value.online), onsite: stripHtml(value.onsite) }
++    return Object.fromEntries(CLOSING_VARIANTS.map(variant => [variant, stripHtml(value[variant])]))
+   }
+   return stripHtml(value)
+ }
+ 
++function stripAccessDetailsField(value, type) {
++  if (!hasAccessDetails(type)) return undefined
++  return {
++    th: Object.fromEntries(ACCESS_DETAIL_FIELD_KEYS.map(key => [key, stripHtml(value.th[key])])),
++    en: Object.fromEntries(ACCESS_DETAIL_FIELD_KEYS.map(key => [key, stripHtml(value.en[key])])),
++  }
++}
++
+ function plainDefaultTemplate(type) {
+   const d = DEFAULT_TEMPLATES[type]
+-  return {
++  const plain = {
+     title: { th: stripHtml(d.title.th), en: stripHtml(d.title.en) },
+     greeting: { th: stripHtml(d.greeting.th), en: stripHtml(d.greeting.en) },
+     closing: { th: stripClosingField(d.closing.th, type), en: stripClosingField(d.closing.en, type) },
+   }
++  if (hasAccessDetails(type)) plain.accessDetails = stripAccessDetailsField(d.accessDetails, type)
++  return plain
+ }
+ 
+ function getPlainDefaultTemplates() {
+@@ -191,21 +261,31 @@ function resolveField(override, defaultValue, vars) {
+ // any unrecognized/missing value) before resolving the text.
+ function resolveClosingField(override, defaultValue, vars, type, apptType) {
+   if (!hasClosingVariants(type)) return resolveField(override, defaultValue, vars)
+-  const variant = apptType === 'onsite' ? 'onsite' : 'online'
++  const variant = CLOSING_VARIANTS.includes(apptType) ? apptType : 'online'
+   return resolveField(override && override[variant], defaultValue[variant], vars)
+ }
+ 
++function resolveAccessDetailsField(override, defaultValue, vars, type, lang) {
++  if (!hasAccessDetails(type)) return undefined
++  return Object.fromEntries(ACCESS_DETAIL_FIELD_KEYS.map(key => [
++    key,
++    resolveField(override && override[lang] && override[lang][key], defaultValue[lang][key], vars),
++  ]))
++}
++
+ // `draftOverride` lets the preview endpoint render unsaved text the admin is
+ // still editing; when omitted, the saved override from disk is used instead.
+ // `apptType` ('online'/'onsite') only matters for types with closing variants.
+ function renderTemplateFields(type, lang, vars, draftOverride, apptType) {
+   const override = draftOverride ? cleanTemplate(type, draftOverride) : (readEmailTemplates()[type] || emptyTemplate(type))
+   const defaults = DEFAULT_TEMPLATES[type]
+-  return {
++  const fields = {
+     title: resolveField(override.title[lang], defaults.title[lang], vars),
+     greeting: resolveField(override.greeting[lang], defaults.greeting[lang], vars),
+     closing: resolveClosingField(override.closing[lang], defaults.closing[lang], vars, type, apptType),
+   }
++  if (hasAccessDetails(type)) fields.accessDetails = resolveAccessDetailsField(override.accessDetails, defaults.accessDetails, vars, type, lang)
++  return fields
+ }
+ 
+ module.exports = {
+@@ -214,7 +294,11 @@ module.exports = {
+   PLACEHOLDERS,
+   DEFAULT_TEMPLATES,
+   TYPES_WITH_CLOSING_VARIANTS,
++  CLOSING_VARIANTS,
++  TYPES_WITH_ACCESS_DETAILS,
++  ACCESS_DETAIL_FIELD_KEYS,
+   hasClosingVariants,
++  hasAccessDetails,
+   readEmailTemplates,
+   writeEmailTemplate,
+   applyPlaceholders,
+diff --git a/src/utils/mailer.js b/src/utils/mailer.js
+index d7a0db1..a47c9ca 100644
+--- a/src/utils/mailer.js
++++ b/src/utils/mailer.js
+@@ -41,7 +41,11 @@ function buildVars({ appointment, client, counselor }) {
+ }
+ 
+ function typeLabel(type, lang = 'th') {
+-  if (lang === 'en') return type === 'online' ? 'Online video call' : 'On-site service'
++  if (lang === 'en') {
++    if (type === 'phone') return 'Phone call'
++    return type === 'online' ? 'Online video call' : 'On-site service'
++  }
++  if (type === 'phone') return 'โทรศัพท์ (Phone call)'
+   return type === 'online' ? 'ออนไลน์ (Video Call)' : 'เข้ารับบริการด้วยตนเอง (On-site)'
+ }
+ 
+@@ -50,6 +54,7 @@ function icon(name, color = '#05967e') {
+     'heart-handshake': '<path d="M19.5 12.6 12 20l-7.5-7.4a5 5 0 0 1 7.1-7.1l.4.4.4-.4a5 5 0 0 1 7.1 7.1Z"/><path d="M12 20l-2-2 2-2 2 2-2 2Z"/>',
+     video: '<path d="m16 13 5 3V8l-5 3"/><rect width="14" height="12" x="2" y="6" rx="2"/>',
+     'map-pin': '<path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/>',
++    phone: '<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 2.08 4.18 2 2 0 0 1 4.06 2h3a2 2 0 0 1 2 1.72c.12.9.32 1.77.59 2.61a2 2 0 0 1-.45 2.11L8 9.63a16 16 0 0 0 6.37 6.37l1.19-1.19a2 2 0 0 1 2.11-.45c.84.27 1.71.47 2.61.59A2 2 0 0 1 22 16.92Z"/>',
+     calendar: '<path d="M8 2v4M16 2v4M3 10h18"/><rect width="18" height="18" x="3" y="4" rx="2"/>',
+     user: '<path d="M19 21a7 7 0 0 0-14 0"/><circle cx="12" cy="7" r="4"/>',
+     clipboard: '<rect width="8" height="4" x="8" y="2" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>',
+@@ -70,6 +75,37 @@ function card(title, rows, color = '#05967e') {
+   return `<div style="border:1px solid #e2e8f0;border-radius:14px;padding:18px;margin:18px 0;background:#ffffff;"><h3 style="margin:0 0 10px;color:${color};font-size:15px;">${title}</h3><table width="100%" cellpadding="0" cellspacing="0">${rows.join('')}</table></div>`
+ }
+ 
++function appointmentAccessDetails({ appointment, client }, lang = 'th', audience = 'client', accessDetails = {}) {
++  const fallback = lang === 'en'
++    ? {
++        onlineTitle: 'Video call link',
++        onlineLinkLabel: 'Join link',
++        phoneTitle: 'Phone counseling',
++        phoneCounselorPhoneLabel: 'Client phone',
++        phoneClientNoticeLabel: 'Notice',
++        phoneClientNoticeText: 'The counselor will call you for counseling.',
++      }
++    : {
++        onlineTitle: '\u0e25\u0e34\u0e07\u0e01\u0e4c\u0e40\u0e02\u0e49\u0e32\u0e23\u0e48\u0e27\u0e21\u0e27\u0e34\u0e14\u0e35\u0e42\u0e2d\u0e04\u0e2d\u0e25',
++        onlineLinkLabel: '\u0e25\u0e34\u0e07\u0e01\u0e4c',
++        phoneTitle: '\u0e01\u0e32\u0e23\u0e43\u0e2b\u0e49\u0e04\u0e33\u0e1b\u0e23\u0e36\u0e01\u0e29\u0e32\u0e17\u0e32\u0e07\u0e42\u0e17\u0e23\u0e28\u0e31\u0e1e\u0e17\u0e4c',
++        phoneCounselorPhoneLabel: '\u0e40\u0e1a\u0e2d\u0e23\u0e4c\u0e42\u0e17\u0e23\u0e1c\u0e39\u0e49\u0e23\u0e31\u0e1a\u0e1a\u0e23\u0e34\u0e01\u0e32\u0e23',
++        phoneClientNoticeLabel: '\u0e02\u0e49\u0e2d\u0e04\u0e27\u0e32\u0e21',
++        phoneClientNoticeText: '\u0e08\u0e34\u0e15\u0e41\u0e1e\u0e17\u0e22\u0e4c\u0e08\u0e30\u0e42\u0e17\u0e23\u0e15\u0e34\u0e14\u0e15\u0e48\u0e2d\u0e01\u0e25\u0e31\u0e1a\u0e40\u0e1e\u0e37\u0e48\u0e2d\u0e43\u0e2b\u0e49\u0e04\u0e33\u0e1b\u0e23\u0e36\u0e01\u0e29\u0e32',
++      }
++  const text = key => accessDetails[key] || fallback[key]
++  if (appointment.type === 'online' && appointment.meetingLink) {
++    return card(icon('video') + text('onlineTitle'), [row(text('onlineLinkLabel'), appointment.meetingLink)])
++  }
++  if (appointment.type === 'phone') {
++    if (audience === 'counselor') {
++      return card(icon('phone') + text('phoneTitle'), [row(text('phoneCounselorPhoneLabel'), client.phone || '-')])
++    }
++    return card(icon('phone') + text('phoneTitle'), [row(text('phoneClientNoticeLabel'), text('phoneClientNoticeText'))])
++  }
++  return ''
++}
++
+ function paragraph(iconName, iconColor, html) {
+   return `<p style="font-size:15px;line-height:1.8;color:#334155;margin:0 0 18px;">${icon(iconName, iconColor)}${html}</p>`
+ }
+@@ -83,31 +119,31 @@ function emailWrapper(title, accentColor, thHtml, enHtml) {
+   return `<!DOCTYPE html><html lang="th"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>${title}</title></head><body style="margin:0;padding:0;background:#f1f5f9;font-family:'Noto Sans Thai','Segoe UI',Arial,sans-serif;"><table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f1f5f9;font-family:'Noto Sans Thai','Segoe UI',Arial,sans-serif;"><tr><td align="center" style="padding:28px 14px;"><table width="640" cellpadding="0" cellspacing="0" border="0" style="max-width:640px;width:100%;background:#fff;border-radius:18px;overflow:hidden;box-shadow:0 8px 30px rgba(15,23,42,.08);"><tr><td style="background:linear-gradient(135deg,${accentColor.from},${accentColor.to});padding:30px 36px;color:#fff;"><div style="font-size:13px;font-weight:700;letter-spacing:.08em;margin-bottom:10px;">MindCare</div><h1 style="margin:0;font-size:23px;line-height:1.35;">${title}</h1></td></tr><tr><td style="padding:30px 36px;">${body}</td></tr><tr><td style="border-top:1px solid #e2e8f0;padding:18px 36px;color:#94a3b8;font-size:12px;line-height:1.7;">อีเมลนี้ส่งจากระบบ MindCare อัตโนมัติ<br>&copy; ${new Date().getFullYear()} MindCare</td></tr></table></td></tr></table></body></html>`
+ }
+ 
+-function appointmentDetails({ appointment, client, counselor, concern }, lang = 'th') {
++function appointmentDetails({ appointment, client, counselor, concern }, lang = 'th', audience = 'client', accessDetails) {
+   const dateStr = formatDate(appointment.date)
+   if (lang === 'en') {
+     return card(`${icon('calendar')}Appointment details`, [
+       row('Appointment ID', appointment.id), row('Date', dateStr), row('Time', `${appointment.time}`), row('Duration', `${appointment.duration} minutes`), row('Type', typeLabel(appointment.type, 'en')), row('Topic', concern || '-')
+-    ]) + card(`${icon('user')}Counselor`, [row('Name', counselor.name), row('Email', counselor.email || '-'), row('Phone', counselor.phone || '-')])
++    ]) + appointmentAccessDetails({ appointment, client }, 'en', audience, accessDetails) + card(`${icon('user')}Counselor`, [row('Name', counselor.name), row('Email', counselor.email || '-'), row('Phone', counselor.phone || '-')])
+   }
+   return card(`${icon('calendar')}รายละเอียดการนัดหมาย`, [
+     row('รหัสการนัด', appointment.id), row('วันที่', dateStr), row('เวลา', `${appointment.time} น.`), row('ระยะเวลา', `${appointment.duration} นาที`), row('รูปแบบ', typeLabel(appointment.type)), row('เรื่องที่ปรึกษา', concern || '-')
+-  ]) + card(`${icon('user')}นักจิตวิทยา`, [row('ชื่อ', counselor.name), row('อีเมล', counselor.email || '-'), row('โทรศัพท์', counselor.phone || '-')])
++  ]) + appointmentAccessDetails({ appointment, client }, 'th', audience, accessDetails) + card(`${icon('user')}นักจิตวิทยา`, [row('ชื่อ', counselor.name), row('อีเมล', counselor.email || '-'), row('โทรศัพท์', counselor.phone || '-')])
+ }
+ 
+ // Shared shape for the 3 email types that are just: greeting paragraph +
+ // the standard appointment-details cards + an optional closing paragraph.
+ // For appointmentClient/reminder, the closing line (and its icon) depend on
+ // whether the appointment is online ("join") or onsite ("arrive").
+-function standardEmailHtml(type, data, accentColor, greetingIcon, closingIcon, templateOverride) {
++function standardEmailHtml(type, data, accentColor, greetingIcon, closingIcon, templateOverride, audience = 'client') {
+   const vars = buildVars(data)
+   const apptType = data.appointment.type
+   const resolvedClosingIcon = hasClosingVariants(type)
+-    ? (apptType === 'onsite' ? ['map-pin', '#05967e'] : ['video', '#05967e'])
++    ? (apptType === 'onsite' ? ['map-pin', '#05967e'] : (apptType === 'phone' ? ['phone', '#05967e'] : ['video', '#05967e']))
+     : closingIcon
+   const build = lang => {
+     const t = renderTemplateFields(type, lang, vars, templateOverride, apptType)
+-    return { title: t.title, html: paragraph(...greetingIcon, t.greeting) + appointmentDetails(data, lang) + (t.closing ? paragraph(...resolvedClosingIcon, t.closing) : '') }
++    return { title: t.title, html: paragraph(...greetingIcon, t.greeting) + appointmentDetails(data, lang, audience, t.accessDetails) + (t.closing ? paragraph(...resolvedClosingIcon, t.closing) : '') }
+   }
+   const th = build('th')
+   const en = build('en')
+@@ -115,11 +151,11 @@ function standardEmailHtml(type, data, accentColor, greetingIcon, closingIcon, t
+ }
+ 
+ function clientEmailHtml(data, templateOverride) {
+-  return standardEmailHtml('appointmentClient', data, { from: '#05967e', to: '#06b6d4' }, ['heart-handshake', '#05967e'], ['video', '#05967e'], templateOverride)
++  return standardEmailHtml('appointmentClient', data, { from: '#05967e', to: '#06b6d4' }, ['heart-handshake', '#05967e'], ['video', '#05967e'], templateOverride, 'client')
+ }
+ 
+ function counselorEmailHtml(data, templateOverride) {
+-  return standardEmailHtml('appointmentCounselor', data, { from: '#3874FF', to: '#6366f1' }, ['heart-handshake', '#05967e'], ['video', '#05967e'], templateOverride)
++  return standardEmailHtml('appointmentCounselor', data, { from: '#3874FF', to: '#6366f1' }, ['heart-handshake', '#05967e'], ['video', '#05967e'], templateOverride, 'counselor')
+ }
+ 
+ function reminderEmailHtml(data, templateOverride) {
+diff --git a/tests/email-templates.test.js b/tests/email-templates.test.js
+index cca6db1..aadea5e 100644
+--- a/tests/email-templates.test.js
++++ b/tests/email-templates.test.js
+@@ -157,3 +157,31 @@ test('renderTemplateFields accepts a draft override without touching the saved f
+     assert.equal(fs.existsSync(templatesPath) ? fs.readFileSync(templatesPath, 'utf8') : null, before)
+   })
+ })
++
++test('phone closing and appointment access detail text are template-driven', () => {
++  return withTempTemplatesFile(() => {
++    const { writeEmailTemplate, renderTemplateFields } = require('../src/utils/email-templates')
++    const defaultPhone = renderTemplateFields('appointmentClient', 'en', {}, undefined, 'phone')
++    assert.equal(defaultPhone.closing, 'Please keep your phone available at the appointment time.')
++    assert.equal(defaultPhone.accessDetails.onlineTitle, 'Video call link')
++    assert.equal(defaultPhone.accessDetails.phoneClientNoticeText, 'The counselor will call you for counseling.')
++
++    writeEmailTemplate('appointmentClient', {
++      title: { th: '', en: '' },
++      greeting: { th: '', en: '' },
++      closing: { th: { online: '', phone: '', onsite: '' }, en: { online: '', phone: 'Phone closing for {{clientName}}', onsite: '' } },
++      accessDetails: {
++        en: {
++          onlineTitle: 'Custom video room',
++          phoneClientNoticeText: 'Custom phone notice for {{clientName}}',
++        },
++      },
++    })
++
++    const fields = renderTemplateFields('appointmentClient', 'en', { clientName: 'Alex' }, undefined, 'phone')
++    assert.equal(fields.closing, 'Phone closing for Alex')
++    assert.equal(fields.accessDetails.onlineTitle, 'Custom video room')
++    assert.equal(fields.accessDetails.onlineLinkLabel, defaultPhone.accessDetails.onlineLinkLabel)
++    assert.equal(fields.accessDetails.phoneClientNoticeText, 'Custom phone notice for Alex')
++  })
++})
+diff --git a/tests/mailer-config.test.js b/tests/mailer-config.test.js
+index 241915d..b40282b 100644
+--- a/tests/mailer-config.test.js
++++ b/tests/mailer-config.test.js
+@@ -209,6 +209,40 @@ test('appointment confirmation closing text and icon differ between online and o
+   }
+ })
+ 
++
++test('appointment emails include online meeting links and phone call details by audience', async () => {
++  const harness = loadMailerWithCapturedTransport({})
++
++  try {
++    await harness.mailer.sendAppointmentEmails({
++      appointment: { id: 'app-online-link', date: '2026-07-01', time: '10:00', duration: 60, type: 'online', meetingLink: 'https://meet.example.test/abc', note: '' },
++      client: { name: 'Test Client', email: 'client@example.test', phone: '0812345678' },
++      counselor: { name: 'Test Counselor', email: 'counselor@example.test', phone: '', specialties: [] },
++      concern: '',
++    })
++    await harness.mailer.sendAppointmentEmails({
++      appointment: { id: 'app-phone', date: '2026-07-01', time: '11:00', duration: 60, type: 'phone', note: '' },
++      client: { name: 'Phone Client', email: 'phone-client@example.test', phone: '0899999999' },
++      counselor: { name: 'Phone Counselor', email: 'phone-counselor@example.test', phone: '', specialties: [] },
++      concern: '',
++    })
++
++    const [onlineClient, onlineCounselor, phoneClient, phoneCounselor] = harness.sentMessages
++    const thaiClientNotice = "จิตแพทย์จะโทรติดต่อกลับเพื่อให้คำปรึกษา"
++    const thaiLinkTitle = "ลิงก์เข้าร่วมวิดีโอคอล"
++    assert.equal((onlineClient.html.match(/https:\/\/meet\.example\.test\/abc/g) || []).length, 2)
++    assert.equal((onlineCounselor.html.match(/https:\/\/meet\.example\.test\/abc/g) || []).length, 2)
++    assert.match(onlineClient.html, new RegExp(thaiLinkTitle))
++    assert.match(onlineCounselor.html, new RegExp(thaiLinkTitle))
++    assert.equal((phoneCounselor.html.match(/0899999999/g) || []).length, 2)
++    assert.match(phoneCounselor.html, /Client phone/)
++    assert.match(phoneClient.html, /counselor will call you/)
++    assert.match(phoneClient.html, new RegExp(thaiClientNotice))
++  } finally {
++    harness.restore()
++  }
++})
++
+ test('reminder email closing text differs between online and onsite appointments', async () => {
+   const harness = loadMailerWithCapturedTransport({})
+ 
+@@ -336,3 +370,64 @@ test('emails include in-email Thai and English toggle without web email view lin
+   }
+ })
+ 
++test('saved access detail template overrides change appointment emails', () => {
++  return withTempTemplatesFile(async () => {
++    const { writeEmailTemplate } = require('../src/utils/email-templates')
++    writeEmailTemplate('appointmentClient', {
++      title: { th: '', en: '' },
++      greeting: { th: '', en: '' },
++      closing: { th: { online: '', phone: '', onsite: '' }, en: { online: '', phone: '', onsite: '' } },
++      accessDetails: {
++        en: {
++          onlineTitle: 'Custom video room',
++          onlineLinkLabel: 'Custom join label',
++          phoneTitle: 'Custom phone card',
++          phoneClientNoticeLabel: 'Custom notice label',
++          phoneClientNoticeText: 'Custom phone notice for client',
++        },
++      },
++    })
++    writeEmailTemplate('appointmentCounselor', {
++      title: { th: '', en: '' },
++      greeting: { th: '', en: '' },
++      closing: { th: '', en: '' },
++      accessDetails: {
++        en: {
++          phoneTitle: 'Counselor phone card',
++          phoneCounselorPhoneLabel: 'Custom client phone label',
++        },
++      },
++    })
++
++    const onlineHarness = loadMailerWithCapturedTransport({})
++    try {
++      await onlineHarness.mailer.sendAppointmentEmails({
++        appointment: { id: 'app-online', date: '2026-07-01', time: '10:00', duration: 60, type: 'online', meetingLink: 'https://meet.example.test/custom', note: '' },
++        client: { name: 'Client', email: 'client@example.test', phone: '0812345678' },
++        counselor: { name: 'Counselor', email: 'counselor@example.test', phone: '021234567', specialties: [] },
++        concern: '',
++      })
++      assert.match(onlineHarness.sentMessages[0].html, /Custom video room/)
++      assert.match(onlineHarness.sentMessages[0].html, /Custom join label/)
++      assert.match(onlineHarness.sentMessages[0].html, /https:\/\/meet\.example\.test\/custom/)
++    } finally {
++      onlineHarness.restore()
++    }
++
++    const phoneHarness = loadMailerWithCapturedTransport({})
++    try {
++      await phoneHarness.mailer.sendAppointmentEmails({
++        appointment: { id: 'app-phone', date: '2026-07-01', time: '10:00', duration: 60, type: 'phone', note: '' },
++        client: { name: 'Client', email: 'client@example.test', phone: '0812345678' },
++        counselor: { name: 'Counselor', email: 'counselor@example.test', phone: '021234567', specialties: [] },
++        concern: '',
++      })
++      assert.match(phoneHarness.sentMessages[0].html, /Custom phone notice for client/)
++      assert.match(phoneHarness.sentMessages[1].html, /Counselor phone card/)
++      assert.match(phoneHarness.sentMessages[1].html, /Custom client phone label/)
++      assert.match(phoneHarness.sentMessages[1].html, /0812345678/)
++    } finally {
++      phoneHarness.restore()
++    }
++  })
++})
+diff --git a/tests/survey-email-settings.test.js b/tests/survey-email-settings.test.js
+index e099a4e..5ab9187 100644
+--- a/tests/survey-email-settings.test.js
++++ b/tests/survey-email-settings.test.js
+@@ -374,3 +374,54 @@ test('preview route rejects unknown email types', async () => {
+   const result = await requestSurveyEmail('/admin/survey-email/preview/not-a-type', 'POST', {})
+   assert.equal(result.res.statusCode, 404)
+ })
++
++test('template edit route saves access detail text and phone closing for appointment emails', async () => {
++  const templatesPath = path.join(__dirname, '..', 'data', 'email-templates.json')
++  const before = fs.existsSync(templatesPath) ? fs.readFileSync(templatesPath, 'utf8') : null
++  try {
++    const getResult = await requestSurveyEmail()
++    assert.match(getResult.body, /name="closing_phone_th"/)
++    assert.match(getResult.body, /name="access_online_title_th"/)
++    assert.match(getResult.body, /name="access_phone_client_notice_text_en"/)
++
++    const postResult = await requestSurveyEmail('/admin/survey-email/templates/appointmentClient', 'POST', {
++      title: 'Appointment template test',
++      greeting_th: '', greeting_en: '',
++      closing_online_th: '', closing_online_en: '',
++      closing_phone_th: '', closing_phone_en: 'Phone closing from admin',
++      closing_onsite_th: '', closing_onsite_en: '',
++      access_online_title_th: '', access_online_title_en: 'Admin video room',
++      access_online_link_label_th: '', access_online_link_label_en: 'Admin join label',
++      access_phone_title_th: '', access_phone_title_en: 'Admin phone card',
++      access_phone_counselor_phone_label_th: '', access_phone_counselor_phone_label_en: 'Admin client phone',
++      access_phone_client_notice_label_th: '', access_phone_client_notice_label_en: 'Admin notice',
++      access_phone_client_notice_text_th: '', access_phone_client_notice_text_en: 'Admin phone notice',
++    })
++    assert.equal(postResult.res.statusCode, 302)
++
++    const saved = JSON.parse(fs.readFileSync(templatesPath, 'utf8'))
++    assert.equal(saved.appointmentClient.closing.en.phone, 'Phone closing from admin')
++    assert.equal(saved.appointmentClient.accessDetails.en.onlineTitle, 'Admin video room')
++    assert.equal(saved.appointmentClient.accessDetails.en.onlineLinkLabel, 'Admin join label')
++    assert.equal(saved.appointmentClient.accessDetails.en.phoneClientNoticeText, 'Admin phone notice')
++  } finally {
++    if (before === null) fs.rmSync(templatesPath, { force: true })
++    else fs.writeFileSync(templatesPath, before)
++  }
++})
++
++test('preview route renders phone-specific appointment template text', async () => {
++  const result = await requestSurveyEmail('/admin/survey-email/preview/appointmentClient?apptType=phone', 'POST', {
++    title: 'Phone preview title', greeting_th: '', greeting_en: '',
++    closing_online_th: '', closing_online_en: '',
++    closing_phone_th: '', closing_phone_en: 'Phone preview closing',
++    closing_onsite_th: '', closing_onsite_en: '',
++    access_phone_title_en: 'Phone preview card',
++    access_phone_client_notice_label_en: 'Phone preview label',
++    access_phone_client_notice_text_en: 'Phone preview notice',
++  })
++  assert.equal(result.res.statusCode, 200)
++  assert.match(result.body, /Phone preview card/)
++  assert.match(result.body, /Phone preview notice/)
++  assert.match(result.body, /Phone preview closing/)
++})
+diff --git a/views/admin/survey-email.ejs b/views/admin/survey-email.ejs
+index 451412d..d1c61a2 100644
+--- a/views/admin/survey-email.ejs
++++ b/views/admin/survey-email.ejs
+@@ -228,6 +228,15 @@ SMTP_BCC=   <span style="color:#94a3b8;"># optional สำเนาทุกอ
+         <textarea name="closing_online_th" id="tpl_closing_online_th" class="inp" rows="2"></textarea>
+         <textarea name="closing_online_en" id="tpl_closing_online_en" class="inp" rows="2"></textarea>
+       </div>
++      <p class="lbl" style="margin-bottom:6px;">&#x0E42;&#x0E17;&#x0E23;&#x0E28;&#x0E31;&#x0E1E;&#x0E17;&#x0E4C;</p>
++      <div class="field-grid" style="margin-bottom:4px;">
++        <label class="lbl">???</label>
++        <label class="lbl">English</label>
++      </div>
++      <div class="field-grid" style="margin-bottom:14px;">
++        <textarea name="closing_phone_th" id="tpl_closing_phone_th" class="inp" rows="2"></textarea>
++        <textarea name="closing_phone_en" id="tpl_closing_phone_en" class="inp" rows="2"></textarea>
++      </div>
+       <p class="lbl" style="margin-bottom:6px;">เข้ารับบริการด้วยตนเอง</p>
+       <div class="field-grid" style="margin-bottom:4px;">
+         <label class="lbl">ไทย</label>
+@@ -238,11 +247,66 @@ SMTP_BCC=   <span style="color:#94a3b8;"># optional สำเนาทุกอ
+         <textarea name="closing_onsite_en" id="tpl_closing_onsite_en" class="inp" rows="2"></textarea>
+       </div>
+     </div>
++
++    <div id="tpl_access_details" style="display:none;margin-top:14px;">
++      <p class="field-help" style="margin:0 0 8px;">&#x0E02;&#x0E49;&#x0E2D;&#x0E04;&#x0E27;&#x0E32;&#x0E21;&#x0E23;&#x0E32;&#x0E22;&#x0E25;&#x0E30;&#x0E40;&#x0E2D;&#x0E35;&#x0E22;&#x0E14;&#x0E23;&#x0E39;&#x0E1B;&#x0E41;&#x0E1A;&#x0E1A;&#x0E1A;&#x0E23;&#x0E34;&#x0E01;&#x0E32;&#x0E23;&#x0E43;&#x0E19;&#x0E2D;&#x0E35;&#x0E40;&#x0E21;&#x0E25; ? &#x0E23;&#x0E30;&#x0E1A;&#x0E1A;&#x0E08;&#x0E30;&#x0E43;&#x0E0A;&#x0E49;&#x0E40;&#x0E09;&#x0E1E;&#x0E32;&#x0E30;&#x0E40;&#x0E21;&#x0E37;&#x0E48;&#x0E2D;&#x0E19;&#x0E31;&#x0E14;&#x0E2B;&#x0E21;&#x0E32;&#x0E22;&#x0E40;&#x0E1B;&#x0E47;&#x0E19;&#x0E2D;&#x0E2D;&#x0E19;&#x0E44;&#x0E25;&#x0E19;&#x0E4C;&#x0E2B;&#x0E23;&#x0E37;&#x0E2D;&#x0E42;&#x0E17;&#x0E23;&#x0E28;&#x0E31;&#x0E1E;&#x0E17;&#x0E4C;</p>
++      <p class="lbl" style="margin-bottom:6px;">&#x0E2D;&#x0E2D;&#x0E19;&#x0E44;&#x0E25;&#x0E19;&#x0E4C;</p>
++      <div class="field-grid" style="margin-bottom:4px;">
++        <label class="lbl">&#x0E0A;&#x0E37;&#x0E48;&#x0E2D;&#x0E01;&#x0E25;&#x0E48;&#x0E2D;&#x0E07;&#x0E25;&#x0E34;&#x0E07;&#x0E01;&#x0E4C; (???)</label>
++        <label class="lbl">Online card title (English)</label>
++      </div>
++      <div class="field-grid" style="margin-bottom:10px;">
++        <input type="text" name="access_online_title_th" id="tpl_access_online_title_th" class="inp">
++        <input type="text" name="access_online_title_en" id="tpl_access_online_title_en" class="inp">
++      </div>
++      <div class="field-grid" style="margin-bottom:4px;">
++        <label class="lbl">&#x0E1B;&#x0E49;&#x0E32;&#x0E22;&#x0E01;&#x0E33;&#x0E01;&#x0E31;&#x0E1A;&#x0E25;&#x0E34;&#x0E07;&#x0E01;&#x0E4C; (???)</label>
++        <label class="lbl">Link label (English)</label>
++      </div>
++      <div class="field-grid" style="margin-bottom:14px;">
++        <input type="text" name="access_online_link_label_th" id="tpl_access_online_link_label_th" class="inp">
++        <input type="text" name="access_online_link_label_en" id="tpl_access_online_link_label_en" class="inp">
++      </div>
++      <p class="lbl" style="margin-bottom:6px;">&#x0E42;&#x0E17;&#x0E23;&#x0E28;&#x0E31;&#x0E1E;&#x0E17;&#x0E4C;</p>
++      <div class="field-grid" style="margin-bottom:4px;">
++        <label class="lbl">&#x0E0A;&#x0E37;&#x0E48;&#x0E2D;&#x0E01;&#x0E25;&#x0E48;&#x0E2D;&#x0E07;&#x0E42;&#x0E17;&#x0E23;&#x0E28;&#x0E31;&#x0E1E;&#x0E17;&#x0E4C; (???)</label>
++        <label class="lbl">Phone card title (English)</label>
++      </div>
++      <div class="field-grid" style="margin-bottom:10px;">
++        <input type="text" name="access_phone_title_th" id="tpl_access_phone_title_th" class="inp">
++        <input type="text" name="access_phone_title_en" id="tpl_access_phone_title_en" class="inp">
++      </div>
++      <div class="field-grid" style="margin-bottom:4px;">
++        <label class="lbl">&#x0E1B;&#x0E49;&#x0E32;&#x0E22;&#x0E40;&#x0E1A;&#x0E2D;&#x0E23;&#x0E4C;&#x0E1C;&#x0E39;&#x0E49;&#x0E23;&#x0E31;&#x0E1A;&#x0E1A;&#x0E23;&#x0E34;&#x0E01;&#x0E32;&#x0E23; (???)</label>
++        <label class="lbl">Client phone label (English)</label>
++      </div>
++      <div class="field-grid" style="margin-bottom:10px;">
++        <input type="text" name="access_phone_counselor_phone_label_th" id="tpl_access_phone_counselor_phone_label_th" class="inp">
++        <input type="text" name="access_phone_counselor_phone_label_en" id="tpl_access_phone_counselor_phone_label_en" class="inp">
++      </div>
++      <div class="field-grid" style="margin-bottom:4px;">
++        <label class="lbl">&#x0E1B;&#x0E49;&#x0E32;&#x0E22;&#x0E02;&#x0E49;&#x0E2D;&#x0E04;&#x0E27;&#x0E32;&#x0E21;&#x0E41;&#x0E08;&#x0E49;&#x0E07;&#x0E1C;&#x0E39;&#x0E49;&#x0E23;&#x0E31;&#x0E1A;&#x0E1A;&#x0E23;&#x0E34;&#x0E01;&#x0E32;&#x0E23; (???)</label>
++        <label class="lbl">Client notice label (English)</label>
++      </div>
++      <div class="field-grid" style="margin-bottom:10px;">
++        <input type="text" name="access_phone_client_notice_label_th" id="tpl_access_phone_client_notice_label_th" class="inp">
++        <input type="text" name="access_phone_client_notice_label_en" id="tpl_access_phone_client_notice_label_en" class="inp">
++      </div>
++      <div class="field-grid" style="margin-bottom:4px;">
++        <label class="lbl">&#x0E02;&#x0E49;&#x0E2D;&#x0E04;&#x0E27;&#x0E32;&#x0E21;&#x0E41;&#x0E08;&#x0E49;&#x0E07;&#x0E1C;&#x0E39;&#x0E49;&#x0E23;&#x0E31;&#x0E1A;&#x0E1A;&#x0E23;&#x0E34;&#x0E01;&#x0E32;&#x0E23; (???)</label>
++        <label class="lbl">Client notice text (English)</label>
++      </div>
++      <div class="field-grid">
++        <textarea name="access_phone_client_notice_text_th" id="tpl_access_phone_client_notice_text_th" class="inp" rows="2"></textarea>
++        <textarea name="access_phone_client_notice_text_en" id="tpl_access_phone_client_notice_text_en" class="inp" rows="2"></textarea>
++      </div>
++    </div>
+   </form>
+   <div style="padding:16px 24px;border-top:1px solid #f1f5f9;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;">
+     <div style="display:flex;gap:10px;flex-wrap:wrap;">
+       <button type="submit" form="tplForm" id="tplPreviewBtn" class="act-btn ab-secondary"><i data-lucide="eye" style="width:14px;height:14px;"></i> ดูตัวอย่าง</button>
+       <button type="submit" form="tplForm" id="tplPreviewOnlineBtn" class="act-btn ab-secondary" style="display:none;"><i data-lucide="eye" style="width:14px;height:14px;"></i> ดูตัวอย่าง (ออนไลน์)</button>
++      <button type="submit" form="tplForm" id="tplPreviewPhoneBtn" class="act-btn ab-secondary" style="display:none;"><i data-lucide="eye" style="width:14px;height:14px;"></i> &#x0E14;&#x0E39;&#x0E15;&#x0E31;&#x0E27;&#x0E2D;&#x0E22;&#x0E48;&#x0E32;&#x0E07; (&#x0E42;&#x0E17;&#x0E23;&#x0E28;&#x0E31;&#x0E1E;&#x0E17;&#x0E4C;)</button>
+       <button type="submit" form="tplForm" id="tplPreviewOnsiteBtn" class="act-btn ab-secondary" style="display:none;"><i data-lucide="eye" style="width:14px;height:14px;"></i> ดูตัวอย่าง (เข้ารับบริการ)</button>
+     </div>
+     <button type="submit" form="tplForm" id="tplSaveBtn" class="act-btn ab-primary"><i data-lucide="save" style="width:14px;height:14px;"></i> บันทึกข้อความ</button>
+@@ -250,6 +314,26 @@ SMTP_BCC=   <span style="color:#94a3b8;"># optional สำเนาทุกอ
+ </div>
+ <script>
+   var TYPES_WITH_CLOSING_VARIANTS = <%- JSON.stringify(typesWithClosingVariants) %>
++  var TYPES_WITH_ACCESS_DETAILS = <%- JSON.stringify(typesWithAccessDetails) %>
++  var ACCESS_DETAIL_FIELDS = {
++    online_title: 'onlineTitle',
++    online_link_label: 'onlineLinkLabel',
++    phone_title: 'phoneTitle',
++    phone_counselor_phone_label: 'phoneCounselorPhoneLabel',
++    phone_client_notice_label: 'phoneClientNoticeLabel',
++    phone_client_notice_text: 'phoneClientNoticeText'
++  }
++
++  function fillAccessDetailFields(tpl, defaults) {
++    Object.keys(ACCESS_DETAIL_FIELDS).forEach(function(field) {
++      var key = ACCESS_DETAIL_FIELDS[field]
++      ;['th', 'en'].forEach(function(lang) {
++        var input = document.getElementById('tpl_access_' + field + '_' + lang)
++        input.value = (tpl.accessDetails && tpl.accessDetails[lang] && tpl.accessDetails[lang][key]) || ''
++        input.placeholder = (defaults.accessDetails && defaults.accessDetails[lang] && defaults.accessDetails[lang][key]) || ''
++      })
++    })
++  }
+ 
+   function openTplPanel(type, label, tpl, defaults) {
+     document.getElementById('tplPanelTitle').textContent = 'แก้ไขข้อความ: ' + label
+@@ -262,23 +346,34 @@ SMTP_BCC=   <span style="color:#94a3b8;"># optional สำเนาทุกอ
+     document.getElementById('tpl_greeting_en').placeholder = (defaults.greeting && defaults.greeting.en) || ''
+ 
+     var isVariant = TYPES_WITH_CLOSING_VARIANTS.indexOf(type) !== -1
++    var hasAccessDetails = TYPES_WITH_ACCESS_DETAILS.indexOf(type) !== -1
++    var useAppointmentPreviews = isVariant || hasAccessDetails
+     document.getElementById('tpl_closing_simple').style.display = isVariant ? 'none' : 'block'
+     document.getElementById('tpl_closing_variant').style.display = isVariant ? 'block' : 'none'
+-    document.getElementById('tplPreviewBtn').style.display = isVariant ? 'none' : 'inline-flex'
+-    document.getElementById('tplPreviewOnlineBtn').style.display = isVariant ? 'inline-flex' : 'none'
+-    document.getElementById('tplPreviewOnsiteBtn').style.display = isVariant ? 'inline-flex' : 'none'
++    document.getElementById('tpl_access_details').style.display = hasAccessDetails ? 'block' : 'none'
++    document.getElementById('tplPreviewBtn').style.display = useAppointmentPreviews ? 'none' : 'inline-flex'
++    document.getElementById('tplPreviewOnlineBtn').style.display = useAppointmentPreviews ? 'inline-flex' : 'none'
++    document.getElementById('tplPreviewPhoneBtn').style.display = useAppointmentPreviews ? 'inline-flex' : 'none'
++    document.getElementById('tplPreviewOnsiteBtn').style.display = useAppointmentPreviews ? 'inline-flex' : 'none'
++    if (hasAccessDetails) fillAccessDetailFields(tpl, defaults)
+ 
+     if (isVariant) {
+       document.getElementById('tpl_closing_online_th').value = (tpl.closing && tpl.closing.th && tpl.closing.th.online) || ''
+       document.getElementById('tpl_closing_online_en').value = (tpl.closing && tpl.closing.en && tpl.closing.en.online) || ''
++      document.getElementById('tpl_closing_phone_th').value = (tpl.closing && tpl.closing.th && tpl.closing.th.phone) || ''
++      document.getElementById('tpl_closing_phone_en').value = (tpl.closing && tpl.closing.en && tpl.closing.en.phone) || ''
+       document.getElementById('tpl_closing_onsite_th').value = (tpl.closing && tpl.closing.th && tpl.closing.th.onsite) || ''
+       document.getElementById('tpl_closing_onsite_en').value = (tpl.closing && tpl.closing.en && tpl.closing.en.onsite) || ''
+       document.getElementById('tpl_closing_online_th').placeholder = (defaults.closing && defaults.closing.th && defaults.closing.th.online) || ''
+       document.getElementById('tpl_closing_online_en').placeholder = (defaults.closing && defaults.closing.en && defaults.closing.en.online) || ''
++      document.getElementById('tpl_closing_phone_th').placeholder = (defaults.closing && defaults.closing.th && defaults.closing.th.phone) || ''
++      document.getElementById('tpl_closing_phone_en').placeholder = (defaults.closing && defaults.closing.en && defaults.closing.en.phone) || ''
+       document.getElementById('tpl_closing_onsite_th').placeholder = (defaults.closing && defaults.closing.th && defaults.closing.th.onsite) || ''
+       document.getElementById('tpl_closing_onsite_en').placeholder = (defaults.closing && defaults.closing.en && defaults.closing.en.onsite) || ''
+       document.getElementById('tplPreviewOnlineBtn').setAttribute('formaction', '/admin/survey-email/preview/' + type + '?apptType=online')
+       document.getElementById('tplPreviewOnlineBtn').setAttribute('formtarget', '_blank')
++      document.getElementById('tplPreviewPhoneBtn').setAttribute('formaction', '/admin/survey-email/preview/' + type + '?apptType=phone')
++      document.getElementById('tplPreviewPhoneBtn').setAttribute('formtarget', '_blank')
+       document.getElementById('tplPreviewOnsiteBtn').setAttribute('formaction', '/admin/survey-email/preview/' + type + '?apptType=onsite')
+       document.getElementById('tplPreviewOnsiteBtn').setAttribute('formtarget', '_blank')
+     } else {
+@@ -290,6 +385,15 @@ SMTP_BCC=   <span style="color:#94a3b8;"># optional สำเนาทุกอ
+       document.getElementById('tplPreviewBtn').setAttribute('formtarget', '_blank')
+     }
+ 
++    if (hasAccessDetails && !isVariant) {
++      document.getElementById('tplPreviewOnlineBtn').setAttribute('formaction', '/admin/survey-email/preview/' + type + '?apptType=online')
++      document.getElementById('tplPreviewOnlineBtn').setAttribute('formtarget', '_blank')
++      document.getElementById('tplPreviewPhoneBtn').setAttribute('formaction', '/admin/survey-email/preview/' + type + '?apptType=phone')
++      document.getElementById('tplPreviewPhoneBtn').setAttribute('formtarget', '_blank')
++      document.getElementById('tplPreviewOnsiteBtn').setAttribute('formaction', '/admin/survey-email/preview/' + type + '?apptType=onsite')
++      document.getElementById('tplPreviewOnsiteBtn').setAttribute('formtarget', '_blank')
++    }
++
+     const ov = document.getElementById('tplOverlay')
+     ov.style.display = 'block'
+     requestAnimationFrame(() => ov.classList.add('open'))

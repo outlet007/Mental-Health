@@ -11,12 +11,34 @@ const { logDeletion } = require('../../utils/audit-log')
 const { getConcernOptions } = require('../../utils/concern-options')
 
 const dataDir = path.join(__dirname, '../../../data')
+const DEFAULT_SESSION_TYPES = { online: true, phone: false, onsite: true }
 
 // สีอ้างอิงต่อนักจิตวิทยา — ต้องตรงกับ COLORS ใน src/routes/admin/schedules.js
 const COUNSELOR_COLORS = ['#6366f1','#05967e','#f59e0b','#ef4444','#06b6d4','#8b5cf6','#10b981','#f43f5e']
 
 function read(file) { return JSON.parse(fs.readFileSync(path.join(dataDir, file), 'utf8')) }
 function write(file, d) { fs.writeFileSync(path.join(dataDir, file), JSON.stringify(d, null, 2)) }
+
+function readAppointmentSessionTypes() {
+  try {
+    const content = read('content.json')
+    return { ...DEFAULT_SESSION_TYPES, ...(content.book?.sessionTypes || {}) }
+  } catch {
+    return { ...DEFAULT_SESSION_TYPES }
+  }
+}
+
+function firstEnabledSessionType(sessionTypes) {
+  return ['online', 'phone', 'onsite'].find(type => sessionTypes[type]) || 'online'
+}
+
+function normalizeAppointmentType(type, sessionTypes) {
+  return sessionTypes[type] ? type : firstEnabledSessionType(sessionTypes)
+}
+
+function cleanMeetingLink(type, meetingLink) {
+  return type === 'online' ? (meetingLink || '').trim() : ''
+}
 
 function isCounselor(req) {
   return req.session.userType === 'counselor'
@@ -116,6 +138,7 @@ router.get('/', (req, res) => {
   const schedules = isCounselor(req)
     ? read('schedules.json').filter(s => s.counselorId === req.session.counselorId)
     : read('schedules.json')
+  const appointmentSessionTypes = readAppointmentSessionTypes()
 
   const counselorActiveCounts = {}
   appointments.forEach(a => {
@@ -134,6 +157,7 @@ router.get('/', (req, res) => {
     counselors,
     clients,
     schedules,
+    appointmentSessionTypes,
     counselorActiveCounts,
     myStatusCounts,
     query: req.query,
@@ -152,7 +176,9 @@ router.get('/slots', (req, res) => {
 
 // ── CREATE ────────────────────────────────────────────────────────────────────
 router.post('/create', async (req, res) => {
-  const { counselorId, clientId, date, time, type, note, concern } = req.body
+  const { counselorId, clientId, date, time, type, note, concern, meetingLink } = req.body
+  const sessionTypes = readAppointmentSessionTypes()
+  const appointmentType = normalizeAppointmentType(type || 'online', sessionTypes)
 
   if (!canUseCounselor(req, counselorId) || !canUseClient(req, clientId)) return forbidden(res)
 
@@ -187,7 +213,8 @@ router.post('/create', async (req, res) => {
     date,
     time,
     duration,
-    type:          type || 'online',
+    type:          appointmentType,
+    meetingLink:   cleanMeetingLink(appointmentType, meetingLink),
     status:        'confirmed',
     note:          note || '',
     concern:       (concern || '').trim(),
@@ -212,7 +239,8 @@ router.post('/create', async (req, res) => {
 
 // ── EDIT ──────────────────────────────────────────────────────────────────────
 router.post('/:id/edit', (req, res) => {
-  const { counselorId, date, time, type, status, note, concern } = req.body
+  const { counselorId, date, time, type, status, note, concern, meetingLink } = req.body
+  const sessionTypes = readAppointmentSessionTypes()
   const data = read('appointments.json')
   const idx  = data.findIndex(a => a.id === req.params.id)
   if (idx === -1) return res.redirect('/admin/appointments?updated=1')
@@ -257,7 +285,10 @@ router.post('/:id/edit', (req, res) => {
   data[idx].time          = newTime
   if (scheduleChanged) data[idx].reminderSent = false
   if (!counselorRole) {
-    if (type)   data[idx].type   = type
+    if (type) {
+      data[idx].type = normalizeAppointmentType(type, sessionTypes)
+      data[idx].meetingLink = cleanMeetingLink(data[idx].type, meetingLink)
+    }
     if (status) data[idx].status = status
     if (note !== undefined) data[idx].note = note.trim()
     if (concern !== undefined) data[idx].concern = concern.trim()

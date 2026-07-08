@@ -157,3 +157,31 @@ test('renderTemplateFields accepts a draft override without touching the saved f
     assert.equal(fs.existsSync(templatesPath) ? fs.readFileSync(templatesPath, 'utf8') : null, before)
   })
 })
+
+test('phone closing and appointment access detail text are template-driven', () => {
+  return withTempTemplatesFile(() => {
+    const { writeEmailTemplate, renderTemplateFields } = require('../src/utils/email-templates')
+    const defaultPhone = renderTemplateFields('appointmentClient', 'en', {}, undefined, 'phone')
+    assert.equal(defaultPhone.closing, 'Please keep your phone available at the appointment time.')
+    assert.equal(defaultPhone.accessDetails.onlineTitle, 'Video call link')
+    assert.equal(defaultPhone.accessDetails.phoneClientNoticeText, 'The counselor will call you for counseling.')
+
+    writeEmailTemplate('appointmentClient', {
+      title: { th: '', en: '' },
+      greeting: { th: '', en: '' },
+      closing: { th: { online: '', phone: '', onsite: '' }, en: { online: '', phone: 'Phone closing for {{clientName}}', onsite: '' } },
+      accessDetails: {
+        en: {
+          onlineTitle: 'Custom video room',
+          phoneClientNoticeText: 'Custom phone notice for {{clientName}}',
+        },
+      },
+    })
+
+    const fields = renderTemplateFields('appointmentClient', 'en', { clientName: 'Alex' }, undefined, 'phone')
+    assert.equal(fields.closing, 'Phone closing for Alex')
+    assert.equal(fields.accessDetails.onlineTitle, 'Custom video room')
+    assert.equal(fields.accessDetails.onlineLinkLabel, defaultPhone.accessDetails.onlineLinkLabel)
+    assert.equal(fields.accessDetails.phoneClientNoticeText, 'Custom phone notice for Alex')
+  })
+})

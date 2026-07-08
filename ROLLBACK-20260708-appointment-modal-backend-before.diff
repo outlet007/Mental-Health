@@ -1,0 +1,492 @@
+diff --git a/src/routes/admin/appointments.js b/src/routes/admin/appointments.js
+index 38be75a..e868e50 100644
+--- a/src/routes/admin/appointments.js
++++ b/src/routes/admin/appointments.js
+@@ -152,7 +152,7 @@ router.get('/slots', (req, res) => {
+ 
+ // ── CREATE ────────────────────────────────────────────────────────────────────
+ router.post('/create', async (req, res) => {
+-  const { counselorId, clientId, date, time, type, note, concern } = req.body
++  const { counselorId, clientId, date, time, type, note, concern, meetingLink } = req.body
+ 
+   if (!canUseCounselor(req, counselorId) || !canUseClient(req, clientId)) return forbidden(res)
+ 
+@@ -212,7 +212,7 @@ router.post('/create', async (req, res) => {
+ 
+ // ── EDIT ──────────────────────────────────────────────────────────────────────
+ router.post('/:id/edit', (req, res) => {
+-  const { counselorId, date, time, type, status, note, concern } = req.body
++  const { counselorId, date, time, type, status, note, concern, meetingLink } = req.body
+   const data = read('appointments.json')
+   const idx  = data.findIndex(a => a.id === req.params.id)
+   if (idx === -1) return res.redirect('/admin/appointments?updated=1')
+diff --git a/src/routes/admin/registration-form.js b/src/routes/admin/registration-form.js
+index f59921b..16204e4 100644
+--- a/src/routes/admin/registration-form.js
++++ b/src/routes/admin/registration-form.js
+@@ -26,6 +26,7 @@ const FORM_TEXT_FIELDS = [
+   'concernLabel',
+   'typeLabel',
+   'onlineLabel',
++  'phoneSessionLabel',
+   'onsiteLabel',
+   'pdpaHeading',
+   'pdpaText',
+@@ -42,6 +43,14 @@ function readFormTexts(body, current = {}) {
+   return formTexts
+ }
+ 
++function readSessionTypes(body) {
++  return {
++    online: body.sessionTypeEnabled_online === 'on',
++    phone:  body.sessionTypeEnabled_phone === 'on',
++    onsite: body.sessionTypeEnabled_onsite === 'on',
++  }
++}
++
+ function readBookSettings(body, currentBook, concernField) {
+   return {
+     ...currentBook,
+@@ -49,6 +58,7 @@ function readBookSettings(body, currentBook, concernField) {
+     subtext: (body.bookSubtext || '').trim(),
+     formHeading: (body.bookFormHeading || '').trim(),
+     concernOptions: readItems(body[concernField]),
++    sessionTypes: readSessionTypes(body),
+     formTexts: readFormTexts(body, currentBook.formTexts || {}),
+   }
+ }
+diff --git a/src/utils/mailer.js b/src/utils/mailer.js
+index d7a0db1..5e90437 100644
+--- a/src/utils/mailer.js
++++ b/src/utils/mailer.js
+@@ -41,7 +41,11 @@ function buildVars({ appointment, client, counselor }) {
+ }
+ 
+ function typeLabel(type, lang = 'th') {
+-  if (lang === 'en') return type === 'online' ? 'Online video call' : 'On-site service'
++  if (lang === 'en') {
++    if (type === 'phone') return 'Phone call'
++    return type === 'online' ? 'Online video call' : 'On-site service'
++  }
++  if (type === 'phone') return 'โทรศัพท์ (Phone call)'
+   return type === 'online' ? 'ออนไลน์ (Video Call)' : 'เข้ารับบริการด้วยตนเอง (On-site)'
+ }
+ 
+@@ -50,6 +54,7 @@ function icon(name, color = '#05967e') {
+     'heart-handshake': '<path d="M19.5 12.6 12 20l-7.5-7.4a5 5 0 0 1 7.1-7.1l.4.4.4-.4a5 5 0 0 1 7.1 7.1Z"/><path d="M12 20l-2-2 2-2 2 2-2 2Z"/>',
+     video: '<path d="m16 13 5 3V8l-5 3"/><rect width="14" height="12" x="2" y="6" rx="2"/>',
+     'map-pin': '<path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/>',
++    phone: '<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 2.08 4.18 2 2 0 0 1 4.06 2h3a2 2 0 0 1 2 1.72c.12.9.32 1.77.59 2.61a2 2 0 0 1-.45 2.11L8 9.63a16 16 0 0 0 6.37 6.37l1.19-1.19a2 2 0 0 1 2.11-.45c.84.27 1.71.47 2.61.59A2 2 0 0 1 22 16.92Z"/>',
+     calendar: '<path d="M8 2v4M16 2v4M3 10h18"/><rect width="18" height="18" x="3" y="4" rx="2"/>',
+     user: '<path d="M19 21a7 7 0 0 0-14 0"/><circle cx="12" cy="7" r="4"/>',
+     clipboard: '<rect width="8" height="4" x="8" y="2" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>',
+@@ -70,6 +75,22 @@ function card(title, rows, color = '#05967e') {
+   return `<div style="border:1px solid #e2e8f0;border-radius:14px;padding:18px;margin:18px 0;background:#ffffff;"><h3 style="margin:0 0 10px;color:${color};font-size:15px;">${title}</h3><table width="100%" cellpadding="0" cellspacing="0">${rows.join('')}</table></div>`
+ }
+ 
++function appointmentAccessDetails({ appointment, client }, lang = 'th', audience = 'client') {
++  if (appointment.type === 'online' && appointment.meetingLink) {
++    if (lang === 'en') return card(icon('video') + 'Video call link', [row('Join link', appointment.meetingLink)])
++    return card(icon('video') + 'ลิงก์เข้าร่วมวิดีโอคอล', [row('ลิงก์', appointment.meetingLink)])
++  }
++  if (appointment.type === 'phone') {
++    if (audience === 'counselor') {
++      if (lang === 'en') return card(icon('phone') + 'Phone counseling', [row('Client phone', client.phone || '-')])
++      return card(icon('phone') + 'การให้คำปรึกษาทางโทรศัพท์', [row('เบอร์โทรผู้รับบริการ', client.phone || '-')])
++    }
++    if (lang === 'en') return card(icon('phone') + 'Phone counseling', [row('Notice', 'The counselor will call you for counseling.')])
++    return card(icon('phone') + 'การให้คำปรึกษาทางโทรศัพท์', [row('ข้อความ', 'จิตแพทย์จะโทรติดต่อกลับเพื่อให้คำปรึกษา')])
++  }
++  return ''
++}
++
+ function paragraph(iconName, iconColor, html) {
+   return `<p style="font-size:15px;line-height:1.8;color:#334155;margin:0 0 18px;">${icon(iconName, iconColor)}${html}</p>`
+ }
+@@ -83,12 +104,12 @@ function emailWrapper(title, accentColor, thHtml, enHtml) {
+   return `<!DOCTYPE html><html lang="th"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>${title}</title></head><body style="margin:0;padding:0;background:#f1f5f9;font-family:'Noto Sans Thai','Segoe UI',Arial,sans-serif;"><table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f1f5f9;font-family:'Noto Sans Thai','Segoe UI',Arial,sans-serif;"><tr><td align="center" style="padding:28px 14px;"><table width="640" cellpadding="0" cellspacing="0" border="0" style="max-width:640px;width:100%;background:#fff;border-radius:18px;overflow:hidden;box-shadow:0 8px 30px rgba(15,23,42,.08);"><tr><td style="background:linear-gradient(135deg,${accentColor.from},${accentColor.to});padding:30px 36px;color:#fff;"><div style="font-size:13px;font-weight:700;letter-spacing:.08em;margin-bottom:10px;">MindCare</div><h1 style="margin:0;font-size:23px;line-height:1.35;">${title}</h1></td></tr><tr><td style="padding:30px 36px;">${body}</td></tr><tr><td style="border-top:1px solid #e2e8f0;padding:18px 36px;color:#94a3b8;font-size:12px;line-height:1.7;">อีเมลนี้ส่งจากระบบ MindCare อัตโนมัติ<br>&copy; ${new Date().getFullYear()} MindCare</td></tr></table></td></tr></table></body></html>`
+ }
+ 
+-function appointmentDetails({ appointment, client, counselor, concern }, lang = 'th') {
++function appointmentDetails({ appointment, client, counselor, concern }, lang = 'th', audience = 'client') {
+   const dateStr = formatDate(appointment.date)
+   if (lang === 'en') {
+     return card(`${icon('calendar')}Appointment details`, [
+       row('Appointment ID', appointment.id), row('Date', dateStr), row('Time', `${appointment.time}`), row('Duration', `${appointment.duration} minutes`), row('Type', typeLabel(appointment.type, 'en')), row('Topic', concern || '-')
+-    ]) + card(`${icon('user')}Counselor`, [row('Name', counselor.name), row('Email', counselor.email || '-'), row('Phone', counselor.phone || '-')])
++    ]) + appointmentAccessDetails({ appointment, client }, 'en', audience) + card(`${icon('user')}Counselor`, [row('Name', counselor.name), row('Email', counselor.email || '-'), row('Phone', counselor.phone || '-')])
+   }
+   return card(`${icon('calendar')}รายละเอียดการนัดหมาย`, [
+     row('รหัสการนัด', appointment.id), row('วันที่', dateStr), row('เวลา', `${appointment.time} น.`), row('ระยะเวลา', `${appointment.duration} นาที`), row('รูปแบบ', typeLabel(appointment.type)), row('เรื่องที่ปรึกษา', concern || '-')
+@@ -99,7 +120,7 @@ function appointmentDetails({ appointment, client, counselor, concern }, lang =
+ // the standard appointment-details cards + an optional closing paragraph.
+ // For appointmentClient/reminder, the closing line (and its icon) depend on
+ // whether the appointment is online ("join") or onsite ("arrive").
+-function standardEmailHtml(type, data, accentColor, greetingIcon, closingIcon, templateOverride) {
++function standardEmailHtml(type, data, accentColor, greetingIcon, closingIcon, templateOverride, audience = 'client') {
+   const vars = buildVars(data)
+   const apptType = data.appointment.type
+   const resolvedClosingIcon = hasClosingVariants(type)
+@@ -107,7 +128,7 @@ function standardEmailHtml(type, data, accentColor, greetingIcon, closingIcon, t
+     : closingIcon
+   const build = lang => {
+     const t = renderTemplateFields(type, lang, vars, templateOverride, apptType)
+-    return { title: t.title, html: paragraph(...greetingIcon, t.greeting) + appointmentDetails(data, lang) + (t.closing ? paragraph(...resolvedClosingIcon, t.closing) : '') }
++    return { title: t.title, html: paragraph(...greetingIcon, t.greeting) + appointmentDetails(data, lang, audience) + (t.closing ? paragraph(...resolvedClosingIcon, t.closing) : '') }
+   }
+   const th = build('th')
+   const en = build('en')
+@@ -115,11 +136,11 @@ function standardEmailHtml(type, data, accentColor, greetingIcon, closingIcon, t
+ }
+ 
+ function clientEmailHtml(data, templateOverride) {
+-  return standardEmailHtml('appointmentClient', data, { from: '#05967e', to: '#06b6d4' }, ['heart-handshake', '#05967e'], ['video', '#05967e'], templateOverride)
++  return standardEmailHtml('appointmentClient', data, { from: '#05967e', to: '#06b6d4' }, ['heart-handshake', '#05967e'], ['video', '#05967e'], templateOverride, 'client')
+ }
+ 
+ function counselorEmailHtml(data, templateOverride) {
+-  return standardEmailHtml('appointmentCounselor', data, { from: '#3874FF', to: '#6366f1' }, ['heart-handshake', '#05967e'], ['video', '#05967e'], templateOverride)
++  return standardEmailHtml('appointmentCounselor', data, { from: '#3874FF', to: '#6366f1' }, ['heart-handshake', '#05967e'], ['video', '#05967e'], templateOverride, 'counselor')
+ }
+ 
+ function reminderEmailHtml(data, templateOverride) {
+diff --git a/tests/appointments-page.test.js b/tests/appointments-page.test.js
+index 0ebe4a5..35b8d43 100644
+--- a/tests/appointments-page.test.js
++++ b/tests/appointments-page.test.js
+@@ -93,6 +93,21 @@ test('appointments table separates status action buttons into the final column',
+   assert.match(row, new RegExp(PENDING_TABLE_LABEL))
+ })
+ 
++
++test('appointment create and edit panels support phone type and online meeting link field', async () => {
++  const html = await renderAppointments()
++
++  const createFormatSection = html.match(/data-create-format-note-section="true"[\s\S]*?<div id="apptSummary"/)?.[0] || ''
++  assert.match(createFormatSection, /name="type" value="phone"/)
++  assert.match(createFormatSection, /id="meetingLinkWrap"/)
++  assert.match(createFormatSection, /name="meetingLink"/)
++  assert.match(createFormatSection, /name="note"/)
++  assert.match(createFormatSection, /Google Meet, Zoom, Microsoft Teams, LINE Meeting/)
++  assert.match(html, /function toggleMeetingLinkField/)
++  assert.match(html, /id="e_phone"/)
++  assert.match(html, /id="e_meetingLink"/)
++})
++
+ test('appointments header links to the public website', async () => {
+   const html = await renderAppointments()
+ 
+diff --git a/tests/mailer-config.test.js b/tests/mailer-config.test.js
+index 241915d..7cd534d 100644
+--- a/tests/mailer-config.test.js
++++ b/tests/mailer-config.test.js
+@@ -209,6 +209,35 @@ test('appointment confirmation closing text and icon differ between online and o
+   }
+ })
+ 
++
++test('appointment emails include online meeting links and phone call details by audience', async () => {
++  const harness = loadMailerWithCapturedTransport({})
++
++  try {
++    await harness.mailer.sendAppointmentEmails({
++      appointment: { id: 'app-online-link', date: '2026-07-01', time: '10:00', duration: 60, type: 'online', meetingLink: 'https://meet.example.test/abc', note: '' },
++      client: { name: 'Test Client', email: 'client@example.test', phone: '0812345678' },
++      counselor: { name: 'Test Counselor', email: 'counselor@example.test', phone: '', specialties: [] },
++      concern: '',
++    })
++    await harness.mailer.sendAppointmentEmails({
++      appointment: { id: 'app-phone', date: '2026-07-01', time: '11:00', duration: 60, type: 'phone', note: '' },
++      client: { name: 'Phone Client', email: 'phone-client@example.test', phone: '0899999999' },
++      counselor: { name: 'Phone Counselor', email: 'phone-counselor@example.test', phone: '', specialties: [] },
++      concern: '',
++    })
++
++    const [onlineClient, onlineCounselor, phoneClient, phoneCounselor] = harness.sentMessages
++    assert.ok(onlineClient.html.includes('https://meet.example.test/abc'))
++    assert.ok(onlineCounselor.html.includes('https://meet.example.test/abc'))
++    assert.match(phoneCounselor.html, /0899999999/)
++    assert.match(phoneCounselor.html, /Client phone/)
++    assert.match(phoneClient.html, /counselor will call you/)
++  } finally {
++    harness.restore()
++  }
++})
++
+ test('reminder email closing text differs between online and onsite appointments', async () => {
+   const harness = loadMailerWithCapturedTransport({})
+ 
+diff --git a/tests/registration-form-admin.test.js b/tests/registration-form-admin.test.js
+index 434ae03..f82f52f 100644
+--- a/tests/registration-form-admin.test.js
++++ b/tests/registration-form-admin.test.js
+@@ -108,6 +108,10 @@ test('registration form admin page renders editable TH and EN form controls', as
+   assert.match(body, /name="formText_phonePlaceholder"/)
+   assert.match(body, /name="formText_emailPlaceholder"/)
+   assert.match(body, /name="formText_submitLabel"/)
++  assert.match(body, /name="formText_phoneSessionLabel"/)
++  assert.match(body, /name="sessionTypeEnabled_online"/)
++  assert.match(body, /name="sessionTypeEnabled_phone"/)
++  assert.match(body, /name="sessionTypeEnabled_onsite"/)
+   assert.doesNotMatch(body, /name="formText_errorText"/)
+   assert.doesNotMatch(body, /ข้อความแจ้งเตือนเมื่อกรอกไม่ครบ/)
+   assert.match(body, /id="registration-en" style="display:;"/)
+@@ -180,6 +184,35 @@ test('registration concern options support drag and drop ordering', async () =>
+   assert.match(body, /function moveConcernRow/)
+ })
+ 
++test('registration form admin saves enabled session type settings for all formats', async () => {
++  const before = fs.readFileSync(contentPath, 'utf8')
++  try {
++    const res = await postRegistrationForm('/admin/registration-form', {
++      bookHeading: 'Custom registration heading',
++      bookSubtext: 'Custom registration subtext',
++      bookFormHeading: 'Custom form heading',
++      bookConcernOption: ['Stress option'],
++      formText_onlineLabel: 'Online option',
++      formText_phoneSessionLabel: 'Phone option',
++      formText_onsiteLabel: 'Onsite option',
++      sessionTypeEnabled_online: 'on',
++      sessionTypeEnabled_phone: 'on',
++    })
++
++    assert.equal(res.statusCode, 302)
++    const saved = JSON.parse(fs.readFileSync(contentPath, 'utf8'))
++    assert.deepEqual(saved.book.sessionTypes, {
++      online: true,
++      phone: true,
++      onsite: false,
++    })
++    assert.equal(saved.book.formTexts.phoneSessionLabel, 'Phone option')
++  } finally {
++    fs.writeFileSync(contentPath, before)
++  }
++})
++
++
+ test('registration form page saves all visible Thai form settings', async () => {
+   const before = fs.readFileSync(contentPath, 'utf8')
+   try {
+@@ -293,6 +326,42 @@ test('home page renders registration form text from content data', async () => {
+   assert.match(html, /'form-submit': "Rendered English submit label"/)
+ })
+ 
++test('home page renders only enabled registration session type options', async () => {
++  const base = JSON.parse(fs.readFileSync(contentPath, 'utf8'))
++  base.book = {
++    ...base.book,
++    sessionTypes: { online: false, phone: true, onsite: true },
++    formTexts: {
++      ...(base.book.formTexts || {}),
++      onlineLabel: 'Rendered online option',
++      phoneSessionLabel: 'Rendered phone option',
++      onsiteLabel: 'Rendered onsite option',
++    },
++  }
++  base.en = base.en || {}
++  base.en.book = {
++    ...(base.en.book || {}),
++    sessionTypes: { online: false, phone: true, onsite: true },
++    formTexts: {
++      ...((base.en.book && base.en.book.formTexts) || {}),
++      onlineLabel: 'Rendered English online option',
++      phoneSessionLabel: 'Rendered English phone option',
++      onsiteLabel: 'Rendered English onsite option',
++    },
++  }
++
++  const html = await renderIndex(base)
++
++  assert.doesNotMatch(html, /name="type" value="online"/)
++  assert.match(html, /name="type" value="phone" required/)
++  assert.match(html, /name="type" value="onsite"/)
++  assert.match(html, /Rendered phone option/)
++  assert.match(html, /Rendered onsite option/)
++  assert.match(html, /'form-type-phone': "Rendered English phone option"/)
++  assert.doesNotMatch(html, /'form-type-online': "Rendered English online option"/)
++})
++
++
+ test('website content page no longer contains registration form management controls', async () => {
+   const app = express()
+   app.set('view engine', 'ejs')
+diff --git a/views/admin/appointments.ejs b/views/admin/appointments.ejs
+index 5cf9744..45f49f7 100644
+--- a/views/admin/appointments.ejs
++++ b/views/admin/appointments.ejs
+@@ -468,22 +468,34 @@
+             </select>
+           </div>
+ 
++          <div data-create-format-note-section="true" style="display:grid;gap:14px;padding:12px;border:1px solid #f1f5f9;border-radius:12px;background:#fff;">
++            <div style="font-size:12px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.05em;">รูปแบบและหมายเหตุ</div>
+           <div>
+             <label class="lbl">รูปแบบการให้คำปรึกษา</label>
+             <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+               <label style="display:flex; align-items:center; gap:8px; padding:10px; border:1.5px solid #a5f3fc; border-radius:10px; cursor:pointer; background:#ecfeff;">
+-                <input type="radio" name="type" value="online" checked style="accent-color:#0891b2;">
++                <input type="radio" name="type" value="online" checked style="accent-color:#0891b2;" onchange="toggleMeetingLinkField()">
+                 <i data-lucide="video" style="width:14px;height:14px;color:#0891b2;flex-shrink:0;"></i>
+                 <span style="font-size:13px; font-weight:500; color:#1e293b;">ออนไลน์</span>
+               </label>
+               <label style="display:flex; align-items:center; gap:8px; padding:10px; border:1.5px solid #e2e8f0; border-radius:10px; cursor:pointer;">
+-                <input type="radio" name="type" value="onsite" style="accent-color:#3874FF;">
++                <input type="radio" name="type" value="phone" style="accent-color:#05967e;" onchange="toggleMeetingLinkField()">
++                <i data-lucide="phone" style="width:14px;height:14px;color:#05967e;flex-shrink:0;"></i>
++                <span style="font-size:13px; font-weight:500; color:#1e293b;">โทรศัพท์</span>
++              </label>
++              <label style="display:flex; align-items:center; gap:8px; padding:10px; border:1.5px solid #e2e8f0; border-radius:10px; cursor:pointer;">
++                <input type="radio" name="type" value="onsite" style="accent-color:#3874FF;" onchange="toggleMeetingLinkField()">
+                 <i data-lucide="map-pin" style="width:14px;height:14px;color:#3874FF;flex-shrink:0;"></i>
+                 <span style="font-size:13px; font-weight:500; color:#1e293b;">เข้ารับบริการด้วยตนเอง</span>
+               </label>
+             </div>
+           </div>
+ 
++          <div id="meetingLinkWrap">
++            <label class="lbl">ลิงก์สำหรับเข้าร่วมวิดีโอคอล</label>
++            <input type="url" name="meetingLink" id="meetingLink" class="inp" placeholder="Google Meet, Zoom, Microsoft Teams, LINE Meeting">
++          </div>
++
+           <div>
+             <label class="lbl">เรื่องที่ต้องการความช่วยเหลือ</label>
+             <textarea name="concern" rows="2" class="inp" style="resize:none;"
+@@ -496,6 +508,8 @@
+                       placeholder="เช่น ครั้งแรก, ติดตามอาการ ฯลฯ"></textarea>
+           </div>
+ 
++          </div>
++
+           <div id="apptSummary" style="display:none; padding:14px; background:#eaf1ff; border:1px solid #b9d0ff; border-radius:12px;">
+             <div style="font-size:12px; font-weight:600; color:#64748b; margin-bottom:10px; text-transform:uppercase; letter-spacing:.05em;">สรุปการนัดหมาย</div>
+             <div style="display:flex; justify-content:space-between; font-size:13px; margin-bottom:6px;">
+@@ -759,19 +773,29 @@
+           <div>
+             <label class="lbl">รูปแบบการให้คำปรึกษา</label>
+             <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+-              <label style="display:flex; align-items:center; gap:8px; padding:10px; border:1.5px solid #e2e8f0; border-radius:10px; cursor:pointer;">
+-                <input type="radio" name="type" value="online" id="e_online" style="accent-color:#0891b2;">
++              <label style="display:flex; align-items:center; gap:8px; padding:10px; border:1.5px solid #a5f3fc; border-radius:10px; cursor:pointer; background:#ecfeff;">
++                <input type="radio" name="type" value="online" id="e_online" style="accent-color:#0891b2;" onchange="toggleMeetingLinkField()">
+                 <i data-lucide="video" style="width:14px;height:14px;color:#0891b2;flex-shrink:0;"></i>
+                 <span style="font-size:13px; font-weight:500; color:#1e293b;">ออนไลน์</span>
+               </label>
+               <label style="display:flex; align-items:center; gap:8px; padding:10px; border:1.5px solid #e2e8f0; border-radius:10px; cursor:pointer;">
+-                <input type="radio" name="type" value="onsite" id="e_onsite" style="accent-color:#3874FF;">
++                <input type="radio" name="type" value="phone" id="e_phone" style="accent-color:#05967e;" onchange="toggleMeetingLinkField()">
++                <i data-lucide="phone" style="width:14px;height:14px;color:#05967e;flex-shrink:0;"></i>
++                <span style="font-size:13px; font-weight:500; color:#1e293b;">โทรศัพท์</span>
++              </label>
++              <label style="display:flex; align-items:center; gap:8px; padding:10px; border:1.5px solid #e2e8f0; border-radius:10px; cursor:pointer;">
++                <input type="radio" name="type" value="onsite" id="e_onsite" style="accent-color:#3874FF;" onchange="toggleMeetingLinkField()">
+                 <i data-lucide="map-pin" style="width:14px;height:14px;color:#3874FF;flex-shrink:0;"></i>
+                 <span style="font-size:13px; font-weight:500; color:#1e293b;">เข้ารับบริการด้วยตนเอง</span>
+               </label>
+             </div>
+           </div>
+ 
++          <div id="e_meetingLinkWrap">
++            <label class="lbl">ลิงก์สำหรับเข้าร่วมวิดีโอคอล</label>
++            <input type="url" name="meetingLink" id="e_meetingLink" class="inp" placeholder="Google Meet, Zoom, Microsoft Teams, LINE Meeting">
++          </div>
++
+           <div>
+             <label class="lbl">สถานะ</label>
+             <select name="status" id="e_status" class="inp">
+@@ -1192,6 +1216,21 @@
+ 
+   // ── View Panel ───────────────────────────────────────────────
+   const STATUS_LABELS = { pending:'รอยืนยัน', confirmed:'ยืนยันแล้ว', completed:'เสร็จสิ้น', cancelled:'ยกเลิก' }
++  function appointmentTypeLabel(type) {
++    if (type === 'phone') return 'โทรศัพท์'
++    if (type === 'onsite') return 'เข้ารับบริการด้วยตนเอง'
++    return 'ออนไลน์'
++  }
++
++  function toggleMeetingLinkField() {
++    const selected = document.querySelector('input[name="type"]:checked')
++    const wrap = document.getElementById('meetingLinkWrap')
++    const editSelected = document.querySelector('#editForm input[name="type"]:checked')
++    const editWrap = document.getElementById('e_meetingLinkWrap')
++    if (wrap) wrap.style.display = selected && selected.value === 'online' ? '' : 'none'
++    if (editWrap) editWrap.style.display = editSelected && editSelected.value === 'online' ? '' : 'none'
++  }
++
+   const STATUS_COLORS = {
+     pending:   { bg:'#fef3c7', color:'#92400e' },
+     confirmed: { bg:'#dbeafe', color:'#1e40af' },
+diff --git a/views/admin/registration-form.ejs b/views/admin/registration-form.ejs
+index 1c89089..8a09834 100644
+--- a/views/admin/registration-form.ejs
++++ b/views/admin/registration-form.ejs
+@@ -24,6 +24,10 @@
+   const formTexts = book.formTexts || {}
+   const enFormTexts = enBook.formTexts || {}
+   function val(obj, key, fallback) { return obj[key] || fallback }
++  function sessionTypeEnabled(bookData, key) {
++    const settings = bookData.sessionTypes || {}
++    return settings[key] !== false
++  }
+   function isWideField(key) { return ['successText', 'typeLabel', 'pdpaHeading', 'pdpaText'].includes(key) }
+   const thFields = [
+     ['successHeading', 'หัวข้อเมื่อส่งคำขอสำเร็จ', 'ส่งคำขอสำเร็จแล้ว!'],
+@@ -39,6 +43,7 @@
+     ['concernLabel', 'Label: เรื่องที่ต้องการความช่วยเหลือ', 'คุณต้องการความช่วยเหลือเรื่องอะไร?'],
+     ['typeLabel', 'Label: รูปแบบที่ต้องการ', 'รูปแบบที่ต้องการ'],
+     ['onlineLabel', 'ตัวเลือก: ออนไลน์', 'ออนไลน์'],
++    ['phoneSessionLabel', 'ตัวเลือก: โทรศัพท์', 'โทรศัพท์'],
+     ['onsiteLabel', 'ตัวเลือก: เข้ารับบริการด้วยตนเอง', 'เข้ารับบริการด้วยตนเอง'],
+     ['pdpaHeading', 'หัวข้อ PDPA', 'การยินยอมเปิดเผยข้อมูล'],
+     ['pdpaText', 'ข้อความ PDPA', 'ข้าพเจ้า ตกลงและยินยอมให้มหาวิทยาลัยเก็บรวบรวม ใช้ ประมวลผล และเปิดเผยข้อมูลส่วนบุคคลของข้าพเจ้า ทั้งที่ปรากฏในเอกสารฉบับนี้ หรือที่มหาวิทยาลัยรวบรวมจากบุคคลอื่น เพื่อวัตถุประสงค์ในการนัดพบแพทย์ หรือเพื่อใช้ประโยชน์ในกิจการของมหาวิทยาลัย ทั้งนี้ข้าพเจ้ารับทราบ ตกลงและยินยอมว่า มหาวิทยาลัยมีสิทธิ์เก็บรวบรวม ใช้ประมวลผลและเปิดเผยข้อมูลส่วนบุคคลของข้าพเจ้า โดยเป็นไปตามนโยบายคุ้มครองข้อมูลส่วนบุคคลของมหาวิทยาลัย ที่ประกาศใช้ในปัจจุบันหรืออาจเปลี่ยนแปลงแก้ไขในภายหลัง รายละเอียดปรากฏตาม นโยบายคุ้มครองข้อมูลส่วนบุคคล ในเว็บไซต์'],
+@@ -59,6 +64,7 @@
+     ['concernLabel', 'Label: Concern', 'What would you like help with?'],
+     ['typeLabel', 'Label: Preferred format', 'Preferred Format'],
+     ['onlineLabel', 'Option: Online', 'Online'],
++    ['phoneSessionLabel', 'Option: Phone call', 'Phone call'],
+     ['onsiteLabel', 'Option: In person', 'In-person'],
+     ['pdpaHeading', 'PDPA heading', 'Data Disclosure Consent'],
+     ['pdpaText', 'PDPA text', "I agree and consent to the University collecting, using, processing, and disclosing my personal information — both appearing in this document and gathered from other persons — for the purpose of scheduling medical appointments or for University operations. I acknowledge that the University has the right to collect, use, process, and disclose my personal data in accordance with the University's Personal Data Protection Policy as currently published or as may be amended in the future. Details are available in the Personal Data Protection Policy on the website."],
+@@ -160,6 +166,21 @@
+               </div>
+             </div>
+           </div>
++
++          <div class="form-frame" data-layout-frame="registration-session-types-th">
++            <div class="form-frame-header">
++              <div class="form-frame-icon"><i data-lucide="sliders-horizontal" style="width:15px;height:15px;"></i></div>
++              <div>
++                <p class="form-frame-title">เปิด/ปิดรูปแบบการให้บริการ</p>
++                <p class="form-frame-note">ควบคุมตัวเลือกที่แสดงในฟอร์มลงทะเบียนหน้าเว็บไซต์</p>
++              </div>
++            </div>
++            <div class="field-grid">
++              <label class="inp" style="display:flex;align-items:center;gap:8px;"><input type="checkbox" name="sessionTypeEnabled_online" <%= sessionTypeEnabled(book, 'online') ? 'checked' : '' %>> ออนไลน์</label>
++              <label class="inp" style="display:flex;align-items:center;gap:8px;"><input type="checkbox" name="sessionTypeEnabled_phone" <%= sessionTypeEnabled(book, 'phone') ? 'checked' : '' %>> โทรศัพท์</label>
++              <label class="inp" style="display:flex;align-items:center;gap:8px;"><input type="checkbox" name="sessionTypeEnabled_onsite" <%= sessionTypeEnabled(book, 'onsite') ? 'checked' : '' %>> เข้ารับบริการด้วยตนเอง</label>
++            </div>
++          </div>
+           <div style="display:flex;justify-content:flex-end;"><button type="submit" class="act-btn ab-primary"><i data-lucide="save" style="width:14px;height:14px;"></i> บันทึกฟอร์ม (TH)</button></div>
+         </form>
+       </div>
+@@ -234,6 +255,21 @@
+               </div>
+             </div>
+           </div>
++
++          <div class="form-frame" data-layout-frame="registration-session-types-en">
++            <div class="form-frame-header">
++              <div class="form-frame-icon"><i data-lucide="sliders-horizontal" style="width:15px;height:15px;"></i></div>
++              <div>
++                <p class="form-frame-title">Service format visibility</p>
++                <p class="form-frame-note">Control which options appear in the public registration form.</p>
++              </div>
++            </div>
++            <div class="field-grid">
++              <label class="inp" style="display:flex;align-items:center;gap:8px;"><input type="checkbox" name="sessionTypeEnabled_online" <%= sessionTypeEnabled(enBook, 'online') ? 'checked' : '' %>> Online</label>
++              <label class="inp" style="display:flex;align-items:center;gap:8px;"><input type="checkbox" name="sessionTypeEnabled_phone" <%= sessionTypeEnabled(enBook, 'phone') ? 'checked' : '' %>> Phone call</label>
++              <label class="inp" style="display:flex;align-items:center;gap:8px;"><input type="checkbox" name="sessionTypeEnabled_onsite" <%= sessionTypeEnabled(enBook, 'onsite') ? 'checked' : '' %>> In-person</label>
++            </div>
++          </div>
+           <div style="display:flex;justify-content:flex-end;"><button type="submit" class="act-btn ab-primary"><i data-lucide="save" style="width:14px;height:14px;"></i> Save form (EN)</button></div>
+         </form>
+       </div>

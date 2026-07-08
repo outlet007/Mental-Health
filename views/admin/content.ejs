@@ -534,7 +534,7 @@
         { key:'features',   label:'ทำไมต้องเลือก MindCare',  icon:'star',          fields:[{f:'heading',l:'หัวข้อ'},{f:'subtext',l:'คำอธิบาย'}] },
         { key:'book',       label:'ลงทะเบียน',                icon:'calendar-plus', fields:[{f:'heading',l:'หัวข้อ'},{f:'subtext',l:'คำอธิบาย'},{f:'formHeading',l:'หัวข้อฟอร์ม'}] },
         { key:'faq',        label:'FAQ',                      icon:'help-circle',   fields:[{f:'heading',l:'หัวข้อ'},{f:'questions',l:'คำถาม'},{f:'answers',l:'คำตอบ'}] },
-        { key:'footer',     label:'Footer (ท้ายเว็บ)',        icon:'layout-panel-top', fields:[{f:'description',l:'คำอธิบาย'},{f:'menu',l:'เมนู (บริการ/ลิงก์/ติดต่อ)'},{f:'lineLabel',l:'ข้อความ LINE'},{f:'hours',l:'เวลาทำการ'},{f:'copyright',l:'ข้อความลิขสิทธิ์'}] },
+        { key:'footer',     label:'Footer (ท้ายเว็บ)',        icon:'layout-panel-top', fields:[{f:'description',l:'คำอธิบาย'},{f:'menu',l:'เมนู (บริการ/ติดต่อ)'},{f:'menuLink',l:'ลิงก์เมนู'},{f:'lineLabel',l:'ข้อความ LINE'},{f:'hours',l:'เวลาทำการ'},{f:'copyright',l:'ข้อความลิขสิทธิ์'}] },
       ]
     %>
     <div class="section-card">
@@ -738,6 +738,29 @@
 </div>
 
 <script>
+  // Each card on this page is its own independent <form>; saving one card
+  // reloads the whole page, which silently discards unsubmitted edits sitting
+  // in the other cards. Warn before that happens.
+  ;(function () {
+    const dirtyForms = new Set()
+    function markDirty(target) {
+      const form = target && target.closest && target.closest('form')
+      if (form) dirtyForms.add(form)
+    }
+    document.addEventListener('input', e => markDirty(e.target))
+    document.addEventListener('change', e => markDirty(e.target))
+    document.querySelectorAll('form').forEach(form => {
+      form.addEventListener('submit', () => dirtyForms.delete(form))
+    })
+    window.addEventListener('beforeunload', e => {
+      if (dirtyForms.size > 0) {
+        e.preventDefault()
+        e.returnValue = ''
+      }
+    })
+    window._markContentFormDirty = markDirty
+  })()
+
   function cardLang(section, lang) {
     ['th', 'en'].forEach(l => {
       const panel = document.getElementById(section + '-' + l)
@@ -782,9 +805,11 @@
       </div>`
     list.appendChild(div)
     lucide.createIcons()
+    _markContentFormDirty(list)
   }
 
   function removeFaq(btn) {
+    _markContentFormDirty(btn)
     btn.closest('.faq-item').remove()
   }
 

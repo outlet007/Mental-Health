@@ -23,9 +23,14 @@ app.use(session({
   cookie: { maxAge: 8 * 60 * 60 * 1000, httpOnly: true },
 }))
 
-// Pass session to all EJS views
+// Pass shared data to all EJS views
 app.use((req, res, next) => {
   res.locals.session = req.session
+  try {
+    res.locals.content = JSON.parse(fs.readFileSync(path.join(__dirname, 'data/content.json'), 'utf8'))
+  } catch (err) {
+    res.locals.content = {}
+  }
   next()
 })
 

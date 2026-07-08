@@ -341,39 +341,64 @@ const _tcFields = {
   features:   ['heading', 'subtext'],
   book:       ['heading', 'subtext', 'formHeading'],
   faq:        ['heading', 'questions', 'answers'],
-  footer:     ['description', 'menu', 'lineLabel', 'hours', 'copyright'],
+  footer:     ['description', 'menu', 'menuLink', 'lineLabel', 'hours', 'copyright'],
 }
 
 router.post('/backgrounds', bgUpload, (req, res) => {
   const data = readData()
   if (!data.backgrounds) data.backgrounds = {}
   const files = req.files || {}
+  const hexRe = /^#[0-9A-Fa-f]{6}$/
   ;['hero', 'counselors', 'features', 'book', 'faq', 'footer'].forEach(sec => {
-    if (!data.backgrounds[sec]) data.backgrounds[sec] = { color: '', image: '' }
-    data.backgrounds[sec].color = (req.body['color_' + sec] || '').trim()
-    const op = parseFloat(req.body['opacity_' + sec])
-    data.backgrounds[sec].opacity = isNaN(op) ? 1 : Math.min(1, Math.max(0, op))
-    const imgOp = parseFloat(req.body['imgOpacity_' + sec])
-    data.backgrounds[sec].imgOpacity = isNaN(imgOp) ? 1 : Math.min(1, Math.max(0, imgOp))
-    data.backgrounds[sec].blend = clampNumber(req.body['blend_' + sec], 0, 0, 220)
-    const blendColor = (req.body['blendColor_' + sec] || '').trim()
-    data.backgrounds[sec].blendColor = _hexRe.test(blendColor) ? blendColor : ''
-    data.backgrounds[sec].motionEnabled = req.body['motionEnabled_' + sec] !== 'off'
-    data.backgrounds[sec].motionDuration = clampNumber(req.body['motionDuration_' + sec], 38, 8, 90)
-    data.backgrounds[sec].motionScale = clampNumber(req.body['motionScale_' + sec], 1.12, 1, 1.35)
-    data.backgrounds[sec].motionStyle = req.body['motionStyle_' + sec] === 'float' ? 'float' : 'zoom'
-    const hexRe = /^#[0-9A-Fa-f]{6}$/
-    const textColors = {}
+    const previous = data.backgrounds[sec] || { color: '', image: '' }
+    data.backgrounds[sec] = previous
+
+    // Fields are only overwritten when actually present in the request, so a
+    // partial submission (e.g. a script or test posting a subset of fields)
+    // can't silently reset the other sections' saved values back to defaults.
+    if (req.body['color_' + sec] !== undefined) {
+      previous.color = req.body['color_' + sec].trim()
+    }
+    if (req.body['opacity_' + sec] !== undefined) {
+      const op = parseFloat(req.body['opacity_' + sec])
+      previous.opacity = isNaN(op) ? (typeof previous.opacity === 'number' ? previous.opacity : 1) : Math.min(1, Math.max(0, op))
+    }
+    if (req.body['imgOpacity_' + sec] !== undefined) {
+      const imgOp = parseFloat(req.body['imgOpacity_' + sec])
+      previous.imgOpacity = isNaN(imgOp) ? (typeof previous.imgOpacity === 'number' ? previous.imgOpacity : 1) : Math.min(1, Math.max(0, imgOp))
+    }
+    if (req.body['blend_' + sec] !== undefined) {
+      previous.blend = clampNumber(req.body['blend_' + sec], typeof previous.blend === 'number' ? previous.blend : 0, 0, 220)
+    }
+    if (req.body['blendColor_' + sec] !== undefined) {
+      const blendColor = req.body['blendColor_' + sec].trim()
+      previous.blendColor = hexRe.test(blendColor) ? blendColor : ''
+    }
+    if (req.body['motionEnabled_' + sec] !== undefined) {
+      previous.motionEnabled = req.body['motionEnabled_' + sec] !== 'off'
+    }
+    if (req.body['motionDuration_' + sec] !== undefined) {
+      previous.motionDuration = clampNumber(req.body['motionDuration_' + sec], typeof previous.motionDuration === 'number' ? previous.motionDuration : 38, 8, 90)
+    }
+    if (req.body['motionScale_' + sec] !== undefined) {
+      previous.motionScale = clampNumber(req.body['motionScale_' + sec], typeof previous.motionScale === 'number' ? previous.motionScale : 1.12, 1, 1.35)
+    }
+    if (req.body['motionStyle_' + sec] !== undefined) {
+      previous.motionStyle = req.body['motionStyle_' + sec] === 'float' ? 'float' : 'zoom'
+    }
+    const textColors = { ...(previous.textColors || {}) }
     ;(_tcFields[sec] || []).forEach(field => {
-      const v = (req.body[`textColor_${sec}_${field}`] || '').trim()
+      const key = `textColor_${sec}_${field}`
+      if (req.body[key] === undefined) return
+      const v = req.body[key].trim()
       textColors[field] = hexRe.test(v) ? v : ''
     })
-    data.backgrounds[sec].textColors = textColors
+    previous.textColors = textColors
     if (req.body['clear_' + sec]) {
-      data.backgrounds[sec].image = ''
+      previous.image = ''
     }
     if (files['img_' + sec] && files['img_' + sec][0]) {
-      data.backgrounds[sec].image = '/uploads/content/' + files['img_' + sec][0].filename
+      previous.image = '/uploads/content/' + files['img_' + sec][0].filename
     }
   })
   writeData(data)

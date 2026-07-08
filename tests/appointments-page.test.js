@@ -55,6 +55,7 @@ function renderAppointments(locals = {}) {
         myStatusCounts: {},
         clientAppointments: [],
         concernOptions: ['ความวิตกกังวล / ความเครียด', 'ภาวะซึมเศร้า', 'ปัญหาความสัมพันธ์', 'ปัญหาครอบครัว', 'ความเศร้าโศก / การสูญเสีย', 'อื่นๆ'],
+        appointmentSessionTypes: { online: true, phone: true, onsite: true },
         ...locals,
       },
       {},
@@ -91,6 +92,32 @@ test('appointments table separates status action buttons into the final column',
   assert.match(statusManagementCell, new RegExp(CONFIRM_BUTTON_LABEL))
   assert.match(statusManagementCell, new RegExp(CANCEL_BUTTON_LABEL))
   assert.match(row, new RegExp(PENDING_TABLE_LABEL))
+})
+
+
+test('appointment create and edit panels support phone type and online meeting link field', async () => {
+  const html = await renderAppointments()
+
+  const createFormatSection = html.match(/data-create-format-note-section="true"[\s\S]*?<div id="apptSummary"/)?.[0] || ''
+  assert.match(createFormatSection, /name="type" value="phone"/)
+  assert.match(createFormatSection, /id="meetingLinkWrap"/)
+  assert.match(createFormatSection, /name="meetingLink"/)
+  assert.match(createFormatSection, /name="note"/)
+  assert.match(createFormatSection, /Google Meet, Zoom, Microsoft Teams, LINE Meeting/)
+  assert.match(html, /function toggleMeetingLinkField/)
+  assert.match(html, /id="e_phone"/)
+  assert.match(html, /id="e_meetingLink"/)
+})
+
+test('appointment panels hide disabled session types from backend settings', async () => {
+  const html = await renderAppointments({ appointmentSessionTypes: { online: true, phone: false, onsite: false } })
+  const createFormatSection = html.match(/data-create-format-note-section="true"[\s\S]*?<div id="apptSummary"/)?.[0] || ''
+
+  assert.match(createFormatSection, /name="type" value="online"/)
+  assert.doesNotMatch(createFormatSection, /name="type" value="phone"/)
+  assert.doesNotMatch(createFormatSection, /name="type" value="onsite"/)
+  assert.doesNotMatch(html, /id="e_phone"/)
+  assert.doesNotMatch(html, /id="e_onsite"/)
 })
 
 test('appointments header links to the public website', async () => {

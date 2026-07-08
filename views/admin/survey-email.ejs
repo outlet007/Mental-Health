@@ -228,6 +228,15 @@ SMTP_BCC=   <span style="color:#94a3b8;"># optional สำเนาทุกอ�
         <textarea name="closing_online_th" id="tpl_closing_online_th" class="inp" rows="2"></textarea>
         <textarea name="closing_online_en" id="tpl_closing_online_en" class="inp" rows="2"></textarea>
       </div>
+      <p class="lbl" style="margin-bottom:6px;">&#x0E42;&#x0E17;&#x0E23;&#x0E28;&#x0E31;&#x0E1E;&#x0E17;&#x0E4C;</p>
+      <div class="field-grid" style="margin-bottom:4px;">
+        <label class="lbl">&#x0E44;&#x0E17;&#x0E22;</label>
+        <label class="lbl">English</label>
+      </div>
+      <div class="field-grid" style="margin-bottom:14px;">
+        <textarea name="closing_phone_th" id="tpl_closing_phone_th" class="inp" rows="2"></textarea>
+        <textarea name="closing_phone_en" id="tpl_closing_phone_en" class="inp" rows="2"></textarea>
+      </div>
       <p class="lbl" style="margin-bottom:6px;">เข้ารับบริการด้วยตนเอง</p>
       <div class="field-grid" style="margin-bottom:4px;">
         <label class="lbl">ไทย</label>
@@ -238,11 +247,66 @@ SMTP_BCC=   <span style="color:#94a3b8;"># optional สำเนาทุกอ�
         <textarea name="closing_onsite_en" id="tpl_closing_onsite_en" class="inp" rows="2"></textarea>
       </div>
     </div>
+
+    <div id="tpl_access_details" style="display:none;margin-top:14px;">
+      <p class="field-help" style="margin:0 0 8px;">&#x0E02;&#x0E49;&#x0E2D;&#x0E04;&#x0E27;&#x0E32;&#x0E21;&#x0E23;&#x0E32;&#x0E22;&#x0E25;&#x0E30;&#x0E40;&#x0E2D;&#x0E35;&#x0E22;&#x0E14;&#x0E23;&#x0E39;&#x0E1B;&#x0E41;&#x0E1A;&#x0E1A;&#x0E1A;&#x0E23;&#x0E34;&#x0E01;&#x0E32;&#x0E23;&#x0E43;&#x0E19;&#x0E2D;&#x0E35;&#x0E40;&#x0E21;&#x0E25; &mdash; &#x0E23;&#x0E30;&#x0E1A;&#x0E1A;&#x0E08;&#x0E30;&#x0E43;&#x0E0A;&#x0E49;&#x0E40;&#x0E09;&#x0E1E;&#x0E32;&#x0E30;&#x0E40;&#x0E21;&#x0E37;&#x0E48;&#x0E2D;&#x0E19;&#x0E31;&#x0E14;&#x0E2B;&#x0E21;&#x0E32;&#x0E22;&#x0E40;&#x0E1B;&#x0E47;&#x0E19;&#x0E2D;&#x0E2D;&#x0E19;&#x0E44;&#x0E25;&#x0E19;&#x0E4C;&#x0E2B;&#x0E23;&#x0E37;&#x0E2D;&#x0E42;&#x0E17;&#x0E23;&#x0E28;&#x0E31;&#x0E1E;&#x0E17;&#x0E4C;</p>
+      <p class="lbl" style="margin-bottom:6px;">&#x0E2D;&#x0E2D;&#x0E19;&#x0E44;&#x0E25;&#x0E19;&#x0E4C;</p>
+      <div class="field-grid" style="margin-bottom:4px;">
+        <label class="lbl">&#x0E0A;&#x0E37;&#x0E48;&#x0E2D;&#x0E01;&#x0E25;&#x0E48;&#x0E2D;&#x0E07;&#x0E25;&#x0E34;&#x0E07;&#x0E01;&#x0E4C; (&#x0E44;&#x0E17;&#x0E22;)</label>
+        <label class="lbl">Online card title (English)</label>
+      </div>
+      <div class="field-grid" style="margin-bottom:10px;">
+        <input type="text" name="access_online_title_th" id="tpl_access_online_title_th" class="inp">
+        <input type="text" name="access_online_title_en" id="tpl_access_online_title_en" class="inp">
+      </div>
+      <div class="field-grid" style="margin-bottom:4px;">
+        <label class="lbl">&#x0E1B;&#x0E49;&#x0E32;&#x0E22;&#x0E01;&#x0E33;&#x0E01;&#x0E31;&#x0E1A;&#x0E25;&#x0E34;&#x0E07;&#x0E01;&#x0E4C; (&#x0E44;&#x0E17;&#x0E22;)</label>
+        <label class="lbl">Link label (English)</label>
+      </div>
+      <div class="field-grid" style="margin-bottom:14px;">
+        <input type="text" name="access_online_link_label_th" id="tpl_access_online_link_label_th" class="inp">
+        <input type="text" name="access_online_link_label_en" id="tpl_access_online_link_label_en" class="inp">
+      </div>
+      <p class="lbl" style="margin-bottom:6px;">&#x0E42;&#x0E17;&#x0E23;&#x0E28;&#x0E31;&#x0E1E;&#x0E17;&#x0E4C;</p>
+      <div class="field-grid" style="margin-bottom:4px;">
+        <label class="lbl">&#x0E0A;&#x0E37;&#x0E48;&#x0E2D;&#x0E01;&#x0E25;&#x0E48;&#x0E2D;&#x0E07;&#x0E42;&#x0E17;&#x0E23;&#x0E28;&#x0E31;&#x0E1E;&#x0E17;&#x0E4C; (&#x0E44;&#x0E17;&#x0E22;)</label>
+        <label class="lbl">Phone card title (English)</label>
+      </div>
+      <div class="field-grid" style="margin-bottom:10px;">
+        <input type="text" name="access_phone_title_th" id="tpl_access_phone_title_th" class="inp">
+        <input type="text" name="access_phone_title_en" id="tpl_access_phone_title_en" class="inp">
+      </div>
+      <div class="field-grid" style="margin-bottom:4px;">
+        <label class="lbl">&#x0E1B;&#x0E49;&#x0E32;&#x0E22;&#x0E40;&#x0E1A;&#x0E2D;&#x0E23;&#x0E4C;&#x0E1C;&#x0E39;&#x0E49;&#x0E23;&#x0E31;&#x0E1A;&#x0E1A;&#x0E23;&#x0E34;&#x0E01;&#x0E32;&#x0E23; (&#x0E44;&#x0E17;&#x0E22;)</label>
+        <label class="lbl">Client phone label (English)</label>
+      </div>
+      <div class="field-grid" style="margin-bottom:10px;">
+        <input type="text" name="access_phone_counselor_phone_label_th" id="tpl_access_phone_counselor_phone_label_th" class="inp">
+        <input type="text" name="access_phone_counselor_phone_label_en" id="tpl_access_phone_counselor_phone_label_en" class="inp">
+      </div>
+      <div class="field-grid" style="margin-bottom:4px;">
+        <label class="lbl">&#x0E1B;&#x0E49;&#x0E32;&#x0E22;&#x0E02;&#x0E49;&#x0E2D;&#x0E04;&#x0E27;&#x0E32;&#x0E21;&#x0E41;&#x0E08;&#x0E49;&#x0E07;&#x0E1C;&#x0E39;&#x0E49;&#x0E23;&#x0E31;&#x0E1A;&#x0E1A;&#x0E23;&#x0E34;&#x0E01;&#x0E32;&#x0E23; (&#x0E44;&#x0E17;&#x0E22;)</label>
+        <label class="lbl">Client notice label (English)</label>
+      </div>
+      <div class="field-grid" style="margin-bottom:10px;">
+        <input type="text" name="access_phone_client_notice_label_th" id="tpl_access_phone_client_notice_label_th" class="inp">
+        <input type="text" name="access_phone_client_notice_label_en" id="tpl_access_phone_client_notice_label_en" class="inp">
+      </div>
+      <div class="field-grid" style="margin-bottom:4px;">
+        <label class="lbl">&#x0E02;&#x0E49;&#x0E2D;&#x0E04;&#x0E27;&#x0E32;&#x0E21;&#x0E41;&#x0E08;&#x0E49;&#x0E07;&#x0E1C;&#x0E39;&#x0E49;&#x0E23;&#x0E31;&#x0E1A;&#x0E1A;&#x0E23;&#x0E34;&#x0E01;&#x0E32;&#x0E23; (&#x0E44;&#x0E17;&#x0E22;)</label>
+        <label class="lbl">Client notice text (English)</label>
+      </div>
+      <div class="field-grid">
+        <textarea name="access_phone_client_notice_text_th" id="tpl_access_phone_client_notice_text_th" class="inp" rows="2"></textarea>
+        <textarea name="access_phone_client_notice_text_en" id="tpl_access_phone_client_notice_text_en" class="inp" rows="2"></textarea>
+      </div>
+    </div>
   </form>
   <div style="padding:16px 24px;border-top:1px solid #f1f5f9;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;">
     <div style="display:flex;gap:10px;flex-wrap:wrap;">
       <button type="submit" form="tplForm" id="tplPreviewBtn" class="act-btn ab-secondary"><i data-lucide="eye" style="width:14px;height:14px;"></i> ดูตัวอย่าง</button>
       <button type="submit" form="tplForm" id="tplPreviewOnlineBtn" class="act-btn ab-secondary" style="display:none;"><i data-lucide="eye" style="width:14px;height:14px;"></i> ดูตัวอย่าง (ออนไลน์)</button>
+      <button type="submit" form="tplForm" id="tplPreviewPhoneBtn" class="act-btn ab-secondary" style="display:none;"><i data-lucide="eye" style="width:14px;height:14px;"></i> &#x0E14;&#x0E39;&#x0E15;&#x0E31;&#x0E27;&#x0E2D;&#x0E22;&#x0E48;&#x0E32;&#x0E07; (&#x0E42;&#x0E17;&#x0E23;&#x0E28;&#x0E31;&#x0E1E;&#x0E17;&#x0E4C;)</button>
       <button type="submit" form="tplForm" id="tplPreviewOnsiteBtn" class="act-btn ab-secondary" style="display:none;"><i data-lucide="eye" style="width:14px;height:14px;"></i> ดูตัวอย่าง (เข้ารับบริการ)</button>
     </div>
     <button type="submit" form="tplForm" id="tplSaveBtn" class="act-btn ab-primary"><i data-lucide="save" style="width:14px;height:14px;"></i> บันทึกข้อความ</button>
@@ -250,6 +314,26 @@ SMTP_BCC=   <span style="color:#94a3b8;"># optional สำเนาทุกอ�
 </div>
 <script>
   var TYPES_WITH_CLOSING_VARIANTS = <%- JSON.stringify(typesWithClosingVariants) %>
+  var TYPES_WITH_ACCESS_DETAILS = <%- JSON.stringify(typesWithAccessDetails) %>
+  var ACCESS_DETAIL_FIELDS = {
+    online_title: 'onlineTitle',
+    online_link_label: 'onlineLinkLabel',
+    phone_title: 'phoneTitle',
+    phone_counselor_phone_label: 'phoneCounselorPhoneLabel',
+    phone_client_notice_label: 'phoneClientNoticeLabel',
+    phone_client_notice_text: 'phoneClientNoticeText'
+  }
+
+  function fillAccessDetailFields(tpl, defaults) {
+    Object.keys(ACCESS_DETAIL_FIELDS).forEach(function(field) {
+      var key = ACCESS_DETAIL_FIELDS[field]
+      ;['th', 'en'].forEach(function(lang) {
+        var input = document.getElementById('tpl_access_' + field + '_' + lang)
+        input.value = (tpl.accessDetails && tpl.accessDetails[lang] && tpl.accessDetails[lang][key]) || ''
+        input.placeholder = (defaults.accessDetails && defaults.accessDetails[lang] && defaults.accessDetails[lang][key]) || ''
+      })
+    })
+  }
 
   function openTplPanel(type, label, tpl, defaults) {
     document.getElementById('tplPanelTitle').textContent = 'แก้ไขข้อความ: ' + label
@@ -262,23 +346,34 @@ SMTP_BCC=   <span style="color:#94a3b8;"># optional สำเนาทุกอ�
     document.getElementById('tpl_greeting_en').placeholder = (defaults.greeting && defaults.greeting.en) || ''
 
     var isVariant = TYPES_WITH_CLOSING_VARIANTS.indexOf(type) !== -1
+    var hasAccessDetails = TYPES_WITH_ACCESS_DETAILS.indexOf(type) !== -1
+    var useAppointmentPreviews = isVariant || hasAccessDetails
     document.getElementById('tpl_closing_simple').style.display = isVariant ? 'none' : 'block'
     document.getElementById('tpl_closing_variant').style.display = isVariant ? 'block' : 'none'
-    document.getElementById('tplPreviewBtn').style.display = isVariant ? 'none' : 'inline-flex'
-    document.getElementById('tplPreviewOnlineBtn').style.display = isVariant ? 'inline-flex' : 'none'
-    document.getElementById('tplPreviewOnsiteBtn').style.display = isVariant ? 'inline-flex' : 'none'
+    document.getElementById('tpl_access_details').style.display = hasAccessDetails ? 'block' : 'none'
+    document.getElementById('tplPreviewBtn').style.display = useAppointmentPreviews ? 'none' : 'inline-flex'
+    document.getElementById('tplPreviewOnlineBtn').style.display = useAppointmentPreviews ? 'inline-flex' : 'none'
+    document.getElementById('tplPreviewPhoneBtn').style.display = useAppointmentPreviews ? 'inline-flex' : 'none'
+    document.getElementById('tplPreviewOnsiteBtn').style.display = useAppointmentPreviews ? 'inline-flex' : 'none'
+    if (hasAccessDetails) fillAccessDetailFields(tpl, defaults)
 
     if (isVariant) {
       document.getElementById('tpl_closing_online_th').value = (tpl.closing && tpl.closing.th && tpl.closing.th.online) || ''
       document.getElementById('tpl_closing_online_en').value = (tpl.closing && tpl.closing.en && tpl.closing.en.online) || ''
+      document.getElementById('tpl_closing_phone_th').value = (tpl.closing && tpl.closing.th && tpl.closing.th.phone) || ''
+      document.getElementById('tpl_closing_phone_en').value = (tpl.closing && tpl.closing.en && tpl.closing.en.phone) || ''
       document.getElementById('tpl_closing_onsite_th').value = (tpl.closing && tpl.closing.th && tpl.closing.th.onsite) || ''
       document.getElementById('tpl_closing_onsite_en').value = (tpl.closing && tpl.closing.en && tpl.closing.en.onsite) || ''
       document.getElementById('tpl_closing_online_th').placeholder = (defaults.closing && defaults.closing.th && defaults.closing.th.online) || ''
       document.getElementById('tpl_closing_online_en').placeholder = (defaults.closing && defaults.closing.en && defaults.closing.en.online) || ''
+      document.getElementById('tpl_closing_phone_th').placeholder = (defaults.closing && defaults.closing.th && defaults.closing.th.phone) || ''
+      document.getElementById('tpl_closing_phone_en').placeholder = (defaults.closing && defaults.closing.en && defaults.closing.en.phone) || ''
       document.getElementById('tpl_closing_onsite_th').placeholder = (defaults.closing && defaults.closing.th && defaults.closing.th.onsite) || ''
       document.getElementById('tpl_closing_onsite_en').placeholder = (defaults.closing && defaults.closing.en && defaults.closing.en.onsite) || ''
       document.getElementById('tplPreviewOnlineBtn').setAttribute('formaction', '/admin/survey-email/preview/' + type + '?apptType=online')
       document.getElementById('tplPreviewOnlineBtn').setAttribute('formtarget', '_blank')
+      document.getElementById('tplPreviewPhoneBtn').setAttribute('formaction', '/admin/survey-email/preview/' + type + '?apptType=phone')
+      document.getElementById('tplPreviewPhoneBtn').setAttribute('formtarget', '_blank')
       document.getElementById('tplPreviewOnsiteBtn').setAttribute('formaction', '/admin/survey-email/preview/' + type + '?apptType=onsite')
       document.getElementById('tplPreviewOnsiteBtn').setAttribute('formtarget', '_blank')
     } else {
@@ -288,6 +383,15 @@ SMTP_BCC=   <span style="color:#94a3b8;"># optional สำเนาทุกอ�
       document.getElementById('tpl_closing_en').placeholder = (defaults.closing && defaults.closing.en) || ''
       document.getElementById('tplPreviewBtn').setAttribute('formaction', '/admin/survey-email/preview/' + type)
       document.getElementById('tplPreviewBtn').setAttribute('formtarget', '_blank')
+    }
+
+    if (hasAccessDetails && !isVariant) {
+      document.getElementById('tplPreviewOnlineBtn').setAttribute('formaction', '/admin/survey-email/preview/' + type + '?apptType=online')
+      document.getElementById('tplPreviewOnlineBtn').setAttribute('formtarget', '_blank')
+      document.getElementById('tplPreviewPhoneBtn').setAttribute('formaction', '/admin/survey-email/preview/' + type + '?apptType=phone')
+      document.getElementById('tplPreviewPhoneBtn').setAttribute('formtarget', '_blank')
+      document.getElementById('tplPreviewOnsiteBtn').setAttribute('formaction', '/admin/survey-email/preview/' + type + '?apptType=onsite')
+      document.getElementById('tplPreviewOnsiteBtn').setAttribute('formtarget', '_blank')
     }
 
     const ov = document.getElementById('tplOverlay')

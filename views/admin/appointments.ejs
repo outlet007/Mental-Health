@@ -46,6 +46,11 @@
   </style>
 </head>
 <body style="background:#f8fafc; margin:0;">
+<%
+  const sessionTypes = { online: true, phone: false, onsite: true, ...(appointmentSessionTypes || {}) }
+  const enabledSessionTypeList = ['online', 'phone', 'onsite'].filter(type => sessionTypes[type])
+  const defaultSessionType = enabledSessionTypeList[0] || 'online'
+%>
 <%- include('../partials/admin-sidebar') %>
 
 <div style="margin-left:256px; min-height:100vh; display:flex; flex-direction:column;">
@@ -169,8 +174,9 @@
         <label class="lbl">รูปแบบ</label>
         <select name="type" class="inp" style="width:120px;">
           <option value="">ทั้งหมด</option>
-          <option value="online" <%=query.type==='online'?'selected':''%>>ออนไลน์</option>
-          <option value="onsite" <%=query.type==='onsite'?'selected':''%>>เข้ารับบริการด้วยตนเอง</option>
+          <% if (sessionTypes.online) { %><option value="online" <%=query.type==='online'?'selected':''%>>ออนไลน์</option><% } %>
+          <% if (sessionTypes.phone) { %><option value="phone" <%=query.type==='phone'?'selected':''%>>โทรศัพท์</option><% } %>
+          <% if (sessionTypes.onsite) { %><option value="onsite" <%=query.type==='onsite'?'selected':''%>>เข้ารับบริการด้วยตนเอง</option><% } %>
         </select>
       </div>
       <button type="submit" class="act-btn ab-primary">
@@ -242,10 +248,15 @@
                   <i data-lucide="video" style="width:13px;height:13px;color:#0891b2;"></i>
                   <span style="font-size:12px; color:#0891b2;">ออนไลน์</span>
                 </div>
+                <% } else if(a.type==='phone') { %>
+                <div style="display:flex; align-items:center; gap:4px;">
+                  <i data-lucide="phone" style="width:13px;height:13px;color:#05967e;"></i>
+                  <span style="font-size:12px; color:#05967e;">โทรศัพท์</span>
+                </div>
                 <% } else { %>
                 <div style="display:flex; align-items:center; gap:4px;">
-                  <i data-lucide="map-pin" style="width:13px;height:13px;color:#05967e;"></i>
-                  <span style="font-size:12px; color:#05967e;">เข้ารับบริการด้วยตนเอง</span>
+                  <i data-lucide="map-pin" style="width:13px;height:13px;color:#3874FF;"></i>
+                  <span style="font-size:12px; color:#3874FF;">เข้ารับบริการด้วยตนเอง</span>
                 </div>
                 <% } %>
               </td>
@@ -468,20 +479,49 @@
             </select>
           </div>
 
+          <div data-create-format-note-section="true" style="display:grid;gap:14px;padding:12px;border:1px solid #f1f5f9;border-radius:12px;background:#fff;">
+            <div style="font-size:12px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.05em;">รูปแบบและหมายเหตุ</div>
           <div>
             <label class="lbl">รูปแบบการให้คำปรึกษา</label>
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+              <% if (sessionTypes.online) { %>
+
               <label style="display:flex; align-items:center; gap:8px; padding:10px; border:1.5px solid #a5f3fc; border-radius:10px; cursor:pointer; background:#ecfeff;">
-                <input type="radio" name="type" value="online" checked style="accent-color:#0891b2;">
+
+                <input type="radio" name="type" value="online" <%= defaultSessionType === 'online' ? 'checked' : '' %> style="accent-color:#0891b2;" onchange="toggleMeetingLinkField()">
                 <i data-lucide="video" style="width:14px;height:14px;color:#0891b2;flex-shrink:0;"></i>
                 <span style="font-size:13px; font-weight:500; color:#1e293b;">ออนไลน์</span>
               </label>
+
+              <% } %>
+
+              <% if (sessionTypes.phone) { %>
+
               <label style="display:flex; align-items:center; gap:8px; padding:10px; border:1.5px solid #e2e8f0; border-radius:10px; cursor:pointer;">
-                <input type="radio" name="type" value="onsite" style="accent-color:#3874FF;">
+
+                <input type="radio" name="type" value="phone" <%= defaultSessionType === 'phone' ? 'checked' : '' %> style="accent-color:#05967e;" onchange="toggleMeetingLinkField()">
+                <i data-lucide="phone" style="width:14px;height:14px;color:#05967e;flex-shrink:0;"></i>
+                <span style="font-size:13px; font-weight:500; color:#1e293b;">โทรศัพท์</span>
+              </label>
+
+              <% } %>
+
+              <% if (sessionTypes.onsite) { %>
+
+              <label style="display:flex; align-items:center; gap:8px; padding:10px; border:1.5px solid #e2e8f0; border-radius:10px; cursor:pointer;">
+
+                <input type="radio" name="type" value="onsite" <%= defaultSessionType === 'onsite' ? 'checked' : '' %> style="accent-color:#3874FF;" onchange="toggleMeetingLinkField()">
                 <i data-lucide="map-pin" style="width:14px;height:14px;color:#3874FF;flex-shrink:0;"></i>
                 <span style="font-size:13px; font-weight:500; color:#1e293b;">เข้ารับบริการด้วยตนเอง</span>
               </label>
+
+              <% } %>
             </div>
+          </div>
+
+          <div id="meetingLinkWrap">
+            <label class="lbl">ลิงก์สำหรับเข้าร่วมวิดีโอคอล</label>
+            <input type="url" name="meetingLink" id="meetingLink" class="inp" placeholder="Google Meet, Zoom, Microsoft Teams, LINE Meeting">
           </div>
 
           <div>
@@ -494,6 +534,8 @@
             <label class="lbl">หมายเหตุ (ถ้ามี)</label>
             <textarea name="note" rows="2" class="inp" style="resize:none;"
                       placeholder="เช่น ครั้งแรก, ติดตามอาการ ฯลฯ"></textarea>
+          </div>
+
           </div>
 
           <div id="apptSummary" style="display:none; padding:14px; background:#eaf1ff; border:1px solid #b9d0ff; border-radius:12px;">
@@ -759,17 +801,44 @@
           <div>
             <label class="lbl">รูปแบบการให้คำปรึกษา</label>
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-              <label style="display:flex; align-items:center; gap:8px; padding:10px; border:1.5px solid #e2e8f0; border-radius:10px; cursor:pointer;">
-                <input type="radio" name="type" value="online" id="e_online" style="accent-color:#0891b2;">
+              <% if (sessionTypes.online) { %>
+
+              <label style="display:flex; align-items:center; gap:8px; padding:10px; border:1.5px solid #a5f3fc; border-radius:10px; cursor:pointer; background:#ecfeff;">
+
+                <input type="radio" name="type" value="online" id="e_online" style="accent-color:#0891b2;" onchange="toggleMeetingLinkField()">
                 <i data-lucide="video" style="width:14px;height:14px;color:#0891b2;flex-shrink:0;"></i>
                 <span style="font-size:13px; font-weight:500; color:#1e293b;">ออนไลน์</span>
               </label>
+
+              <% } %>
+
+              <% if (sessionTypes.phone) { %>
+
               <label style="display:flex; align-items:center; gap:8px; padding:10px; border:1.5px solid #e2e8f0; border-radius:10px; cursor:pointer;">
-                <input type="radio" name="type" value="onsite" id="e_onsite" style="accent-color:#3874FF;">
+
+                <input type="radio" name="type" value="phone" id="e_phone" style="accent-color:#05967e;" onchange="toggleMeetingLinkField()">
+                <i data-lucide="phone" style="width:14px;height:14px;color:#05967e;flex-shrink:0;"></i>
+                <span style="font-size:13px; font-weight:500; color:#1e293b;">โทรศัพท์</span>
+              </label>
+
+              <% } %>
+
+              <% if (sessionTypes.onsite) { %>
+
+              <label style="display:flex; align-items:center; gap:8px; padding:10px; border:1.5px solid #e2e8f0; border-radius:10px; cursor:pointer;">
+
+                <input type="radio" name="type" value="onsite" id="e_onsite" style="accent-color:#3874FF;" onchange="toggleMeetingLinkField()">
                 <i data-lucide="map-pin" style="width:14px;height:14px;color:#3874FF;flex-shrink:0;"></i>
                 <span style="font-size:13px; font-weight:500; color:#1e293b;">เข้ารับบริการด้วยตนเอง</span>
               </label>
+
+              <% } %>
             </div>
+          </div>
+
+          <div id="e_meetingLinkWrap">
+            <label class="lbl">ลิงก์สำหรับเข้าร่วมวิดีโอคอล</label>
+            <input type="url" name="meetingLink" id="e_meetingLink" class="inp" placeholder="Google Meet, Zoom, Microsoft Teams, LINE Meeting">
           </div>
 
           <div>
@@ -990,7 +1059,7 @@
       document.getElementById('cdApptList').innerHTML = appts.map((a, i) => {
         const sc = STATUS_COLORS[a.status] || { bg:'#f1f5f9', color:'#64748b' }
         const sl = STATUS_LABELS[a.status] || a.status
-        const typeLabel = a.type === 'online' ? 'ออนไลน์' : 'เข้ารับบริการด้วยตนเอง'
+        const typeLabel = appointmentTypeLabel(a.type)
         const cCol = COUNSELOR_COLORS[a.counselorId] || '#64748b'
         return `
           <div class="appt-row" onclick="toggleCdAppt(this)">
@@ -1104,6 +1173,7 @@
     requestAnimationFrame(() => { ov.classList.add('open') })
     document.getElementById('panel').classList.add('open')
     document.body.style.overflow = 'hidden'
+    toggleMeetingLinkField()
   }
   function closePanel() {
     const ov = document.getElementById('overlay')
@@ -1192,6 +1262,21 @@
 
   // ── View Panel ───────────────────────────────────────────────
   const STATUS_LABELS = { pending:'รอยืนยัน', confirmed:'ยืนยันแล้ว', completed:'เสร็จสิ้น', cancelled:'ยกเลิก' }
+  function appointmentTypeLabel(type) {
+    if (type === 'phone') return 'โทรศัพท์'
+    if (type === 'onsite') return 'เข้ารับบริการด้วยตนเอง'
+    return 'ออนไลน์'
+  }
+
+  function toggleMeetingLinkField() {
+    const selected = document.querySelector('input[name="type"]:checked')
+    const wrap = document.getElementById('meetingLinkWrap')
+    const editSelected = document.querySelector('#editForm input[name="type"]:checked')
+    const editWrap = document.getElementById('e_meetingLinkWrap')
+    if (wrap) wrap.style.display = selected && selected.value === 'online' ? '' : 'none'
+    if (editWrap) editWrap.style.display = editSelected && editSelected.value === 'online' ? '' : 'none'
+  }
+
   const STATUS_COLORS = {
     pending:   { bg:'#fef3c7', color:'#92400e' },
     confirmed: { bg:'#dbeafe', color:'#1e40af' },
@@ -1209,7 +1294,7 @@
     document.getElementById('v_counselorName').textContent = a.counselorName
     document.getElementById('v_date').textContent = a.date
     document.getElementById('v_time').textContent = a.time + ' น.'
-    document.getElementById('v_type').textContent = a.type === 'online' ? 'ออนไลน์' : 'เข้ารับบริการด้วยตนเอง'
+    document.getElementById('v_type').textContent = appointmentTypeLabel(a.type)
     document.getElementById('v_duration').textContent = (a.duration || 60) + ' นาที'
     const sc = STATUS_COLORS[a.status] || { bg:'#f1f5f9', color:'#64748b' }
     document.getElementById('v_status').innerHTML =
@@ -1288,13 +1373,17 @@
     const statusEl  = document.getElementById('e_status')
     const noteEl    = document.getElementById('e_note')
     const concernEl = document.getElementById('e_concern')
+    const meetingLinkEl = document.getElementById('e_meetingLink')
     const summaryEl = document.getElementById('e_apptSummary')
     if (statusEl)  statusEl.value  = a.status  || 'pending'
     if (noteEl)    noteEl.value    = a.note    || ''
     if (concernEl) concernEl.value = a.concern || ''
-    if (document.getElementById('e_online') && document.getElementById('e_onsite')) {
-      document.getElementById(a.type === 'onsite' ? 'e_onsite' : 'e_online').checked = true
-    }
+    if (meetingLinkEl) meetingLinkEl.value = a.meetingLink || ''
+    const typeInput = document.getElementById(a.type === 'phone' ? 'e_phone' : (a.type === 'onsite' ? 'e_onsite' : 'e_online'))
+    const fallbackTypeInput = document.querySelector('#editForm input[name="type"]')
+    if (typeInput) typeInput.checked = true
+    else if (fallbackTypeInput) fallbackTypeInput.checked = true
+    toggleMeetingLinkField()
     if (summaryEl) summaryEl.style.display = 'none'
 
     eLoadSlots()

@@ -41,7 +41,11 @@ function buildVars({ appointment, client, counselor }) {
 }
 
 function typeLabel(type, lang = 'th') {
-  if (lang === 'en') return type === 'online' ? 'Online video call' : 'On-site service'
+  if (lang === 'en') {
+    if (type === 'phone') return 'Phone call'
+    return type === 'online' ? 'Online video call' : 'On-site service'
+  }
+  if (type === 'phone') return 'โทรศัพท์ (Phone call)'
   return type === 'online' ? 'ออนไลน์ (Video Call)' : 'เข้ารับบริการด้วยตนเอง (On-site)'
 }
 
@@ -50,6 +54,7 @@ function icon(name, color = '#05967e') {
     'heart-handshake': '<path d="M19.5 12.6 12 20l-7.5-7.4a5 5 0 0 1 7.1-7.1l.4.4.4-.4a5 5 0 0 1 7.1 7.1Z"/><path d="M12 20l-2-2 2-2 2 2-2 2Z"/>',
     video: '<path d="m16 13 5 3V8l-5 3"/><rect width="14" height="12" x="2" y="6" rx="2"/>',
     'map-pin': '<path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/>',
+    phone: '<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 2.08 4.18 2 2 0 0 1 4.06 2h3a2 2 0 0 1 2 1.72c.12.9.32 1.77.59 2.61a2 2 0 0 1-.45 2.11L8 9.63a16 16 0 0 0 6.37 6.37l1.19-1.19a2 2 0 0 1 2.11-.45c.84.27 1.71.47 2.61.59A2 2 0 0 1 22 16.92Z"/>',
     calendar: '<path d="M8 2v4M16 2v4M3 10h18"/><rect width="18" height="18" x="3" y="4" rx="2"/>',
     user: '<path d="M19 21a7 7 0 0 0-14 0"/><circle cx="12" cy="7" r="4"/>',
     clipboard: '<rect width="8" height="4" x="8" y="2" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>',
@@ -70,6 +75,37 @@ function card(title, rows, color = '#05967e') {
   return `<div style="border:1px solid #e2e8f0;border-radius:14px;padding:18px;margin:18px 0;background:#ffffff;"><h3 style="margin:0 0 10px;color:${color};font-size:15px;">${title}</h3><table width="100%" cellpadding="0" cellspacing="0">${rows.join('')}</table></div>`
 }
 
+function appointmentAccessDetails({ appointment, client }, lang = 'th', audience = 'client', accessDetails = {}) {
+  const fallback = lang === 'en'
+    ? {
+        onlineTitle: 'Video call link',
+        onlineLinkLabel: 'Join link',
+        phoneTitle: 'Phone counseling',
+        phoneCounselorPhoneLabel: 'Client phone',
+        phoneClientNoticeLabel: 'Notice',
+        phoneClientNoticeText: 'The counselor will call you for counseling.',
+      }
+    : {
+        onlineTitle: '\u0e25\u0e34\u0e07\u0e01\u0e4c\u0e40\u0e02\u0e49\u0e32\u0e23\u0e48\u0e27\u0e21\u0e27\u0e34\u0e14\u0e35\u0e42\u0e2d\u0e04\u0e2d\u0e25',
+        onlineLinkLabel: '\u0e25\u0e34\u0e07\u0e01\u0e4c',
+        phoneTitle: '\u0e01\u0e32\u0e23\u0e43\u0e2b\u0e49\u0e04\u0e33\u0e1b\u0e23\u0e36\u0e01\u0e29\u0e32\u0e17\u0e32\u0e07\u0e42\u0e17\u0e23\u0e28\u0e31\u0e1e\u0e17\u0e4c',
+        phoneCounselorPhoneLabel: '\u0e40\u0e1a\u0e2d\u0e23\u0e4c\u0e42\u0e17\u0e23\u0e1c\u0e39\u0e49\u0e23\u0e31\u0e1a\u0e1a\u0e23\u0e34\u0e01\u0e32\u0e23',
+        phoneClientNoticeLabel: '\u0e02\u0e49\u0e2d\u0e04\u0e27\u0e32\u0e21',
+        phoneClientNoticeText: '\u0e08\u0e34\u0e15\u0e41\u0e1e\u0e17\u0e22\u0e4c\u0e08\u0e30\u0e42\u0e17\u0e23\u0e15\u0e34\u0e14\u0e15\u0e48\u0e2d\u0e01\u0e25\u0e31\u0e1a\u0e40\u0e1e\u0e37\u0e48\u0e2d\u0e43\u0e2b\u0e49\u0e04\u0e33\u0e1b\u0e23\u0e36\u0e01\u0e29\u0e32',
+      }
+  const text = key => accessDetails[key] || fallback[key]
+  if (appointment.type === 'online' && appointment.meetingLink) {
+    return card(icon('video') + text('onlineTitle'), [row(text('onlineLinkLabel'), appointment.meetingLink)])
+  }
+  if (appointment.type === 'phone') {
+    if (audience === 'counselor') {
+      return card(icon('phone') + text('phoneTitle'), [row(text('phoneCounselorPhoneLabel'), client.phone || '-')])
+    }
+    return card(icon('phone') + text('phoneTitle'), [row(text('phoneClientNoticeLabel'), text('phoneClientNoticeText'))])
+  }
+  return ''
+}
+
 function paragraph(iconName, iconColor, html) {
   return `<p style="font-size:15px;line-height:1.8;color:#334155;margin:0 0 18px;">${icon(iconName, iconColor)}${html}</p>`
 }
@@ -83,31 +119,31 @@ function emailWrapper(title, accentColor, thHtml, enHtml) {
   return `<!DOCTYPE html><html lang="th"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>${title}</title></head><body style="margin:0;padding:0;background:#f1f5f9;font-family:'Noto Sans Thai','Segoe UI',Arial,sans-serif;"><table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f1f5f9;font-family:'Noto Sans Thai','Segoe UI',Arial,sans-serif;"><tr><td align="center" style="padding:28px 14px;"><table width="640" cellpadding="0" cellspacing="0" border="0" style="max-width:640px;width:100%;background:#fff;border-radius:18px;overflow:hidden;box-shadow:0 8px 30px rgba(15,23,42,.08);"><tr><td style="background:linear-gradient(135deg,${accentColor.from},${accentColor.to});padding:30px 36px;color:#fff;"><div style="font-size:13px;font-weight:700;letter-spacing:.08em;margin-bottom:10px;">MindCare</div><h1 style="margin:0;font-size:23px;line-height:1.35;">${title}</h1></td></tr><tr><td style="padding:30px 36px;">${body}</td></tr><tr><td style="border-top:1px solid #e2e8f0;padding:18px 36px;color:#94a3b8;font-size:12px;line-height:1.7;">อีเมลนี้ส่งจากระบบ MindCare อัตโนมัติ<br>&copy; ${new Date().getFullYear()} MindCare</td></tr></table></td></tr></table></body></html>`
 }
 
-function appointmentDetails({ appointment, client, counselor, concern }, lang = 'th') {
+function appointmentDetails({ appointment, client, counselor, concern }, lang = 'th', audience = 'client', accessDetails) {
   const dateStr = formatDate(appointment.date)
   if (lang === 'en') {
     return card(`${icon('calendar')}Appointment details`, [
       row('Appointment ID', appointment.id), row('Date', dateStr), row('Time', `${appointment.time}`), row('Duration', `${appointment.duration} minutes`), row('Type', typeLabel(appointment.type, 'en')), row('Topic', concern || '-')
-    ]) + card(`${icon('user')}Counselor`, [row('Name', counselor.name), row('Email', counselor.email || '-'), row('Phone', counselor.phone || '-')])
+    ]) + appointmentAccessDetails({ appointment, client }, 'en', audience, accessDetails) + card(`${icon('user')}Counselor`, [row('Name', counselor.name), row('Email', counselor.email || '-'), row('Phone', counselor.phone || '-')])
   }
   return card(`${icon('calendar')}รายละเอียดการนัดหมาย`, [
     row('รหัสการนัด', appointment.id), row('วันที่', dateStr), row('เวลา', `${appointment.time} น.`), row('ระยะเวลา', `${appointment.duration} นาที`), row('รูปแบบ', typeLabel(appointment.type)), row('เรื่องที่ปรึกษา', concern || '-')
-  ]) + card(`${icon('user')}นักจิตวิทยา`, [row('ชื่อ', counselor.name), row('อีเมล', counselor.email || '-'), row('โทรศัพท์', counselor.phone || '-')])
+  ]) + appointmentAccessDetails({ appointment, client }, 'th', audience, accessDetails) + card(`${icon('user')}นักจิตวิทยา`, [row('ชื่อ', counselor.name), row('อีเมล', counselor.email || '-'), row('โทรศัพท์', counselor.phone || '-')])
 }
 
 // Shared shape for the 3 email types that are just: greeting paragraph +
 // the standard appointment-details cards + an optional closing paragraph.
 // For appointmentClient/reminder, the closing line (and its icon) depend on
 // whether the appointment is online ("join") or onsite ("arrive").
-function standardEmailHtml(type, data, accentColor, greetingIcon, closingIcon, templateOverride) {
+function standardEmailHtml(type, data, accentColor, greetingIcon, closingIcon, templateOverride, audience = 'client') {
   const vars = buildVars(data)
   const apptType = data.appointment.type
   const resolvedClosingIcon = hasClosingVariants(type)
-    ? (apptType === 'onsite' ? ['map-pin', '#05967e'] : ['video', '#05967e'])
+    ? (apptType === 'onsite' ? ['map-pin', '#05967e'] : (apptType === 'phone' ? ['phone', '#05967e'] : ['video', '#05967e']))
     : closingIcon
   const build = lang => {
     const t = renderTemplateFields(type, lang, vars, templateOverride, apptType)
-    return { title: t.title, html: paragraph(...greetingIcon, t.greeting) + appointmentDetails(data, lang) + (t.closing ? paragraph(...resolvedClosingIcon, t.closing) : '') }
+    return { title: t.title, html: paragraph(...greetingIcon, t.greeting) + appointmentDetails(data, lang, audience, t.accessDetails) + (t.closing ? paragraph(...resolvedClosingIcon, t.closing) : '') }
   }
   const th = build('th')
   const en = build('en')
@@ -115,11 +151,11 @@ function standardEmailHtml(type, data, accentColor, greetingIcon, closingIcon, t
 }
 
 function clientEmailHtml(data, templateOverride) {
-  return standardEmailHtml('appointmentClient', data, { from: '#05967e', to: '#06b6d4' }, ['heart-handshake', '#05967e'], ['video', '#05967e'], templateOverride)
+  return standardEmailHtml('appointmentClient', data, { from: '#05967e', to: '#06b6d4' }, ['heart-handshake', '#05967e'], ['video', '#05967e'], templateOverride, 'client')
 }
 
 function counselorEmailHtml(data, templateOverride) {
-  return standardEmailHtml('appointmentCounselor', data, { from: '#3874FF', to: '#6366f1' }, ['heart-handshake', '#05967e'], ['video', '#05967e'], templateOverride)
+  return standardEmailHtml('appointmentCounselor', data, { from: '#3874FF', to: '#6366f1' }, ['heart-handshake', '#05967e'], ['video', '#05967e'], templateOverride, 'counselor')
 }
 
 function reminderEmailHtml(data, templateOverride) {

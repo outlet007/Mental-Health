@@ -43,7 +43,13 @@
       "pdpaCheckbox": "ข้าพเจ้าได้อ่านและยอมรับการยินยอมเปิดเผยข้อมูลแล้ว",
       "submitLabel": "ส่งคำขอจองนัดหมาย",
       "phonePlaceholder": "08X-XXX-XXXX",
-      "emailPlaceholder": "your@email.com"
+      "emailPlaceholder": "your@email.com",
+      "phoneSessionLabel": "โทรศัพท์"
+    },
+    "sessionTypes": {
+      "online": true,
+      "phone": true,
+      "onsite": true
     }
   },
   "faqs": [
@@ -61,7 +67,7 @@
     }
   ],
   "contact": {
-    "description": "ระบบจองนัดหมายการให้คำปรึกษาทางสุขภาพจิต เชื่อมต่อผู้ที่ต้องการความช่วยเหลือกับผู้เชี่ยวชาญที่ไว้วางใจได้",
+    "description": "ระบบจองนัดหมายการให้คำปรึกษาทางสุขภาพจิต เชื่อมต่อผู้ที่ต้องการความช่วยเหลือ<br>กับผู้เชี่ยวชาญที่ไว้วางใจได้",
     "lineLabel": "LINE @bucare",
     "lineUrl": "https://page.line.me/bucare?openQrModal=true",
     "email": "hello@MindCare.th",
@@ -71,36 +77,36 @@
   },
   "backgrounds": {
     "hero": {
-      "color": "",
-      "opacity": 1,
+      "color": "#70cdba",
+      "opacity": 0.05,
       "image": "/uploads/content/1782273930131.png",
       "imgOpacity": 1,
       "textColors": {
-        "heading": "",
-        "subtext": ""
+        "heading": "#1a2942",
+        "subtext": "#666666"
       },
       "motionEnabled": true,
-      "motionDuration": 38,
-      "motionScale": 1.12,
+      "motionDuration": 16,
+      "motionScale": 1.16,
       "motionStyle": "zoom",
       "blend": 0,
-      "blendColor": ""
+      "blendColor": "#ededed"
     },
     "counselors": {
-      "color": "",
-      "opacity": 1,
+      "color": "#ffffff",
+      "opacity": 0,
       "image": "/uploads/content/1783317283390.png",
       "imgOpacity": 1,
       "textColors": {
-        "heading": "",
-        "subtext": ""
+        "heading": "#0e2c48",
+        "subtext": "#424242"
       },
       "motionEnabled": true,
-      "motionDuration": 38,
-      "motionScale": 1.12,
+      "motionDuration": 18,
+      "motionScale": 1.17,
       "motionStyle": "zoom",
-      "blend": 0,
-      "blendColor": ""
+      "blend": 120,
+      "blendColor": "#e0e0e0"
     },
     "features": {
       "color": "",
@@ -112,60 +118,61 @@
         "subtext": ""
       },
       "motionEnabled": true,
-      "motionDuration": 38,
-      "motionScale": 1.12,
+      "motionDuration": 12,
+      "motionScale": 1.19,
       "motionStyle": "zoom",
-      "blend": 0,
-      "blendColor": ""
+      "blend": 140,
+      "blendColor": "#01314d"
     },
     "book": {
-      "color": "",
-      "opacity": 1,
+      "color": "#7ac6c7",
+      "opacity": 0.05,
       "image": "/uploads/content/1783391389871.png",
       "imgOpacity": 1,
       "textColors": {
-        "heading": "",
-        "subtext": "",
-        "formHeading": ""
+        "heading": "#0e2c48",
+        "subtext": "#262626",
+        "formHeading": "#0e2c48"
       },
       "motionEnabled": true,
-      "motionDuration": 38,
+      "motionDuration": 21,
       "motionScale": 1.12,
       "motionStyle": "zoom",
-      "blend": 0,
-      "blendColor": ""
+      "blend": 160,
+      "blendColor": "#eaebf4"
     },
     "faq": {
-      "color": "",
-      "opacity": 1,
+      "color": "#adafd2",
+      "opacity": 0.2,
       "image": "/uploads/content/1783402133631.png",
-      "imgOpacity": 1,
+      "imgOpacity": 0.45,
       "textColors": {
-        "heading": "",
-        "questions": "",
-        "answers": ""
+        "heading": "#0e2c48",
+        "questions": "#0e2c48",
+        "answers": "#4f4f4f"
       },
       "motionEnabled": true,
-      "motionDuration": 38,
-      "motionScale": 1.12,
+      "motionDuration": 21,
+      "motionScale": 1.16,
       "motionStyle": "zoom",
-      "blend": 0,
-      "blendColor": ""
+      "blend": 110,
+      "blendColor": "#bcbdd7"
     },
     "footer": {
-      "color": "",
+      "color": "#05132e",
       "image": "/uploads/content/1783410413940.jpg",
-      "opacity": 1,
-      "imgOpacity": 1,
-      "motionEnabled": true,
+      "opacity": 0.9,
+      "imgOpacity": 0.4,
+      "motionEnabled": false,
       "motionDuration": 38,
       "motionScale": 1.12,
       "textColors": {
-        "description": "",
-        "menu": "",
-        "lineLabel": "",
-        "hours": "",
-        "copyright": ""
+        "description": "#cfcfcf",
+        "menu": "#ffffff",
+        "lineLabel": "#cfcfcf",
+        "hours": "#cfcfcf",
+        "copyright": "#cfcfcf",
+        "menuLink": "#cfcfcf"
       },
       "motionStyle": "zoom",
       "blend": 0,
@@ -247,8 +254,8 @@
       "subtext": "We believe everyone deserves good mental health care in a safe and trustworthy environment.",
       "items": [
         "Counselors verified and certified",
-        "All information is confidential under PDPA",
-        "Book appointments 24 hours a day, every day",
+        "All information is kept confidential",
+        "Appointments can be booked 24/7",
         "Supports both online and in-person sessions",
         "Appointment reminders so you never miss a session"
       ]
@@ -259,8 +266,8 @@
     "subtext": "เราเชื่อว่าทุกคนมีสิทธิ์ได้รับการดูแลสุขภาพจิตที่ดี ในสภาพแวดล้อมที่ปลอดภัย<br>และไว้วางใจได้",
     "items": [
       "นักให้คำปรึกษาผ่านการตรวจสอบและรับรองคุณสมบัติ",
-      "ข้อมูลทุกอย่างเป็นความลับตาม PDPA",
-      "จองนัดได้ตลอด 24 ชั่วโมง ทุกวัน",
+      "ข้อมูลทุกอย่างเป็นความลับ",
+      "จองนัดได้ตลอด 24 ชั่วโมง",
       "รองรับทั้งการพบออนไลน์และเข้ารับบริการด้วยตนเอง",
       "แจ้งเตือนก่อนนัดหมาย ไม่ลืมแน่นอน"
     ],
@@ -277,8 +284,8 @@
     "collageMotionScale": 1.12
   },
   "branding": {
-    "headerLogoImage": "",
-    "footerLogoImage": "",
-    "faviconImage": ""
+    "headerLogoImage": "/uploads/content/1783430241417-37be3778.webp",
+    "footerLogoImage": "/uploads/content/1783430241418-4e2ae4f5.webp",
+    "faviconImage": "/uploads/content/1783430241418-0d98ecab.webp"
   }
 }

@@ -263,3 +263,39 @@ test('saving branding without touching the fields preserves the existing header/
     fs.writeFileSync(contentPath, before)
   }
 })
+
+function renderAdminLogin(content) {
+  return new Promise((resolve, reject) => {
+    ejs.renderFile(
+      path.join(__dirname, '..', 'views', 'admin', 'login.ejs'),
+      { content, error: false },
+      {},
+      (err, html) => err ? reject(err) : resolve(html)
+    )
+  })
+}
+
+function renderAdminSidebar(content) {
+  return new Promise((resolve, reject) => {
+    ejs.renderFile(
+      path.join(__dirname, '..', 'views', 'partials', 'admin-sidebar.ejs'),
+      { content, page: 'dashboard', session: { adminName: 'Admin', adminEmail: 'admin@example.com', userType: 'admin' } },
+      {},
+      (err, html) => err ? reject(err) : resolve(html)
+    )
+  })
+}
+
+test('admin login uses the footer logo without the old logo text', async () => {
+  const html = await renderAdminLogin({ branding: { headerLogoImage: '/uploads/content/header-logo.png', footerLogoImage: '/uploads/content/footer-logo.png' } })
+  assert.ok(html.includes('<img src="/uploads/content/footer-logo.png" alt="MindCare" class="brand-img">'))
+  assert.equal(html.includes('<img src="/uploads/content/header-logo.png"'), false)
+  assert.equal(html.includes('font-size:18px;font-weight:700;margin:0;line-height:1.2;">MindCare</p>'), false)
+})
+
+test('admin sidebar uses the footer logo without the old logo text', async () => {
+  const html = await renderAdminSidebar({ branding: { headerLogoImage: '/uploads/content/header-logo.png', footerLogoImage: '/uploads/content/footer-logo.png' } })
+  assert.ok(html.includes('<img src="/uploads/content/footer-logo.png" alt="MindCare" class="h-9 w-auto max-w-[160px] object-contain">'))
+  assert.equal(html.includes('<img src="/uploads/content/header-logo.png"'), false)
+  assert.equal(html.includes('class="font-bold leading-tight" style="color:#fff">MindCare</p>'), false)
+})
