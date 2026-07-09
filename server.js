@@ -1,6 +1,7 @@
 require('dotenv').config()
 const express = require('express')
 const session = require('express-session')
+const helmet  = require('helmet')
 const path    = require('path')
 const fs      = require('fs')
 const { attachSurveyRatingsToCounselors } = require('./src/utils/counselor-survey-ratings')
@@ -11,6 +12,13 @@ const app = express()
 app.set('view engine', 'ejs')
 app.set('views', path.join(__dirname, 'views'))
 
+// CSP/HSTS are left off for now: admin views rely on inline style="..."/<script>
+// throughout (project convention, see coding rules) and there's no HTTPS
+// termination configured yet, so both would break the app rather than harden
+// it. The rest of helmet's defaults (X-Frame-Options, X-Content-Type-Options,
+// Referrer-Policy, etc.) are safe additions with no functional impact.
+app.use(helmet({ contentSecurityPolicy: false, hsts: false }))
+
 app.use(express.urlencoded({ extended: true }))
 app.use(express.json())
 app.use(express.static(path.join(__dirname, 'public')))
@@ -20,7 +28,7 @@ app.use(session({
   secret: process.env.SESSION_SECRET || 'MindCare-session-secret-2026',
   resave: false,
   saveUninitialized: false,
-  cookie: { maxAge: 8 * 60 * 60 * 1000, httpOnly: true },
+  cookie: { maxAge: 8 * 60 * 60 * 1000, httpOnly: true, sameSite: 'lax' },
 }))
 
 // Pass shared data to all EJS views

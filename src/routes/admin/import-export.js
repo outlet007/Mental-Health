@@ -12,8 +12,15 @@ function writeData(file, data) { fs.writeFileSync(path.join(dataDir, file), JSON
 const upload = multer({ dest: os.tmpdir(), limits: { fileSize: 5 * 1024 * 1024 } })
 
 // ── CSV helpers ───────────────────────────────────────────────────
+// Values starting with = + - @ are treated as formulas by Excel/Sheets when
+// the CSV is opened — prefix with an apostrophe so they render as plain text
+// instead of executing (CSV/formula injection).
 function toCSV(rows, headers) {
-  const esc = v => `"${String(v ?? '').replace(/"/g, '""')}"`
+  const esc = v => {
+    let s = String(v ?? '')
+    if (/^[=+\-@]/.test(s)) s = "'" + s
+    return `"${s.replace(/"/g, '""')}"`
+  }
   const head = headers.map(h => esc(h.label)).join(',')
   const body = rows.map(r => headers.map(h => esc(r[h.label] ?? '')).join(','))
   return [head, ...body].join('\r\n')

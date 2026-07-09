@@ -2,13 +2,21 @@ const express = require('express')
 const router  = express.Router()
 const fs      = require('fs')
 const path    = require('path')
+const rateLimit = require('express-rate-limit')
 
 const dataFile = path.join(__dirname, '../../data/contacts.json')
 
 function readData()   { return JSON.parse(fs.readFileSync(dataFile, 'utf8')) }
 function writeData(d) { fs.writeFileSync(dataFile, JSON.stringify(d, null, 2)) }
 
-router.post('/', (req, res) => {
+const contactLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+})
+
+router.post('/', contactLimiter, (req, res) => {
   const { name, phone, email, studentId, concern, type } = req.body
   if (!name || !studentId || !phone || !email || !type) return res.redirect('/?error=missing#book')
 

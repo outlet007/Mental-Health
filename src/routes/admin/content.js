@@ -18,7 +18,14 @@ const bgStorage = multer.diskStorage({
   destination: uploadDir,
   filename: (req, file, cb) => cb(null, Date.now() + '-' + crypto.randomBytes(4).toString('hex') + path.extname(file.originalname)),
 })
-const bgUpload = multer({ storage: bgStorage, limits: { fileSize: 5 * 1024 * 1024 } }).fields([
+// Matches the `accept="image/jpeg,image/png,image/webp,image/gif"` advertised
+// by every file input on this page — rejects anything else (e.g. .svg/.html)
+// server-side too, not just via the browser's file picker filter.
+const bgFileFilter = (req, file, cb) => {
+  const ok = /jpeg|jpg|png|webp|gif/.test(path.extname(file.originalname).toLowerCase())
+  cb(ok ? null : new Error('รองรับเฉพาะไฟล์รูปภาพ'), ok)
+}
+const bgUpload = multer({ storage: bgStorage, limits: { fileSize: 5 * 1024 * 1024 }, fileFilter: bgFileFilter }).fields([
   { name: 'img_hero',       maxCount: 1 },
   { name: 'img_counselors', maxCount: 1 },
   { name: 'img_features',   maxCount: 1 },
@@ -26,13 +33,13 @@ const bgUpload = multer({ storage: bgStorage, limits: { fileSize: 5 * 1024 * 102
   { name: 'img_faq',        maxCount: 1 },
   { name: 'img_footer',     maxCount: 1 },
 ])
-const heroVisualUpload = multer({ storage: bgStorage, limits: { fileSize: 5 * 1024 * 1024 } }).single('heroVisualImage')
-const brandingUpload = multer({ storage: bgStorage, limits: { fileSize: 5 * 1024 * 1024 } }).fields([
+const heroVisualUpload = multer({ storage: bgStorage, limits: { fileSize: 5 * 1024 * 1024 }, fileFilter: bgFileFilter }).single('heroVisualImage')
+const brandingUpload = multer({ storage: bgStorage, limits: { fileSize: 5 * 1024 * 1024 }, fileFilter: bgFileFilter }).fields([
   { name: 'headerLogoImage', maxCount: 1 },
   { name: 'footerLogoImage', maxCount: 1 },
   { name: 'faviconImage',    maxCount: 1 },
 ])
-const featuresCollageUpload = multer({ storage: bgStorage, limits: { fileSize: 5 * 1024 * 1024 } }).fields([
+const featuresCollageUpload = multer({ storage: bgStorage, limits: { fileSize: 5 * 1024 * 1024 }, fileFilter: bgFileFilter }).fields([
   { name: 'collagePhoto1', maxCount: 1 },
   { name: 'collagePhoto2', maxCount: 1 },
   { name: 'collagePhoto3', maxCount: 1 },
