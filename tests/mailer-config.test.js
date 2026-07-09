@@ -230,10 +230,15 @@ test('appointment emails include online meeting links and phone call details by 
     const [onlineClient, onlineCounselor, phoneClient, phoneCounselor] = harness.sentMessages
     const thaiClientNotice = "จิตแพทย์จะโทรติดต่อกลับเพื่อให้คำปรึกษา"
     const thaiLinkTitle = "ลิงก์เข้าร่วมวิดีโอคอล"
-    assert.equal((onlineClient.html.match(/https:\/\/meet\.example\.test\/abc/g) || []).length, 2)
-    assert.equal((onlineCounselor.html.match(/https:\/\/meet\.example\.test\/abc/g) || []).length, 2)
+    // Link now renders as a clickable anchor (href + visible text) in the details
+    // card, plus a "join now" button in the closing notice card (client only).
+    assert.equal((onlineClient.html.match(/https:\/\/meet\.example\.test\/abc/g) || []).length, 6)
+    assert.equal((onlineCounselor.html.match(/https:\/\/meet\.example\.test\/abc/g) || []).length, 4)
     assert.match(onlineClient.html, new RegExp(thaiLinkTitle))
     assert.match(onlineCounselor.html, new RegExp(thaiLinkTitle))
+    assert.match(onlineClient.html, /href="https:\/\/meet\.example\.test\/abc" target="_blank" rel="noopener noreferrer"/)
+    assert.match(onlineClient.html, /เข้าร่วมวิดีโอคอล/)
+    assert.match(onlineClient.html, /Join video call/)
     assert.equal((phoneCounselor.html.match(/0899999999/g) || []).length, 2)
     assert.match(phoneCounselor.html, /Client phone/)
     assert.match(phoneClient.html, /counselor will call you/)

@@ -49,7 +49,7 @@ function typeLabel(type, lang = 'th') {
   return type === 'online' ? 'ออนไลน์ (Video Call)' : 'เข้ารับบริการด้วยตนเอง (On-site)'
 }
 
-function icon(name, color = '#05967e') {
+function icon(name, color = '#05967e', standalone = false) {
   const paths = {
     'heart-handshake': '<path d="M19.5 12.6 12 20l-7.5-7.4a5 5 0 0 1 7.1-7.1l.4.4.4-.4a5 5 0 0 1 7.1 7.1Z"/><path d="M12 20l-2-2 2-2 2 2-2 2Z"/>',
     video: '<path d="m16 13 5 3V8l-5 3"/><rect width="14" height="12" x="2" y="6" rx="2"/>',
@@ -64,7 +64,12 @@ function icon(name, color = '#05967e') {
     frown: '<circle cx="12" cy="12" r="10"/><path d="M8 16s1.5-2 4-2 4 2 4 2"/><path d="M9 9h.01M15 9h.01"/>',
     'circle-alert': '<circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/>'
   }
-  return `<svg data-email-icon="${name}" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-4px;margin-right:8px;">${paths[name] || paths.clipboard}</svg>`
+  const style = standalone ? '' : 'vertical-align:-4px;margin-right:8px;'
+  return `<svg data-email-icon="${name}" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="${style}">${paths[name] || paths.clipboard}</svg>`
+}
+
+function escapeHtml(str) {
+  return String(str || '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]))
 }
 
 function row(label, value) {
@@ -95,7 +100,9 @@ function appointmentAccessDetails({ appointment, client }, lang = 'th', audience
       }
   const text = key => accessDetails[key] || fallback[key]
   if (appointment.type === 'online' && appointment.meetingLink) {
-    return card(icon('video') + text('onlineTitle'), [row(text('onlineLinkLabel'), appointment.meetingLink)])
+    const safeLink = escapeHtml(appointment.meetingLink)
+    const linkHtml = `<a href="${safeLink}" target="_blank" rel="noopener noreferrer" style="color:#05967e;text-decoration:underline;word-break:break-all;">${safeLink}</a>`
+    return card(icon('video') + text('onlineTitle'), [row(text('onlineLinkLabel'), linkHtml)])
   }
   if (appointment.type === 'phone') {
     if (audience === 'counselor') {
@@ -108,6 +115,17 @@ function appointmentAccessDetails({ appointment, client }, lang = 'th', audience
 
 function paragraph(iconName, iconColor, html) {
   return `<p style="font-size:15px;line-height:1.8;color:#334155;margin:0 0 18px;">${icon(iconName, iconColor)}${html}</p>`
+}
+
+// Highlighted "don't miss this" card for the arrival/join/call instruction —
+// more eye-catching than a plain paragraph so clients notice it. For online
+// appointments, `link` appends a clickable "join now" button right after the
+// text, on the same line.
+function noticeCard(iconName, html, link) {
+  const linkHtml = link
+    ? ` <a href="${escapeHtml(link.url)}" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;gap:6px;vertical-align:middle;margin-left:8px;background:#05967e;color:#ffffff;font-size:13px;font-weight:700;text-decoration:none;padding:6px 14px;border-radius:999px;">${icon('video', '#ffffff', true)}${escapeHtml(link.label)}</a>`
+    : ''
+  return `<div style="border:1.5px solid #a0f3e1;border-radius:14px;padding:14px 18px;margin:18px 0;background:#f0fdfa;"><div style="display:flex;align-items:center;gap:12px;"><div style="flex-shrink:0;width:38px;height:38px;border-radius:10px;background:#05967e;display:flex;align-items:center;justify-content:center;">${icon(iconName, '#ffffff', true)}</div><p style="margin:0;font-size:15px;font-weight:700;line-height:1.6;color:#065f56;">${html}${linkHtml}</p></div></div>`
 }
 
 function languageToggle(thHtml, enHtml) {
@@ -143,7 +161,13 @@ function standardEmailHtml(type, data, accentColor, greetingIcon, closingIcon, t
     : closingIcon
   const build = lang => {
     const t = renderTemplateFields(type, lang, vars, templateOverride, apptType)
-    return { title: t.title, html: paragraph(...greetingIcon, t.greeting) + appointmentDetails(data, lang, audience, t.accessDetails) + (t.closing ? paragraph(...resolvedClosingIcon, t.closing) : '') }
+    const joinLink = (hasClosingVariants(type) && apptType === 'online' && data.appointment.meetingLink)
+      ? { url: data.appointment.meetingLink, label: lang === 'en' ? 'Join video call' : 'เข้าร่วมวิดีโอคอล' }
+      : null
+    const closingHtml = t.closing
+      ? (hasClosingVariants(type) ? noticeCard(resolvedClosingIcon[0], t.closing, joinLink) : paragraph(...resolvedClosingIcon, t.closing))
+      : ''
+    return { title: t.title, html: paragraph(...greetingIcon, t.greeting) + appointmentDetails(data, lang, audience, t.accessDetails) + closingHtml }
   }
   const th = build('th')
   const en = build('en')
