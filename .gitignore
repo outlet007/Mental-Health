@@ -5,3 +5,15 @@ public/css/output.css
 .DS_Store
 Thumbs.db
 .claude/
+
+# Real client/counselor PII and health-related data — never commit (security
+# review finding #1). content.json/schedules.json/survey-email-settings.json
+# stay tracked since they're site config, not personal data.
+data/admins.json
+data/appointments.json
+data/audit-log.json
+data/clients.json
+data/contacts.json
+data/counselors.json
+data/surveys.json
+data/email-view-tokens.json
