@@ -24,7 +24,12 @@ async function sendDueAppointmentReminders(now = new Date()) {
   const deliveryConfig = getEmailDeliveryConfig(settings)
 
   let sent = 0
-  let changed = false
+  // IDs whose reminder was handled this pass (sent, or skipped for good reason
+  // e.g. no client email) — collected instead of mutating `appointments`
+  // in place, because the loop below awaits real SMTP sends and can take a
+  // while; writing a snapshot from before that would silently discard any
+  // appointment edit/cancel an admin made via the UI in the meantime.
+  const dueIds = []
 
   for (const appt of appointments) {
     if (appt.reminderSent || appt.status !== 'confirmed') continue
@@ -38,8 +43,7 @@ async function sendDueAppointmentReminders(now = new Date()) {
     const client = clients.find(c => c.id === appt.clientId)
     const counselor = counselors.find(c => c.id === appt.counselorId)
     if (!client || !counselor || !client.email) {
-      appt.reminderSent = true
-      changed = true
+      dueIds.push(appt.id)
       continue
     }
 
@@ -47,14 +51,28 @@ async function sendDueAppointmentReminders(now = new Date()) {
       const recipient = resolveEmailRecipient('reminder', client, settings)
       await sendReminderEmail({ appointment: appt, client: recipient, counselor, concern: appt.concern || '', deliveryConfig })
       sent++
-      appt.reminderSent = true
-      changed = true
+      dueIds.push(appt.id)
     } catch (err) {
       console.error('[Email] reminder error:', err.message)
     }
   }
 
-  if (changed) write('appointments.json', appointments)
+  // Re-read right before writing so this only ever applies reminderSent on
+  // top of the latest state, instead of overwriting other fields back to
+  // whatever they were when this pass started.
+  if (dueIds.length) {
+    const latest = read('appointments.json')
+    const idSet = new Set(dueIds)
+    let changed = false
+    for (const appt of latest) {
+      if (idSet.has(appt.id) && !appt.reminderSent) {
+        appt.reminderSent = true
+        changed = true
+      }
+    }
+    if (changed) write('appointments.json', latest)
+  }
+
   return { checked: appointments.length, sent }
 }
 

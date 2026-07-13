@@ -21,6 +21,7 @@ function makeApp(session = {}) {
       counselorId: 'c001',
       adminName: 'Counselor',
       adminEmail: 'counselor@example.com',
+      csrfToken: 'test-csrf-token',
       ...session,
     }
     res.locals.session = req.session
@@ -116,6 +117,7 @@ test('counselor profile update keeps username readonly and updates password only
       sessionDuration: '45',
       username: 'evil-change',
       password: 'NewSecurePass123',
+      _csrf: 'test-csrf-token',
     }).toString()
 
     const { res } = await request(makeApp(), 'POST', '/admin/profile', payload)

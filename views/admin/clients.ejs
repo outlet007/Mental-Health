@@ -297,7 +297,7 @@
   </div>
   <div style="flex:1;overflow-y:auto;padding:20px;">
     <p style="font-size:12px;color:#64748b;margin:0 0 14px;">เลือกนักจิตวิทยาคนใหม่แยกทีละนัดหมาย (แสดงเฉพาะนัดที่รอยืนยัน/ยืนยันแล้ว — นัดที่เสร็จสิ้นหรือยกเลิกไปแล้วจะไม่ถูกย้าย)</p>
-    <form id="transferForm" method="POST" action="">
+    <form id="transferForm" method="POST" action=""><input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
       <div id="transferRows" style="display:grid;gap:10px;"></div>
       <p id="transferEmpty" style="display:none;font-size:13px;color:#94a3b8;text-align:center;padding:24px 0;">ไม่มีนัดหมายที่รอยืนยัน/ยืนยันแล้วสำหรับผู้รับบริการคนนี้</p>
     </form>
@@ -325,7 +325,7 @@
     <button onclick="closeBook()" style="background:none;border:none;cursor:pointer;padding:6px;border-radius:8px;color:#94a3b8;"><i data-lucide="x" style="width:18px;height:18px;"></i></button>
   </div>
   <div style="flex:1;overflow-y:auto;">
-    <form method="POST" action="/admin/appointments/create" id="bookForm">
+    <form method="POST" action="/admin/appointments/create" id="bookForm"><input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
       <input type="hidden" name="clientId" id="bookClientId">
       <!-- Step 1 -->
       <div style="padding:16px 20px;border-bottom:1px solid #f8fafc;">
@@ -459,7 +459,7 @@
     <button onclick="closePanel()" style="background:none;border:none;cursor:pointer;padding:6px;border-radius:8px;color:#94a3b8;"><i data-lucide="x" style="width:18px;height:18px;"></i></button>
   </div>
   <div style="flex:1;overflow-y:auto;padding:20px;">
-    <form id="panelForm" method="POST" action="/admin/clients/create">
+    <form id="panelForm" method="POST" action="/admin/clients/create"><input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
       <div style="display:grid;gap:16px;">
         <div>
           <label class="lbl">ชื่อ-นามสกุล *</label>
@@ -525,7 +525,7 @@
     </div>
     <button onclick="closeDeleteModal()" style="background:none;border:none;cursor:pointer;padding:6px;border-radius:8px;color:#94a3b8;"><i data-lucide="x" style="width:18px;height:18px;"></i></button>
   </div>
-  <form id="deleteForm" method="POST" action="" style="padding:20px;display:flex;flex-direction:column;gap:14px;">
+  <form id="deleteForm" method="POST" action="" style="padding:20px;display:flex;flex-direction:column;gap:14px;"><input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
     <div style="padding:12px 14px;background:#fef2f2;border:1px solid #fca5a5;border-radius:10px;font-size:13px;color:#991b1b;display:flex;gap:8px;align-items:flex-start;">
       <i data-lucide="alert-triangle" style="width:16px;height:16px;flex-shrink:0;margin-top:1px;"></i>
       <span id="deleteWarningText"></span>

@@ -175,7 +175,7 @@
           <i data-lucide="upload-cloud" style="width:16px;height:16px;color:#05967e;"></i>
           ขั้นตอนที่ 2-3: อัปโหลดและนำเข้าข้อมูล
         </div>
-        <form id="importForm" action="/admin/import-export/import" method="POST" enctype="multipart/form-data">
+        <form id="importForm" action="/admin/import-export/import" method="POST" enctype="multipart/form-data"><input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
           <input type="hidden" name="type" value="<%= type %>">
           <div class="drop-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
             <input type="file" name="file" id="fileInput" accept=".csv" onchange="handleFileSelect(this)">

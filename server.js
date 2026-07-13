@@ -82,6 +82,12 @@ app.use('/admin', require('./src/routes/admin/auth'))
 // Protect all /admin routes
 app.use('/admin', require('./src/middleware/auth'))
 
+// CSRF protection (token generation + verification) is applied inside each
+// admin route file via router.use(), not globally here — that way routers
+// stay self-protected regardless of how/where they get mounted (production
+// server.js, or a test harness that mounts a single route file directly).
+// See src/middleware/csrf.js.
+
 // Admin routes
 app.use('/admin',               require('./src/routes/admin/index'))
 app.use('/admin/counselors',    require('./src/routes/admin/counselors'))

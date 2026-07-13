@@ -4,6 +4,7 @@ const fs      = require('fs')
 const path    = require('path')
 const bcrypt  = require('bcryptjs')
 const rateLimit = require('express-rate-limit')
+const { verifyToken } = require('../../middleware/csrf')
 
 const dataDir = path.join(__dirname, '../../../data')
 function read(file) { return JSON.parse(fs.readFileSync(path.join(dataDir, file), 'utf8')) }
@@ -57,7 +58,7 @@ router.post('/login', loginLimiter, async (req, res) => {
   res.redirect('/admin')
 })
 
-router.post('/logout', (req, res) => {
+router.post('/logout', verifyToken, (req, res) => {
   req.session.destroy(() => res.redirect('/admin/login'))
 })
 

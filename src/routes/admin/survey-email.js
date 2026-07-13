@@ -1,5 +1,8 @@
 const express = require('express')
 const router = express.Router()
+const { ensureToken, verifyToken } = require('../../middleware/csrf')
+router.use(ensureToken)
+router.use(verifyToken)
 const {
   readSurveyEmailSettings,
   writeSurveyEmailSettings,

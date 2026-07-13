@@ -120,7 +120,7 @@
         <p class="text-sm font-medium truncate" style="color:#fff"><%= session && session.adminName ? session.adminName : 'Admin' %></p>
         <p class="text-xs truncate" style="color:rgba(255,255,255,.5)"><%= session && session.adminEmail ? session.adminEmail : '' %></p>
       </div>
-      <form method="POST" action="/admin/logout" style="margin:0;">
+      <form method="POST" action="/admin/logout" style="margin:0;"><input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
         <button type="submit" title="ออกจากระบบ" class="flex items-center justify-center w-7 h-7 rounded-lg transition-colors" style="background:none;border:none;cursor:pointer;color:rgba(255,255,255,.45);" onmouseover="this.style.background='rgba(239,68,68,.2)';this.style.color='#f87171'" onmouseout="this.style.background='none';this.style.color='rgba(255,255,255,.45)'">
           <i data-lucide="log-out" class="w-4 h-4"></i>
         </button>

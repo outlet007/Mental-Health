@@ -14,7 +14,7 @@ function requestSurveyEmail(pathname = '/admin/survey-email', method = 'GET', fi
   app.set('views', path.join(__dirname, '..', 'views'))
   app.use(express.urlencoded({ extended: true }))
   app.use((req, res, next) => {
-    req.session = { adminName: 'Admin', adminEmail: 'admin@example.com', userType: 'admin' }
+    req.session = { adminName: 'Admin', adminEmail: 'admin@example.com', userType: 'admin', csrfToken: 'test-csrf-token' }
     res.locals.session = req.session
     next()
   })
@@ -22,7 +22,7 @@ function requestSurveyEmail(pathname = '/admin/survey-email', method = 'GET', fi
 
   return new Promise((resolve, reject) => {
     const server = app.listen(0, () => {
-      const body = new URLSearchParams(fields).toString()
+      const body = new URLSearchParams(method === 'POST' ? { ...fields, _csrf: 'test-csrf-token' } : fields).toString()
       const req = http.request({
         hostname: '127.0.0.1',
         port: server.address().port,

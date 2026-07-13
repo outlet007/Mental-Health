@@ -96,7 +96,7 @@
         </div>
       </div>
       <div id="registration-th" style="display:<%= autoEnRegistration ? 'none' : '' %>;">
-        <form method="POST" action="/admin/registration-form" style="display:grid;gap:14px;">
+        <form method="POST" action="/admin/registration-form" style="display:grid;gap:14px;"><input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
           <div class="registration-layout" data-registration-layout="th">
             <div class="form-frame form-frame-soft" data-layout-frame="registration-section-copy-th">
               <div class="form-frame-header">
@@ -185,7 +185,7 @@
         </form>
       </div>
       <div id="registration-en" style="display:<%= autoEnRegistration ? '' : 'none' %>;">
-        <form method="POST" action="/admin/registration-form/en" style="display:grid;gap:14px;">
+        <form method="POST" action="/admin/registration-form/en" style="display:grid;gap:14px;"><input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
           <div class="registration-layout" data-registration-layout="en">
             <div class="form-frame form-frame-soft" data-layout-frame="registration-section-copy-en">
               <div class="form-frame-header">

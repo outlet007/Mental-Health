@@ -7,6 +7,9 @@ const multer  = require('multer')
 const crypto  = require('crypto')
 const bcrypt  = require('bcryptjs')
 const { logDeletion } = require('../../utils/audit-log')
+const { ensureToken, verifyToken } = require('../../middleware/csrf')
+router.use(ensureToken)
+router.use(verifyToken)
 
 const dataFile   = path.join(__dirname, '../../../data/counselors.json')
 const uploadDir  = path.join(__dirname, '../../../public/uploads/counselors')
@@ -84,8 +87,14 @@ router.get('/', (req, res) => {
 })
 
 // ── CREATE ────────────────────────────────────────────────────────────────────
-router.post('/create', upload.single('photo'), async (req, res) => {
+router.post('/create', upload.single('photo'), verifyToken, async (req, res) => {
   const { username, password, name, title, email, phone, bio, specialties, languages, sessionDuration, isApproved } = req.body
+  // Hash before reading the file: bcrypt.hash awaits (yields to the event
+  // loop), so a read-then-await-then-write here could interleave with another
+  // concurrent request's write and silently lose one of the two updates.
+  const uname = str(username).trim()
+  const pass  = str(password).trim()
+  const hashedPassword = (uname && pass) ? await bcrypt.hash(pass, 10) : null
   const data = readData()
 
   if (data.some(c => c.email === email)) {
@@ -115,11 +124,9 @@ router.post('/create', upload.single('photo'), async (req, res) => {
     createdAt:       new Date().toISOString().split('T')[0],
   }
 
-  const uname = str(username).trim()
-  const pass  = str(password).trim()
   if (uname) {
     record.username = uname.toLowerCase()
-    if (pass) record.password = await bcrypt.hash(pass, 10)
+    if (hashedPassword) record.password = hashedPassword
   }
 
   data.push(record)
@@ -128,8 +135,11 @@ router.post('/create', upload.single('photo'), async (req, res) => {
 })
 
 // ── EDIT ──────────────────────────────────────────────────────────────────────
-router.post('/:id/edit', upload.single('photo'), async (req, res) => {
+router.post('/:id/edit', upload.single('photo'), verifyToken, async (req, res) => {
   const { username, password, name, title, email, phone, bio, specialties, languages, sessionDuration } = req.body
+  // Hash before reading the file — see the /create route above for why.
+  const pass = str(password).trim()
+  const hashedPassword = pass ? await bcrypt.hash(pass, 10) : null
   const data = readData()
   const idx  = data.findIndex(c => c.id === req.params.id)
   if (idx === -1) return res.redirect('/admin/counselors')
@@ -155,9 +165,8 @@ router.post('/:id/edit', upload.single('photo'), async (req, res) => {
   }
 
   const uname = str(username).trim()
-  const pass  = str(password).trim()
   if (uname) data[idx].username = uname.toLowerCase()
-  if (pass)  data[idx].password = await bcrypt.hash(pass, 10)
+  if (hashedPassword) data[idx].password = hashedPassword
 
   writeData(data)
   res.redirect('/admin/counselors?updated=1')

@@ -4,6 +4,9 @@ const fs      = require('fs')
 const path    = require('path')
 const multer  = require('multer')
 const os      = require('os')
+const { ensureToken, verifyToken } = require('../../middleware/csrf')
+router.use(ensureToken)
+router.use(verifyToken)
 
 const dataDir = path.join(__dirname, '../../../data')
 function readData(file) { return JSON.parse(fs.readFileSync(path.join(dataDir, file), 'utf8')) }
@@ -236,7 +239,7 @@ router.get('/export/:type', (req, res) => {
 })
 
 // ── POST import ───────────────────────────────────────────────────
-router.post('/import', upload.single('file'), (req, res) => {
+router.post('/import', upload.single('file'), verifyToken, (req, res) => {
   const type   = req.body.type || 'clients'
   const schema = SCHEMAS[type]
   const back   = `/admin/import-export?tab=import&type=${type}`

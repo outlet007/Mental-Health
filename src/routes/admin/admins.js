@@ -1,5 +1,8 @@
 const express = require('express')
 const router  = express.Router()
+const { ensureToken, verifyToken } = require('../../middleware/csrf')
+router.use(ensureToken)
+router.use(verifyToken)
 const fs      = require('fs')
 const { matchesSearch } = require('../../utils/search')
 const path    = require('path')
@@ -47,10 +50,14 @@ router.get('/', (req, res) => {
 router.post('/create', async (req, res) => {
   const { username, password, name, department, email, phone, role } = req.body
   if (!username || !password || !name) return res.redirect('/admin/admins?error=missing')
+  // Hash before reading the file: bcrypt.hash awaits (yields to the event
+  // loop), so a read-then-await-then-write here could interleave with another
+  // concurrent request's write and silently lose one of the two updates.
+  // Doing the hash first keeps the read/check/write itself fully synchronous.
+  const hashed = await bcrypt.hash(password, 10)
   const data = readData()
   if (data.find(a => a.username === username.trim().toLowerCase()))
     return res.redirect('/admin/admins?error=duplicate')
-  const hashed = await bcrypt.hash(password, 10)
   data.push({
     id:         'adm' + Date.now().toString().slice(-6),
     username:   username.trim().toLowerCase(),
@@ -69,6 +76,8 @@ router.post('/create', async (req, res) => {
 
 router.post('/:id/edit', async (req, res) => {
   const { username, password, name, department, email, phone, role, status } = req.body
+  // Hash before reading the file — see the /create route above for why.
+  const hashedPassword = (password && password.trim()) ? await bcrypt.hash(password.trim(), 10) : null
   const data = readData()
   const idx  = data.findIndex(a => a.id === req.params.id)
   if (idx !== -1) {
@@ -82,8 +91,8 @@ router.post('/:id/edit', async (req, res) => {
     data[idx].phone      = (phone || '').trim()
     data[idx].role       = role || data[idx].role
     data[idx].status     = status || data[idx].status
-    if (password && password.trim()) {
-      data[idx].password = await bcrypt.hash(password.trim(), 10)
+    if (hashedPassword) {
+      data[idx].password = hashedPassword
     }
     writeData(data)
   }

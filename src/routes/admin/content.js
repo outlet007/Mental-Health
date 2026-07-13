@@ -4,6 +4,10 @@ const fs      = require('fs')
 const path    = require('path')
 const multer  = require('multer')
 const crypto  = require('crypto')
+const { ensureToken, verifyToken } = require('../../middleware/csrf')
+const { sanitizeContentTree } = require('../../utils/sanitize-content')
+router.use(ensureToken)
+router.use(verifyToken)
 
 const dataFile  = path.join(__dirname, '../../../data/content.json')
 const uploadDir = path.join(__dirname, '../../../public/uploads/content')
@@ -47,7 +51,7 @@ const featuresCollageUpload = multer({ storage: bgStorage, limits: { fileSize: 5
 ])
 
 function readData()   { return JSON.parse(fs.readFileSync(dataFile, 'utf8')) }
-function writeData(d) { fs.writeFileSync(dataFile, JSON.stringify(d, null, 2)) }
+function writeData(d) { fs.writeFileSync(dataFile, JSON.stringify(sanitizeContentTree(d), null, 2)) }
 
 const _hexRe = /^#[0-9A-Fa-f]{6}$/
 function saveTextColors(data, section, fields, body) {
@@ -81,7 +85,7 @@ router.get('/', (req, res) => {
   })
 })
 
-router.post('/branding', brandingUpload, (req, res) => {
+router.post('/branding', brandingUpload, verifyToken, (req, res) => {
   const data = readData()
   const previous = data.branding || {}
   data.branding = {
@@ -106,7 +110,7 @@ router.post('/branding', brandingUpload, (req, res) => {
 })
 
 // ── TH endpoints ─────────────────────────────────────────────────────────────
-router.post('/hero', heroVisualUpload, (req, res) => {
+router.post('/hero', heroVisualUpload, verifyToken, (req, res) => {
   const data = readData()
   const previousHero = data.hero || {}
   data.hero = {
@@ -163,7 +167,7 @@ router.post('/counselors', (req, res) => {
   res.redirect('/admin/content?saved=counselors')
 })
 
-router.post('/features', featuresCollageUpload, (req, res) => {
+router.post('/features', featuresCollageUpload, verifyToken, (req, res) => {
   const data = readData()
   const previousFeatures = data.features || {}
   const files = req.files || {}
@@ -351,7 +355,7 @@ const _tcFields = {
   footer:     ['description', 'menu', 'menuLink', 'lineLabel', 'hours', 'copyright'],
 }
 
-router.post('/backgrounds', bgUpload, (req, res) => {
+router.post('/backgrounds', bgUpload, verifyToken, (req, res) => {
   const data = readData()
   if (!data.backgrounds) data.backgrounds = {}
   const files = req.files || {}

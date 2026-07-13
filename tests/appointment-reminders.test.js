@@ -123,3 +123,46 @@ test('does not send when reminders are disabled, outside the window, or not conf
     })
   )
 })
+
+test('a concurrent edit to appointments.json while a reminder email is sending is preserved, not clobbered', async () => {
+  const now = new Date('2026-07-07T00:00:00.000Z')
+  const within = isoInHours(now, 5)
+
+  await withTempJson(settingsPath, { deliveryMode: 'test', emailTypes: { reminder: { enabled: true, recipientMode: 'default', customEmail: '', hoursBefore: 24 } } }, () =>
+    withTempJson(appointmentsPath, [
+      { id: 'app-race', clientId: CLIENT_ID, counselorId: COUNSELOR_ID, date: within.date, time: within.time, duration: 60, type: 'online', status: 'confirmed', note: 'original' },
+    ], async () => {
+      const nodemailer = require('nodemailer')
+      const originalCreateTransport = nodemailer.createTransport
+      nodemailer.createTransport = () => ({
+        sendMail: async () => {
+          // Simulate an admin editing this same appointment via the UI while
+          // this email send is still in flight (network I/O yields the event
+          // loop here, same as a real SMTP call). Before the fix, the reminder
+          // job would overwrite this with its stale pre-loop snapshot when it
+          // finally wrote appointments.json back.
+          const current = JSON.parse(fs.readFileSync(appointmentsPath, 'utf8'))
+          current[0].note = 'edited concurrently by admin'
+          fs.writeFileSync(appointmentsPath, JSON.stringify(current, null, 2))
+          return { messageId: 'test-message-id' }
+        },
+      })
+      delete require.cache[require.resolve('../src/utils/mailer')]
+      delete require.cache[require.resolve('../src/utils/appointment-reminders')]
+      const { sendDueAppointmentReminders } = require('../src/utils/appointment-reminders')
+
+      try {
+        const result = await sendDueAppointmentReminders(now)
+        assert.equal(result.sent, 1)
+
+        const after = JSON.parse(fs.readFileSync(appointmentsPath, 'utf8'))
+        assert.equal(after[0].reminderSent, true, 'reminder flag should still be set')
+        assert.equal(after[0].note, 'edited concurrently by admin', 'concurrent edit must survive, not be reverted by a stale write')
+      } finally {
+        nodemailer.createTransport = originalCreateTransport
+        delete require.cache[require.resolve('../src/utils/mailer')]
+        delete require.cache[require.resolve('../src/utils/appointment-reminders')]
+      }
+    })
+  )
+})

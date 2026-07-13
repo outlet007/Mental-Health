@@ -5,6 +5,9 @@ const path    = require('path')
 const multer  = require('multer')
 const crypto  = require('crypto')
 const bcrypt  = require('bcryptjs')
+const { ensureToken, verifyToken } = require('../../middleware/csrf')
+router.use(ensureToken)
+router.use(verifyToken)
 
 const dataFile  = path.join(__dirname, '../../../data/counselors.json')
 const uploadDir = path.join(__dirname, '../../../public/uploads/counselors')
@@ -72,14 +75,20 @@ router.get('/', requireCounselor, (req, res) => {
   })
 })
 
-router.post('/', requireCounselor, upload.single('photo'), async (req, res) => {
+router.post('/', requireCounselor, upload.single('photo'), verifyToken, async (req, res) => {
+  const { name, title, email, phone, bio, specialties, languages, sessionDuration, password } = req.body
+  // Hash before reading the file: bcrypt.hash awaits (yields to the event
+  // loop), so a read-then-await-then-write here could interleave with another
+  // concurrent request's write and silently lose one of the two updates.
+  const newPassword = str(password).trim()
+  const hashedPassword = newPassword ? await bcrypt.hash(newPassword, 10) : null
+
   const { data, idx } = findCurrentCounselor(req)
   if (idx === -1) {
     if (req.file) fs.unlinkSync(req.file.path)
     return res.redirect('/admin')
   }
 
-  const { name, title, email, phone, bio, specialties, languages, sessionDuration, password } = req.body
   let photo = data[idx].photo || null
   if (req.file) {
     deletePhoto(data[idx].photo)
@@ -100,8 +109,7 @@ router.post('/', requireCounselor, upload.single('photo'), async (req, res) => {
     photo,
   }
 
-  const newPassword = str(password).trim()
-  if (newPassword) data[idx].password = await bcrypt.hash(newPassword, 10)
+  if (hashedPassword) data[idx].password = hashedPassword
 
   writeData(data)
   syncSession(req, data[idx])
