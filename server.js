@@ -2,6 +2,7 @@ require('dotenv').config()
 const express = require('express')
 const session = require('express-session')
 const helmet  = require('helmet')
+const crypto  = require('crypto')
 const path    = require('path')
 const fs      = require('fs')
 const { attachSurveyRatingsToCounselors } = require('./src/utils/counselor-survey-ratings')
@@ -24,8 +25,18 @@ app.use(express.json())
 app.use(express.static(path.join(__dirname, 'public')))
 
 // Session
+// No static fallback secret: a hardcoded string here would sit in git history
+// same as any other exposed credential. If SESSION_SECRET isn't set, fall back
+// to a secret generated fresh for this process only — sessions still work,
+// they just don't survive a restart, which is a safer failure mode than a
+// predictable secret anyone with repo access could forge cookies with.
+if (!process.env.SESSION_SECRET) {
+  console.warn('[Security] SESSION_SECRET is not set — using a random secret for this run only. Set SESSION_SECRET in .env so sessions survive restarts.')
+}
+const sessionSecret = process.env.SESSION_SECRET || crypto.randomBytes(32).toString('hex')
+
 app.use(session({
-  secret: process.env.SESSION_SECRET || 'MindCare-session-secret-2026',
+  secret: sessionSecret,
   resave: false,
   saveUninitialized: false,
   cookie: { maxAge: 8 * 60 * 60 * 1000, httpOnly: true, sameSite: 'lax' },
