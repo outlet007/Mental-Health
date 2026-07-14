@@ -24,6 +24,16 @@ app.use(express.urlencoded({ extended: true }))
 app.use(express.json())
 app.use(express.static(path.join(__dirname, 'public')))
 
+// No CORS middleware, intentionally: this is a server-rendered app (EJS
+// views + session cookies), not an API consumed by a separate frontend/
+// mobile app/third party. With no Access-Control-Allow-Origin header ever
+// sent, browsers already block cross-origin JS from reading any response by
+// default — the correct and safest posture here. If a real cross-origin
+// consumer is ever needed, add the `cors` package scoped to specific known
+// origins — never `origin: '*'` combined with `credentials: true`, which
+// would let any site read authenticated admin responses using a visitor's
+// session cookie.
+
 // Session
 // No static fallback secret: a hardcoded string here would sit in git history
 // same as any other exposed credential. If SESSION_SECRET isn't set, fall back
