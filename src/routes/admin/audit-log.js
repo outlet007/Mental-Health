@@ -3,12 +3,12 @@ const router  = express.Router()
 const { ensureToken, verifyToken } = require('../../middleware/csrf')
 router.use(ensureToken)
 router.use(verifyToken)
-const fs      = require('fs')
 const path    = require('path')
 const { matchesSearch } = require('../../utils/search')
+const { readJSON } = require('../../utils/json-store')
 
 const logFile = path.join(__dirname, '../../../data/audit-log.json')
-function readLog() { return fs.existsSync(logFile) ? JSON.parse(fs.readFileSync(logFile, 'utf8')) : [] }
+function readLog() { return readJSON(logFile, []) }
 
 const ENTITY_LABELS = {
   client:      'ผู้รับบริการ',

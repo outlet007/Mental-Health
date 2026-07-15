@@ -1,5 +1,5 @@
-const fs = require('fs')
 const path = require('path')
+const { readJSON, writeJSON } = require('./json-store')
 
 const templatesFile = path.join(__dirname, '../../data/email-templates.json')
 
@@ -182,10 +182,7 @@ function cleanTemplate(type, data = {}) {
 // Overrides (may be partially filled) merged over defaults — any field left
 // blank by the admin falls back to the built-in default text for that field.
 function readEmailTemplates() {
-  let stored = {}
-  if (fs.existsSync(templatesFile)) {
-    try { stored = JSON.parse(fs.readFileSync(templatesFile, 'utf8')) } catch (error) { stored = {} }
-  }
+  const stored = readJSON(templatesFile, {})
   const result = {}
   for (const id of EMAIL_TYPE_IDS) {
     result[id] = cleanTemplate(id, stored[id])
@@ -197,7 +194,7 @@ function writeEmailTemplate(type, template) {
   if (!EMAIL_TYPE_IDS.includes(type)) throw new Error(`Unknown email type: ${type}`)
   const all = readEmailTemplates()
   all[type] = cleanTemplate(type, template)
-  fs.writeFileSync(templatesFile, JSON.stringify(all, null, 2))
+  writeJSON(templatesFile, all)
   return all[type]
 }
 

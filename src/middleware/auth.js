@@ -1,19 +1,15 @@
-﻿const fs = require('fs')
-const path = require('path')
+﻿const path = require('path')
+const { readJSON } = require('../utils/json-store')
 
 const counselorFile   = path.join(__dirname, '../../data/counselors.json')
 const appointmentFile = path.join(__dirname, '../../data/appointments.json')
 
 function readCounselors() {
-  if (!fs.existsSync(counselorFile)) return []
-  try { return JSON.parse(fs.readFileSync(counselorFile, 'utf8')) }
-  catch (error) { return [] }
+  return readJSON(counselorFile, [])
 }
 
 function readAppointments() {
-  if (!fs.existsSync(appointmentFile)) return []
-  try { return JSON.parse(fs.readFileSync(appointmentFile, 'utf8')) }
-  catch (error) { return [] }
+  return readJSON(appointmentFile, [])
 }
 
 const COUNSELOR_ALLOWED = [

@@ -3,11 +3,11 @@ const router  = express.Router()
 const { ensureToken, verifyToken } = require('../../middleware/csrf')
 router.use(ensureToken)
 router.use(verifyToken)
-const fs      = require('fs')
 const path    = require('path')
+const { readJSON } = require('../../utils/json-store')
 
 const dataDir = path.join(__dirname, '../../../data')
-function read(file) { return JSON.parse(fs.readFileSync(path.join(dataDir, file), 'utf8')) }
+function read(file) { return readJSON(path.join(dataDir, file)) }
 
 router.get('/', (req, res) => {
   const contacts     = read('contacts.json')

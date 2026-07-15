@@ -1,5 +1,5 @@
-const fs = require('fs')
 const path = require('path')
+const { readJSON, writeJSON } = require('./json-store')
 
 const settingsFile = path.join(__dirname, '../../data/survey-email-settings.json')
 
@@ -65,12 +65,9 @@ function cleanSettings(data = {}) {
 }
 
 function readSurveyEmailSettings() {
-  if (!fs.existsSync(settingsFile)) return { ...DEFAULT_SETTINGS, emailTypes: cleanEmailTypes({}) }
-  try {
-    return cleanSettings(JSON.parse(fs.readFileSync(settingsFile, 'utf8')))
-  } catch (error) {
-    return { ...DEFAULT_SETTINGS, emailTypes: cleanEmailTypes({}) }
-  }
+  const stored = readJSON(settingsFile, null)
+  if (!stored) return { ...DEFAULT_SETTINGS, emailTypes: cleanEmailTypes({}) }
+  return cleanSettings(stored)
 }
 
 function writeSurveyEmailSettings(settings) {
@@ -78,7 +75,7 @@ function writeSurveyEmailSettings(settings) {
     ...cleanSettings(settings),
     updatedAt: new Date().toISOString(),
   }
-  fs.writeFileSync(settingsFile, JSON.stringify(data, null, 2))
+  writeJSON(settingsFile, data)
   return data
 }
 

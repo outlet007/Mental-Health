@@ -3,13 +3,13 @@ const router = express.Router()
 const { ensureToken, verifyToken } = require('../../middleware/csrf')
 router.use(ensureToken)
 router.use(verifyToken)
-const fs = require('fs')
 const path = require('path')
+const { readJSON } = require('../../utils/json-store')
 
 const dataDir = path.join(__dirname, '../../../data')
 
 function readData(file) {
-  return JSON.parse(fs.readFileSync(path.join(dataDir, file), 'utf8'))
+  return readJSON(path.join(dataDir, file))
 }
 
 function getMonday(d) {
@@ -94,8 +94,7 @@ router.get('/', (req, res) => {
       .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
       .slice(0, 8)
 
-    const surveysPath   = path.join(dataDir, 'surveys.json')
-    const surveys       = fs.existsSync(surveysPath) ? readData('surveys.json') : []
+    const surveys       = readJSON(path.join(dataDir, 'surveys.json'), [])
     const mySurveys      = surveys.filter(s => s.counselorId === cId && typeof s.rating === 'number')
     const myAvgRating    = mySurveys.length > 0
       ? mySurveys.reduce((sum, s) => sum + s.rating, 0) / mySurveys.length

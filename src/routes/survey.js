@@ -1,16 +1,15 @@
 const express = require('express')
 const router  = express.Router()
-const fs      = require('fs')
 const path    = require('path')
+const { readJSON, writeJSON } = require('../utils/json-store')
 
 const dataDir = path.join(__dirname, '../../data')
 
-function read(file) { return JSON.parse(fs.readFileSync(path.join(dataDir, file), 'utf8')) }
-function write(file, d) { fs.writeFileSync(path.join(dataDir, file), JSON.stringify(d, null, 2)) }
+function read(file) { return readJSON(path.join(dataDir, file)) }
+function write(file, d) { writeJSON(path.join(dataDir, file), d) }
 
 function getSurveys() {
-  const f = path.join(dataDir, 'surveys.json')
-  return fs.existsSync(f) ? JSON.parse(fs.readFileSync(f, 'utf8')) : []
+  return readJSON(path.join(dataDir, 'surveys.json'), [])
 }
 
 router.get('/:token', (req, res) => {

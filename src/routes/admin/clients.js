@@ -3,7 +3,6 @@ const router  = express.Router()
 const { ensureToken, verifyToken } = require('../../middleware/csrf')
 router.use(ensureToken)
 router.use(verifyToken)
-const fs      = require('fs')
 const { matchesSearch } = require('../../utils/search')
 const path    = require('path')
 const { sendAppointmentEmails, sendCounselorReassignedEmail } = require('../../utils/mailer')
@@ -11,18 +10,21 @@ const { resolveAppointmentEmailOptions, resolveReassignedEmailOptions } = requir
 const { reassignAppointmentCounselor } = require('../../utils/appointment-scheduling')
 const { logDeletion } = require('../../utils/audit-log')
 const { getConcernOptions } = require('../../utils/concern-options')
+const { readJSON, writeJSON } = require('../../utils/json-store')
+const { logInfo } = require('../../utils/logger')
 
 const dataDir    = path.join(__dirname, '../../../data')
 const clientFile = path.join(dataDir, 'clients.json')
 const apptFile   = path.join(dataDir, 'appointments.json')
+const surveysFile = path.join(dataDir, 'surveys.json')
 
 // สีอ้างอิงต่อนักจิตวิทยา — ต้องตรงกับ COLORS ใน src/routes/admin/schedules.js
 const COUNSELOR_COLORS = ['#6366f1','#05967e','#f59e0b','#ef4444','#06b6d4','#8b5cf6','#10b981','#f43f5e']
 
-function read(file)    { return JSON.parse(fs.readFileSync(path.join(dataDir, file), 'utf8')) }
-function write(file, d) { fs.writeFileSync(path.join(dataDir, file), JSON.stringify(d, null, 2)) }
-function readClients()  { return JSON.parse(fs.readFileSync(clientFile, 'utf8')) }
-function writeClients(d){ fs.writeFileSync(clientFile, JSON.stringify(d, null, 2)) }
+function read(file)    { return readJSON(path.join(dataDir, file)) }
+function write(file, d) { writeJSON(path.join(dataDir, file), d) }
+function readClients()  { return readJSON(clientFile) }
+function writeClients(d){ writeJSON(clientFile, d) }
 
 function isCounselor(req) {
   return req.session.userType === 'counselor'
@@ -112,7 +114,7 @@ router.get('/', (req, res) => {
 // ── DETAIL ────────────────────────────────────────────────────────────────────
 router.get('/:id', (req, res) => {
   const clients      = readClients()
-  const appointments = JSON.parse(fs.readFileSync(apptFile, 'utf8'))
+  const appointments = readJSON(apptFile)
   const client       = clients.find(c => c.id === req.params.id)
   if (!client) return res.redirect('/admin/clients')
   if (!canUseClient(req, req.params.id)) return forbidden(res)
@@ -125,6 +127,33 @@ router.get('/:id', (req, res) => {
     page: 'clients', title: `ข้อมูล ${client.name}`,
     client, appointments: clientAppointments,
   })
+})
+
+// ── DATA EXPORT (PDPA right-to-access request) ──────────────────────────────
+// Bundles everything the app holds about one client — their profile, full
+// appointment history, and any satisfaction surveys they submitted — into a
+// single downloadable JSON file, for an admin to hand over when a client
+// formally asks what data is held about them. Deletion (right to erasure) is
+// already covered by the existing delete route + audit log below.
+router.get('/:id/export', (req, res) => {
+  const client = readClients().find(c => c.id === req.params.id)
+  if (!client) return res.redirect('/admin/clients')
+  if (!canUseClient(req, req.params.id)) return forbidden(res)
+
+  const appointments = readJSON(apptFile).filter(a => a.clientId === req.params.id)
+  const surveys = readJSON(surveysFile, []).filter(s => s.clientId === req.params.id)
+
+  logInfo(`Data export for client ${client.id} (${client.name}) by ${req.session.adminName || req.session.counselorId || 'unknown'}`)
+
+  const payload = {
+    exportedAt: new Date().toISOString(),
+    client,
+    appointments,
+    surveys,
+  }
+  res.setHeader('Content-Type', 'application/json; charset=utf-8')
+  res.setHeader('Content-Disposition', `attachment; filename="client-${client.id}-data-export.json"`)
+  res.send(JSON.stringify(payload, null, 2))
 })
 
 // ── CREATE ────────────────────────────────────────────────────────────────────

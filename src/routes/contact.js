@@ -1,13 +1,13 @@
 const express = require('express')
 const router  = express.Router()
-const fs      = require('fs')
 const path    = require('path')
 const rateLimit = require('express-rate-limit')
+const { readJSON, writeJSON } = require('../utils/json-store')
 
 const dataFile = path.join(__dirname, '../../data/contacts.json')
 
-function readData()   { return JSON.parse(fs.readFileSync(dataFile, 'utf8')) }
-function writeData(d) { fs.writeFileSync(dataFile, JSON.stringify(d, null, 2)) }
+function readData()   { return readJSON(dataFile) }
+function writeData(d) { writeJSON(dataFile, d) }
 
 const contactLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,

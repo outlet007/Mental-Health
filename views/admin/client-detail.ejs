@@ -10,7 +10,10 @@
 <div class="ml-64 min-h-screen flex flex-col">
   <header class="h-14 bg-white border-b border-slate-100 px-6 flex items-center gap-3 sticky top-0 z-20">
     <a href="/admin/clients" class="btn-ghost p-2"><i data-lucide="arrow-left" class="w-4 h-4"></i></a>
-    <h1 class="font-semibold text-slate-800"><%= title %></h1>
+    <h1 class="font-semibold text-slate-800 flex-1"><%= title %></h1>
+    <a href="/admin/clients/<%= client.id %>/export" class="btn-secondary text-xs px-3 py-2 flex items-center gap-1.5" title="ดาวน์โหลดข้อมูลทั้งหมดของผู้รับบริการรายนี้ (สำหรับคำขอเข้าถึงข้อมูลตาม PDPA)">
+      <i data-lucide="download" class="w-3.5 h-3.5"></i> ส่งออกข้อมูล
+    </a>
   </header>
   <main class="flex-1 p-6">
     <div class="grid lg:grid-cols-3 gap-6">

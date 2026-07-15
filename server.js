@@ -4,9 +4,11 @@ const session = require('express-session')
 const helmet  = require('helmet')
 const crypto  = require('crypto')
 const path    = require('path')
-const fs      = require('fs')
 const { attachSurveyRatingsToCounselors } = require('./src/utils/counselor-survey-ratings')
 const { sendDueAppointmentReminders } = require('./src/utils/appointment-reminders')
+const { readJSON } = require('./src/utils/json-store')
+const { runBackup } = require('./src/utils/backup')
+const { logError } = require('./src/utils/logger')
 
 const app = express()
 
@@ -52,25 +54,42 @@ app.use(session({
   cookie: { maxAge: 8 * 60 * 60 * 1000, httpOnly: true, sameSite: 'lax' },
 }))
 
-// Pass shared data to all EJS views
+// Pass shared data to all EJS views. Falls back to {} on failure (rather than
+// the readJSON default of throwing) because this runs before every single
+// request — a corrupted content.json should degrade pages to their built-in
+// default text, not take the whole site down.
 app.use((req, res, next) => {
   res.locals.session = req.session
   try {
-    res.locals.content = JSON.parse(fs.readFileSync(path.join(__dirname, 'data/content.json'), 'utf8'))
+    res.locals.content = readJSON(path.join(__dirname, 'data/content.json'))
   } catch (err) {
     res.locals.content = {}
   }
   next()
 })
 
+// Health check for monitoring/orchestrators (Docker healthcheck, a load
+// balancer, uptime checks). No auth — the whole point is for infra without
+// admin credentials to poll it. Actually reads a data file rather than just
+// returning 200 unconditionally, so it catches "process is up but the data
+// disk is unreadable" too, not just "process is up".
+app.get('/health', (req, res) => {
+  try {
+    readJSON(path.join(__dirname, 'data/content.json'))
+    res.status(200).json({ status: 'ok', uptimeSeconds: Math.floor(process.uptime()) })
+  } catch (err) {
+    logError('[Health] check failed', err)
+    res.status(503).json({ status: 'error' })
+  }
+})
+
 // Landing page
 app.get('/', (req, res) => {
-  const counselors = JSON.parse(fs.readFileSync(path.join(__dirname, 'data/counselors.json'), 'utf8'))
-  const surveysPath = path.join(__dirname, 'data/surveys.json')
-  const surveys = fs.existsSync(surveysPath) ? JSON.parse(fs.readFileSync(surveysPath, 'utf8')) : []
+  const counselors = readJSON(path.join(__dirname, 'data/counselors.json'))
+  const surveys = readJSON(path.join(__dirname, 'data/surveys.json'), [])
   const approved   = counselors.filter(c => c.isApproved)
   const ratingStats = attachSurveyRatingsToCounselors(approved, surveys)
-  const content    = JSON.parse(fs.readFileSync(path.join(__dirname, 'data/content.json'), 'utf8'))
+  const content    = readJSON(path.join(__dirname, 'data/content.json'))
   res.render('index', {
     counselors: ratingStats.counselors,
     counselorRatingAverage: ratingStats.averageRating,
@@ -116,15 +135,74 @@ app.use('/admin/reports',        require('./src/routes/admin/reports'))
 app.use('/admin/notifications', require('./src/routes/admin/notifications'))
 app.use('/admin/audit-log',     require('./src/routes/admin/audit-log'))
 
+// Global error handler — must be registered after every route. Logs the
+// error with request context to a persistent file (console output alone is
+// lost on container restart unless something external is capturing it) and
+// returns the same generic, detail-free message Express's own default
+// handler already used — never the error's own message or stack, since a
+// thrown error can carry data that shouldn't reach the client.
+app.use((err, req, res, next) => {
+  logError(`Unhandled error on ${req.method} ${req.originalUrl}`, err)
+  if (res.headersSent) return next(err)
+  res.status(err.status || 500)
+  if (req.accepts('html')) {
+    res.type('html').send('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Error</title></head><body><pre>Internal Server Error</pre></body></html>')
+  } else {
+    res.json({ error: 'Internal Server Error' })
+  }
+})
+
 // Appointment reminder emails — polls periodically instead of exact scheduling
 // since only a JSON file backs appointment state (no job queue).
 const REMINDER_CHECK_INTERVAL_MS = 15 * 60 * 1000
-setInterval(() => {
-  sendDueAppointmentReminders().catch(err => console.error('[Email] reminder check error:', err.message))
+const reminderInterval = setInterval(() => {
+  sendDueAppointmentReminders().catch(err => logError('[Email] reminder check error', err))
 }, REMINDER_CHECK_INTERVAL_MS)
 
+// Local rotating snapshots of data/ + public/uploads/ — a same-disk safety
+// net against an accidental delete or bad edit, not a substitute for a real
+// offsite backup (see DEPLOYMENT.md). Runs once at startup, then on a timer.
+const BACKUP_INTERVAL_MS = parseInt(process.env.BACKUP_INTERVAL_HOURS || '6', 10) * 60 * 60 * 1000
+function runBackupSafely() {
+  try {
+    const result = runBackup()
+    if (result.ok) console.log(`[Backup] Snapshot saved to ${result.path}`)
+    else console.warn('[Backup] Skipped:', result.reason)
+  } catch (err) {
+    logError('[Backup] Failed', err)
+  }
+}
+const backupInterval = setInterval(runBackupSafely, BACKUP_INTERVAL_MS)
+
 const PORT = process.env.PORT || 3000
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`MindCare running -> http://localhost:${PORT}`)
-  sendDueAppointmentReminders().catch(err => console.error('[Email] reminder check error:', err.message))
+  sendDueAppointmentReminders().catch(err => logError('[Email] reminder check error', err))
+  runBackupSafely()
 })
+
+// Graceful shutdown: stop accepting new connections and let in-flight
+// requests finish before the process exits, instead of being killed mid
+// request. This matters most for requests in the middle of a data-file
+// write — even with the atomic write in json-store.js (temp file + rename)
+// protecting against a corrupted file, an abrupt kill can still drop a
+// request's write entirely. `docker compose down`/restarts send SIGTERM.
+function shutdown(signal) {
+  console.log(`[Server] Received ${signal}, shutting down gracefully...`)
+  clearInterval(reminderInterval)
+  clearInterval(backupInterval)
+  server.close(err => {
+    if (err) { console.error('[Server] Error while closing:', err.message); process.exit(1) }
+    console.log('[Server] All connections closed, exiting.')
+    process.exit(0)
+  })
+  // Safety net: if some connection never closes (e.g. a stuck keep-alive),
+  // don't hang forever — force exit after a grace period.
+  setTimeout(() => {
+    console.error('[Server] Forced shutdown after timeout — a connection did not close in time.')
+    process.exit(1)
+  }, 10000).unref()
+}
+
+process.on('SIGTERM', () => shutdown('SIGTERM'))
+process.on('SIGINT', () => shutdown('SIGINT'))

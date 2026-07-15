@@ -3,16 +3,16 @@ const router  = express.Router()
 const { ensureToken, verifyToken } = require('../../middleware/csrf')
 router.use(ensureToken)
 router.use(verifyToken)
-const fs      = require('fs')
 const { matchesSearch } = require('../../utils/search')
 const path    = require('path')
 const bcrypt  = require('bcryptjs')
 const { logDeletion } = require('../../utils/audit-log')
+const { readJSON, writeJSON } = require('../../utils/json-store')
 
 const dataFile = path.join(__dirname, '../../../data/admins.json')
 
-function readData()   { return JSON.parse(fs.readFileSync(dataFile, 'utf8')) }
-function writeData(d) { fs.writeFileSync(dataFile, JSON.stringify(d, null, 2)) }
+function readData()   { return readJSON(dataFile) }
+function writeData(d) { writeJSON(dataFile, d) }
 function isSuperAdminRole(role) { return ['superadmin', 'admin'].includes(role) }
 function activeSuperAdminCount(data) {
   return data.filter(a => isSuperAdminRole(a.role) && a.status === 'active').length

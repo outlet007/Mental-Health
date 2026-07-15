@@ -6,6 +6,7 @@ const multer  = require('multer')
 const crypto  = require('crypto')
 const { ensureToken, verifyToken } = require('../../middleware/csrf')
 const { sanitizeContentTree } = require('../../utils/sanitize-content')
+const { readJSON, writeJSON } = require('../../utils/json-store')
 router.use(ensureToken)
 router.use(verifyToken)
 
@@ -50,8 +51,8 @@ const featuresCollageUpload = multer({ storage: bgStorage, limits: { fileSize: 5
   { name: 'collagePhoto4', maxCount: 1 },
 ])
 
-function readData()   { return JSON.parse(fs.readFileSync(dataFile, 'utf8')) }
-function writeData(d) { fs.writeFileSync(dataFile, JSON.stringify(sanitizeContentTree(d), null, 2)) }
+function readData()   { return readJSON(dataFile) }
+function writeData(d) { writeJSON(dataFile, sanitizeContentTree(d)) }
 
 const _hexRe = /^#[0-9A-Fa-f]{6}$/
 function saveTextColors(data, section, fields, body) {

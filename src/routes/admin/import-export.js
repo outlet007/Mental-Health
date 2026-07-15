@@ -5,12 +5,13 @@ const path    = require('path')
 const multer  = require('multer')
 const os      = require('os')
 const { ensureToken, verifyToken } = require('../../middleware/csrf')
+const { readJSON, writeJSON } = require('../../utils/json-store')
 router.use(ensureToken)
 router.use(verifyToken)
 
 const dataDir = path.join(__dirname, '../../../data')
-function readData(file) { return JSON.parse(fs.readFileSync(path.join(dataDir, file), 'utf8')) }
-function writeData(file, data) { fs.writeFileSync(path.join(dataDir, file), JSON.stringify(data, null, 2)) }
+function readData(file) { return readJSON(path.join(dataDir, file)) }
+function writeData(file, data) { writeJSON(path.join(dataDir, file), data) }
 
 const upload = multer({ dest: os.tmpdir(), limits: { fileSize: 5 * 1024 * 1024 } })
 

@@ -6,6 +6,7 @@ const multer  = require('multer')
 const crypto  = require('crypto')
 const bcrypt  = require('bcryptjs')
 const { ensureToken, verifyToken } = require('../../middleware/csrf')
+const { readJSON, writeJSON } = require('../../utils/json-store')
 router.use(ensureToken)
 router.use(verifyToken)
 
@@ -29,8 +30,8 @@ const upload = multer({
   },
 })
 
-function readData() { return JSON.parse(fs.readFileSync(dataFile, 'utf8')) }
-function writeData(data) { fs.writeFileSync(dataFile, JSON.stringify(data, null, 2)) }
+function readData() { return readJSON(dataFile) }
+function writeData(data) { writeJSON(dataFile, data) }
 function str(v) { return Array.isArray(v) ? (v[0] || '') : String(v || '') }
 function parseArr(v) {
   const raw = Array.isArray(v) ? v.join(',') : (v || '')

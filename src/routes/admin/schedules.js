@@ -3,9 +3,9 @@ const router  = express.Router()
 const { ensureToken, verifyToken } = require('../../middleware/csrf')
 router.use(ensureToken)
 router.use(verifyToken)
-const fs      = require('fs')
 const path    = require('path')
 const { logDeletion } = require('../../utils/audit-log')
+const { readJSON, writeJSON } = require('../../utils/json-store')
 
 const scheduleFile  = path.join(__dirname, '../../../data/schedules.json')
 const counselorFile = path.join(__dirname, '../../../data/counselors.json')
@@ -13,9 +13,9 @@ const counselorFile = path.join(__dirname, '../../../data/counselors.json')
 const DAY_NAMES = ['อาทิตย์','จันทร์','อังคาร','พุธ','พฤหัสบดี','ศุกร์','เสาร์']
 const COLORS    = ['#6366f1','#05967e','#f59e0b','#ef4444','#06b6d4','#8b5cf6','#10b981','#f43f5e']
 
-function readSchedules()   { return JSON.parse(fs.readFileSync(scheduleFile,  'utf8')) }
-function readCounselors()  { return JSON.parse(fs.readFileSync(counselorFile, 'utf8')) }
-function writeSchedules(d) { fs.writeFileSync(scheduleFile, JSON.stringify(d, null, 2)) }
+function readSchedules()   { return readJSON(scheduleFile) }
+function readCounselors()  { return readJSON(counselorFile) }
+function writeSchedules(d) { writeJSON(scheduleFile, d) }
 function isCounselor(req)  { return req.session.userType === 'counselor' }
 function canUseCounselor(req, cId) { return !isCounselor(req) || cId === req.session.counselorId }
 function forbidden(res)    { return res.status(403).send('Forbidden') }

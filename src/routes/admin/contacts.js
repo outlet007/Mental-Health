@@ -3,13 +3,13 @@ const router  = express.Router()
 const { ensureToken, verifyToken } = require('../../middleware/csrf')
 router.use(ensureToken)
 router.use(verifyToken)
-const fs      = require('fs')
 const { matchesSearch } = require('../../utils/search')
 const path    = require('path')
 const { sendAppointmentEmails } = require('../../utils/mailer')
 const { resolveAppointmentEmailOptions } = require('../../utils/survey-email-settings')
 const { logDeletion } = require('../../utils/audit-log')
 const { getConcernOptions } = require('../../utils/concern-options')
+const { readJSON, writeJSON } = require('../../utils/json-store')
 
 const dataDir  = path.join(__dirname, '../../../data')
 const dataFile = path.join(dataDir, 'contacts.json')
@@ -18,9 +18,9 @@ const DEFAULT_SESSION_TYPES = { online: true, phone: false, onsite: true }
 // สีอ้างอิงต่อนักจิตวิทยา — ต้องตรงกับ COLORS ใน src/routes/admin/schedules.js
 const COUNSELOR_COLORS = ['#6366f1','#05967e','#f59e0b','#ef4444','#06b6d4','#8b5cf6','#10b981','#f43f5e']
 
-function readFile(file) { return JSON.parse(fs.readFileSync(path.join(dataDir, file), 'utf8')) }
-function readData()     { return JSON.parse(fs.readFileSync(dataFile, 'utf8')) }
-function writeData(d)   { fs.writeFileSync(dataFile, JSON.stringify(d, null, 2)) }
+function readFile(file) { return readJSON(path.join(dataDir, file)) }
+function readData()     { return readJSON(dataFile) }
+function writeData(d)   { writeJSON(dataFile, d) }
 
 function readAppointmentSessionTypes() {
   try {
@@ -142,7 +142,7 @@ router.post('/:id/book', async (req, res) => {
   // ผู้รับบริการ: ใช้ตัวที่ admin ยืนยันเลือกไว้ (existingClientId) เท่านั้น
   // ไม่ auto-match ด้วยเบอร์โทร/อีเมลอีกต่อไป — ป้องกันการ merge ข้อมูลผิดคนโดยไม่ได้ตั้งใจ
   const clientsFile = path.join(dataDir, 'clients.json')
-  const clients = JSON.parse(fs.readFileSync(clientsFile, 'utf8'))
+  const clients = readJSON(clientsFile)
   let client = existingClientId ? clients.find(c => c.id === existingClientId) : null
   if (!client) {
     client = {
@@ -156,11 +156,11 @@ router.post('/:id/book', async (req, res) => {
       createdAt: new Date().toISOString().split('T')[0],
     }
     clients.push(client)
-    fs.writeFileSync(clientsFile, JSON.stringify(clients, null, 2))
+    writeJSON(clientsFile, clients)
   }
 
   const apptFile = path.join(dataDir, 'appointments.json')
-  const appts    = JSON.parse(fs.readFileSync(apptFile, 'utf8'))
+  const appts    = readJSON(apptFile)
   const maxNum = appts.reduce((max, a) => {
     const m = String(a.id).match(/^app-(\d+)$/)
     return m ? Math.max(max, parseInt(m[1])) : max
@@ -182,7 +182,7 @@ router.post('/:id/book', async (req, res) => {
     createdAt:     new Date().toISOString().split('T')[0],
   }
   appts.push(newAppt)
-  fs.writeFileSync(apptFile, JSON.stringify(appts, null, 2))
+  writeJSON(apptFile, appts)
 
   contacts[idx].status = 'converted'
   contacts[idx].appointmentId = newAppt.id

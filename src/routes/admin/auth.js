@@ -1,13 +1,13 @@
 const express = require('express')
 const router  = express.Router()
-const fs      = require('fs')
 const path    = require('path')
 const bcrypt  = require('bcryptjs')
 const rateLimit = require('express-rate-limit')
 const { verifyToken } = require('../../middleware/csrf')
+const { readJSON } = require('../../utils/json-store')
 
 const dataDir = path.join(__dirname, '../../../data')
-function read(file) { return JSON.parse(fs.readFileSync(path.join(dataDir, file), 'utf8')) }
+function read(file) { return readJSON(path.join(dataDir, file)) }
 
 // Never matches any real password — compared against when no account is found,
 // so login always pays the same bcrypt cost and response time doesn't leak

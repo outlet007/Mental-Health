@@ -1,10 +1,10 @@
-const fs = require('fs')
 const path = require('path')
+const { readJSON, writeJSON } = require('./json-store')
 
 const logFile = path.join(__dirname, '../../data/audit-log.json')
 
 function readLog() {
-  return fs.existsSync(logFile) ? JSON.parse(fs.readFileSync(logFile, 'utf8')) : []
+  return readJSON(logFile, [])
 }
 
 function logDeletion({ entityType, entityId, entityName, reason, req }) {
@@ -19,7 +19,7 @@ function logDeletion({ entityType, entityId, entityName, reason, req }) {
     actorRole:  req.session.userType || 'admin',
     deletedAt:  new Date().toISOString(),
   })
-  fs.writeFileSync(logFile, JSON.stringify(log, null, 2))
+  writeJSON(logFile, log)
 }
 
 module.exports = { logDeletion }

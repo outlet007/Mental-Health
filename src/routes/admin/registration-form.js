@@ -4,13 +4,13 @@ const { ensureToken, verifyToken } = require('../../middleware/csrf')
 const { sanitizeContentTree } = require('../../utils/sanitize-content')
 router.use(ensureToken)
 router.use(verifyToken)
-const fs = require('fs')
 const path = require('path')
+const { readJSON, writeJSON } = require('../../utils/json-store')
 
 const dataFile = path.join(__dirname, '../../../data/content.json')
 
-function readData() { return JSON.parse(fs.readFileSync(dataFile, 'utf8')) }
-function writeData(data) { fs.writeFileSync(dataFile, JSON.stringify(sanitizeContentTree(data), null, 2)) }
+function readData() { return readJSON(dataFile) }
+function writeData(data) { writeJSON(dataFile, sanitizeContentTree(data)) }
 
 function readItems(value) {
   return [].concat(value || []).map(item => item.trim()).filter(Boolean)

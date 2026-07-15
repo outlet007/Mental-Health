@@ -1,12 +1,12 @@
-const fs = require('fs')
 const path = require('path')
 const { sendReminderEmail } = require('./mailer')
 const { readSurveyEmailSettings, getEmailDeliveryConfig, isEmailTypeEnabled, resolveEmailRecipient } = require('./survey-email-settings')
+const { readJSON, writeJSON } = require('./json-store')
 
 const dataDir = path.join(__dirname, '../../data')
 
-function read(file) { return JSON.parse(fs.readFileSync(path.join(dataDir, file), 'utf8')) }
-function write(file, d) { fs.writeFileSync(path.join(dataDir, file), JSON.stringify(d, null, 2)) }
+function read(file) { return readJSON(path.join(dataDir, file)) }
+function write(file, d) { writeJSON(path.join(dataDir, file), d) }
 
 // Sends the "appointment coming up" reminder to clients whose confirmed
 // appointment falls within emailTypes.reminder.hoursBefore hours from `now`,

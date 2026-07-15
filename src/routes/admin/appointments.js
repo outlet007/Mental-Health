@@ -3,7 +3,6 @@ const router  = express.Router()
 const { ensureToken, verifyToken } = require('../../middleware/csrf')
 router.use(ensureToken)
 router.use(verifyToken)
-const fs      = require('fs')
 const { matchesSearch } = require('../../utils/search')
 const path    = require('path')
 const crypto = require('crypto')
@@ -12,6 +11,7 @@ const { resolveAppointmentEmailOptions, resolveReassignedEmailOptions, resolveSu
 const { toMin, timesOverlap } = require('../../utils/appointment-scheduling')
 const { logDeletion } = require('../../utils/audit-log')
 const { getConcernOptions } = require('../../utils/concern-options')
+const { readJSON, writeJSON } = require('../../utils/json-store')
 
 const dataDir = path.join(__dirname, '../../../data')
 const DEFAULT_SESSION_TYPES = { online: true, phone: false, onsite: true }
@@ -19,8 +19,8 @@ const DEFAULT_SESSION_TYPES = { online: true, phone: false, onsite: true }
 // สีอ้างอิงต่อนักจิตวิทยา — ต้องตรงกับ COLORS ใน src/routes/admin/schedules.js
 const COUNSELOR_COLORS = ['#6366f1','#05967e','#f59e0b','#ef4444','#06b6d4','#8b5cf6','#10b981','#f43f5e']
 
-function read(file) { return JSON.parse(fs.readFileSync(path.join(dataDir, file), 'utf8')) }
-function write(file, d) { fs.writeFileSync(path.join(dataDir, file), JSON.stringify(d, null, 2)) }
+function read(file) { return readJSON(path.join(dataDir, file)) }
+function write(file, d) { writeJSON(path.join(dataDir, file), d) }
 
 function readAppointmentSessionTypes() {
   try {

@@ -8,6 +8,7 @@ const crypto  = require('crypto')
 const bcrypt  = require('bcryptjs')
 const { logDeletion } = require('../../utils/audit-log')
 const { ensureToken, verifyToken } = require('../../middleware/csrf')
+const { readJSON, writeJSON } = require('../../utils/json-store')
 router.use(ensureToken)
 router.use(verifyToken)
 
@@ -30,8 +31,8 @@ const upload = multer({
   },
 })
 
-function readData()    { return JSON.parse(fs.readFileSync(dataFile, 'utf8')) }
-function writeData(d)  { fs.writeFileSync(dataFile, JSON.stringify(d, null, 2)) }
+function readData()    { return readJSON(dataFile) }
+function writeData(d)  { writeJSON(dataFile, d) }
 function str(v)        { return Array.isArray(v) ? (v[0] || '') : String(v || '') }
 function parseArr(v)   { const s = Array.isArray(v) ? v.join(',') : (v || ''); return s.split(',').map(s => s.trim()).filter(Boolean) }
 function initials(name){ const parts = str(name).trim().split(' '); return parts.map(p => p[0]).join('').toUpperCase().slice(0,2) }
@@ -59,7 +60,7 @@ router.get('/', (req, res) => {
 
   // คำนวณค่าเฉลี่ยความพึงพอใจแต่ละนักจิตวิทยาจาก surveys.json
   const surveysFile = path.join(__dirname, '../../../data/surveys.json')
-  const surveys = fs.existsSync(surveysFile) ? JSON.parse(fs.readFileSync(surveysFile, 'utf8')) : []
+  const surveys = readJSON(surveysFile, [])
   const surveyStats = {}
   surveys.forEach(s => {
     if (!surveyStats[s.counselorId]) surveyStats[s.counselorId] = { sum: 0, count: 0 }
@@ -69,7 +70,7 @@ router.get('/', (req, res) => {
 
   // นับจำนวนผู้รับบริการที่ดูแลอยู่ปัจจุบัน (distinct client ที่มีนัด pending/confirmed) ต่อนักจิตวิทยา
   const apptFile     = path.join(__dirname, '../../../data/appointments.json')
-  const appointments = fs.existsSync(apptFile) ? JSON.parse(fs.readFileSync(apptFile, 'utf8')) : []
+  const appointments = readJSON(apptFile, [])
   const clientIdsByCounselor = {}
   appointments
     .filter(a => a.status === 'pending' || a.status === 'confirmed')

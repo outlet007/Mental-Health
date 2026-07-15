@@ -3,8 +3,8 @@ const router = express.Router()
 const { ensureToken, verifyToken } = require('../../middleware/csrf')
 router.use(ensureToken)
 router.use(verifyToken)
-const fs = require('fs')
 const path = require('path')
+const { readJSON } = require('../../utils/json-store')
 
 const dataDir = path.join(__dirname, '../../../data')
 const REPORT_PAGE_SIZE_OPTIONS = [20, 40, 60]
@@ -32,14 +32,8 @@ const STATUS_LABELS = {
 
 function readData(file) {
   const filePath = path.join(dataDir, file)
-  if (!fs.existsSync(filePath)) return []
-
-  try {
-    const data = JSON.parse(fs.readFileSync(filePath, 'utf8'))
-    return Array.isArray(data) ? data : []
-  } catch (error) {
-    return []
-  }
+  const data = readJSON(filePath, [])
+  return Array.isArray(data) ? data : []
 }
 
 function fmtDate(date) {

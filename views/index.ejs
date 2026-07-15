@@ -663,7 +663,27 @@ function _photoMotion(obj, prefix, uid) {
     </div>
   </footer>
 
+  <!-- Cookie consent banner -->
+  <div id="cookie-consent" class="fixed bottom-0 inset-x-0 z-50 bg-slate-800 text-slate-200 border-t border-slate-700 px-4 py-4 hidden">
+    <div class="max-w-6xl mx-auto flex flex-wrap items-center justify-center gap-3 text-sm text-center">
+      <p data-i18n-html="cookie-consent-text">เราใช้ cookies บนเว็บไซต์นี้เพื่อการบริหารเว็บไซต์ และเพิ่มประสิทธิภาพการใช้งานของท่าน สามารถตรวจสอบหรือดูนโยบายของ cookies ได้ <a href="https://www.bu.ac.th/th/cookies" target="_blank" rel="noopener" class="underline text-brand-400 hover:text-brand-300">ที่นี่</a></p>
+      <button type="button" id="cookie-consent-accept" class="btn-primary text-xs px-5 py-2 whitespace-nowrap flex-shrink-0" data-i18n="cookie-consent-accept">ยอมรับ</button>
+    </div>
+  </div>
   <script>
+    // Cookie consent banner
+    (function () {
+      const KEY = 'mw-cookie-consent';
+      const banner = document.getElementById('cookie-consent');
+      const acceptBtn = document.getElementById('cookie-consent-accept');
+      if (!banner || !acceptBtn) return;
+      if (!localStorage.getItem(KEY)) banner.classList.remove('hidden');
+      acceptBtn.addEventListener('click', function () {
+        localStorage.setItem(KEY, '1');
+        banner.classList.add('hidden');
+      });
+    })();
+
     // Counselor Carousel
     (function () {
       const inner   = document.getElementById('c-inner');
@@ -994,6 +1014,8 @@ function _photoMotion(obj, prefix, uid) {
         'footer-line-url': <%- JSON.stringify(content.contact && content.contact.lineUrl || 'https://page.line.me/bucare?openQrModal=true') %>,
         'footer-hours': <%- JSON.stringify(content.contact && content.contact.hours || 'จันทร์-เสาร์ 08.30 – 17.00 น.<br>(ยกเว้นวันหยุดนักขัตฤกษ์)') %>,
         'footer-copyright': <%- JSON.stringify((content.contact && content.contact.copyright) || '© 2024 MindCare · ข้อมูลทุกอย่างได้รับการคุ้มครองตาม PDPA') %>,
+        'cookie-consent-text': <%- JSON.stringify('เราใช้ cookies บนเว็บไซต์นี้เพื่อการบริหารเว็บไซต์ และเพิ่มประสิทธิภาพการใช้งานของท่าน สามารถตรวจสอบหรือดูนโยบายของ cookies ได้ <a href="https://www.bu.ac.th/th/cookies" target="_blank" rel="noopener" class="underline text-brand-400 hover:text-brand-300">ที่นี่</a>') %>,
+        'cookie-consent-accept': 'ยอมรับ',
       },
       en: {
         'page-title': 'MindCare — Mental Health Counseling Appointment System',
@@ -1065,6 +1087,8 @@ function _photoMotion(obj, prefix, uid) {
         'footer-line-url': <%- JSON.stringify((content.en && content.en.contact && content.en.contact.lineUrl) || (content.contact && content.contact.lineUrl) || 'https://page.line.me/bucare?openQrModal=true') %>,
         'footer-hours': <%- JSON.stringify((content.en && content.en.contact && content.en.contact.hours) || 'Mon–Sat 08:30–17:00 (excl. public holidays)') %>,
         'footer-copyright': <%- JSON.stringify((content.en && content.en.contact && content.en.contact.copyright) || '© 2024 MindCare · All information is protected under PDPA') %>,
+        'cookie-consent-text': <%- JSON.stringify('We use cookies on this website for site administration and to improve your experience. You can review our cookie policy <a href="https://www.bu.ac.th/en/cookies" target="_blank" rel="noopener" class="underline text-brand-400 hover:text-brand-300">here</a>.') %>,
+        'cookie-consent-accept': 'Accept',
       }
     };
 

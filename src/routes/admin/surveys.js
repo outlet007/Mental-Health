@@ -3,20 +3,18 @@ const router = express.Router()
 const { ensureToken, verifyToken } = require('../../middleware/csrf')
 router.use(ensureToken)
 router.use(verifyToken)
-const fs = require('fs')
 const path = require('path')
+const { readJSON } = require('../../utils/json-store')
 
 const dataDir = path.join(__dirname, '../../../data')
 const RATING_LABELS = { 5: 'มากที่สุด', 4: 'มาก', 3: 'ปานกลาง', 2: 'น้อย', 1: 'น้อยที่สุด' }
 
 function getSurveys() {
-  const f = path.join(dataDir, 'surveys.json')
-  return fs.existsSync(f) ? JSON.parse(fs.readFileSync(f, 'utf8')) : []
+  return readJSON(path.join(dataDir, 'surveys.json'), [])
 }
 
 function getCounselors() {
-  const f = path.join(dataDir, 'counselors.json')
-  return fs.existsSync(f) ? JSON.parse(fs.readFileSync(f, 'utf8')) : []
+  return readJSON(path.join(dataDir, 'counselors.json'), [])
 }
 
 function pct(count, total) {
