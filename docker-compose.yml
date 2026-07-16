@@ -1,15 +1,15 @@
 ﻿services:
   app:
     build: .
-    container_name: mindcare-app
+    container_name: mindcare.bu.ac.th_app
     depends_on:
       - mailpit
     ports:
-      - "3010:3000"
+      - "8024:3000"
     environment:
       NODE_ENV: production
       PORT: 3000
-      BASE_URL: http://localhost:3010
+      BASE_URL: http://localhost:8024
       SESSION_SECRET: ${SESSION_SECRET:?SESSION_SECRET must be set in .env}
       DATA_ENCRYPTION_KEY: ${DATA_ENCRYPTION_KEY:-}
       SMTP_AUTH: "false"
