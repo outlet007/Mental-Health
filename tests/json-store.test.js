@@ -124,6 +124,18 @@ test('ensureDataFiles seeds every missing data file as an empty array', () => {
   }
 })
 
+test('ensureDataFiles seeds listed files with the given content and leaves the rest as []', () => {
+  const { readJSON, ensureDataFiles } = freshStore(undefined)
+  const dir = tempDir()
+  try {
+    ensureDataFiles(dir, { 'counselors.json': [{ id: 'c001', name: 'Seed Counselor' }] })
+    assert.deepEqual(readJSON(path.join(dir, 'counselors.json')), [{ id: 'c001', name: 'Seed Counselor' }])
+    assert.deepEqual(readJSON(path.join(dir, 'clients.json')), [])
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true })
+  }
+})
+
 test('ensureDataFiles does not overwrite a data file that already has real content', () => {
   const { readJSON, writeJSON, ensureDataFiles } = freshStore(undefined)
   const dir = tempDir()

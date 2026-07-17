@@ -7,10 +7,11 @@ const path    = require('path')
 const { attachSurveyRatingsToCounselors } = require('./src/utils/counselor-survey-ratings')
 const { sendDueAppointmentReminders } = require('./src/utils/appointment-reminders')
 const { readJSON, ensureDataFiles } = require('./src/utils/json-store')
+const { getSeedData } = require('./src/utils/seed-data')
 const { runBackup } = require('./src/utils/backup')
 const { logError } = require('./src/utils/logger')
 
-ensureDataFiles(path.join(__dirname, 'data'))
+ensureDataFiles(path.join(__dirname, 'data'), getSeedData())
 
 const app = express()
 

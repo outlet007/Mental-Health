@@ -112,10 +112,14 @@ const SEEDABLE_DATA_FILES = [
   'contacts.json', 'counselors.json', 'surveys.json',
 ]
 
-function ensureDataFiles(dataDir) {
+// `seeds` optionally maps a subset of SEEDABLE_DATA_FILES to non-empty
+// starter content (see src/utils/seed-data.js) - any file not listed there
+// still seeds as `[]`. admins.json is never seeded with more than `[]`
+// here, by design (see seed-data.js's comment on why).
+function ensureDataFiles(dataDir, seeds = {}) {
   for (const file of SEEDABLE_DATA_FILES) {
     const filePath = path.join(dataDir, file)
-    if (!fs.existsSync(filePath)) writeJSON(filePath, [])
+    if (!fs.existsSync(filePath)) writeJSON(filePath, seeds[file] || [])
   }
 }
 
