@@ -106,3 +106,32 @@ test('an invalid (non-64-hex-char) DATA_ENCRYPTION_KEY is ignored, falling back 
     fs.rmSync(file, { force: true })
   }
 })
+
+function tempDir() {
+  return fs.mkdtempSync(path.join(os.tmpdir(), 'json-store-ensure-'))
+}
+
+test('ensureDataFiles seeds every missing data file as an empty array', () => {
+  const { readJSON, ensureDataFiles } = freshStore(undefined)
+  const dir = tempDir()
+  try {
+    ensureDataFiles(dir)
+    for (const file of ['admins.json', 'appointments.json', 'audit-log.json', 'clients.json', 'contacts.json', 'counselors.json', 'surveys.json']) {
+      assert.deepEqual(readJSON(path.join(dir, file)), [], `${file} should be seeded as []`)
+    }
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true })
+  }
+})
+
+test('ensureDataFiles does not overwrite a data file that already has real content', () => {
+  const { readJSON, writeJSON, ensureDataFiles } = freshStore(undefined)
+  const dir = tempDir()
+  try {
+    writeJSON(path.join(dir, 'admins.json'), [{ id: 'adm1', username: 'real-admin' }])
+    ensureDataFiles(dir)
+    assert.deepEqual(readJSON(path.join(dir, 'admins.json')), [{ id: 'adm1', username: 'real-admin' }])
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true })
+  }
+})

@@ -100,4 +100,23 @@ function writeJSON(filePath, data) {
   renameWithRetry(tmpPath, filePath)
 }
 
-module.exports = { readJSON, writeJSON }
+// data/*.json files containing real client PII (admins, appointments,
+// clients, contacts, counselors, surveys, the deletion audit log) are
+// gitignored on purpose (see the PII git-history scrub, 2026-07-13) — a
+// fresh `git clone` has none of them, so every route that reads one with
+// no fallback (most don't pass one) would crash with ENOENT on first
+// request. Seed each as an empty array on boot; any file that already
+// exists (every real deployment so far) is left untouched.
+const SEEDABLE_DATA_FILES = [
+  'admins.json', 'appointments.json', 'audit-log.json', 'clients.json',
+  'contacts.json', 'counselors.json', 'surveys.json',
+]
+
+function ensureDataFiles(dataDir) {
+  for (const file of SEEDABLE_DATA_FILES) {
+    const filePath = path.join(dataDir, file)
+    if (!fs.existsSync(filePath)) writeJSON(filePath, [])
+  }
+}
+
+module.exports = { readJSON, writeJSON, ensureDataFiles }
