@@ -50,37 +50,28 @@
         </div>
       </div>
 
-      <% const smtpConfigured = process.env && process.env.SMTP_USER && process.env.SMTP_USER !== 'your-email@gmail.com' %>
+      <% const smtpConfigured = settings.deliveryMode === 'gmail' && settings.gmailUser && settings.gmailAppPassword %>
       <div style="display:flex;align-items:center;gap:10px;padding:12px 14px;background:<%= smtpConfigured ? '#ecfdf9' : '#fef9c3' %>;border:1px solid <%= smtpConfigured ? '#a0f3e1' : '#fde68a' %>;border-radius:10px;margin-bottom:16px;">
         <i data-lucide="<%= smtpConfigured ? 'check-circle' : 'alert-triangle' %>" style="width:16px;height:16px;color:<%= smtpConfigured ? '#05967e' : '#92400e' %>;flex-shrink:0;"></i>
         <div>
           <% if (smtpConfigured) { %>
-          <span style="font-size:13px;font-weight:600;color:#065f46;">SMTP พร้อมใช้งาน</span>
-          <span style="font-size:12px;color:#64748b;margin-left:8px;">(<%= process.env.SMTP_USER %>)</span>
+          <span style="font-size:13px;font-weight:600;color:#065f46;">SMTP พร้อมใช้งาน (Gmail)</span>
+          <span style="font-size:12px;color:#64748b;margin-left:8px;">(<%= settings.gmailUser %>)</span>
           <% } else { %>
           <span style="font-size:13px;font-weight:600;color:#92400e;">SMTP ยังไม่ได้ตั้งค่า</span>
-          <span style="font-size:12px;color:#64748b;margin-left:8px;">แก้ไขไฟล์ <code style="background:#fff;padding:1px 6px;border-radius:4px;font-family:monospace;">.env</code> เพื่อเปิดใช้งาน</span>
+          <span style="font-size:12px;color:#64748b;margin-left:8px;">กรอก Gmail sender และ App Password ในช่อง "ช่องทางการส่งอีเมล" ด้านล่าง แล้วเลือกโหมด "ใช้งานจริง Gmail"</span>
           <% } %>
         </div>
       </div>
 
       <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:14px 16px;margin-bottom:16px;">
-        <p style="margin:0 0 10px;font-size:12px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:.05em;">ตัวแปรใน .env ที่ต้องตั้งค่า</p>
-        <pre style="margin:0;font-size:12px;color:#334155;font-family:monospace;line-height:1.8;overflow-x:auto;">SMTP_HOST=smtp.gmail.com
-SMTP_PORT=587
-SMTP_SECURE=false
-SMTP_USER=your-email@gmail.com
-SMTP_PASS=your-app-password
-SMTP_FROM_NAME=MindCare
-SMTP_FROM_EMAIL=your-email@gmail.com
-SMTP_BCC=   <span style="color:#94a3b8;"># optional สำเนาทุกอีเมล</span></pre>
-        <p style="margin:10px 0 0;font-size:12px;color:#94a3b8;">Gmail: ใช้ App Password จาก <a href="https://myaccount.google.com/apppasswords" target="_blank" style="color:#6366f1;">myaccount.google.com/apppasswords</a> (ต้องเปิด 2-Step Verification)</p>
+        <p style="margin:0;font-size:12px;color:#64748b;line-height:1.7;">ใช้ App Password จาก <a href="https://myaccount.google.com/apppasswords" target="_blank" style="color:#6366f1;">myaccount.google.com/apppasswords</a> (ต้องเปิด 2-Step Verification ก่อน) แล้วกรอกในช่อง "ช่องทางการส่งอีเมล" ด้านล่าง — ค่าที่บันทึกจากหน้านี้ใช้กับอีเมลทุกประเภทของระบบ</p>
       </div>
 
       <form method="POST" action="/admin/survey-email/test-email" style="display:flex;gap:10px;align-items:flex-end;"><input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
         <div style="flex:1;">
           <label class="lbl">ส่งอีเมลทดสอบไปที่</label>
-          <input type="email" name="to" class="inp" placeholder="your@email.com" required value="<%= process.env.SMTP_USER || '' %>">
+          <input type="email" name="to" class="inp" placeholder="your@email.com" required value="<%= settings.gmailUser || '' %>">
         </div>
         <button type="submit" class="act-btn" style="background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;">
           <i data-lucide="send" style="width:13px;height:13px;"></i> ส่งทดสอบ

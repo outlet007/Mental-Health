@@ -57,7 +57,7 @@ test('email test/SMTP status card sits at the top of the จัดการอ�
   assert.equal(getResult.res.statusCode, 200)
   assert.match(getResult.body, /ระบบแจ้งเตือนอีเมล/)
   assert.match(getResult.body, /action="\/admin\/survey-email\/test-email"/)
-  assert.match(getResult.body, /ตัวแปรใน \.env ที่ต้องตั้งค่า/)
+  assert.doesNotMatch(getResult.body, /ตัวแปรใน \.env ที่ต้องตั้งค่า/)
   // Card order: test-email first, then delivery channel, then the outbound list.
   const testCardIndex = getResult.body.indexOf('ระบบแจ้งเตือนอีเมล')
   const deliveryCardIndex = getResult.body.indexOf('ช่องทางการส่งอีเมล')

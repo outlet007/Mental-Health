@@ -7,6 +7,7 @@ const {
   readSurveyEmailSettings,
   writeSurveyEmailSettings,
   writeEmailType,
+  getEmailDeliveryConfig,
 } = require('../../utils/survey-email-settings')
 const {
   EMAIL_TYPES,
@@ -163,6 +164,7 @@ router.post('/test-email', async (req, res) => {
       client:    { name: 'ผู้รับบริการทดสอบ', email: to, phone: '08X-XXX-XXXX' },
       counselor: { name: 'ดร.ทดสอบ ระบบอีเมล', title: 'นักจิตวิทยาให้คำปรึกษา', email: to, phone: '08X-XXX-XXXX', specialties: ['ทดสอบระบบ'] },
       concern:   'ทดสอบการส่งอีเมลจากระบบ MindCare',
+      deliveryConfig: getEmailDeliveryConfig(),
     })
     res.redirect('/admin/survey-email?emailSent=1')
   } catch (err) {

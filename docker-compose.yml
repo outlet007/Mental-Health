@@ -2,8 +2,6 @@
   app:
     build: .
     container_name: mindcare.bu.ac.th_app
-    depends_on:
-      - mailpit
     ports:
       - "8024:3000"
     environment:
@@ -12,21 +10,8 @@
       BASE_URL: http://localhost:8024
       SESSION_SECRET: ${SESSION_SECRET:?SESSION_SECRET must be set in .env}
       DATA_ENCRYPTION_KEY: ${DATA_ENCRYPTION_KEY:-}
-      SMTP_AUTH: "false"
-      SMTP_HOST: mailpit
-      SMTP_PORT: 1025
-      SMTP_SECURE: "false"
-      SMTP_FROM_NAME: MindCare Docker
-      SMTP_FROM_EMAIL: no-reply@mindcare.local
     volumes:
       - ./data:/app/data
       - ./public/uploads:/app/public/uploads
       - ./backups:/app/backups
       - ./logs:/app/logs
-
-  mailpit:
-    image: axllent/mailpit:v1.20
-    container_name: mindcare-mailpit
-    ports:
-      - "8025:8025"
-      - "1025:1025"
