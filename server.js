@@ -15,6 +15,16 @@ ensureDataFiles(path.join(__dirname, 'data'), getSeedData())
 
 const app = express()
 
+// Trust exactly one hop of X-Forwarded-For: this app is always meant to run
+// behind a single reverse proxy (nginx/Traefik/etc, see DEPLOYMENT.md) that
+// terminates TLS and forwards to this container - never reachable directly
+// from the internet. `1` means Express uses the client IP the proxy
+// reports and ignores anything further left in the header, so a client
+// can't spoof X-Forwarded-For to fake a different IP and dodge rate
+// limiting. Set TRUST_PROXY_HOPS in .env if an additional layer (e.g. a
+// CDN in front of the reverse proxy) is ever added - each hop adds 1.
+app.set('trust proxy', parseInt(process.env.TRUST_PROXY_HOPS, 10) || 1)
+
 app.set('view engine', 'ejs')
 app.set('views', path.join(__dirname, 'views'))
 

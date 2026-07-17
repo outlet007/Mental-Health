@@ -7,7 +7,7 @@
     environment:
       NODE_ENV: production
       PORT: 3000
-      BASE_URL: http://localhost:8024
+      BASE_URL: ${BASE_URL:-http://localhost:8024}
       SESSION_SECRET: ${SESSION_SECRET:?SESSION_SECRET must be set in .env}
       DATA_ENCRYPTION_KEY: ${DATA_ENCRYPTION_KEY:-}
     volumes:
