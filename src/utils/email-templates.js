@@ -88,8 +88,8 @@ const DEFAULT_TEMPLATES = {
   counselorReassigned: {
     title: { th: 'ยกเลิกนัดหมาย', en: 'ยกเลิกนัดหมาย' },
     greeting: {
-      th: 'สวัสดี <strong>{{counselorName}}</strong><br>นัดหมายนี้ถูกเปลี่ยนไปเป็นนักจิตวิทยาท่านอื่นแล้ว กรุณานำนัดออกจากตารางเวลาของคุณ',
-      en: 'Hello <strong>{{counselorName}}</strong><br>This appointment has been reassigned to another counselor. Please remove it from your schedule.',
+      th: 'สวัสดี <strong>{{counselorName}}</strong><br>นัดหมายนี้ถูกเปลี่ยนไปเป็นนักจิตวิทยาท่านอื่นแล้ว และระบบได้นำนัดหมายนี้ออกจากตารางของท่านในระบบให้อัตโนมัติแล้ว',
+      en: 'Hello <strong>{{counselorName}}</strong><br>This appointment has been reassigned to another counselor, and the system has already automatically removed it from your schedule.',
     },
     closing: { th: '', en: '' },
   },

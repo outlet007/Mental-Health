@@ -530,10 +530,20 @@ function _photoMotion(obj, prefix, uid) {
         </div>
         <% } %>
         <form method="POST" action="/contact" class="space-y-4">
+          <div class="flex gap-2.5 p-1.5 mb-6 bg-slate-100 rounded-2xl" role="tablist" aria-label="ประเภทผู้ลงทะเบียน">
+            <button type="button" data-audience-tab="student" onclick="setAudience('student')" class="flex-1 py-3.5 rounded-xl text-base transition-colors bg-brand-600 shadow-md text-white font-semibold flex items-center justify-center gap-2" role="tab" aria-selected="true">
+              <i data-lucide="graduation-cap" class="w-5 h-5"></i>
+              <span data-i18n="form-tab-student">นักศึกษา</span>
+            </button>
+            <button type="button" data-audience-tab="staff" onclick="setAudience('staff')" class="flex-1 py-3.5 rounded-xl text-base transition-colors text-slate-500 font-medium hover:text-slate-700 flex items-center justify-center gap-2" role="tab" aria-selected="false">
+              <i data-lucide="briefcase" class="w-5 h-5"></i>
+              <span data-i18n="form-tab-staff">อาจารย์/บุคลากร</span>
+            </button>
+          </div>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label class="form-label"><span data-i18n="form-label-name"><%= bookText(bookFormTexts, 'nameLabel', 'ชื่อ-นามสกุล') %></span> <span class="text-red-400">*</span></label>
-              <input type="text" name="name" class="form-input" placeholder="<%= bookText(bookFormTexts, 'namePlaceholder', 'กรอกชื่อของคุณ') %>" data-i18n-ph="form-ph-name" required>
+              <input type="text" name="name" class="form-input" placeholder="<%= bookText(bookFormTexts, 'namePlaceholder', 'กรอกชื่อ-นามสกุลของคุณ') %>" data-i18n-ph="form-ph-name" required>
             </div>
             <div>
               <label class="form-label"><span data-i18n="form-label-studentid"><%= bookText(bookFormTexts, 'studentIdLabel', 'รหัสนักศึกษา') %></span> <span class="text-red-400">*</span></label>
@@ -564,7 +574,7 @@ function _photoMotion(obj, prefix, uid) {
             <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
               <% enabledSessionTypes.forEach((item, idx) => { %>
               <label class="flex items-center gap-2 p-3 border border-slate-200 rounded-xl cursor-pointer hover:border-brand-300 hover:bg-brand-50 transition-colors">
-                <input type="radio" name="type" value="<%= item.key %>" <%= idx === 0 ? 'required' : '' %> class="accent-brand-600">
+                <input type="radio" name="type" value="<%= item.key %>" <%= idx === 0 ? 'required' : '' %> <%= enabledSessionTypes.length === 1 ? 'checked' : '' %> class="accent-brand-600">
                 <i data-lucide="<%= item.icon %>" class="w-4 h-4 text-brand-500"></i>
                 <span class="text-sm font-medium" data-i18n="<%= item.i18n %>"><%= bookText(bookFormTexts, item.textKey, item.fallback) %></span>
               </label>
@@ -927,6 +937,13 @@ function _photoMotion(obj, prefix, uid) {
 
     // ─── i18n ────────────────────────────────────────────────────────────────
     const LANG_KEY = 'mw-lang';
+    let currentLang = 'th';
+    let currentAudience = 'student';
+    const AUDIENCE_STAFF_TEXT = {
+      th: { label: 'รหัสอาจารย์/บุคลากร', placeholder: 'เช่น A68001' },
+      en: { label: 'Faculty/Staff ID', placeholder: 'e.g. A68001' },
+    };
+    const AUDIENCE_EMAIL_PLACEHOLDER = { student: 'your@bumail.net', staff: 'your@bu.ac.th' };
     const FLAGS = {
       th: `<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 64 64" style="font-size:24px" aria-hidden="true"><path fill="#ed4c5c" d="M52.4 10C47 5 39.9 2 32 2s-15 3-20.4 8zM11.6 54c5.4 5 12.5 8 20.4 8s15-3 20.4-8z"/><path fill="#2a5f9e" d="M2 32c0 4.3.9 8.3 2.5 12h55c1.6-3.7 2.5-7.7 2.5-12s-.9-8.3-2.5-12h-55C2.9 23.7 2 27.7 2 32"/><path fill="#f9f9f9" d="M11.6 54h40.7c3-2.8 5.5-6.2 7.1-10h-55c1.8 3.8 4.2 7.2 7.2 10m40.8-44H11.6c-3 2.8-5.5 6.2-7.1 10h55c-1.7-3.8-4.1-7.2-7.1-10"/></svg>`,
       en: `<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 64 64" style="font-size:24px" aria-hidden="true"><path fill="#ed4c5c" d="M48 6.6C43.3 3.7 37.9 2 32 2v4.6z"/><path fill="#fff" d="M32 11.2h21.6C51.9 9.5 50 7.9 48 6.6H32z"/><path fill="#ed4c5c" d="M32 15.8h25.3c-1.1-1.7-2.3-3.2-3.6-4.6H32z"/><path fill="#fff" d="M32 20.4h27.7c-.7-1.6-1.5-3.2-2.4-4.6H32z"/><path fill="#ed4c5c" d="M32 25h29.2c-.4-1.6-.9-3.1-1.5-4.6H32z"/><path fill="#fff" d="M32 29.7h29.9c-.1-1.6-.4-3.1-.7-4.6H32z"/><path fill="#ed4c5c" d="M61.9 29.7H32V32H2c0 .8 0 1.5.1 2.3h59.8c.1-.8.1-1.5.1-2.3s0-1.6-.1-2.3"/><path fill="#fff" d="M2.8 38.9h58.4c.4-1.5.6-3 .7-4.6H2.1c.1 1.5.4 3.1.7 4.6"/><path fill="#ed4c5c" d="M4.3 43.5h55.4c.6-1.5 1.1-3 1.5-4.6H2.8c.4 1.6.9 3.1 1.5 4.6"/><path fill="#fff" d="M6.7 48.1h50.6c.9-1.5 1.7-3 2.4-4.6H4.3c.7 1.6 1.5 3.1 2.4 4.6"/><path fill="#ed4c5c" d="M10.3 52.7h43.4c1.3-1.4 2.6-3 3.6-4.6H6.7c1 1.7 2.3 3.2 3.6 4.6"/><path fill="#fff" d="M15.9 57.3h32.2c2.1-1.3 3.9-2.9 5.6-4.6H10.3c1.7 1.8 3.6 3.3 5.6 4.6"/><path fill="#ed4c5c" d="M32 62c5.9 0 11.4-1.7 16.1-4.7H15.9c4.7 3 10.2 4.7 16.1 4.7"/><path fill="#428bc1" d="M16 6.6c-2.1 1.3-4 2.9-5.7 4.6c-1.4 1.4-2.6 3-3.6 4.6c-.9 1.5-1.8 3-2.4 4.6c-.6 1.5-1.1 3-1.5 4.6c-.4 1.5-.6 3-.7 4.6c-.1.8-.1 1.6-.1 2.4h30V2c-5.9 0-11.3 1.7-16 4.6"/><path fill="#fff" d="m25 3l.5 1.5H27l-1.2 1l.4 1.5l-1.2-.9l-1.2.9l.4-1.5l-1.2-1h1.5zm4 6l.5 1.5H31l-1.2 1l.4 1.5l-1.2-.9l-1.2.9l.4-1.5l-1.2-1h1.5zm-8 0l.5 1.5H23l-1.2 1l.4 1.5l-1.2-.9l-1.2.9l.4-1.5l-1.2-1h1.5zm4 6l.5 1.5H27l-1.2 1l.4 1.5l-1.2-.9l-1.2.9l.4-1.5l-1.2-1h1.5zm-8 0l.5 1.5H19l-1.2 1l.4 1.5l-1.2-.9l-1.2.9l.4-1.5l-1.2-1h1.5zm-8 0l.5 1.5H11l-1.2 1l.4 1.5l-1.2-.9l-1.2.9l.4-1.5l-1.2-1h1.5zm20 6l.5 1.5H31l-1.2 1l.4 1.5l-1.2-.9l-1.2.9l.4-1.5l-1.2-1h1.5zm-8 0l.5 1.5H23l-1.2 1l.4 1.5l-1.2-.9l-1.2.9l.4-1.5l-1.2-1h1.5zm-8 0l.5 1.5H15l-1.2 1l.4 1.5l-1.2-.9l-1.2.9l.4-1.5l-1.2-1h1.5zm12 6l.5 1.5H27l-1.2 1l.4 1.5l-1.2-.9l-1.2.9l.4-1.5l-1.2-1h1.5zm-8 0l.5 1.5H19l-1.2 1l.4 1.5l-1.2-.9l-1.2.9l.4-1.5l-1.2-1h1.5zm-8 0l.5 1.5H11l-1.2 1l.4 1.5l-1.2-.9l-1.2.9l.4-1.5l-1.2-1h1.5zm2.8-14l1.2-.9l1.2.9l-.5-1.5l1.2-1h-1.5L13 9l-.5 1.5h-1.4l1.2.9zm-8 12l1.2-.9l1.2.9l-.5-1.5l1.2-1H5.5L5 21l-.5 1.5h-1c0 .1-.1.2-.1.3l.8.6z"/></svg>`
@@ -982,11 +999,13 @@ function _photoMotion(obj, prefix, uid) {
         'book-success-text': <%- JSON.stringify(bookText(bookFormTexts, 'successText', 'ทีมงานจะติดต่อกลับหาคุณภายใน 1 วันทำการ<br>ขอบคุณที่ไว้วางใจ MindCare')) %>,
         'form-heading': <%- JSON.stringify(content.book && content.book.formHeading || 'กรุณาฝากข้อมูลของท่าน เพื่อให้เจ้าหน้าที่ติดต่อกลับสำหรับการนัดหมายรับคำปรึกษา') %>,
         'form-error': <%- JSON.stringify(bookText(bookFormTexts, 'errorText', 'กรุณากรอกข้อมูลที่จำเป็นให้ครบทุกช่อง')) %>,
+        'form-tab-student': 'นักศึกษา',
+        'form-tab-staff': 'อาจารย์/บุคลากร',
         'form-label-name': <%- JSON.stringify(bookText(bookFormTexts, 'nameLabel', 'ชื่อ-นามสกุล')) %>,
         'form-label-studentid': <%- JSON.stringify(bookText(bookFormTexts, 'studentIdLabel', 'รหัสนักศึกษา')) %>,
         'form-label-phone': <%- JSON.stringify(bookText(bookFormTexts, 'phoneLabel', 'เบอร์โทรศัพท์')) %>,
         'form-label-email': <%- JSON.stringify(bookText(bookFormTexts, 'emailLabel', 'อีเมล')) %>,
-        'form-ph-name': <%- JSON.stringify(bookText(bookFormTexts, 'namePlaceholder', 'กรอกชื่อของคุณ')) %>,
+        'form-ph-name': <%- JSON.stringify(bookText(bookFormTexts, 'namePlaceholder', 'กรอกชื่อ-นามสกุลของคุณ')) %>,
         'form-ph-studentid': <%- JSON.stringify(bookText(bookFormTexts, 'studentIdPlaceholder', 'เช่น 1680123456')) %>,
         'form-ph-phone': <%- JSON.stringify(bookText(bookFormTexts, 'phonePlaceholder', '08X-XXX-XXXX')) %>,
         'form-ph-email': <%- JSON.stringify(bookText(bookFormTexts, 'emailPlaceholder', 'your@email.com')) %>,
@@ -1055,6 +1074,8 @@ function _photoMotion(obj, prefix, uid) {
         'book-success-text': <%- JSON.stringify(bookText(enBookFormTexts, 'successText', 'Our team will contact you within 1 business day.<br>Thank you for trusting MindCare.')) %>,
         'form-heading': <%- JSON.stringify((content.en && content.en.book && content.en.book.formHeading) || 'Please leave your information so our staff can contact you to schedule a counseling appointment.') %>,
         'form-error': <%- JSON.stringify(bookText(enBookFormTexts, 'errorText', 'Please fill in all required fields.')) %>,
+        'form-tab-student': 'Student',
+        'form-tab-staff': 'Faculty/Staff',
         'form-label-name': <%- JSON.stringify(bookText(enBookFormTexts, 'nameLabel', 'Full Name')) %>,
         'form-label-studentid': <%- JSON.stringify(bookText(enBookFormTexts, 'studentIdLabel', 'Student ID')) %>,
         'form-label-phone': <%- JSON.stringify(bookText(enBookFormTexts, 'phoneLabel', 'Phone Number')) %>,
@@ -1094,6 +1115,7 @@ function _photoMotion(obj, prefix, uid) {
 
     function setLang(lang) {
       localStorage.setItem(LANG_KEY, lang);
+      currentLang = lang;
       const T = TRANSLATIONS[lang];
 
       // Update flag button display
@@ -1164,6 +1186,48 @@ function _photoMotion(obj, prefix, uid) {
       // Page title + html lang
       if (T['page-title']) document.title = T['page-title'];
       document.documentElement.lang = lang === 'en' ? 'en' : 'th';
+
+      applyAudienceLabel();
+    }
+
+    // Registration form audience tabs (นักศึกษา / อาจารย์-บุคลากร) — swaps only
+    // the studentId field's visible label + placeholder; the field name and
+    // data storage stay exactly the same (still submitted/stored as studentId).
+    function applyAudienceLabel() {
+      const labelEl = document.querySelector('[data-i18n="form-label-studentid"]');
+      const inputEl = document.querySelector('input[name="studentId"]');
+      if (labelEl && inputEl) {
+        if (currentAudience === 'staff') {
+          const staffText = AUDIENCE_STAFF_TEXT[currentLang] || AUDIENCE_STAFF_TEXT.th;
+          labelEl.textContent = staffText.label;
+          inputEl.placeholder = staffText.placeholder;
+        } else {
+          const T = TRANSLATIONS[currentLang] || TRANSLATIONS.th;
+          labelEl.textContent = T['form-label-studentid'];
+          inputEl.placeholder = T['form-ph-studentid'];
+        }
+      }
+
+      const emailInputEl = document.querySelector('input[name="email"]');
+      if (emailInputEl) {
+        emailInputEl.placeholder = AUDIENCE_EMAIL_PLACEHOLDER[currentAudience] || AUDIENCE_EMAIL_PLACEHOLDER.student;
+      }
+    }
+
+    function setAudience(audience) {
+      currentAudience = audience;
+      document.querySelectorAll('[data-audience-tab]').forEach(btn => {
+        const isActive = btn.dataset.audienceTab === audience;
+        btn.classList.toggle('bg-brand-600', isActive);
+        btn.classList.toggle('shadow-md', isActive);
+        btn.classList.toggle('text-white', isActive);
+        btn.classList.toggle('font-semibold', isActive);
+        btn.classList.toggle('text-slate-500', !isActive);
+        btn.classList.toggle('font-medium', !isActive);
+        btn.classList.toggle('hover:text-slate-700', !isActive);
+        btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
+      });
+      applyAudienceLabel();
     }
 
     function toggleLangMenu() {

@@ -26,11 +26,11 @@
       "customEmail": ""
     },
     "reminder": {
-      "enabled": false,
+      "enabled": true,
       "recipientMode": "default",
       "customEmail": "",
       "hoursBefore": 24
     }
   },
-  "updatedAt": "2026-07-08T12:12:00.340Z"
+  "updatedAt": "2026-07-20T04:13:25.709Z"
 }

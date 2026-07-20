@@ -29,7 +29,7 @@
       "successText": "ทีมงานจะติดต่อกลับหาคุณภายใน 1 วันทำการ<br>ขอบคุณที่ไว้วางใจ MindCare",
       "errorText": "กรุณากรอกข้อมูลที่จำเป็นให้ครบทุกช่อง",
       "nameLabel": "ชื่อ-นามสกุล",
-      "namePlaceholder": "กรอกชื่อของคุณ",
+      "namePlaceholder": "กรอกชื่อ-นามสกุลของคุณ",
       "studentIdLabel": "รหัสนักศึกษา",
       "studentIdPlaceholder": "เช่น 1680123456",
       "phoneLabel": "เบอร์โทรศัพท์",
@@ -47,8 +47,8 @@
       "phoneSessionLabel": "โทรศัพท์"
     },
     "sessionTypes": {
-      "online": true,
-      "phone": true,
+      "online": false,
+      "phone": false,
       "onsite": true
     }
   },
@@ -59,7 +59,7 @@
     },
     {
       "q": "ถ้าฉันต้องการยกเลิกหรือเลื่อนนัด ทำอย่างไร?",
-      "a": "คุณสามารถยกเลิกหรือเลื่อนนัดได้ก่อน 24 ชั่วโมง ผ่าน <a href=\"https://page.line.me/bucare?openQrModal=true\" target=\"_blank\" rel=\"noopener\" class=\"text-brand-600 font-medium hover:underline\">LINE @bucare</a>"
+      "a": "คุณสามารถยกเลิกหรือเลื่อนนัดได้ก่อน 24 ชั่วโมง ผ่าน LINE @bucare"
     },
     {
       "q": "การให้คำปรึกษาออนไลน์มีประสิทธิภาพเท่าการเข้ารับบริการด้วยตนเองไหม?",
@@ -233,7 +233,7 @@
       },
       {
         "q": "How can I cancel or reschedule my appointment?",
-        "a": "You can cancel or reschedule at least 24 hours in advance via <a href=\"https://page.line.me/bucare?openQrModal=true\" target=\"_blank\" rel=\"noopener\" class=\"text-brand-600 font-medium hover:underline\">LINE @bucare</a>"
+        "a": "You can cancel or reschedule at least 24 hours in advance via LINE @bucare"
       },
       {
         "q": "Is online counseling as effective as in-person sessions?",
@@ -284,8 +284,8 @@
     "collageMotionScale": 1.12
   },
   "branding": {
-    "headerLogoImage": "/uploads/content/1783430241417-37be3778.webp",
-    "footerLogoImage": "/uploads/content/1783430241418-4e2ae4f5.webp",
-    "faviconImage": "/uploads/content/1783430241418-0d98ecab.webp"
+    "headerLogoImage": "/uploads/content/1784522882881-b5254117.webp",
+    "footerLogoImage": "/uploads/content/1784522882882-95842765.webp",
+    "faviconImage": "/uploads/content/1784522882883-8d0becf7.webp"
   }
 }
