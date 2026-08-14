@@ -6,6 +6,7 @@ router.use(ensureToken)
 router.use(verifyToken)
 const path = require('path')
 const { readJSON, writeJSON } = require('../../utils/json-store')
+const { buildFacultyOptions } = require('../../utils/faculty-options')
 
 const dataFile = path.join(__dirname, '../../../data/content.json')
 
@@ -23,6 +24,8 @@ const FORM_TEXT_FIELDS = [
   'namePlaceholder',
   'studentIdLabel',
   'studentIdPlaceholder',
+  'facultyLabel',
+  'facultyPlaceholder',
   'phoneLabel',
   'phonePlaceholder',
   'emailLabel',
@@ -55,13 +58,14 @@ function readSessionTypes(body) {
   }
 }
 
-function readBookSettings(body, currentBook, concernField) {
+function readBookSettings(body, currentBook, concernField, facultyField) {
   return {
     ...currentBook,
     heading: (body.bookHeading || '').trim(),
     subtext: (body.bookSubtext || '').trim(),
     formHeading: (body.bookFormHeading || '').trim(),
     concernOptions: readItems(body[concernField]),
+    facultyOptions: readItems(body[facultyField]),
     sessionTypes: readSessionTypes(body),
     formTexts: readFormTexts(body, currentBook.formTexts || {}),
   }
@@ -74,13 +78,14 @@ router.get('/', (req, res) => {
     page: 'registration-form',
     title: 'จัดการฟอร์มลงทะเบียนเพื่อขอรับบริการให้คำปรึกษา',
     content,
+    facultyOptions: buildFacultyOptions(content),
     query: req.query,
   })
 })
 
 router.post('/', (req, res) => {
   const data = readData()
-  data.book = readBookSettings(req.body, data.book || {}, 'bookConcernOption')
+  data.book = readBookSettings(req.body, data.book || {}, 'bookConcernOption', 'bookFacultyOption')
   writeData(data)
   res.redirect('/admin/registration-form?saved=th')
 })
@@ -88,7 +93,7 @@ router.post('/', (req, res) => {
 router.post('/en', (req, res) => {
   const data = readData()
   if (!data.en) data.en = {}
-  data.en.book = readBookSettings(req.body, data.en.book || {}, 'bookConcernOptionEn')
+  data.en.book = readBookSettings(req.body, data.en.book || {}, 'bookConcernOptionEn', 'bookFacultyOptionEn')
   writeData(data)
   res.redirect('/admin/registration-form?saved=en')
 })

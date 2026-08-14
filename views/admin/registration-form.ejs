@@ -23,6 +23,9 @@
   const enConcernItems = Array.isArray(enBook.concernOptions) && enBook.concernOptions.length ? enBook.concernOptions : enConcernDefaults
   const formTexts = book.formTexts || {}
   const enFormTexts = enBook.formTexts || {}
+  const facultyItems = Array.isArray(facultyOptions) ? facultyOptions : []
+  const thFacultyItems = facultyItems.map(item => item.th)
+  const enFacultyItems = facultyItems.map(item => item.en)
   function val(obj, key, fallback) { return obj[key] || fallback }
   function sessionTypeEnabled(bookData, key) {
     const settings = bookData.sessionTypes || {}
@@ -36,6 +39,8 @@
     ['namePlaceholder', 'Placeholder: ชื่อ-นามสกุล', 'กรอกชื่อ-นามสกุลของคุณ'],
     ['studentIdLabel', 'Label: รหัสนักศึกษา', 'รหัสนักศึกษา'],
     ['studentIdPlaceholder', 'Placeholder: รหัสนักศึกษา', 'เช่น 1680123456'],
+    ['facultyLabel', 'Label: คณะ', 'คณะ'],
+    ['facultyPlaceholder', 'Placeholder: คณะ', '-- เลือกคณะ --'],
     ['phoneLabel', 'Label: เบอร์โทรศัพท์', 'เบอร์โทรศัพท์'],
     ['phonePlaceholder', 'Placeholder: เบอร์โทรศัพท์', '08X-XXX-XXXX'],
     ['emailLabel', 'Label: อีเมล', 'อีเมล'],
@@ -57,6 +62,8 @@
     ['namePlaceholder', 'Placeholder: Full name', 'Enter your name'],
     ['studentIdLabel', 'Label: Student ID', 'Student ID'],
     ['studentIdPlaceholder', 'Placeholder: Student ID', 'e.g. 1680123456'],
+    ['facultyLabel', 'Label: Faculty / School', 'Faculty / School'],
+    ['facultyPlaceholder', 'Placeholder: Faculty / School', '-- Select faculty / school --'],
     ['phoneLabel', 'Label: Phone number', 'Phone Number'],
     ['phonePlaceholder', 'Placeholder: Phone number', '08X-XXX-XXXX'],
     ['emailLabel', 'Label: Email', 'Email'],
@@ -167,6 +174,26 @@
             </div>
           </div>
 
+          <div class="form-frame" data-layout-frame="registration-faculty-options-th">
+            <div class="form-frame-header">
+              <div class="form-frame-icon"><i data-lucide="building-2" style="width:15px;height:15px;"></i></div>
+              <div>
+                <p class="form-frame-title">Dropdown: คณะ</p>
+                <p class="form-frame-note">เพิ่ม ลบ และเรียงรายการคณะภาษาไทย โดยลำดับต้องตรงกับรายการภาษาอังกฤษ</p>
+              </div>
+            </div>
+            <div id="registration-faculty-list-th" class="option-list">
+              <% thFacultyItems.forEach((item, idx) => { %>
+              <div class="option-row" data-option-row="bookFacultyOption" data-drag-row="bookFacultyOption" draggable="true" ondragstart="handleConcernDragStart(event)" ondragover="handleConcernDragOver(event)" ondrop="handleConcernDrop(event)" ondragend="handleConcernDragEnd(event)">
+                <button type="button" class="drag-handle" data-drag-handle="true" aria-label="ลากเพื่อสลับลำดับ"><i data-lucide="grip-vertical" style="width:16px;height:16px;"></i></button>
+                <input type="text" name="bookFacultyOption" class="inp" value="<%= item %>" placeholder="คณะลำดับที่ <%= idx + 1 %>">
+                <button type="button" class="icon-btn" aria-label="ลบคณะ" onclick="removeConcernOption(this)"><i data-lucide="trash-2" style="width:15px;height:15px;"></i></button>
+              </div>
+              <% }) %>
+            </div>
+            <button type="button" class="act-btn ab-ghost" onclick="addConcernOption('registration-faculty-list-th','bookFacultyOption','คณะลำดับที่')"><i data-lucide="plus" style="width:14px;height:14px;"></i> เพิ่มคณะ</button>
+          </div>
+
           <div class="form-frame" data-layout-frame="registration-session-types-th">
             <div class="form-frame-header">
               <div class="form-frame-icon"><i data-lucide="sliders-horizontal" style="width:15px;height:15px;"></i></div>
@@ -254,6 +281,26 @@
           </div>
               </div>
             </div>
+          </div>
+
+          <div class="form-frame" data-layout-frame="registration-faculty-options-en">
+            <div class="form-frame-header">
+              <div class="form-frame-icon"><i data-lucide="building-2" style="width:15px;height:15px;"></i></div>
+              <div>
+                <p class="form-frame-title">Dropdown: Faculty / School</p>
+                <p class="form-frame-note">Add, remove, and order English entries to match the Thai list by position.</p>
+              </div>
+            </div>
+            <div id="registration-faculty-list-en" class="option-list">
+              <% enFacultyItems.forEach((item, idx) => { %>
+              <div class="option-row" data-option-row="bookFacultyOptionEn" data-drag-row="bookFacultyOptionEn" draggable="true" ondragstart="handleConcernDragStart(event)" ondragover="handleConcernDragOver(event)" ondrop="handleConcernDrop(event)" ondragend="handleConcernDragEnd(event)">
+                <button type="button" class="drag-handle" data-drag-handle="true" aria-label="Drag to reorder"><i data-lucide="grip-vertical" style="width:16px;height:16px;"></i></button>
+                <input type="text" name="bookFacultyOptionEn" class="inp" value="<%= item %>" placeholder="Faculty / school <%= idx + 1 %>">
+                <button type="button" class="icon-btn" aria-label="Remove faculty" onclick="removeConcernOption(this)"><i data-lucide="trash-2" style="width:15px;height:15px;"></i></button>
+              </div>
+              <% }) %>
+            </div>
+            <button type="button" class="act-btn ab-ghost" onclick="addConcernOption('registration-faculty-list-en','bookFacultyOptionEn','Faculty / school')"><i data-lucide="plus" style="width:14px;height:14px;"></i> Add faculty / school</button>
           </div>
 
           <div class="form-frame" data-layout-frame="registration-session-types-en">

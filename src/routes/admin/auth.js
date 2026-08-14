@@ -5,6 +5,13 @@ const bcrypt  = require('bcryptjs')
 const rateLimit = require('express-rate-limit')
 const { verifyToken } = require('../../middleware/csrf')
 const { readJSON } = require('../../utils/json-store')
+const {
+  createFormToken,
+  verifyFormToken,
+  isHoneypotClear,
+  getTurnstileConfig,
+  verifyTurnstile,
+} = require('../../utils/public-form-protection')
 
 const dataDir = path.join(__dirname, '../../../data')
 function read(file) { return readJSON(path.join(dataDir, file)) }
@@ -24,11 +31,30 @@ const loginLimiter = rateLimit({
 
 router.get('/login', (req, res) => {
   if (req.session && req.session.adminId) return res.redirect('/admin')
-  res.render('admin/login', { error: req.query.error === '1' })
+  const turnstile = getTurnstileConfig()
+  res.render('admin/login', {
+    error: req.query.error === '1',
+    publicFormToken: createFormToken(),
+    turnstileSiteKey: turnstile.enabled ? turnstile.siteKey : '',
+  })
 })
 
 router.post('/login', loginLimiter, async (req, res) => {
-  const { username, password } = req.body
+  const body = req.body || {}
+  if (!isHoneypotClear(body.company_website) || !verifyFormToken(body.form_token)) {
+    return res.redirect('/admin/login?error=1')
+  }
+  const turnstileOk = await verifyTurnstile({
+    token: body['cf-turnstile-response'],
+    remoteIp: req.ip,
+    action: 'login',
+  })
+  if (!turnstileOk) return res.redirect('/admin/login?error=1')
+
+  const { username, password } = body
+  if (typeof username !== 'string' || username.length > 100 || typeof password !== 'string' || password.length > 200) {
+    return res.redirect('/admin/login?error=1')
+  }
   const uname = (username || '').trim().toLowerCase()
 
   let user     = null

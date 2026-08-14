@@ -77,6 +77,26 @@ function clampNumber(value, fallback, min, max) {
   return Math.min(max, Math.max(min, n))
 }
 
+const SECTION_VISIBILITY_KEYS = ['hero', 'counselors', 'features', 'book', 'faq', 'footer']
+function buildSectionVisibility(body = {}) {
+  return Object.fromEntries(
+    SECTION_VISIBILITY_KEYS.map(key => [key, body['visibility_' + key] === 'on'])
+  )
+}
+
+function normalizeSectionOrder(value) {
+  const requested = Array.isArray(value) ? value : String(value || '').split(',')
+  const normalized = []
+  requested.forEach(item => {
+    const key = String(item).trim()
+    if (SECTION_VISIBILITY_KEYS.includes(key) && !normalized.includes(key)) normalized.push(key)
+  })
+  SECTION_VISIBILITY_KEYS.forEach(key => {
+    if (!normalized.includes(key)) normalized.push(key)
+  })
+  return normalized
+}
+
 router.get('/', (req, res) => {
   const content = readData()
   if (!content.en) content.en = {}
@@ -108,6 +128,14 @@ router.post('/branding', brandingUpload, verifyToken, (req, res) => {
   }
   writeData(data)
   res.redirect('/admin/content?saved=branding')
+})
+
+router.post('/visibility', (req, res) => {
+  const data = readData()
+  data.sectionVisibility = buildSectionVisibility(req.body)
+  data.sectionOrder = normalizeSectionOrder(req.body.sectionOrder)
+  writeData(data)
+  res.redirect('/admin/content?saved=visibility')
 })
 
 // ── TH endpoints ─────────────────────────────────────────────────────────────
@@ -418,3 +446,5 @@ router.post('/backgrounds', bgUpload, verifyToken, (req, res) => {
 })
 
 module.exports = router
+module.exports.buildSectionVisibility = buildSectionVisibility
+module.exports.normalizeSectionOrder = normalizeSectionOrder

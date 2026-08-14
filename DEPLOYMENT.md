@@ -143,3 +143,31 @@ clients, ~216KB total) and this is completely fine at that scale.
    entity: `clients`, `appointments`, etc.) before this migration would
    make swapping the underlying storage a much smaller change than it is
    today, where each route file talks to the JSON files directly.
+
+## Public form bot protection
+
+The contact, survey, and login forms always use a signed timing token, a hidden
+honeypot, server-side validation, and per-IP rate limits.
+Contact submissions also reject the same student ID plus email for 30 minutes.
+
+Cloudflare Turnstile is optional locally and enforced automatically when both
+keys are configured:
+
+```env
+TURNSTILE_SITE_KEY=your-public-site-key
+TURNSTILE_SECRET_KEY=your-secret-key
+TURNSTILE_HOSTNAME=mindcare.example.ac.th
+```
+
+For local development, multiple allowed hostnames can be separated with
+commas (hostnames only, without a protocol or port), for example:
+TURNSTILE_HOSTNAME=localhost,127.0.0.1
+
+Create separate Turnstile widgets for development and production. The secret
+key must never be placed in HTML or committed to the repository. Server-side
+verification fails closed when Turnstile is enabled but Cloudflare cannot
+validate the token.
+
+`TRUST_PROXY_HOPS` defaults to `0` so a directly exposed app cannot accept a
+spoofed `X-Forwarded-For` value. Set it to the exact number of trusted reverse
+proxies only when the app is actually deployed behind them.

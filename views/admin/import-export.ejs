@@ -100,7 +100,7 @@
 
       <!-- Data type selector -->
       <div class="type-tab">
-        <% Object.entries(SCHEMAS).forEach(([k, s]) => { %>
+        <% Object.entries(SCHEMAS).filter(([, s]) => s.importable !== false).forEach(([k, s]) => { %>
         <a href="/admin/import-export?tab=import&type=<%= k %>"
            class="type-btn <%= type===k ? 'active' : '' %>">
           <i data-lucide="<%= s.icon %>" style="width:13px;height:13px;display:inline-block;vertical-align:-2px;margin-right:4px;"></i>
@@ -214,6 +214,27 @@
           ส่งออกข้อมูลเป็น CSV
         </div>
         <p style="font-size:13px;color:#64748b;margin:0 0 20px;">ดาวน์โหลดข้อมูลปัจจุบันในระบบเป็นไฟล์ CSV ที่เปิดได้ใน Excel</p>
+        <form method="GET" action="/admin/import-export" style="display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap;background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:16px;margin-bottom:20px;">
+          <input type="hidden" name="tab" value="export">
+          <label style="display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:600;color:#475569;">
+            วันที่เริ่มต้น
+            <input type="date" name="dateFrom" value="<%= dateFrom %>" class="inp" style="width:180px;">
+          </label>
+          <label style="display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:600;color:#475569;">
+            วันที่สิ้นสุด
+            <input type="date" name="dateTo" value="<%= dateTo %>" class="inp" style="width:180px;">
+          </label>
+          <button type="submit" class="act-btn ab-primary">
+            <i data-lucide="filter" style="width:14px;height:14px;"></i>
+            ใช้ช่วงเวลา
+          </button>
+          <% if (dateFrom || dateTo) { %>
+          <a href="/admin/import-export?tab=export" class="act-btn ab-secondary">
+            <i data-lucide="x" style="width:14px;height:14px;"></i>
+            ล้างช่วงเวลา
+          </a>
+          <% } %>
+        </form>
         <div style="display:flex;flex-direction:column;gap:12px;">
           <% Object.entries(SCHEMAS).forEach(([k, s]) => { %>
           <div class="export-card">
@@ -223,11 +244,11 @@
               </div>
               <div>
                 <p style="font-size:14px;font-weight:600;color:#1e293b;margin:0;"><%= s.label %></p>
-                <p style="font-size:12px;color:#94a3b8;margin:3px 0 0;"><%= counts[k] %> รายการในระบบ • <%= s.headers.length %> คอลัมน์</p>
+                <p style="font-size:12px;color:#94a3b8;margin:3px 0 0;"><%= counts[k] %> <%= dateFrom || dateTo ? 'รายการในช่วงที่เลือก' : 'รายการในระบบ' %> • <%= s.headers.length %> คอลัมน์</p>
               </div>
             </div>
             <div style="display:flex;align-items:center;gap:8px;">
-              <a href="/admin/import-export/export/<%= k %>"
+              <a href="/admin/import-export/export/<%= k %>?dateFrom=<%= dateFrom %>&amp;dateTo=<%= dateTo %>"
                  style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;background:#05967e;color:#fff;border-radius:8px;font-size:12px;font-weight:600;text-decoration:none;transition:all .15s;"
                  onmouseover="this.style.background='#067866'" onmouseout="this.style.background='#05967e'">
                 <i data-lucide="download" style="width:14px;height:14px;"></i>

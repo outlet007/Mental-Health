@@ -9,6 +9,7 @@ const { sendAppointmentEmails } = require('../../utils/mailer')
 const { resolveAppointmentEmailOptions } = require('../../utils/survey-email-settings')
 const { logDeletion } = require('../../utils/audit-log')
 const { getConcernOptions } = require('../../utils/concern-options')
+const { getFacultyOptions, resolveFaculty } = require('../../utils/faculty-options')
 const { readJSON, writeJSON } = require('../../utils/json-store')
 
 const dataDir  = path.join(__dirname, '../../../data')
@@ -65,6 +66,9 @@ router.get('/', (req, res) => {
     c.name,
     c.phone,
     c.email,
+    c.studentId,
+    c.faculty,
+    c.facultyEn,
   ], search))
   filtered.sort((a, b) => b.createdAt.localeCompare(a.createdAt))
 
@@ -87,6 +91,7 @@ router.get('/', (req, res) => {
     contacts: filtered, query: req.query,
     total: contacts.length, statusCounts, concernOptions, counselorColors,
     counselors, schedules, clients, appointments, counselorActiveCounts, appointmentSessionTypes,
+    facultyOptions: getFacultyOptions(),
   })
 })
 
@@ -103,13 +108,19 @@ router.post('/:id/status', (req, res) => {
 })
 
 router.post('/:id/edit', (req, res) => {
-  const { name, studentId, phone, email, concern, sessionType } = req.body
+  const { name, studentId, facultyIndex, phone, email, concern, sessionType } = req.body
+  const facultySelection = resolveFaculty(facultyIndex)
   const sessionTypes = readAppointmentSessionTypes()
   const data = readData()
   const idx  = data.findIndex(c => c.id === req.params.id)
   if (idx !== -1) {
     data[idx].name        = (name || '').trim()
     data[idx].studentId    = (studentId || '').trim()
+    if (facultySelection) {
+      data[idx].facultyIndex = facultySelection.facultyIndex
+      data[idx].faculty = facultySelection.faculty
+      data[idx].facultyEn = facultySelection.facultyEn
+    }
     data[idx].phone        = (phone || '').trim()
     data[idx].email        = (email || '').trim()
     data[idx].concern      = concern || ''
@@ -151,6 +162,9 @@ router.post('/:id/book', async (req, res) => {
       phone: contact.phone,
       email: contact.email || '',
       studentId: contact.studentId || '',
+      facultyIndex: contact.facultyIndex || '',
+      faculty: contact.faculty || '',
+      facultyEn: contact.facultyEn || '',
       status: 'active',
       totalSessions: 0,
       createdAt: new Date().toISOString().split('T')[0],

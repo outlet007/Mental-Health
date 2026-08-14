@@ -103,7 +103,6 @@ test('home page renders features copy from content data instead of hardcoded tex
   assert.match(html, /'feature-1': "English proof two"/)
 })
 
-
 test('home page renders concern dropdown options from content data', async () => {
   const base = JSON.parse(fs.readFileSync(contentPath, 'utf8'))
   base.book = {

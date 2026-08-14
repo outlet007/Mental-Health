@@ -14,6 +14,7 @@ function readData(file) { return readJSON(path.join(dataDir, file)) }
 function writeData(file, data) { writeJSON(path.join(dataDir, file), data) }
 
 const upload = multer({ dest: os.tmpdir(), limits: { fileSize: 5 * 1024 * 1024 } })
+const RATING_LABELS = { 5: 'มากที่สุด', 4: 'มาก', 3: 'ปานกลาง', 2: 'น้อย', 1: 'น้อยที่สุด' }
 
 // ── CSV helpers ───────────────────────────────────────────────────
 // Values starting with = + - @ are treated as formulas by Excel/Sheets when
@@ -56,12 +57,28 @@ function parseLine(line) {
   return out.map(s => s.trim())
 }
 
+function parseDateFilter(value) {
+  return /^\d{4}-\d{2}-\d{2}$/.test(String(value || '')) ? String(value) : ''
+}
+
+function filterByDateRange(data, schema, dateFrom, dateTo) {
+  if (!dateFrom && !dateTo) return data
+  return data.filter(item => {
+    const itemDate = String(item[schema.dateKey] || '').slice(0, 10)
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(itemDate)) return false
+    if (dateFrom && itemDate < dateFrom) return false
+    if (dateTo && itemDate > dateTo) return false
+    return true
+  })
+}
+
 // ── Schemas ───────────────────────────────────────────────────────
 const SCHEMAS = {
   clients: {
     label: 'ผู้รับบริการ',
     icon:  'users',
     file:  'clients.json',
+    dateKey: 'registeredAt',
     headers: [
       { key: 'name',   label: 'ชื่อ-นามสกุล',        required: true  },
       { key: 'email',  label: 'อีเมล',                required: true  },
@@ -97,6 +114,7 @@ const SCHEMAS = {
     label: 'นักจิตวิทยาให้คำปรึกษา',
     icon:  'user-check',
     file:  'counselors.json',
+    dateKey: 'createdAt',
     headers: [
       { key: 'name',            label: 'ชื่อ-นามสกุล',            required: true  },
       { key: 'title',           label: 'ตำแหน่ง',                  required: true  },
@@ -145,6 +163,7 @@ const SCHEMAS = {
     label: 'นัดหมาย',
     icon:  'calendar-check',
     file:  'appointments.json',
+    dateKey: 'date',
     headers: [
       { key: 'clientId',    label: 'รหัสผู้รับบริการ',      required: true  },
       { key: 'counselorId', label: 'รหัสนักจิตวิทยา',       required: true  },
@@ -184,32 +203,65 @@ const SCHEMAS = {
       }
     },
   },
+  surveys: {
+    label: 'แบบประเมินความพึงพอใจ',
+    icon:  'star',
+    file:  'surveys.json',
+    dateKey: 'submittedAt',
+    importable: false,
+    headers: [
+      { key: 'submittedAt',    label: 'วันที่และเวลาที่ประเมิน' },
+      { key: 'id',             label: 'รหัสแบบประเมิน' },
+      { key: 'appointmentId',  label: 'รหัสนัดหมาย' },
+      { key: 'clientId',       label: 'รหัสผู้รับบริการ' },
+      { key: 'clientName',     label: 'ผู้รับบริการ' },
+      { key: 'counselorId',    label: 'รหัสนักจิตวิทยา' },
+      { key: 'counselorName',  label: 'นักจิตวิทยา' },
+      { key: 'appointmentDate', label: 'วันที่นัดหมาย' },
+      { key: 'rating',         label: 'คะแนน' },
+      {
+        key: 'ratingLabel',
+        label: 'ระดับความพึงพอใจ',
+        exportValue: item => RATING_LABELS[Number(item.rating)] || '',
+      },
+      {
+        key: 'comment',
+        label: 'ข้อเสนอแนะ',
+        exportValue: item => item.comment || item.feedback || item.message || item.note || '',
+      },
+    ],
+  },
 }
 
 // ── GET page ──────────────────────────────────────────────────────
 router.get('/', (req, res) => {
   const tab    = req.query.tab    || 'import'
-  const type   = req.query.type   || 'clients'
+  const requestedType = req.query.type || 'clients'
+  const type   = SCHEMAS[requestedType] && (tab !== 'import' || SCHEMAS[requestedType].importable !== false)
+    ? requestedType
+    : 'clients'
   const result = req.query.result || null
   const count  = parseInt(req.query.count) || 0
   const error  = req.query.error  || null
   const schema = SCHEMAS[type] || SCHEMAS.clients
+  const dateFrom = parseDateFilter(req.query.dateFrom)
+  const dateTo   = parseDateFilter(req.query.dateTo)
 
   const counts = {}
   Object.entries(SCHEMAS).forEach(([k, s]) => {
-    try { counts[k] = readData(s.file).length } catch { counts[k] = 0 }
+    try { counts[k] = filterByDateRange(readData(s.file), s, dateFrom, dateTo).length } catch { counts[k] = 0 }
   })
 
   res.render('admin/import-export', {
     page: 'import-export', title: 'นำเข้า-ส่งออก ข้อมูล',
-    tab, type, schema, SCHEMAS, counts, result, count, error,
+    tab, type, schema, SCHEMAS, counts, result, count, error, dateFrom, dateTo,
   })
 })
 
 // ── GET template CSV ──────────────────────────────────────────────
 router.get('/template/:type', (req, res) => {
   const schema = SCHEMAS[req.params.type]
-  if (!schema) return res.redirect('/admin/import-export')
+  if (!schema || schema.importable === false) return res.redirect('/admin/import-export')
   const csv = toCSV([schema.sample], schema.headers)
   res.setHeader('Content-Type', 'text/csv; charset=utf-8')
   res.setHeader('Content-Disposition', `attachment; filename="template_${req.params.type}.csv"`)
@@ -221,11 +273,13 @@ router.get('/export/:type', (req, res) => {
   const schema = SCHEMAS[req.params.type]
   if (!schema) return res.redirect('/admin/import-export')
 
-  const data = readData(schema.file)
+  const dateFrom = parseDateFilter(req.query.dateFrom)
+  const dateTo   = parseDateFilter(req.query.dateTo)
+  const data = filterByDateRange(readData(schema.file), schema, dateFrom, dateTo)
   const rows = data.map(item => {
     const row = {}
     schema.headers.forEach(h => {
-      let val = item[h.key]
+      let val = typeof h.exportValue === 'function' ? h.exportValue(item) : item[h.key]
       if (Array.isArray(val)) val = val.join('|')
       row[h.label] = val ?? ''
     })
@@ -245,7 +299,7 @@ router.post('/import', upload.single('file'), verifyToken, (req, res) => {
   const schema = SCHEMAS[type]
   const back   = `/admin/import-export?tab=import&type=${type}`
 
-  if (!schema || !req.file) return res.redirect(back + '&error=no_file')
+  if (!schema || schema.importable === false || !req.file) return res.redirect(back + '&error=no_file')
 
   try {
     const text = fs.readFileSync(req.file.path, 'utf8').replace(/^﻿/, '')

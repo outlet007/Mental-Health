@@ -10,20 +10,17 @@ const { readJSON, ensureDataFiles } = require('./src/utils/json-store')
 const { getSeedData } = require('./src/utils/seed-data')
 const { runBackup } = require('./src/utils/backup')
 const { logError } = require('./src/utils/logger')
+const { createFormToken, getTurnstileConfig } = require('./src/utils/public-form-protection')
 
 ensureDataFiles(path.join(__dirname, 'data'), getSeedData())
 
 const app = express()
 
-// Trust exactly one hop of X-Forwarded-For: this app is always meant to run
-// behind a single reverse proxy (nginx/Traefik/etc, see DEPLOYMENT.md) that
-// terminates TLS and forwards to this container - never reachable directly
-// from the internet. `1` means Express uses the client IP the proxy
-// reports and ignores anything further left in the header, so a client
-// can't spoof X-Forwarded-For to fake a different IP and dodge rate
-// limiting. Set TRUST_PROXY_HOPS in .env if an additional layer (e.g. a
-// CDN in front of the reverse proxy) is ever added - each hop adds 1.
-app.set('trust proxy', parseInt(process.env.TRUST_PROXY_HOPS, 10) || 1)
+// Do not trust X-Forwarded-For by default. Trusting it on a directly exposed
+// local/container port lets a client spoof its IP and bypass rate limits.
+// Set TRUST_PROXY_HOPS to the exact number of trusted proxies in production.
+const trustProxyHops = Number.parseInt(process.env.TRUST_PROXY_HOPS || '0', 10)
+app.set('trust proxy', Number.isInteger(trustProxyHops) && trustProxyHops > 0 ? trustProxyHops : false)
 
 app.set('view engine', 'ejs')
 app.set('views', path.join(__dirname, 'views'))
@@ -103,12 +100,17 @@ app.get('/', (req, res) => {
   const approved   = counselors.filter(c => c.isApproved)
   const ratingStats = attachSurveyRatingsToCounselors(approved, surveys)
   const content    = readJSON(path.join(__dirname, 'data/content.json'))
+  const turnstile = getTurnstileConfig()
+  const { buildFacultyOptions } = require('./src/utils/faculty-options')
   res.render('index', {
     counselors: ratingStats.counselors,
     counselorRatingAverage: ratingStats.averageRating,
     counselorReviewCount: ratingStats.reviewCount,
     query: req.query,
     content,
+    facultyOptions: buildFacultyOptions(content),
+    publicFormToken: createFormToken(),
+    turnstileSiteKey: turnstile.enabled ? turnstile.siteKey : '',
   })
 })
 
@@ -187,11 +189,23 @@ function runBackupSafely() {
 }
 const backupInterval = setInterval(runBackupSafely, BACKUP_INTERVAL_MS)
 
-const PORT = process.env.PORT || 3000
-const server = app.listen(PORT, () => {
+const PORT = Number.parseInt(process.env.PORT || '3000', 10)
+const HOST = process.env.HOST || '127.0.0.1'
+const server = app.listen(PORT, HOST, () => {
   console.log(`MindCare running -> http://localhost:${PORT}`)
   sendDueAppointmentReminders().catch(err => logError('[Email] reminder check error', err))
   runBackupSafely()
+})
+
+server.on('error', err => {
+  clearInterval(reminderInterval)
+  clearInterval(backupInterval)
+  if (err.code === 'EADDRINUSE') {
+    console.error(`[Server] Port ${PORT} is already in use. Set PORT to another value in .env (for example PORT=3001).`)
+  } else {
+    logError('[Server] Failed to start', err)
+  }
+  process.exitCode = 1
 })
 
 // Graceful shutdown: stop accepting new connections and let in-flight

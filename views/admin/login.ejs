@@ -21,6 +21,8 @@
     .rgt-top{display:flex;justify-content:flex-end;padding:24px}
     .rgt-body{flex:1;display:flex;align-items:center;justify-content:center;padding:16px 24px 48px}
     .form{display:flex;flex-direction:column;gap:20px;width:100%;max-width:368px}
+    .turnstile-wrap{width:100%;margin:18px 0;display:flex;justify-content:center}
+    .turnstile-wrap .cf-turnstile{width:100%;max-width:574px}
     /* Inputs */
     .inp-wrap{position:relative}
     .inp{height:44px;width:100%;border-radius:12px;border:1.5px solid #e6e2ee;background:#fff;padding:0 12px 0 40px;font-size:14px;color:#15182e;outline:none;transition:border-color .15s,box-shadow .15s;font-family:inherit}
@@ -35,6 +37,9 @@
     .back-btn{display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 14px;border-radius:10px;border:1px solid #e6e2ee;background:#f8f7fb;font-size:12px;font-weight:500;color:#15182e;text-decoration:none;transition:background .15s}
     .back-btn:hover{background:#ede9f6}
   </style>
+  <% if (typeof turnstileSiteKey !== 'undefined' && turnstileSiteKey) { %>
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+  <% } %>
 </head>
 <body>
 <div class="root">
@@ -80,6 +85,11 @@
 
       <div class="rgt-body">
         <form class="form" method="POST" action="/admin/login">
+          <input type="hidden" name="form_token" value="<%= typeof publicFormToken !== 'undefined' ? publicFormToken : '' %>">
+          <div aria-hidden="true" style="position:fixed;left:-10000px;top:auto;width:1px;height:1px;overflow:hidden;">
+            <label for="login_company_website">Company website</label>
+            <input type="text" id="login_company_website" name="company_website" tabindex="-1" autocomplete="off">
+          </div>
 
           <div style="display:flex;flex-direction:column;gap:4px;">
             <h1 style="font-size:24px;font-weight:700;color:#15182e;margin:0;">เข้าสู่ระบบ</h1>
@@ -114,6 +124,17 @@
             </div>
           </label>
 
+          <% if (typeof turnstileSiteKey !== 'undefined' && turnstileSiteKey) { %>
+          <div class="turnstile-wrap">
+            <div
+              class="cf-turnstile"
+              data-sitekey="<%= turnstileSiteKey %>"
+              data-action="login"
+              data-size="flexible"
+              data-theme="light"
+              data-language="th"></div>
+          </div>
+          <% } %>
           <button type="submit" class="submit">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m10 17 5-5-5-5"></path><path d="M15 12H3"></path><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path></svg>
             เข้าสู่ระบบ

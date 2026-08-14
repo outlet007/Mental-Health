@@ -19,14 +19,39 @@
     .section-bg-motion { transform-origin:center; will-change:transform; }
     .section-bg-blend { position:absolute; left:0; right:0; pointer-events:none; z-index:1; }
     .section-bg-blend-bottom { bottom:0; }
+    .turnstile-wrap {
+      width:100%;
+      margin:18px 0;
+      display:flex;
+      justify-content:center;
+    }
+    .turnstile-wrap .cf-turnstile {
+      width:100%;
+      max-width:574px;
+    }
     @media (prefers-reduced-motion: reduce) {
       .section-bg-motion { animation:none !important; transform:none; }
     }
   </style>
+  <% if (typeof turnstileSiteKey !== 'undefined' && turnstileSiteKey) { %>
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+  <% } %>
 </head>
 <body class="bg-white">
 <%
 const _bgs = content.backgrounds || {}
+const _sectionVisibility = content.sectionVisibility || {}
+function sectionVisible(key) {
+  return _sectionVisibility[key] !== false
+}
+const _defaultSectionOrder = ['hero', 'counselors', 'features', 'book', 'faq', 'footer']
+const _savedSectionOrder = Array.isArray(content.sectionOrder) ? content.sectionOrder : []
+const _sectionOrder = _savedSectionOrder
+  .filter((key, index) => _defaultSectionOrder.includes(key) && _savedSectionOrder.indexOf(key) === index)
+  .concat(_defaultSectionOrder.filter(key => !_savedSectionOrder.includes(key)))
+function sectionOrderValue(key) {
+  return _sectionOrder.indexOf(key)
+}
 const featureContent = content.features || {}
 const featureDefaults = [
   { icon:'shield-check', text:'นักให้คำปรึกษาผ่านการตรวจสอบและรับรองคุณสมบัติ' },
@@ -52,6 +77,7 @@ const concernItems = Array.isArray(content.book && content.book.concernOptions) 
 const enConcernDefaults = ['Anxiety / Stress', 'Depression', 'Relationship Issues', 'Family Problems', 'Grief / Loss', 'Other']
 const enBookContent = (content.en && content.en.book) || {}
 const enConcernItems = Array.isArray(enBookContent.concernOptions) && enBookContent.concernOptions.length ? enBookContent.concernOptions : enConcernDefaults
+const facultyItems = typeof facultyOptions !== 'undefined' && Array.isArray(facultyOptions) ? facultyOptions : []
 const bookFormTexts = (content.book && content.book.formTexts) || {}
 const enBookFormTexts = enBookContent.formTexts || {}
 function bookText(texts, key, fallback) {
@@ -165,7 +191,7 @@ function _photoMotion(obj, prefix, uid) {
   <!-- Navbar -->
   <nav class="fixed top-0 inset-x-0 z-50 bg-white/80 backdrop-blur border-b border-slate-100 shadow-[0_1px_2px_rgba(15,23,42,0.06),0_8px_20px_rgba(15,23,42,0.12)]">
     <div class="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-      <a href="#home" class="flex items-center gap-2.5 rounded-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-300 focus-visible:ring-offset-2" aria-label="MindCare home">
+      <a href="<%= sectionVisible('hero') ? '#home' : '/' %>" class="flex items-center gap-2.5 rounded-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-300 focus-visible:ring-offset-2" aria-label="MindCare home">
         <% if (content.branding && content.branding.headerLogoImage) { %>
         <img src="<%= content.branding.headerLogoImage %>" alt="MindCare" class="h-8 w-auto">
         <% } else { %>
@@ -177,11 +203,11 @@ function _photoMotion(obj, prefix, uid) {
         <span class="font-bold text-slate-800 text-lg">MindCare</span>
         <% } %>
       </a>
-      <div id="main-nav-links" class="hidden md:flex items-center gap-1 relative rounded-full p-0.5">
+      <div id="main-nav-links" class="hidden md:flex items-center gap-1 relative rounded-full p-0.5 ml-auto mr-3">
         <span id="main-nav-indicator" class="pointer-events-none absolute left-0 top-0.5 h-[calc(100%-4px)] rounded-full bg-brand-50 shadow-sm opacity-0 transition-all duration-300 ease-out"></span>
-        <a href="#book" class="btn-ghost text-sm relative z-10" data-i18n="nav-register">ลงทะเบียนเพื่อขอรับบริการ</a>
-        <a href="#counselors" class="btn-ghost text-sm relative z-10" data-i18n="nav-counselors">นักให้คำปรึกษา</a>
-        <a href="#faq" class="btn-ghost text-sm relative z-10" data-i18n="nav-faq">คำถามที่พบบ่อย</a>
+        <% if (sectionVisible('book')) { %><a href="#book" class="btn-ghost text-sm relative z-10" data-i18n="nav-register">ลงทะเบียนเพื่อขอรับบริการ</a><% } %>
+        <% if (sectionVisible('counselors')) { %><a href="#counselors" class="btn-ghost text-sm relative z-10" data-i18n="nav-counselors">นักให้คำปรึกษา</a><% } %>
+        <% if (sectionVisible('faq')) { %><a href="#faq" class="btn-ghost text-sm relative z-10" data-i18n="nav-faq">คำถามที่พบบ่อย</a><% } %>
       </div>
       <div class="hidden md:flex items-center gap-2">
         <!-- Language toggle -->
@@ -209,7 +235,7 @@ function _photoMotion(obj, prefix, uid) {
           </div>
         </div>
         <div class="w-px h-6 bg-gray-300 self-center" aria-hidden="true"></div>
-        <a href="#book" class="btn-primary text-sm"><i data-lucide="calendar-plus" class="w-5 h-5"></i> <span data-i18n="nav-btn-register">ลงทะเบียน</span></a>
+        <% if (sectionVisible('book')) { %><a href="#book" class="btn-primary text-sm"><i data-lucide="calendar-plus" class="w-5 h-5"></i> <span data-i18n="nav-btn-register">ลงทะเบียน</span></a><% } %>
         <a href="/admin/login" class="btn-secondary text-sm">
           <i data-lucide="log-in" class="w-4 h-4"></i>
           <span data-i18n="nav-staff">สำหรับเจ้าหน้าที่</span>
@@ -233,30 +259,32 @@ function _photoMotion(obj, prefix, uid) {
       </div>
 
       <div class="min-h-[calc(100vh-3rem)] flex flex-col px-5 py-4">
-        <div class="grid grid-cols-2 gap-3 mb-7">
+        <div class="grid <%= sectionVisible('book') ? 'grid-cols-2' : 'grid-cols-1' %> gap-3 mb-7">
+          <% if (sectionVisible('book')) { %>
           <a href="#book" onclick="closeMobileMenu()" class="btn-primary justify-center text-sm">
             <span data-i18n="nav-btn-register">ลงทะเบียน</span>
           </a>
+          <% } %>
           <a href="/admin/login" class="btn-secondary justify-center text-sm">
             <span data-i18n="nav-staff">สำหรับเจ้าหน้าที่</span>
           </a>
         </div>
 
         <div class="flex flex-col text-slate-800">
-          <a href="#home" onclick="closeMobileMenu()" class="flex items-center justify-between py-4 text-base font-medium">
+          <% if (sectionVisible('hero')) { %><a href="#home" onclick="closeMobileMenu()" class="flex items-center justify-between py-4 text-base font-medium">
             <span data-i18n="mobile-home">หน้าแรก</span>
-          </a>
-          <a href="#book" onclick="closeMobileMenu()" class="flex items-center justify-between py-4 text-base font-medium">
+          </a><% } %>
+          <% if (sectionVisible('book')) { %><a href="#book" onclick="closeMobileMenu()" class="flex items-center justify-between py-4 text-base font-medium">
             <span data-i18n="mobile-services">บริการของเรา</span>
             <i data-lucide="chevron-down" class="w-5 h-5 text-slate-600"></i>
-          </a>
-          <a href="#counselors" onclick="closeMobileMenu()" class="flex items-center justify-between py-4 text-base font-medium">
+          </a><% } %>
+          <% if (sectionVisible('counselors')) { %><a href="#counselors" onclick="closeMobileMenu()" class="flex items-center justify-between py-4 text-base font-medium">
             <span data-i18n="nav-counselors">นักให้คำปรึกษา</span>
-          </a>
-          <a href="#faq" onclick="closeMobileMenu()" class="flex items-center justify-between py-4 text-base font-medium">
+          </a><% } %>
+          <% if (sectionVisible('faq')) { %><a href="#faq" onclick="closeMobileMenu()" class="flex items-center justify-between py-4 text-base font-medium">
             <span data-i18n="nav-faq">คำถามที่พบบ่อย</span>
             <i data-lucide="chevron-down" class="w-5 h-5 text-slate-600"></i>
-          </a>
+          </a><% } %>
         </div>
 
         <div class="mt-auto pb-1">
@@ -269,8 +297,10 @@ function _photoMotion(obj, prefix, uid) {
       </div>
   </div>
 
+  <div id="public-sections" style="display:flex;flex-direction:column;">
   <!-- Hero -->
-  <section id="home" class="pt-32 pb-24 bg-gradient-to-br from-brand-50 via-ocean-50 to-white" style="position:relative;overflow:hidden;">
+  <% if (sectionVisible('hero')) { %>
+  <section id="home" class="pt-32 pb-24 bg-gradient-to-br from-brand-50 via-ocean-50 to-white" style="position:relative;overflow:hidden;order:<%= sectionOrderValue('hero') %>;">
     <%- _bgLayers('hero') %>
     <% if (content.hero.visualImage) { %>
     <!-- Full-bleed hero visual replacing the right-side object entirely -->
@@ -304,14 +334,18 @@ function _photoMotion(obj, prefix, uid) {
           <%- content.hero.subtext %>
         </p>
         <div data-animate="fade-up" data-delay="360ms" class="flex flex-wrap gap-3">
+          <% if (sectionVisible('book')) { %>
           <a href="#book" class="btn-primary px-7 py-3 text-base">
             <i data-lucide="calendar-plus" class="w-5 h-5"></i>
             <span data-i18n="hero-cta-main"><%= content.hero.ctaMain %></span>
           </a>
+          <% } %>
+          <% if (sectionVisible('counselors')) { %>
           <a href="#counselors" class="btn-secondary px-7 py-3 text-base">
             <i data-lucide="users" class="w-5 h-5"></i>
             <span data-i18n="hero-cta-sub"><%= content.hero.ctaSub %></span>
           </a>
+          <% } %>
         </div>
       </div>
 
@@ -349,10 +383,12 @@ function _photoMotion(obj, prefix, uid) {
       <% } %>
     </div>
   </section>
+  <% } %>
 
 
   <!-- Counselors -->
-  <section id="counselors" class="py-20" style="position:relative;overflow:hidden;background:#eef1ff;">
+  <% if (sectionVisible('counselors')) { %>
+  <section id="counselors" class="py-20" style="position:relative;overflow:hidden;background:#eef1ff;order:<%= sectionOrderValue('counselors') %>;">
     <%- _bgLayers('counselors') %>
     <div class="max-w-6xl mx-auto px-6" style="position:relative;z-index:2;">
       <div data-animate="fade-up" class="text-center mb-12">
@@ -431,9 +467,11 @@ function _photoMotion(obj, prefix, uid) {
       <div id="c-dots" class="flex justify-center gap-2 mt-8"></div>
     </div>
   </section>
+  <% } %>
 
   <!-- Features -->
-  <section id="features" class="py-20 bg-gradient-to-r from-brand-600 to-ocean-600" style="position:relative;overflow:hidden;">
+  <% if (sectionVisible('features')) { %>
+  <section id="features" class="py-20 bg-gradient-to-r from-brand-600 to-ocean-600" style="position:relative;overflow:hidden;order:<%= sectionOrderValue('features') %>;">
     <%- _bgLayers('features') %>
     <div class="max-w-6xl mx-auto px-6" style="position:relative;z-index:2;">
       <div class="grid md:grid-cols-2 gap-12 items-center">
@@ -502,9 +540,11 @@ function _photoMotion(obj, prefix, uid) {
       </div>
     </div>
   </section>
+  <% } %>
 
   <!-- CTA / Book -->
-  <section id="book" class="py-20 bg-white" style="position:relative;overflow:hidden;">
+  <% if (sectionVisible('book')) { %>
+  <section id="book" class="py-20 bg-white" style="position:relative;overflow:hidden;order:<%= sectionOrderValue('book') %>;">
     <%- _bgLayers('book') %>
     <div class="max-w-2xl mx-auto px-6 text-center" style="position:relative;z-index:2;">
       <h2 data-animate="fade-up" data-delay="100ms" class="text-3xl font-bold text-slate-800 mb-4" data-i18n-html="book-heading" style="<%- _tc('book','heading') %>"><%- content.book.heading %></h2>
@@ -523,20 +563,25 @@ function _photoMotion(obj, prefix, uid) {
           <i data-lucide="send" class="w-4 h-4 text-brand-500"></i>
           <span data-i18n-html="form-heading" style="<%- _tc('book','formHeading') %>"><%- content.book.formHeading %></span>
         </h3>
-        <% if (query && query.error === 'missing') { %>
+        <% if (query && query.error) { %>
         <div class="flex items-center gap-2 mb-4 px-4 py-3 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm">
           <i data-lucide="alert-circle" class="w-4 h-4 flex-shrink-0"></i>
           <span data-i18n-html="form-error"><%- bookText(bookFormTexts, 'errorText', 'กรุณากรอกข้อมูลที่จำเป็นให้ครบทุกช่อง') %></span>
         </div>
         <% } %>
         <form method="POST" action="/contact" class="space-y-4">
+          <input type="hidden" name="form_token" value="<%= typeof publicFormToken !== 'undefined' ? publicFormToken : '' %>">
+          <div aria-hidden="true" style="position:fixed;left:-10000px;top:auto;width:1px;height:1px;overflow:hidden;">
+            <label for="company_website">Company website</label>
+            <input type="text" id="company_website" name="company_website" tabindex="-1" autocomplete="off">
+          </div>
           <div class="flex gap-2.5 p-1.5 mb-6 bg-slate-100 rounded-2xl" role="tablist" aria-label="ประเภทผู้ลงทะเบียน">
-            <button type="button" data-audience-tab="student" onclick="setAudience('student')" class="flex-1 py-3.5 rounded-xl text-base transition-colors bg-brand-600 shadow-md text-white font-semibold flex items-center justify-center gap-2" role="tab" aria-selected="true">
-              <i data-lucide="graduation-cap" class="w-5 h-5"></i>
+            <button type="button" data-audience-tab="student" onclick="setAudience('student')" class="flex-1 py-3.5 rounded-xl text-base transition-colors flex items-center justify-center gap-2 bg-brand-600 shadow-md text-white font-semibold" role="tab" aria-selected="true">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="graduation-cap" aria-hidden="true" class="lucide lucide-graduation-cap w-5 h-5"><path d="M21.42 10.922a1 1 0 0 0-.019-1.838L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.832l8.57 3.908a2 2 0 0 0 1.66 0z"></path><path d="M22 10v6"></path><path d="M6 12.5V16a6 3 0 0 0 12 0v-3.5"></path></svg>
               <span data-i18n="form-tab-student">นักศึกษา</span>
             </button>
-            <button type="button" data-audience-tab="staff" onclick="setAudience('staff')" class="flex-1 py-3.5 rounded-xl text-base transition-colors text-slate-500 font-medium hover:text-slate-700 flex items-center justify-center gap-2" role="tab" aria-selected="false">
-              <i data-lucide="briefcase" class="w-5 h-5"></i>
+            <button type="button" data-audience-tab="staff" onclick="setAudience('staff')" class="flex-1 py-3.5 rounded-xl text-base transition-colors flex items-center justify-center gap-2 text-slate-500 font-medium hover:text-slate-700" role="tab" aria-selected="false">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="briefcase" aria-hidden="true" class="lucide lucide-briefcase w-5 h-5"><path d="M16 20V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path><rect width="20" height="14" x="2" y="6" rx="2"></rect></svg>
               <span data-i18n="form-tab-staff">อาจารย์/บุคลากร</span>
             </button>
           </div>
@@ -549,6 +594,15 @@ function _photoMotion(obj, prefix, uid) {
               <label class="form-label"><span data-i18n="form-label-studentid"><%= bookText(bookFormTexts, 'studentIdLabel', 'รหัสนักศึกษา') %></span> <span class="text-red-400">*</span></label>
               <input type="text" name="studentId" class="form-input" placeholder="<%= bookText(bookFormTexts, 'studentIdPlaceholder', 'เช่น 1680123456') %>" data-i18n-ph="form-ph-studentid" required>
             </div>
+          </div>
+          <div>
+            <label class="form-label"><span data-i18n="form-label-faculty"><%= bookText(bookFormTexts, 'facultyLabel', 'คณะ') %></span> <span class="text-red-400">*</span></label>
+            <select name="facultyIndex" class="form-select" required>
+              <option value="" data-i18n-opt="faculty-placeholder"><%= bookText(bookFormTexts, 'facultyPlaceholder', '-- เลือกคณะ --') %></option>
+              <% facultyItems.forEach((item, idx) => { %>
+              <option value="<%= item.index %>" data-i18n-opt="faculty-<%= idx %>"><%= item.th %></option>
+              <% }) %>
+            </select>
           </div>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
@@ -594,6 +648,17 @@ function _photoMotion(obj, prefix, uid) {
               <span class="text-sm text-slate-700 group-hover:text-slate-900 transition-colors" data-i18n-html="pdpa-checkbox"><%- bookText(bookFormTexts, 'pdpaCheckbox', 'ข้าพเจ้าได้อ่านและยอมรับการยินยอมเปิดเผยข้อมูลแล้ว') %></span>
             </label>
           </div>
+          <% if (typeof turnstileSiteKey !== 'undefined' && turnstileSiteKey) { %>
+          <div class="turnstile-wrap">
+            <div
+              class="cf-turnstile"
+              data-sitekey="<%= turnstileSiteKey %>"
+              data-action="contact"
+              data-size="flexible"
+              data-theme="light"
+              data-language="th"></div>
+          </div>
+          <% } %>
           <button type="submit" class="btn-primary w-full justify-center py-3 text-base">
             <i data-lucide="send" class="w-5 h-5"></i>
             <span data-i18n="form-submit"><%= bookText(bookFormTexts, 'submitLabel', 'ส่งคำขอจองนัดหมาย') %></span>
@@ -603,9 +668,11 @@ function _photoMotion(obj, prefix, uid) {
       <% } %>
     </div>
   </section>
+  <% } %>
 
   <!-- FAQ -->
-  <section id="faq" class="py-20 bg-slate-50" style="position:relative;overflow:hidden;">
+  <% if (sectionVisible('faq')) { %>
+  <section id="faq" class="py-20 bg-slate-50" style="position:relative;overflow:hidden;order:<%= sectionOrderValue('faq') %>;">
     <%- _bgLayers('faq') %>
     <div class="max-w-3xl mx-auto px-6" style="position:relative;z-index:2;">
       <h2 data-animate="fade-up" class="text-3xl font-bold text-slate-800 text-center mb-10" data-i18n="faq-heading" style="<%- _tc('faq','heading') %>">คำถามที่พบบ่อย</h2>
@@ -622,9 +689,11 @@ function _photoMotion(obj, prefix, uid) {
       </div>
     </div>
   </section>
+  <% } %>
 
   <!-- Footer -->
-  <footer class="bg-slate-800 text-slate-400 py-12" style="position:relative;overflow:hidden;">
+  <% if (sectionVisible('footer')) { %>
+  <footer class="bg-slate-800 text-slate-400 py-12" style="position:relative;overflow:hidden;order:<%= sectionOrderValue('footer') %>;">
     <%- _bgLayers('footer') %>
     <div class="max-w-6xl mx-auto px-6" style="position:relative;z-index:2;">
       <div class="grid md:grid-cols-4 gap-8 mb-8">
@@ -649,8 +718,8 @@ function _photoMotion(obj, prefix, uid) {
         <div>
           <p class="text-white font-medium mb-3 <%= _tcClass('footer','menu') %>" data-i18n="footer-services">บริการ</p>
           <ul class="space-y-2 text-sm">
-            <li><a href="#counselors" class="hover:text-brand-400 transition-colors <%= _tcClass('footer','menuLink') %>" data-i18n="footer-link-1">นักให้คำปรึกษาของเรา</a></li>
-            <li><a href="#book" class="hover:text-brand-400 transition-colors <%= _tcClass('footer','menuLink') %>" data-i18n="footer-link-2">ลงทะเบียนเพื่อขอรับบริการ</a></li>
+            <% if (sectionVisible('counselors')) { %><li><a href="#counselors" class="hover:text-brand-400 transition-colors <%= _tcClass('footer','menuLink') %>" data-i18n="footer-link-1">นักให้คำปรึกษาของเรา</a></li><% } %>
+            <% if (sectionVisible('book')) { %><li><a href="#book" class="hover:text-brand-400 transition-colors <%= _tcClass('footer','menuLink') %>" data-i18n="footer-link-2">ลงทะเบียนเพื่อขอรับบริการ</a></li><% } %>
           </ul>
         </div>
         <div>
@@ -672,6 +741,8 @@ function _photoMotion(obj, prefix, uid) {
       </div>
     </div>
   </footer>
+  <% } %>
+  </div>
 
   <!-- Cookie consent banner -->
   <div id="cookie-consent" class="fixed bottom-0 inset-x-0 z-50 bg-slate-800 text-slate-200 border-t border-slate-700 px-4 py-4 hidden">
@@ -697,6 +768,7 @@ function _photoMotion(obj, prefix, uid) {
     // Counselor Carousel
     (function () {
       const inner   = document.getElementById('c-inner');
+      if (!inner) return;
       const slides  = Array.from(inner.querySelectorAll('.c-slide'));
       const prevBtn = document.getElementById('c-prev');
       const nextBtn = document.getElementById('c-next');
@@ -1003,10 +1075,15 @@ function _photoMotion(obj, prefix, uid) {
         'form-tab-staff': 'อาจารย์/บุคลากร',
         'form-label-name': <%- JSON.stringify(bookText(bookFormTexts, 'nameLabel', 'ชื่อ-นามสกุล')) %>,
         'form-label-studentid': <%- JSON.stringify(bookText(bookFormTexts, 'studentIdLabel', 'รหัสนักศึกษา')) %>,
+        'form-label-faculty': <%- JSON.stringify(bookText(bookFormTexts, 'facultyLabel', 'คณะ')) %>,
         'form-label-phone': <%- JSON.stringify(bookText(bookFormTexts, 'phoneLabel', 'เบอร์โทรศัพท์')) %>,
         'form-label-email': <%- JSON.stringify(bookText(bookFormTexts, 'emailLabel', 'อีเมล')) %>,
         'form-ph-name': <%- JSON.stringify(bookText(bookFormTexts, 'namePlaceholder', 'กรอกชื่อ-นามสกุลของคุณ')) %>,
         'form-ph-studentid': <%- JSON.stringify(bookText(bookFormTexts, 'studentIdPlaceholder', 'เช่น 1680123456')) %>,
+        'faculty-placeholder': <%- JSON.stringify(bookText(bookFormTexts, 'facultyPlaceholder', '-- เลือกคณะ --')) %>,
+        <% facultyItems.forEach((item, idx) => { %>
+        'faculty-<%= idx %>': <%- JSON.stringify(item.th) %>,
+        <% }) %>
         'form-ph-phone': <%- JSON.stringify(bookText(bookFormTexts, 'phonePlaceholder', '08X-XXX-XXXX')) %>,
         'form-ph-email': <%- JSON.stringify(bookText(bookFormTexts, 'emailPlaceholder', 'your@email.com')) %>,
         'form-label-concern': <%- JSON.stringify(bookText(bookFormTexts, 'concernLabel', 'คุณต้องการความช่วยเหลือเรื่องอะไร?')) %>,
@@ -1078,10 +1155,15 @@ function _photoMotion(obj, prefix, uid) {
         'form-tab-staff': 'Faculty/Staff',
         'form-label-name': <%- JSON.stringify(bookText(enBookFormTexts, 'nameLabel', 'Full Name')) %>,
         'form-label-studentid': <%- JSON.stringify(bookText(enBookFormTexts, 'studentIdLabel', 'Student ID')) %>,
+        'form-label-faculty': <%- JSON.stringify(bookText(enBookFormTexts, 'facultyLabel', 'Faculty / School')) %>,
         'form-label-phone': <%- JSON.stringify(bookText(enBookFormTexts, 'phoneLabel', 'Phone Number')) %>,
         'form-label-email': <%- JSON.stringify(bookText(enBookFormTexts, 'emailLabel', 'Email')) %>,
         'form-ph-name': <%- JSON.stringify(bookText(enBookFormTexts, 'namePlaceholder', 'Enter your name')) %>,
         'form-ph-studentid': <%- JSON.stringify(bookText(enBookFormTexts, 'studentIdPlaceholder', 'e.g. 1680123456')) %>,
+        'faculty-placeholder': <%- JSON.stringify(bookText(enBookFormTexts, 'facultyPlaceholder', '-- Select faculty / school --')) %>,
+        <% facultyItems.forEach((item, idx) => { %>
+        'faculty-<%= idx %>': <%- JSON.stringify(item.en) %>,
+        <% }) %>
         'form-ph-phone': <%- JSON.stringify(bookText(enBookFormTexts, 'phonePlaceholder', '08X-XXX-XXXX')) %>,
         'form-ph-email': <%- JSON.stringify(bookText(enBookFormTexts, 'emailPlaceholder', 'your@email.com')) %>,
         'form-label-concern': <%- JSON.stringify(bookText(enBookFormTexts, 'concernLabel', 'What would you like help with?')) %>,

@@ -7,6 +7,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  <% if (typeof turnstileSiteKey !== 'undefined' && turnstileSiteKey) { %>
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+  <% } %>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -181,6 +184,14 @@
       </div>
 
       <form method="POST" action="/survey/<%= appt.surveyToken %>">
+        <input type="hidden" name="form_token" value="<%= typeof publicFormToken !== 'undefined' ? publicFormToken : '' %>">
+        <div aria-hidden="true" style="position:fixed;left:-10000px;top:auto;width:1px;height:1px;overflow:hidden;">
+          <label for="company_website">Company website</label>
+          <input type="text" id="company_website" name="company_website" tabindex="-1" autocomplete="off">
+        </div>
+        <% if (typeof turnstileSiteKey !== 'undefined' && turnstileSiteKey) { %>
+        <div class="cf-turnstile" data-sitekey="<%= turnstileSiteKey %>" data-action="survey"></div>
+        <% } %>
 
         <p class="section-label">ระดับความพึงพอใจของท่านในการรับบริการครั้งนี้</p>
 
