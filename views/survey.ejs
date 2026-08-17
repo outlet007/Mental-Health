@@ -203,9 +203,10 @@
             { val:2, icon:'frown', txt:'น้อย' },
             { val:1, icon:'circle-alert', txt:'น้อยที่สุด' },
           ] %>
+          <% const selectedRating = typeof initialRating !== 'undefined' && Number.isInteger(initialRating) ? initialRating : 5 %>
           <% ratings.forEach(e => { %>
             <div>
-              <input type="radio" name="rating" id="r<%= e.val %>" value="<%= e.val %>" class="rating-option" <%= e.val === 5 ? 'checked' : '' %>>
+              <input type="radio" name="rating" id="r<%= e.val %>" value="<%= e.val %>" class="rating-option" <%= e.val === selectedRating ? 'checked' : '' %>>
               <label for="r<%= e.val %>" class="rating-label">
                 <span class="rating-icon"><i data-lucide="<%= e.icon %>"></i></span>
                 <span class="txt"><%= e.txt %></span>

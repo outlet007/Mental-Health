@@ -1,10 +1,14 @@
 ﻿const express = require('express')
 const router = express.Router()
+const crypto = require('crypto')
 const { ensureToken, verifyToken } = require('../../middleware/csrf')
 router.use(ensureToken)
 router.use(verifyToken)
 const path = require('path')
-const { readJSON } = require('../../utils/json-store')
+const { readJSON, writeJSON } = require('../../utils/json-store')
+const { sendSurveyEmail } = require('../../utils/mailer')
+const { resolveSurveyEmailOptions } = require('../../utils/survey-email-settings')
+const { getPendingSurveyAppointments, recordSurveyEmailSent } = require('../../utils/survey-delivery')
 
 const dataDir = path.join(__dirname, '../../../data')
 const RATING_LABELS = { 5: 'มากที่สุด', 4: 'มาก', 3: 'ปานกลาง', 2: 'น้อย', 1: 'น้อยที่สุด' }
@@ -15,6 +19,14 @@ function getSurveys() {
 
 function getCounselors() {
   return readJSON(path.join(dataDir, 'counselors.json'), [])
+}
+
+function getAppointments() {
+  return readJSON(path.join(dataDir, 'appointments.json'), [])
+}
+
+function getClients() {
+  return readJSON(path.join(dataDir, 'clients.json'), [])
 }
 
 function pct(count, total) {
@@ -166,6 +178,11 @@ router.get('/', (req, res) => {
     count: all.filter(s => s.rating === r).length,
   }))
   const counselorSummaries = buildCounselorSummaries(allowedCounselors, all)
+  const pendingSurveyAppointments = getPendingSurveyAppointments(
+    getAppointments(),
+    getSurveys(),
+    isCounselor ? req.session.counselorId : ''
+  )
 
   res.render('admin/surveys', {
     page: 'surveys',
@@ -181,7 +198,52 @@ router.get('/', (req, res) => {
     query: req.query,
     dateFrom,
     dateTo,
+    pendingSurveyAppointments,
+    activeSurveyTab: req.query.tab === 'pending' ? 'pending' : 'completed',
   })
+})
+
+router.post('/appointments/:id/resend', async (req, res) => {
+  const appointmentsFile = path.join(dataDir, 'appointments.json')
+  const appointments = getAppointments()
+  const appointment = appointments.find(item => item.id === req.params.id)
+  const returnToPending = suffix => res.redirect(`/admin/surveys?tab=pending${suffix}`)
+
+  if (!appointment || appointment.status !== 'completed') return returnToPending('&error=invalid')
+  if (req.session.userType === 'counselor' && appointment.counselorId !== req.session.counselorId) {
+    return res.status(403).send('Forbidden')
+  }
+  if (getSurveys().some(item => item.appointmentId === appointment.id)) {
+    return returnToPending('&error=already_completed')
+  }
+
+  const client = getClients().find(item => item.id === appointment.clientId)
+  const counselor = getCounselors().find(item => item.id === appointment.counselorId)
+  if (!client || !counselor) return returnToPending('&error=invalid')
+
+  if (!appointment.surveyToken) {
+    appointment.surveyToken = crypto.randomBytes(16).toString('hex')
+    writeJSON(appointmentsFile, appointments)
+  }
+
+  const surveyOptions = resolveSurveyEmailOptions(client)
+  if (surveyOptions.skip || !surveyOptions.client.email) return returnToPending('&error=email_disabled')
+
+  try {
+    const baseUrl = process.env.BASE_URL || 'http://localhost:3000'
+    await sendSurveyEmail({
+      appointment,
+      client: surveyOptions.client,
+      counselor,
+      surveyUrl: `${baseUrl}/survey/${appointment.surveyToken}`,
+      deliveryConfig: surveyOptions.deliveryConfig,
+    })
+    recordSurveyEmailSent(appointment.id, dataDir)
+    return returnToPending('&sent=1')
+  } catch (error) {
+    console.error('[Email] survey resend error:', error.message)
+    return returnToPending('&error=email')
+  }
 })
 
 module.exports = router

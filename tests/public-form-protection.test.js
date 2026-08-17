@@ -73,6 +73,7 @@ test('contact validation requires consent and validates identity and contact fie
   const allowedTypes = new Set(['online'])
   const facultyOptions = [{ index: '0', th: 'คณะตัวอย่าง', en: 'Example Faculty' }]
   assert.deepEqual(validateContact(valid, allowedTypes, facultyOptions, []), {
+    audience: 'student',
     name: 'Test User',
     studentId: '1680123456',
     facultyIndex: '0',

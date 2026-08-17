@@ -50,24 +50,14 @@
     </div>
 
     <!-- Stat Cards -->
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-      <a href="/admin/appointments" class="stat-card" style="text-decoration:none; cursor:pointer;" aria-label="View all appointments">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+      <a href="/admin/appointments?status=all" class="stat-card" style="text-decoration:none; cursor:pointer;" aria-label="View all appointments">
         <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style="background:#e0e7ff;">
           <i data-lucide="calendar-days" class="w-5 h-5" style="color:#6366f1;"></i>
         </div>
         <div>
           <p class="text-2xl font-bold text-slate-800"><%= myStats.total %></p>
           <p class="text-xs text-slate-500">นัดหมายทั้งหมด</p>
-        </div>
-      </a>
-      <a href="/admin/appointments?status=pending" class="stat-card" style="text-decoration:none; cursor:pointer;" aria-label="View pending appointments">
-        <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style="background:#fef3c7;">
-          <i data-lucide="clock" class="w-5 h-5" style="color:#f59e0b;"></i>
-        </div>
-        <div>
-          <p class="text-2xl font-bold text-slate-800"><%= myStats.pending %></p>
-          <p class="text-xs text-slate-500">รอยืนยัน</p>
-          <% if (myStats.pending > 0) { %><p class="text-xs font-medium mt-0.5" style="color:#f59e0b;">ต้องดำเนินการ</p><% } %>
         </div>
       </a>
       <a href="/admin/appointments?status=confirmed" class="stat-card" style="text-decoration:none; cursor:pointer;" aria-label="View confirmed appointments">
@@ -259,14 +249,7 @@
             เมนูด่วน
           </h2>
           <div class="space-y-2">
-            <a href="/admin/appointments?status=pending" class="flex items-center gap-3 p-3 rounded-xl hover:bg-amber-100 transition-colors" style="background:#fffbeb;text-decoration:none;">
-              <i data-lucide="clock" class="w-4 h-4" style="color:#f59e0b;flex-shrink:0;"></i>
-              <div>
-                <p class="text-sm font-medium" style="color:#92400e;">นัดรอยืนยัน</p>
-                <p class="text-xs" style="color:#b45309;"><%= myStats.pending %> รายการ</p>
-              </div>
-            </a>
-            <a href="/admin/appointments" class="flex items-center gap-3 p-3 rounded-xl hover:bg-brand-100 transition-colors" style="background:#ecfdf9;text-decoration:none;">
+            <a href="/admin/appointments?status=all" class="flex items-center gap-3 p-3 rounded-xl hover:bg-brand-100 transition-colors" style="background:#ecfdf9;text-decoration:none;">
               <i data-lucide="calendar-check" class="w-4 h-4 text-brand-600" style="flex-shrink:0;"></i>
               <div>
                 <p class="text-sm font-medium text-brand-800">นัดหมายทั้งหมด</p>

@@ -7,6 +7,7 @@ router.use(verifyToken)
 const path = require('path')
 const { readJSON, writeJSON } = require('../../utils/json-store')
 const { buildFacultyOptions } = require('../../utils/faculty-options')
+const { getAllAudienceFields, readAudienceFields } = require('../../utils/registration-audience-fields')
 
 const dataFile = path.join(__dirname, '../../../data/content.json')
 
@@ -79,8 +80,17 @@ router.get('/', (req, res) => {
     title: 'จัดการฟอร์มลงทะเบียนเพื่อขอรับบริการให้คำปรึกษา',
     content,
     facultyOptions: buildFacultyOptions(content),
+    audienceFields: getAllAudienceFields(content),
     query: req.query,
   })
+})
+
+router.post('/fields', (req, res) => {
+  const data = readData()
+  if (!data.book) data.book = {}
+  data.book.audienceFields = readAudienceFields(req.body)
+  writeData(data)
+  res.redirect('/admin/registration-form?saved=fields')
 })
 
 router.post('/', (req, res) => {

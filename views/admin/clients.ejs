@@ -212,9 +212,11 @@
                   <button class="act-btn ab-secondary edit-btn" data-rec="<%= JSON.stringify(c) %>" title="แก้ไข">
                     <i data-lucide="pencil" style="width:13px;height:13px;"></i> แก้ไข
                   </button>
-                  <button type="button" class="act-btn ab-danger delete-btn" data-action="/admin/clients/<%= c.id %>/delete" data-name="<%= c.name %>" data-warning="ข้อมูลผู้รับบริการและประวัติที่เกี่ยวข้องจะถูกลบถาวร ไม่สามารถกู้คืนได้" title="ลบ">
-                    <i data-lucide="trash-2" style="width:12px;height:12px;"></i>
-                  </button>
+                  <% if (!isCounselorView) { %>
+                    <button type="button" class="act-btn ab-danger delete-btn" data-action="/admin/clients/<%= c.id %>/delete" data-name="<%= c.name %>" data-warning="ข้อมูลผู้รับบริการและประวัติที่เกี่ยวข้องจะถูกลบถาวร ไม่สามารถกู้คืนได้" title="ลบ">
+                      <i data-lucide="trash-2" style="width:12px;height:12px;"></i>
+                    </button>
+                  <% } %>
                   <% if (!isCounselorView && pendingTransferSet.has(c.id)) { %>
                   <button class="act-btn ab-amber transfer-client-btn" data-rec="<%= JSON.stringify(c) %>" title="โอนย้ายผู้รับบริการ">
                     <i data-lucide="repeat" style="width:13px;height:13px;"></i> โอนย้ายผู้รับบริการ
@@ -567,6 +569,12 @@
     return `<span style="display:inline-block;padding:2px 8px;background:${cc.bg};color:${cc.color};border-radius:99px;font-size:12px;font-weight:500;">${concern}</span>`
   }
 
+  function escapeClientHistoryText(value) {
+    return String(value ?? '').replace(/[&<>"']/g, char => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+    })[char])
+  }
+
   // ── Delete confirm modal ─────────────────────────────────────────────────────
   function openDeleteModal(action, name, warning) {
     document.getElementById('deleteForm').action        = action
@@ -678,6 +686,8 @@
               <div><strong>ระยะเวลา:</strong> ${a.duration || 60} นาที</div>
               ${a.concern ? `<div><strong>เรื่องที่ต้องการความช่วยเหลือ:</strong> ${concernBadge(a.concern)}</div>` : ''}
               ${a.note ? `<div><strong>หมายเหตุ:</strong> ${a.note}</div>` : ''}
+              ${a.counselorNote ? `<div style="margin-top:8px;padding:10px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;"><strong>บันทึกการให้คำปรึกษา:</strong><div style="margin-top:4px;white-space:pre-wrap;overflow-wrap:anywhere;">${escapeClientHistoryText(a.counselorNote)}</div></div>` : ''}
+              ${a.counselorAttachment?.originalName ? `<div style="margin-top:8px;"><strong>ไฟล์เอกสาร:</strong> <a href="/admin/appointments/${encodeURIComponent(a.id)}/consultation-attachment" onclick="event.stopPropagation()" style="color:#1d4ed8;font-weight:600;text-decoration:none;">${escapeClientHistoryText(a.counselorAttachment.originalName)}</a></div>` : ''}
             </div>
           </div>`
       }).join('')

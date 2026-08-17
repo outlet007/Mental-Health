@@ -82,15 +82,33 @@
             const statusBadge={pending:'badge-yellow',confirmed:'badge-blue',completed:'badge-green',cancelled:'badge-red'}
             const statusLabel={pending:'รอยืนยัน',confirmed:'ยืนยันแล้ว',completed:'เสร็จสิ้น',cancelled:'ยกเลิก'}
           %>
-          <div class="flex items-center gap-4 p-4 rounded-xl border border-slate-100 hover:border-brand-200 hover:bg-brand-50/30 transition-colors">
-            <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 <%= a.type==='online'?'bg-ocean-100':'bg-brand-100' %>">
-              <i data-lucide="<%= a.type==='online'?'video':'map-pin' %>" class="w-5 h-5 <%= a.type==='online'?'text-ocean-600':'text-brand-600' %>"></i>
+          <div class="p-4 rounded-xl border border-slate-100 hover:border-brand-200 hover:bg-brand-50/30 transition-colors">
+            <div class="flex items-center gap-4">
+              <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 <%= a.type==='online'?'bg-ocean-100':'bg-brand-100' %>">
+                <i data-lucide="<%= a.type==='online'?'video':'map-pin' %>" class="w-5 h-5 <%= a.type==='online'?'text-ocean-600':'text-brand-600' %>"></i>
+              </div>
+              <div class="flex-1 min-w-0">
+                <p class="font-medium text-slate-800 text-sm"><%= a.counselorName %></p>
+                <p class="text-xs text-slate-400"><%= a.date %> เวลา <%= a.time %> · <%= a.duration %> นาที</p>
+              </div>
+              <span class="<%= statusBadge[a.status] %>"><%= statusLabel[a.status] %></span>
             </div>
-            <div class="flex-1 min-w-0">
-              <p class="font-medium text-slate-800 text-sm"><%= a.counselorName %></p>
-              <p class="text-xs text-slate-400"><%= a.date %> เวลา <%= a.time %> · <%= a.duration %> นาที</p>
+            <% if (a.counselorNote || a.counselorAttachment?.originalName) { %>
+            <div class="mt-3 pt-3 border-t border-slate-100 space-y-2 text-sm text-slate-600">
+              <% if (a.counselorNote) { %>
+              <div class="p-3 rounded-lg bg-green-50 border border-green-100">
+                <p class="font-semibold text-green-800 mb-1">บันทึกการให้คำปรึกษา</p>
+                <p class="whitespace-pre-wrap break-words"><%= a.counselorNote %></p>
+              </div>
+              <% } %>
+              <% if (a.counselorAttachment?.originalName) { %>
+              <a href="/admin/appointments/<%= encodeURIComponent(a.id) %>/consultation-attachment" class="inline-flex items-center gap-2 text-blue-700 font-semibold hover:underline">
+                <i data-lucide="paperclip" class="w-4 h-4"></i>
+                <%= a.counselorAttachment.originalName %>
+              </a>
+              <% } %>
             </div>
-            <span class="<%= statusBadge[a.status] %>"><%= statusLabel[a.status] %></span>
+            <% } %>
           </div>
           <% }) %>
         </div>

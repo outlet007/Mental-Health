@@ -2,7 +2,7 @@ const assert = require('node:assert/strict')
 const http = require('node:http')
 const test = require('node:test')
 const express = require('express')
-const { ensureToken, verifyToken } = require('../src/middleware/csrf')
+const { ensureToken, verifyToken, verifyParsedToken } = require('../src/middleware/csrf')
 
 // ── Unit tests: exercise the middleware functions directly with mock
 // req/res/next so the pass/fail logic is verified in isolation, independent
@@ -44,6 +44,27 @@ test('verifyToken passes through multipart POSTs (deferred to the per-route chec
   let nextCalled = 0
   verifyToken(req, {}, () => { nextCalled++ })
   assert.equal(nextCalled, 1)
+})
+
+test('verifyParsedToken validates a multipart POST after multer has populated req.body', () => {
+  const req = {
+    method: 'POST',
+    session: { csrfToken: 'expected' },
+    body: { _csrf: 'wrong' },
+  }
+  let statusCode = 200
+  let sent = ''
+  const res = {
+    status(code) { statusCode = code; return this },
+    send(value) { sent = value; return this },
+  }
+  let called = false
+
+  verifyParsedToken(req, res, () => { called = true })
+
+  assert.equal(called, false)
+  assert.equal(statusCode, 403)
+  assert.match(sent, /invalid or missing security token/)
 })
 
 test('verifyToken rejects a POST with a missing _csrf field', () => {

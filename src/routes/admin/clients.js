@@ -209,6 +209,7 @@ router.post('/:id/edit', (req, res) => {
 
 // ── DELETE ────────────────────────────────────────────────────────────────────
 router.post('/:id/delete', (req, res) => {
+  if (isCounselor(req)) return forbidden(res)
   if (!canUseClient(req, req.params.id)) return forbidden(res)
   const clients = readClients()
   const client  = clients.find(c => c.id === req.params.id)

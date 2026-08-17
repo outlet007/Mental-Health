@@ -63,7 +63,7 @@ router.get('/', (req, res) => {
   if (req.session.userType === 'counselor') {
     const cId      = req.session.counselorId
     const me       = counselors.find(c => c.id === cId) || {}
-    const myApts   = appointments.filter(a => a.counselorId === cId)
+    const myApts   = appointments.filter(a => a.counselorId === cId && a.status !== 'pending')
     const myScheds = schedules.filter(s => s.counselorId === cId)
 
     const weekMyApts = myApts.filter(a =>
@@ -82,7 +82,7 @@ router.get('/', (req, res) => {
     })))
 
     const total     = myApts.length
-    const pending   = myApts.filter(a => a.status === 'pending').length
+    const pending   = 0
     const confirmed = myApts.filter(a => a.status === 'confirmed').length
     const completed = myApts.filter(a => a.status === 'completed').length
     const todayApts = myApts.filter(a => a.date === todayStr && a.status !== 'cancelled').length

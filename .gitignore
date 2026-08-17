@@ -17,6 +17,7 @@ data/contacts.json
 data/counselors.json
 data/surveys.json
 data/email-view-tokens.json
+data/consultation-attachments/
 
 # Local backup snapshots (src/utils/backup.js) — same real PII/health data as
 # the files above, just copies of it. Never commit.

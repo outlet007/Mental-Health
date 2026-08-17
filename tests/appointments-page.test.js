@@ -94,6 +94,22 @@ test('appointments table separates status action buttons into the final column',
   assert.match(row, new RegExp(PENDING_TABLE_LABEL))
 })
 
+test('counselor view does not show the confirm button for pending appointments', async () => {
+  const html = await renderAppointments({
+    userType: 'counselor',
+    session: { adminName: 'Counselor', adminEmail: 'counselor@example.com', userType: 'counselor' },
+  })
+
+  const row = html.match(/<tr>[\s\S]*?app-test-pending[\s\S]*?<\/tr>/)?.[0] || ''
+  const cells = [...row.matchAll(/<td[\s\S]*?<\/td>/g)].map(match => match[0])
+  assert.equal(cells.length, 9)
+
+  const statusManagementCell = cells[8]
+  assert.match(statusManagementCell, /openViewPanel/)
+  assert.doesNotMatch(statusManagementCell, /\/admin\/appointments\/app-test-pending\/confirm/)
+  assert.doesNotMatch(statusManagementCell, new RegExp(CONFIRM_BUTTON_LABEL))
+})
+
 
 test('appointment create and edit panels support phone type and online meeting link field', async () => {
   const html = await renderAppointments()
@@ -107,6 +123,42 @@ test('appointment create and edit panels support phone type and online meeting l
   assert.match(html, /function toggleMeetingLinkField/)
   assert.match(html, /id="e_phone"/)
   assert.match(html, /id="e_meetingLink"/)
+})
+
+test('consultation note panels support secure document attachments', async () => {
+  const html = await renderAppointments()
+
+  assert.match(html, /id="completeForm"[^>]+enctype="multipart\/form-data"/)
+  assert.match(html, /name="counselorAttachment" id="counselorAttachmentInput"/)
+  assert.match(html, /for="counselorAttachmentInput"[^>]*>[\s\S]*?เพิ่มไฟล์เอกสาร/)
+  assert.match(html, /id="counselorAttachmentFileName"/)
+  assert.match(html, /id="editNoteForm"[^>]+enctype="multipart\/form-data"/)
+  assert.match(html, /name="counselorAttachment" id="editCounselorAttachmentInput"/)
+  assert.match(html, /for="editCounselorAttachmentInput"[^>]*>[\s\S]*?เพิ่มไฟล์เอกสาร/)
+  assert.match(html, /function updateAttachmentFileName/)
+  assert.match(html, /name="removeCounselorAttachment"/)
+  assert.match(html, /consultation-attachment/)
+  assert.match(html, /PDF, DOC และ DOCX ขนาดไม่เกิน 10 MB/)
+})
+
+test('client history shows consultation notes and attachments from the shared care team', async () => {
+  const html = await renderAppointments({
+    userType: 'counselor',
+    session: { adminName: 'Counselor', adminEmail: 'counselor@example.com', userType: 'counselor' },
+    clientAppointments: [{
+      id: 'other-counselor-appointment', clientId: 'client-1', counselorId: 'coun-2',
+      counselorName: 'Counselor Two', date: '2026-06-20', time: '10:00', duration: 60,
+      status: 'completed', counselorNote: 'Shared treatment note',
+      counselorAttachment: { originalName: 'shared-treatment.pdf' },
+    }],
+  })
+
+  assert.match(html, /function escapeClientHistoryText\(value\)/)
+  assert.match(html, /escapeClientHistoryText\(a\.counselorNote\)/)
+  assert.match(html, /a\.counselorAttachment\?\.originalName/)
+  assert.match(html, /\/admin\/appointments\/\$\{encodeURIComponent\(a\.id\)\}\/consultation-attachment/)
+  assert.match(html, /Shared treatment note/)
+  assert.match(html, /shared-treatment\.pdf/)
 })
 
 test('appointment panels hide disabled session types from backend settings', async () => {

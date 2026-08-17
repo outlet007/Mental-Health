@@ -86,7 +86,8 @@
          if (q.counselorId) parts.push('&counselorId=' + encodeURIComponent(q.counselorId))
          return parts.join('')
     } %>
-    <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:20px;">
+    <div style="display:grid;grid-template-columns:repeat(<%= isCounselorView ? 3 : 4 %>,minmax(0,1fr));gap:14px;margin-bottom:20px;">
+      <% if (!isCounselorView) { %>
       <a href="/admin/appointments?status=pending<%= statusFilterQS(query) %>" style="text-decoration:none;background:#fff;border:1.5px solid <%= query.status==='pending' ? '#f59e0b' : '#e2e8f0' %>;border-radius:14px;padding:18px;display:flex;align-items:center;justify-content:space-between;gap:10px;cursor:pointer;">
         <div>
           <p style="font-size:12px;color:#64748b;margin:0;">รอยืนยัน</p>
@@ -96,6 +97,7 @@
           <i data-lucide="clock" style="width:20px;height:20px;color:#92400e;"></i>
         </div>
       </a>
+      <% } %>
       <a href="/admin/appointments?status=confirmed<%= statusFilterQS(query) %>" style="text-decoration:none;background:#fff;border:1.5px solid <%= query.status==='confirmed' ? '#1e40af' : '#e2e8f0' %>;border-radius:14px;padding:18px;display:flex;align-items:center;justify-content:space-between;gap:10px;cursor:pointer;">
         <div>
           <p style="font-size:12px;color:#64748b;margin:0;">ยืนยันแล้ว</p>
@@ -134,6 +136,10 @@
     <div style="margin-bottom:16px; padding:12px 16px; background:#fef2f2; border:1px solid #fca5a5; border-radius:12px; color:#991b1b; font-size:13px; display:flex; align-items:center; gap:8px;">
       <i data-lucide="alert-circle" style="width:16px;height:16px;flex-shrink:0;"></i> ช่วงเวลานี้ถูกจองแล้ว กรุณาเลือกเวลาอื่น
     </div>
+    <% } if (query.error==='attachment') { %>
+    <div style="margin-bottom:16px; padding:12px 16px; background:#fef2f2; border:1px solid #fca5a5; border-radius:12px; color:#991b1b; font-size:13px; display:flex; align-items:center; gap:8px;">
+      <i data-lucide="file-warning" style="width:16px;height:16px;flex-shrink:0;"></i> แนบเอกสารไม่สำเร็จ กรุณาใช้ไฟล์ PDF, DOC หรือ DOCX ขนาดไม่เกิน 10 MB
+    </div>
     <% } if (query.updated) { %>
     <div style="margin-bottom:16px; padding:12px 16px; background:#ecfeff; border:1px solid #a5f3fc; border-radius:12px; color:#155e75; font-size:13px; display:flex; align-items:center; gap:8px;">
       <i data-lucide="check-circle" style="width:16px;height:16px;flex-shrink:0;"></i> อัปเดตนัดหมายสำเร็จ
@@ -163,8 +169,8 @@
       <div>
         <label class="lbl">สถานะ</label>
         <select name="status" class="inp" style="width:140px;">
-          <option value="">ทั้งหมด</option>
-          <option value="pending"   <%=query.status==='pending'?'selected':''%>>รอยืนยัน</option>
+          <option value="all" <%=query.status==='all'?'selected':''%>>ทั้งหมด</option>
+          <% if (!isCounselorView) { %><option value="pending" <%=query.status==='pending'?'selected':''%>>รอยืนยัน</option><% } %>
           <option value="confirmed" <%=query.status==='confirmed'?'selected':''%>>ยืนยันแล้ว</option>
           <option value="completed" <%=query.status==='completed'?'selected':''%>>เสร็จสิ้น</option>
           <option value="cancelled" <%=query.status==='cancelled'?'selected':''%>>ยกเลิก</option>
@@ -280,7 +286,7 @@
 
                   <%/* แก้ไขหมายเหตุ — เฉพาะ completed + counselor */%>
                   <% if (a.status === 'completed' && userType === 'counselor') { %>
-                  <button data-id="<%= a.id %>" data-note="<%= a.counselorNote || '' %>" onclick="openEditNotePanel(this.dataset.id, this.dataset.note)" class="act-btn ab-warn" title="แก้ไขหมายเหตุการให้คำปรึกษา">
+                  <button data-id="<%= a.id %>" data-note="<%= a.counselorNote || '' %>" data-attachment-name="<%= a.counselorAttachment?.originalName || '' %>" onclick="openEditNotePanel(this.dataset.id, this.dataset.note, this.dataset.attachmentName)" class="act-btn ab-warn" title="แก้ไขหมายเหตุการให้คำปรึกษา">
                     <i data-lucide="file-pen" style="width:12px;height:12px;"></i> แก้ไขหมายเหตุ
                   </button>
                   <% } %>
@@ -308,8 +314,8 @@
                     <i data-lucide="eye" style="width:13px;height:13px;"></i> ดูข้อมูลนัด
                   </button>
 
-                  <%/* ยืนยัน — pending ทุก role */%>
-                  <% if (a.status === 'pending') { %>
+                  <%/* ยืนยัน — pending เฉพาะ admin; นัดที่ admin สร้างถูกยืนยันและส่งอีเมลแล้ว */%>
+                  <% if (a.status === 'pending' && userType !== 'counselor') { %>
                   <form method="POST" action="/admin/appointments/<%= a.id %>/confirm" style="margin:0;"><input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
                     <button type="submit" class="act-btn ab-primary">
                       <i data-lucide="check" style="width:12px;height:12px;"></i> ยืนยันนัด
@@ -645,6 +651,13 @@
         <div style="font-size:12px; color:#166534; margin-bottom:4px; font-weight:500; text-transform:uppercase; letter-spacing:.05em;">หมายเหตุการให้คำปรึกษา</div>
         <div id="v_counselorNote" style="font-size:13px; color:#1e293b; line-height:1.6;"></div>
       </div>
+      <div id="v_counselorAttachmentWrap" style="display:none; padding:14px; background:#eff6ff; border:1px solid #bfdbfe; border-radius:12px;">
+        <div style="font-size:12px; color:#1e40af; margin-bottom:7px; font-weight:500; text-transform:uppercase; letter-spacing:.05em;">เอกสารแนบการให้คำปรึกษา</div>
+        <a id="v_counselorAttachment" href="#" style="display:inline-flex;align-items:center;gap:7px;color:#1d4ed8;font-size:13px;font-weight:600;text-decoration:none;">
+          <i data-lucide="paperclip" style="width:15px;height:15px;"></i>
+          <span id="v_counselorAttachmentName"></span>
+        </a>
+      </div>
     </div>
   </div>
   <div style="padding:16px 20px; border-top:1px solid #f1f5f9;">
@@ -904,7 +917,7 @@
     </button>
   </div>
   <div style="flex:1; overflow-y:auto; padding:24px;">
-    <form id="completeForm" method="POST" action=""><input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+    <form id="completeForm" method="POST" action="" enctype="multipart/form-data"><input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
       <div style="display:grid; gap:16px;">
         <div style="padding:14px; background:#ecfdf9; border:1px solid #a0f3e1; border-radius:12px; font-size:13px; color:#065f46; display:flex; align-items:center; gap:8px;">
           <i data-lucide="info" style="width:16px;height:16px;flex-shrink:0;"></i>
@@ -914,6 +927,17 @@
           <label class="lbl">หมายเหตุการให้คำปรึกษา <span style="color:#ef4444;">*</span></label>
           <textarea name="counselorNote" id="counselorNoteInput" rows="5" class="inp" style="resize:vertical; min-height:120px;"
                     placeholder="สรุปผลการให้คำปรึกษา ประเด็นที่พูดคุย แนวทางการรักษาต่อไป ฯลฯ" required></textarea>
+        </div>
+        <div>
+          <label class="lbl">เอกสารแนบ <span style="font-weight:400;color:#94a3b8;">(ถ้ามี)</span></label>
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+            <input type="file" name="counselorAttachment" id="counselorAttachmentInput" accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" style="display:none;" onchange="updateAttachmentFileName(this, 'counselorAttachmentFileName')">
+            <label for="counselorAttachmentInput" class="act-btn ab-secondary" style="cursor:pointer;padding:9px 14px;">
+              <i data-lucide="paperclip" style="width:14px;height:14px;"></i> เพิ่มไฟล์เอกสาร
+            </label>
+            <span id="counselorAttachmentFileName" style="font-size:12px;color:#64748b;overflow-wrap:anywhere;">ยังไม่ได้เลือกไฟล์</span>
+          </div>
+          <div style="font-size:12px;color:#94a3b8;margin-top:5px;">รองรับ PDF, DOC และ DOCX ขนาดไม่เกิน 10 MB</div>
         </div>
       </div>
     </form>
@@ -944,11 +968,34 @@
     </button>
   </div>
   <div style="flex:1; overflow-y:auto; padding:24px;">
-    <form id="editNoteForm" method="POST" action=""><input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
-      <div>
-        <label class="lbl">หมายเหตุการให้คำปรึกษา</label>
-        <textarea name="counselorNote" id="editNoteInput" rows="6" class="inp" style="resize:vertical; min-height:140px;"
-                  placeholder="สรุปผลการให้คำปรึกษา ประเด็นที่พูดคุย แนวทางการรักษาต่อไป ฯลฯ"></textarea>
+    <form id="editNoteForm" method="POST" action="" enctype="multipart/form-data"><input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+      <div style="display:grid;gap:16px;">
+        <div>
+          <label class="lbl">หมายเหตุการให้คำปรึกษา</label>
+          <textarea name="counselorNote" id="editNoteInput" rows="6" class="inp" style="resize:vertical; min-height:140px;"
+                    placeholder="สรุปผลการให้คำปรึกษา ประเด็นที่พูดคุย แนวทางการรักษาต่อไป ฯลฯ"></textarea>
+        </div>
+        <div>
+          <label class="lbl">เอกสารแนบใหม่ <span style="font-weight:400;color:#94a3b8;">(ไฟล์ใหม่จะแทนไฟล์เดิม)</span></label>
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+            <input type="file" name="counselorAttachment" id="editCounselorAttachmentInput" accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" style="display:none;" onchange="updateAttachmentFileName(this, 'editCounselorAttachmentFileName')">
+            <label for="editCounselorAttachmentInput" class="act-btn ab-secondary" style="cursor:pointer;padding:9px 14px;">
+              <i data-lucide="paperclip" style="width:14px;height:14px;"></i> เพิ่มไฟล์เอกสาร
+            </label>
+            <span id="editCounselorAttachmentFileName" style="font-size:12px;color:#64748b;overflow-wrap:anywhere;">ยังไม่ได้เลือกไฟล์</span>
+          </div>
+          <div style="font-size:12px;color:#94a3b8;margin-top:5px;">รองรับ PDF, DOC และ DOCX ขนาดไม่เกิน 10 MB</div>
+        </div>
+        <div id="existingCounselorAttachmentWrap" style="display:none;padding:12px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;">
+          <a id="existingCounselorAttachmentLink" href="#" style="display:flex;align-items:center;gap:7px;color:#1d4ed8;font-size:13px;font-weight:600;text-decoration:none;margin-bottom:9px;">
+            <i data-lucide="paperclip" style="width:15px;height:15px;"></i>
+            <span id="existingCounselorAttachmentName"></span>
+          </a>
+          <label style="display:flex;align-items:center;gap:7px;font-size:12px;color:#64748b;cursor:pointer;">
+            <input type="checkbox" name="removeCounselorAttachment" id="removeCounselorAttachment" value="1">
+            ลบเอกสารแนบเดิม
+          </label>
+        </div>
       </div>
     </form>
   </div>
@@ -1022,6 +1069,12 @@
 
 <script>
   // ── Client detail modal (แบบเดียวกับหน้าข้อมูลผู้รับบริการ) ──────────────────
+  function escapeClientHistoryText(value) {
+    return String(value ?? '').replace(/[&<>"']/g, char => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+    })[char])
+  }
+
   function openClientDetail(clientId) {
     const client = CLIENTS.find(c => c.id === clientId)
     if (!client) return
@@ -1083,6 +1136,8 @@
               <div><strong>ระยะเวลา:</strong> ${a.duration || 60} นาที</div>
               ${a.concern ? `<div><strong>เรื่องที่ต้องการความช่วยเหลือ:</strong> ${concernBadge(a.concern)}</div>` : ''}
               ${a.note ? `<div><strong>หมายเหตุ:</strong> ${a.note}</div>` : ''}
+              ${a.counselorNote ? `<div style="margin-top:8px;padding:10px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;"><strong>บันทึกการให้คำปรึกษา:</strong><div style="margin-top:4px;white-space:pre-wrap;overflow-wrap:anywhere;">${escapeClientHistoryText(a.counselorNote)}</div></div>` : ''}
+              ${a.counselorAttachment?.originalName ? `<div style="margin-top:8px;"><strong>ไฟล์เอกสาร:</strong> <a href="/admin/appointments/${encodeURIComponent(a.id)}/consultation-attachment" onclick="event.stopPropagation()" style="color:#1d4ed8;font-weight:600;text-decoration:none;">${escapeClientHistoryText(a.counselorAttachment.originalName)}</a></div>` : ''}
             </div>
           </div>`
       }).join('')
@@ -1320,6 +1375,14 @@
     } else {
       cnWrap.style.display = 'none'
     }
+    const attachmentWrap = document.getElementById('v_counselorAttachmentWrap')
+    if (a.counselorAttachment?.originalName) {
+      document.getElementById('v_counselorAttachmentName').textContent = a.counselorAttachment.originalName
+      document.getElementById('v_counselorAttachment').href = `/admin/appointments/${encodeURIComponent(a.id)}/consultation-attachment`
+      attachmentWrap.style.display = 'block'
+    } else {
+      attachmentWrap.style.display = 'none'
+    }
     const ov = document.getElementById('viewOverlay')
     ov.style.display = 'block'
     requestAnimationFrame(() => { ov.classList.add('open') })
@@ -1485,9 +1548,25 @@
   }
 
   // ── Edit Note Panel ───────────────────────────────────────────────
-  function openEditNotePanel(id, note) {
+  function updateAttachmentFileName(input, targetId) {
+    const target = document.getElementById(targetId)
+    if (target) target.textContent = input.files?.[0]?.name || 'ยังไม่ได้เลือกไฟล์'
+  }
+
+  function openEditNotePanel(id, note, attachmentName) {
     document.getElementById('editNoteForm').action = '/admin/appointments/' + id + '/edit-note'
     document.getElementById('editNoteInput').value = note || ''
+    document.getElementById('editCounselorAttachmentInput').value = ''
+    document.getElementById('editCounselorAttachmentFileName').textContent = 'ยังไม่ได้เลือกไฟล์'
+    document.getElementById('removeCounselorAttachment').checked = false
+    const attachmentWrap = document.getElementById('existingCounselorAttachmentWrap')
+    if (attachmentName) {
+      document.getElementById('existingCounselorAttachmentName').textContent = attachmentName
+      document.getElementById('existingCounselorAttachmentLink').href = `/admin/appointments/${encodeURIComponent(id)}/consultation-attachment`
+      attachmentWrap.style.display = 'block'
+    } else {
+      attachmentWrap.style.display = 'none'
+    }
     const ov = document.getElementById('editNoteOverlay')
     ov.style.display = 'block'
     requestAnimationFrame(() => { ov.classList.add('open') })
@@ -1511,6 +1590,8 @@
   function openCompletePanel(id) {
     document.getElementById('completeForm').action = '/admin/appointments/' + id + '/complete'
     document.getElementById('counselorNoteInput').value = ''
+    document.getElementById('counselorAttachmentInput').value = ''
+    document.getElementById('counselorAttachmentFileName').textContent = 'ยังไม่ได้เลือกไฟล์'
     const ov = document.getElementById('completeOverlay')
     ov.style.display = 'block'
     requestAnimationFrame(() => { ov.classList.add('open') })

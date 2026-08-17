@@ -186,11 +186,16 @@ function reminderEmailHtml(data, templateOverride) {
   return standardEmailHtml('reminder', data, { from: '#f59e0b', to: '#fb923c' }, ['calendar', '#f59e0b'], ['video', '#05967e'], templateOverride)
 }
 
-function surveyEmailHtml({ appointment, client, counselor }, templateOverride) {
+function surveyEmailHtml({ appointment, client, counselor, surveyUrl }, templateOverride) {
   const vars = buildVars({ appointment, client, counselor })
   const th = renderTemplateFields('survey', 'th', vars, templateOverride)
   const en = renderTemplateFields('survey', 'en', vars, templateOverride)
-  const ratingIcons = ['smile-plus', 'smile', 'meh', 'frown', 'circle-alert'].map((name, idx) => `<span style="display:inline-block;margin:4px 5px;padding:10px 12px;border:1px solid #fde68a;border-radius:12px;background:#fffbeb;color:#92400e;">${icon(name, '#f59e0b')}${5 - idx}</span>`).join('')
+  const ratingIcons = ['smile-plus', 'smile', 'meh', 'frown', 'circle-alert'].map((name, idx) => {
+    const rating = 5 - idx
+    const separator = String(surveyUrl || '').includes('?') ? '&' : '?'
+    const ratingUrl = `${surveyUrl || '#'}${surveyUrl ? `${separator}rating=${rating}` : ''}`
+    return `<a href="${escapeHtml(ratingUrl)}" target="_blank" rel="noopener noreferrer" aria-label="Rate ${rating} out of 5" style="display:inline-block;margin:4px 5px;padding:10px 12px;border:1px solid #fde68a;border-radius:12px;background:#fffbeb;color:#92400e;text-decoration:none;font-weight:700;">${icon(name, '#f59e0b')}${rating}</a>`
+  }).join('')
   const detailTh = card(`${icon('clipboard')}รายละเอียดการนัดหมาย`, [row('วันที่', formatDate(appointment.date)), row('เวลา', `${appointment.time} น.`), row('นักจิตวิทยา', counselor.name)])
   const detailEn = card(`${icon('clipboard')}Appointment details`, [row('Date', formatDate(appointment.date)), row('Time', appointment.time), row('Counselor', counselor.name)])
   const feedbackBlock = (heading, subtext) => `<div style="border:1px solid #fde68a;border-radius:14px;padding:18px;margin-bottom:18px;background:#fff7ed;text-align:center;"><h3 style="margin:0 0 8px;color:#92400e;">${icon('smile-plus', '#f59e0b')}${heading}</h3><p style="margin:0 0 12px;color:#b45309;">${subtext}</p>${ratingIcons}</div>`

@@ -83,6 +83,14 @@
     <div style="margin-bottom:16px; padding:12px 16px; background:#fef2f2; border:1px solid #fca5a5; border-radius:12px; color:#991b1b; font-size:13px; display:flex; align-items:center; gap:8px;">
       <i data-lucide="alert-circle" style="width:16px;height:16px;flex-shrink:0;"></i> อีเมลนี้มีในระบบแล้ว
     </div>
+    <% } if (query.error==='duplicate_username') { %>
+    <div style="margin-bottom:16px; padding:12px 16px; background:#fef2f2; border:1px solid #fca5a5; border-radius:12px; color:#991b1b; font-size:13px; display:flex; align-items:center; gap:8px;">
+      <i data-lucide="alert-circle" style="width:16px;height:16px;flex-shrink:0;"></i> ชื่อผู้ใช้นี้มีในระบบแล้ว กรุณาใช้ชื่ออื่น
+    </div>
+    <% } if (query.error==='login_credentials') { %>
+    <div style="margin-bottom:16px; padding:12px 16px; background:#fef2f2; border:1px solid #fca5a5; border-radius:12px; color:#991b1b; font-size:13px; display:flex; align-items:center; gap:8px;">
+      <i data-lucide="alert-circle" style="width:16px;height:16px;flex-shrink:0;"></i> กรุณากรอกชื่อผู้ใช้และรหัสผ่านอย่างน้อย 8 ตัวอักษร
+    </div>
     <% } %>
 
     <!-- Filter -->
@@ -289,7 +297,11 @@
           <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
             <div>
               <label class="lbl">ตำแหน่ง / คุณวุฒิ *</label>
-              <input type="text" name="title" id="f_title" class="inp" required placeholder="นักจิตวิทยาคลินิก">
+              <select name="title" id="f_title" class="inp" required>
+                <option value="">เลือกตำแหน่ง / คุณวุฒิ</option>
+                <option value="จิตแพทย์">จิตแพทย์</option>
+                <option value="นักจิตวิทยาคลินิก">นักจิตวิทยาคลินิก</option>
+              </select>
             </div>
             <div>
               <label class="lbl">เบอร์โทรศัพท์</label>
@@ -360,34 +372,25 @@
         <div style="font-size:12px; font-weight:600; color:#94a3b8; text-transform:uppercase; letter-spacing:.05em; margin-bottom:14px;">ข้อมูลการเข้าสู่ระบบ</div>
         <div style="display:grid; gap:12px;">
           <div>
-            <label class="lbl" id="unameLbl">ชื่อผู้ใช้</label>
-            <input type="text" name="username" id="f_username" class="inp" placeholder="เช่น dr.somchai">
+            <label class="lbl" id="unameLbl">ชื่อผู้ใช้ *</label>
+            <input type="text" name="username" id="f_username" class="inp" placeholder="เช่น dr.somchai" autocomplete="username" required>
           </div>
           <div>
-            <label class="lbl" id="pwdLabel">รหัสผ่าน</label>
-            <input type="password" name="password" id="f_password" class="inp" placeholder="กรอกรหัสผ่าน">
+            <label class="lbl" id="pwdLabel">รหัสผ่าน *</label>
+            <input type="password" name="password" id="f_password" class="inp" placeholder="กรอกรหัสผ่าน" autocomplete="new-password" minlength="8" required>
           </div>
         </div>
-        <p style="font-size:12px; color:#94a3b8; margin:10px 0 0;">กรอกเพื่อให้นักจิตวิทยาให้คำปรึกษาเข้าใช้งานระบบหลังบ้านได้</p>
+        <p style="font-size:12px; color:#94a3b8; margin:10px 0 0;">บัญชีจะเปิดใช้งานทันทีหลังบันทึก รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร</p>
       </div>
 
       <div id="approveSection" style="padding:20px;">
-        <div style="font-size:12px; font-weight:600; color:#94a3b8; text-transform:uppercase; letter-spacing:.05em; margin-bottom:14px;">สถานะการอนุมัติ</div>
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-          <label style="display:flex; align-items:flex-start; gap:10px; padding:12px; border:1.5px solid #a0f3e1; border-radius:10px; cursor:pointer; background:#ecfdf9;">
-            <input type="radio" name="isApproved" value="true" checked style="margin-top:2px; accent-color:#05967e;">
-            <div>
-              <div style="font-size:13px; font-weight:500; color:#1e293b;">อนุมัติทันที</div>
-              <div style="font-size:12px; color:#64748b;">แสดงในหน้าค้นหา</div>
-            </div>
-          </label>
-          <label style="display:flex; align-items:flex-start; gap:10px; padding:12px; border:1.5px solid #e2e8f0; border-radius:10px; cursor:pointer;">
-            <input type="radio" name="isApproved" value="false" style="margin-top:2px; accent-color:#f59e0b;">
-            <div>
-              <div style="font-size:13px; font-weight:500; color:#1e293b;">รออนุมัติ</div>
-              <div style="font-size:12px; color:#64748b;">ซ่อนจากหน้าค้นหา</div>
-            </div>
-          </label>
+        <div style="font-size:12px; font-weight:600; color:#94a3b8; text-transform:uppercase; letter-spacing:.05em; margin-bottom:14px;">สถานะบัญชี</div>
+        <div style="display:flex;align-items:flex-start;gap:10px;padding:12px;border:1.5px solid #a0f3e1;border-radius:10px;background:#ecfdf9;">
+          <i data-lucide="circle-check" style="width:18px;height:18px;color:#05967e;flex-shrink:0;margin-top:1px;"></i>
+          <div>
+            <div style="font-size:13px;font-weight:600;color:#065f46;">อนุมัติและเปิดใช้งานทันที</div>
+            <div style="font-size:12px;color:#64748b;margin-top:2px;">นักจิตวิทยาให้คำปรึกษาสามารถ Login เข้าระบบหลังบ้านได้ทันทีหลังสร้างบัญชี</div>
+          </div>
         </div>
       </div>
 
@@ -512,7 +515,8 @@
       document.getElementById('f_username').value     = ''
       document.getElementById('f_password').value     = ''
       document.getElementById('f_password').placeholder = 'กรอกรหัสผ่าน'
-      document.getElementById('pwdLabel').textContent   = 'รหัสผ่าน'
+      document.getElementById('f_password').required    = true
+      document.getElementById('pwdLabel').textContent   = 'รหัสผ่าน *'
       resetPhotoPreview('?', null)
     } else {
       document.getElementById('panelTitle').textContent = 'แก้ไขข้อมูล'
@@ -531,6 +535,7 @@
       document.getElementById('f_username').value        = data.username||''
       document.getElementById('f_password').value        = ''
       document.getElementById('f_password').placeholder  = 'ปล่อยว่างถ้าไม่ต้องการเปลี่ยน'
+      document.getElementById('f_password').required     = false
       document.getElementById('pwdLabel').textContent      = 'รหัสผ่านใหม่'
       resetPhotoPreview(data.avatar, data.photo||null)
     }

@@ -14,6 +14,11 @@ function renderIndex(content) {
   })
 }
 
+function audienceTab(html, audience) {
+  const match = html.match(new RegExp(`<button[^>]*data-audience-tab="${audience}"[\\s\\S]*?<\\/button>`))
+  return match ? match[0] : ''
+}
+
 const baseContent = {
   hero: { badge: 'b', heading1: 'h1', heading2: 'h2', subtext: 's', ctaMain: 'm', ctaSub: 's' },
   counselors: { heading: 'c', subtext: 's' },
@@ -26,14 +31,14 @@ const baseContent = {
 
 test('the registration form shows a นักศึกษา / อาจารย์-บุคลากร tab switcher above the fields', async () => {
   const html = await renderIndex(baseContent)
-  assert.match(html, /data-audience-tab="student"[\s\S]{0,400}นักศึกษา/)
-  assert.match(html, /data-audience-tab="staff"[\s\S]{0,400}อาจารย์\/บุคลากร/)
+  assert.match(audienceTab(html, 'student'), /นักศึกษา/)
+  assert.match(audienceTab(html, 'staff'), /อาจารย์\/บุคลากร/)
 })
 
 test('the student tab uses a graduation-cap icon and the staff tab uses a briefcase icon', async () => {
   const html = await renderIndex(baseContent)
-  assert.match(html, /data-audience-tab="student"[\s\S]{0,400}data-lucide="graduation-cap"/)
-  assert.match(html, /data-audience-tab="staff"[\s\S]{0,400}data-lucide="briefcase"/)
+  assert.match(audienceTab(html, 'student'), /data-lucide="graduation-cap"/)
+  assert.match(audienceTab(html, 'staff'), /data-lucide="briefcase"/)
 })
 
 test('the studentId field keeps the same name attribute regardless of tab, so stored data is unaffected', async () => {

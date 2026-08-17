@@ -7,12 +7,13 @@ const multer  = require('multer')
 const crypto  = require('crypto')
 const bcrypt  = require('bcryptjs')
 const { logDeletion } = require('../../utils/audit-log')
-const { ensureToken, verifyToken } = require('../../middleware/csrf')
+const { ensureToken, verifyToken, verifyParsedToken } = require('../../middleware/csrf')
 const { readJSON, writeJSON } = require('../../utils/json-store')
 router.use(ensureToken)
 router.use(verifyToken)
 
 const dataFile   = path.join(__dirname, '../../../data/counselors.json')
+const adminsFile = path.join(__dirname, '../../../data/admins.json')
 const uploadDir  = path.join(__dirname, '../../../public/uploads/counselors')
 
 const storage = multer.diskStorage({
@@ -88,19 +89,30 @@ router.get('/', (req, res) => {
 })
 
 // ── CREATE ────────────────────────────────────────────────────────────────────
-router.post('/create', upload.single('photo'), verifyToken, async (req, res) => {
-  const { username, password, name, title, email, phone, bio, specialties, languages, sessionDuration, isApproved } = req.body
+router.post('/create', upload.single('photo'), verifyParsedToken, async (req, res) => {
+  const { username, password, name, title, email, phone, bio, specialties, languages, sessionDuration } = req.body
   // Hash before reading the file: bcrypt.hash awaits (yields to the event
   // loop), so a read-then-await-then-write here could interleave with another
   // concurrent request's write and silently lose one of the two updates.
-  const uname = str(username).trim()
+  const uname = str(username).trim().toLowerCase()
   const pass  = str(password).trim()
-  const hashedPassword = (uname && pass) ? await bcrypt.hash(pass, 10) : null
+  if (!uname || pass.length < 8) {
+    if (req.file) fs.unlinkSync(req.file.path)
+    return res.redirect('/admin/counselors?error=login_credentials')
+  }
+  const hashedPassword = await bcrypt.hash(pass, 10)
   const data = readData()
+  const normalizedEmail = str(email).trim().toLowerCase()
 
-  if (data.some(c => c.email === email)) {
+  if (data.some(c => str(c.email).trim().toLowerCase() === normalizedEmail)) {
     if (req.file) fs.unlinkSync(req.file.path)
     return res.redirect('/admin/counselors?error=duplicate_email')
+  }
+  const usernameExists = data.some(c => str(c.username).trim().toLowerCase() === uname) ||
+    readJSON(adminsFile, []).some(a => str(a.username).trim().toLowerCase() === uname)
+  if (usernameExists) {
+    if (req.file) fs.unlinkSync(req.file.path)
+    return res.redirect('/admin/counselors?error=duplicate_username')
   }
 
   const newId = 'c' + Date.now().toString().slice(-6)
@@ -110,7 +122,7 @@ router.post('/create', upload.single('photo'), verifyToken, async (req, res) => 
     id:              newId,
     name:            str(name).trim(),
     title:           str(title).trim(),
-    email:           str(email).trim().toLowerCase(),
+    email:           normalizedEmail,
     phone:           str(phone).trim(),
     bio:             str(bio).trim(),
     specialties:     parseArr(specialties),
@@ -118,17 +130,15 @@ router.post('/create', upload.single('photo'), verifyToken, async (req, res) => 
     sessionDuration: parseInt(str(sessionDuration)) || 60,
     rating:          0,
     reviewCount:     0,
-    status:          str(isApproved) === 'true' ? 'active' : 'pending',
-    isApproved:      str(isApproved) === 'true',
+    status:          'active',
+    isApproved:      true,
     avatar:          initials(name),
     photo:           photo,
     createdAt:       new Date().toISOString().split('T')[0],
   }
 
-  if (uname) {
-    record.username = uname.toLowerCase()
-    if (hashedPassword) record.password = hashedPassword
-  }
+  record.username = uname
+  record.password = hashedPassword
 
   data.push(record)
   writeData(data)
@@ -136,7 +146,7 @@ router.post('/create', upload.single('photo'), verifyToken, async (req, res) => 
 })
 
 // ── EDIT ──────────────────────────────────────────────────────────────────────
-router.post('/:id/edit', upload.single('photo'), verifyToken, async (req, res) => {
+router.post('/:id/edit', upload.single('photo'), verifyParsedToken, async (req, res) => {
   const { username, password, name, title, email, phone, bio, specialties, languages, sessionDuration } = req.body
   // Hash before reading the file — see the /create route above for why.
   const pass = str(password).trim()

@@ -26,6 +26,14 @@ function ensureToken(req, res, next) {
 function verifyToken(req, res, next) {
   if (req.method !== 'POST') return next()
   if (req.is('multipart/form-data')) return next()
+  return verifyParsedToken(req, res, next)
+}
+
+// Use after multer has parsed a multipart request. Unlike verifyToken, this
+// intentionally does not skip multipart content types because req.body is now
+// available and must be checked before a buffered/uploaded file is accepted.
+function verifyParsedToken(req, res, next) {
+  if (req.method !== 'POST') return next()
   if (!req.session) return next()
 
   const token = req.body && req.body._csrf
@@ -35,4 +43,4 @@ function verifyToken(req, res, next) {
   next()
 }
 
-module.exports = { ensureToken, verifyToken }
+module.exports = { ensureToken, verifyToken, verifyParsedToken }

@@ -80,6 +80,12 @@ const enConcernItems = Array.isArray(enBookContent.concernOptions) && enBookCont
 const facultyItems = typeof facultyOptions !== 'undefined' && Array.isArray(facultyOptions) ? facultyOptions : []
 const bookFormTexts = (content.book && content.book.formTexts) || {}
 const enBookFormTexts = enBookContent.formTexts || {}
+const audienceFieldDefaults = { studentId:true, faculty:true, phone:true, email:true, concern:true, sessionType:true }
+const configuredAudienceFields = (content.book && content.book.audienceFields) || {}
+const registrationAudienceFields = {
+  student: { ...audienceFieldDefaults, ...(configuredAudienceFields.student || {}) },
+  staff: { ...audienceFieldDefaults, ...(configuredAudienceFields.staff || {}) },
+}
 function bookText(texts, key, fallback) {
   return texts[key] || fallback
 }
@@ -571,6 +577,7 @@ function _photoMotion(obj, prefix, uid) {
         <% } %>
         <form method="POST" action="/contact" class="space-y-4">
           <input type="hidden" name="form_token" value="<%= typeof publicFormToken !== 'undefined' ? publicFormToken : '' %>">
+          <input type="hidden" name="audience" id="registrationAudience" value="student">
           <div aria-hidden="true" style="position:fixed;left:-10000px;top:auto;width:1px;height:1px;overflow:hidden;">
             <label for="company_website">Company website</label>
             <input type="text" id="company_website" name="company_website" tabindex="-1" autocomplete="off">
@@ -585,17 +592,17 @@ function _photoMotion(obj, prefix, uid) {
               <span data-i18n="form-tab-staff">อาจารย์/บุคลากร</span>
             </button>
           </div>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4" data-registration-row="identity">
             <div>
               <label class="form-label"><span data-i18n="form-label-name"><%= bookText(bookFormTexts, 'nameLabel', 'ชื่อ-นามสกุล') %></span> <span class="text-red-400">*</span></label>
               <input type="text" name="name" class="form-input" placeholder="<%= bookText(bookFormTexts, 'namePlaceholder', 'กรอกชื่อ-นามสกุลของคุณ') %>" data-i18n-ph="form-ph-name" required>
             </div>
-            <div>
+            <div data-registration-field="studentId">
               <label class="form-label"><span data-i18n="form-label-studentid"><%= bookText(bookFormTexts, 'studentIdLabel', 'รหัสนักศึกษา') %></span> <span class="text-red-400">*</span></label>
               <input type="text" name="studentId" class="form-input" placeholder="<%= bookText(bookFormTexts, 'studentIdPlaceholder', 'เช่น 1680123456') %>" data-i18n-ph="form-ph-studentid" required>
             </div>
           </div>
-          <div>
+          <div data-registration-field="faculty">
             <label class="form-label"><span data-i18n="form-label-faculty"><%= bookText(bookFormTexts, 'facultyLabel', 'คณะ') %></span> <span class="text-red-400">*</span></label>
             <select name="facultyIndex" class="form-select" required>
               <option value="" data-i18n-opt="faculty-placeholder"><%= bookText(bookFormTexts, 'facultyPlaceholder', '-- เลือกคณะ --') %></option>
@@ -604,17 +611,17 @@ function _photoMotion(obj, prefix, uid) {
               <% }) %>
             </select>
           </div>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4" data-registration-row="contact">
+            <div data-registration-field="phone">
               <label class="form-label"><span data-i18n="form-label-phone"><%= bookText(bookFormTexts, 'phoneLabel', 'เบอร์โทรศัพท์') %></span> <span class="text-red-400">*</span></label>
               <input type="tel" name="phone" class="form-input" placeholder="<%= bookText(bookFormTexts, 'phonePlaceholder', '08X-XXX-XXXX') %>" data-i18n-ph="form-ph-phone" required>
             </div>
-            <div>
+            <div data-registration-field="email">
               <label class="form-label"><span data-i18n="form-label-email"><%= bookText(bookFormTexts, 'emailLabel', 'อีเมล') %></span> <span class="text-red-400">*</span></label>
               <input type="email" name="email" class="form-input" placeholder="<%= bookText(bookFormTexts, 'emailPlaceholder', 'your@email.com') %>" data-i18n-ph="form-ph-email" required>
             </div>
           </div>
-          <div>
+          <div data-registration-field="concern">
             <label class="form-label" data-i18n="form-label-concern"><%= bookText(bookFormTexts, 'concernLabel', 'คุณต้องการความช่วยเหลือเรื่องอะไร?') %></label>
             <select name="concern" class="form-select">
               <option value="" data-i18n-opt="concern-0">-- เลือกประเภท --</option>
@@ -623,7 +630,7 @@ function _photoMotion(obj, prefix, uid) {
               <% }) %>
             </select>
           </div>
-          <div>
+          <div data-registration-field="sessionType">
             <label class="form-label"><span data-i18n="form-label-type"><%= bookText(bookFormTexts, 'typeLabel', 'รูปแบบที่ต้องการ') %></span> <span class="text-red-400">*</span></label>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
               <% enabledSessionTypes.forEach((item, idx) => { %>
@@ -1011,6 +1018,7 @@ function _photoMotion(obj, prefix, uid) {
     const LANG_KEY = 'mw-lang';
     let currentLang = 'th';
     let currentAudience = 'student';
+    const AUDIENCE_FIELD_VISIBILITY = <%- JSON.stringify(registrationAudienceFields) %>;
     const AUDIENCE_STAFF_TEXT = {
       th: { label: 'รหัสอาจารย์/บุคลากร', placeholder: 'เช่น A68001' },
       en: { label: 'Faculty/Staff ID', placeholder: 'e.g. A68001' },
@@ -1294,6 +1302,30 @@ function _photoMotion(obj, prefix, uid) {
       if (emailInputEl) {
         emailInputEl.placeholder = AUDIENCE_EMAIL_PLACEHOLDER[currentAudience] || AUDIENCE_EMAIL_PLACEHOLDER.student;
       }
+      applyAudienceFields();
+    }
+
+    function applyAudienceFields() {
+      const settings = AUDIENCE_FIELD_VISIBILITY[currentAudience] || AUDIENCE_FIELD_VISIBILITY.student || {};
+      const audienceInput = document.getElementById('registrationAudience');
+      if (audienceInput) audienceInput.value = currentAudience;
+
+      document.querySelectorAll('[data-registration-field]').forEach(wrapper => {
+        const field = wrapper.dataset.registrationField;
+        const visible = settings[field] !== false;
+        wrapper.hidden = !visible;
+        wrapper.querySelectorAll('input, select, textarea').forEach(control => {
+          if (!control.dataset.baseRequired) control.dataset.baseRequired = control.required ? 'true' : 'false';
+          control.disabled = !visible;
+          control.required = visible && control.dataset.baseRequired === 'true';
+        });
+      });
+
+      document.querySelectorAll('[data-registration-row]').forEach(row => {
+        const visibleChildren = Array.from(row.children).filter(child => !child.hidden);
+        Array.from(row.children).forEach(child => { child.style.gridColumn = ''; });
+        if (visibleChildren.length === 1) visibleChildren[0].style.gridColumn = '1 / -1';
+      });
     }
 
     function setAudience(audience) {

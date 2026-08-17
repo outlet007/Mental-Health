@@ -34,21 +34,23 @@ const surveyLimiter = rateLimit({
 
 router.get('/:token', (req, res) => {
   const { token } = req.params
+  const requestedRating = Number.parseInt(req.query.rating, 10)
+  const initialRating = Number.isInteger(requestedRating) && requestedRating >= 1 && requestedRating <= 5 ? requestedRating : 5
   const appointments = read('appointments.json')
   const appt = appointments.find(item => item.surveyToken === token)
   const formLocals = publicFormLocals()
 
-  if (!appt) return res.render('survey', { error: 'not_found', appt: null, counselor: null, ...formLocals })
-  if (appt.status !== 'completed') return res.render('survey', { error: 'not_ready', appt, counselor: null, ...formLocals })
+  if (!appt) return res.render('survey', { error: 'not_found', appt: null, counselor: null, initialRating, ...formLocals })
+  if (appt.status !== 'completed') return res.render('survey', { error: 'not_ready', appt, counselor: null, initialRating, ...formLocals })
 
   const surveys = getSurveys()
   if (surveys.some(item => item.appointmentId === appt.id)) {
-    return res.render('survey', { error: 'already_done', appt, counselor: null, ...formLocals })
+    return res.render('survey', { error: 'already_done', appt, counselor: null, initialRating, ...formLocals })
   }
 
   const counselors = read('counselors.json')
   const counselor = counselors.find(item => item.id === appt.counselorId) || {}
-  res.render('survey', { error: null, appt, counselor, ...formLocals })
+  res.render('survey', { error: null, appt, counselor, initialRating, ...formLocals })
 })
 
 router.post('/:token', surveyLimiter, async (req, res) => {

@@ -73,8 +73,8 @@ test('counselor dashboard top stat cards link to filtered appointment sections',
     myCalendarGrid: Array.from({ length: 10 }, () => Array.from({ length: 7 }, () => ({ schedules: [], appointments: [] }))),
   })
 
-  assert.match(html, /<a href="\/admin\/appointments"[^>]*class="stat-card"[\s\S]*?นัดหมายทั้งหมด[\s\S]*?<\/a>/)
-  assert.match(html, /<a href="\/admin\/appointments\?status=pending"[^>]*class="stat-card"[\s\S]*?รอยืนยัน[\s\S]*?<\/a>/)
+  assert.match(html, /<a href="\/admin\/appointments\?status=all"[^>]*class="stat-card"[\s\S]*?นัดหมายทั้งหมด[\s\S]*?<\/a>/)
+  assert.doesNotMatch(html, /\/admin\/appointments\?status=pending/)
   assert.match(html, /<a href="\/admin\/appointments\?status=confirmed"[^>]*class="stat-card"[\s\S]*?ยืนยันแล้ว[\s\S]*?<\/a>/)
   assert.match(html, /<a href="\/admin\/appointments\?status=completed"[^>]*class="stat-card"[\s\S]*?เสร็จสิ้น[\s\S]*?<\/a>/)
 })

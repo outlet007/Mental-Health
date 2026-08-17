@@ -1,6 +1,7 @@
 const express = require('express')
 const router  = express.Router()
-const { ensureToken, verifyToken } = require('../../middleware/csrf')
+const multer  = require('multer')
+const { ensureToken, verifyToken, verifyParsedToken } = require('../../middleware/csrf')
 router.use(ensureToken)
 router.use(verifyToken)
 const { matchesSearch } = require('../../utils/search')
@@ -9,12 +10,51 @@ const crypto = require('crypto')
 const { sendAppointmentEmails, sendSurveyEmail, sendCounselorReassignedEmail } = require('../../utils/mailer')
 const { resolveAppointmentEmailOptions, resolveReassignedEmailOptions, resolveSurveyEmailOptions } = require('../../utils/survey-email-settings')
 const { toMin, timesOverlap } = require('../../utils/appointment-scheduling')
+const { filterAppointmentsByStatus, resolveAppointmentStatusFilter } = require('../../utils/appointment-status-filter')
+const { recordSurveyEmailSent } = require('../../utils/survey-delivery')
 const { logDeletion } = require('../../utils/audit-log')
 const { getConcernOptions } = require('../../utils/concern-options')
 const { readJSON, writeJSON } = require('../../utils/json-store')
+const {
+  MAX_ATTACHMENT_SIZE,
+  deleteConsultationAttachment,
+  isAllowedDocument,
+  readConsultationAttachment,
+  saveConsultationAttachment,
+} = require('../../utils/consultation-attachments')
 
 const dataDir = path.join(__dirname, '../../../data')
 const DEFAULT_SESSION_TYPES = { online: true, phone: false, onsite: true }
+const consultationUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: MAX_ATTACHMENT_SIZE, files: 1 },
+  fileFilter: (req, file, callback) => {
+    if (isAllowedDocument(file)) return callback(null, true)
+    callback(new Error('รองรับเฉพาะไฟล์ PDF, DOC และ DOCX'))
+  },
+}).single('counselorAttachment')
+
+function parseConsultationAttachment(req, res, next) {
+  consultationUpload(req, res, error => {
+    if (error) return res.redirect('/admin/appointments?error=attachment')
+    next()
+  })
+}
+
+function applyAttachmentUpdate(appointment, file, removeRequested) {
+  const previous = appointment.counselorAttachment || null
+  let replacement = null
+  if (file) replacement = saveConsultationAttachment(file)
+
+  if (replacement) appointment.counselorAttachment = replacement
+  else if (removeRequested) delete appointment.counselorAttachment
+
+  return {
+    previous,
+    replacement,
+    shouldDeletePrevious: Boolean(previous && (replacement || removeRequested)),
+  }
+}
 
 // สีอ้างอิงต่อนักจิตวิทยา — ต้องตรงกับ COLORS ใน src/routes/admin/schedules.js
 const COUNSELOR_COLORS = ['#6366f1','#05967e','#f59e0b','#ef4444','#06b6d4','#8b5cf6','#10b981','#f43f5e']
@@ -53,6 +93,14 @@ function canUseCounselor(req, counselorId) {
 
 function canUseAppointment(req, appointment) {
   return !isCounselor(req) || appointment.counselorId === req.session.counselorId
+}
+
+// Reading treatment records is shared across the client's care team. A
+// counselor joins that care team once at least one appointment links them to
+// the same client. Mutating an appointment still uses canUseAppointment().
+function canViewAppointment(req, appointment) {
+  if (!isCounselor(req)) return true
+  return Boolean(appointment?.clientId) && canUseClient(req, appointment.clientId)
 }
 
 function canUseClient(req, clientId) {
@@ -107,7 +155,8 @@ router.get('/', (req, res) => {
   const counselorColors = {}
   counselors.forEach((c, i) => { counselorColors[c.id] = COUNSELOR_COLORS[i % COUNSELOR_COLORS.length] })
 
-  const { status, type, search, counselorId } = req.query
+  const { type, search, counselorId } = req.query
+  const status = resolveAppointmentStatusFilter(req.query.status, isCounselor(req))
   let filtered = appointments
   let clientAppointments = appointments
 
@@ -130,7 +179,7 @@ router.get('/', (req, res) => {
     cancelled: filtered.filter(a => a.status === 'cancelled').length,
   }
 
-  if (status) filtered = filtered.filter(a => a.status === status)
+  filtered = filterAppointmentsByStatus(filtered, status, isCounselor(req))
   if (type)   filtered = filtered.filter(a => a.type === type)
   if (search) filtered = filtered.filter(a => matchesSearch([
     a.clientName,
@@ -163,7 +212,7 @@ router.get('/', (req, res) => {
     appointmentSessionTypes,
     counselorActiveCounts,
     myStatusCounts,
-    query: req.query,
+    query: { ...req.query, status },
     userType: req.session.userType || 'admin',
   })
 })
@@ -337,6 +386,7 @@ router.post('/:id/delete', (req, res) => {
   if (appt && !canUseAppointment(req, appt)) return forbidden(res)
   write('appointments.json', data.filter(a => a.id !== req.params.id))
   if (appt) {
+    deleteConsultationAttachment(appt.counselorAttachment)
     logDeletion({
       entityType: 'appointment',
       entityId:   appt.id,
@@ -348,14 +398,52 @@ router.post('/:id/delete', (req, res) => {
   res.redirect('/admin/appointments?deleted=1')
 })
 
+// Documents attached to consultation notes contain sensitive health data.
+// They are stored outside public/ and can only be downloaded after the
+// regular admin auth middleware and the client care-team access check pass.
+router.get('/:id/consultation-attachment', (req, res) => {
+  const appointment = read('appointments.json').find(a => a.id === req.params.id)
+  if (!appointment) return res.status(404).send('Document not found')
+  if (!canViewAppointment(req, appointment)) return forbidden(res)
+  if (!appointment.counselorAttachment) return res.status(404).send('Document not found')
+
+  try {
+    const metadata = appointment.counselorAttachment
+    const contents = readConsultationAttachment(metadata)
+    res.set('Cache-Control', 'no-store, private')
+    res.type(metadata.contentType || 'application/octet-stream')
+    res.attachment(metadata.originalName || 'consultation-document')
+    res.send(contents)
+  } catch (error) {
+    console.error('[Consultation attachment] read error:', error.message)
+    res.status(404).send('Document not found')
+  }
+})
+
 // ── EDIT COUNSELOR NOTE ───────────────────────────────────────────────────────
-router.post('/:id/edit-note', (req, res) => {
+router.post('/:id/edit-note', parseConsultationAttachment, verifyParsedToken, (req, res) => {
   const data = read('appointments.json')
   const idx  = data.findIndex(a => a.id === req.params.id)
   if (idx !== -1) {
     if (!canUseAppointment(req, data[idx])) return forbidden(res)
+    let attachmentUpdate
+    try {
+      attachmentUpdate = applyAttachmentUpdate(
+        data[idx],
+        req.file,
+        req.body.removeCounselorAttachment === '1'
+      )
+    } catch (error) {
+      return res.redirect('/admin/appointments?error=attachment')
+    }
     data[idx].counselorNote = (req.body.counselorNote || '').trim()
-    write('appointments.json', data)
+    try {
+      write('appointments.json', data)
+    } catch (error) {
+      if (attachmentUpdate.replacement) deleteConsultationAttachment(attachmentUpdate.replacement)
+      throw error
+    }
+    if (attachmentUpdate.shouldDeletePrevious) deleteConsultationAttachment(attachmentUpdate.previous)
   }
   res.redirect('/admin/appointments?updated=1')
 })
@@ -371,12 +459,18 @@ router.post('/:id/confirm', (req, res) => {
   res.redirect('/admin/appointments')
 })
 
-router.post('/:id/complete', (req, res) => {
+router.post('/:id/complete', parseConsultationAttachment, verifyParsedToken, (req, res) => {
   const data = read('appointments.json')
   const idx  = data.findIndex(a => a.id === req.params.id)
   if (idx !== -1) {
     if (!canUseAppointment(req, data[idx])) return forbidden(res)
     const appt = data[idx]
+    let attachmentUpdate
+    try {
+      attachmentUpdate = applyAttachmentUpdate(appt, req.file, false)
+    } catch (error) {
+      return res.redirect('/admin/appointments?error=attachment')
+    }
     appt.status = 'completed'
     if (req.body.counselorNote !== undefined) {
       appt.counselorNote = req.body.counselorNote.trim()
@@ -384,7 +478,13 @@ router.post('/:id/complete', (req, res) => {
     if (!appt.surveyToken) {
       appt.surveyToken = crypto.randomBytes(16).toString('hex')
     }
-    write('appointments.json', data)
+    try {
+      write('appointments.json', data)
+    } catch (error) {
+      if (attachmentUpdate.replacement) deleteConsultationAttachment(attachmentUpdate.replacement)
+      throw error
+    }
+    if (attachmentUpdate.shouldDeletePrevious) deleteConsultationAttachment(attachmentUpdate.previous)
 
     const clients    = read('clients.json')
     const counselors = read('counselors.json')
@@ -400,6 +500,8 @@ router.post('/:id/complete', (req, res) => {
           counselor,
           surveyUrl: `${baseUrl}/survey/${appt.surveyToken}`,
           deliveryConfig: surveyOptions.deliveryConfig,
+        }).then(() => {
+          recordSurveyEmailSent(appt.id, dataDir)
         }).catch(err => console.error('[Email] survey error:', err.message))
       }
     }
