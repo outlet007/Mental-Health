@@ -66,3 +66,25 @@ test('attachment reads use shared client care-team access while note edits remai
   assert.match(downloadRoute, /if \(!canViewAppointment\(req, appointment\)\) return forbidden\(res\)/)
   assert.match(editNoteRoute, /if \(!canUseAppointment\(req, data\[idx\]\)\) return forbidden\(res\)/)
 })
+test('completed status can only be set through the consultation completion route', () => {
+  const source = fs.readFileSync(path.join(__dirname, '..', 'src', 'routes', 'admin', 'appointments.js'), 'utf8')
+  const editRoute = source.slice(source.indexOf("router.post('/:id/edit'"), source.indexOf("router.post('/:id/delete'"))
+  const completeRoute = source.slice(source.indexOf("router.post('/:id/complete'"))
+
+  assert.match(editRoute, /status && status !== 'completed'/)
+  assert.doesNotMatch(editRoute, /if \(status\) data\[idx\]\.status = status/)
+  assert.match(completeRoute, /appt\.status = 'completed'/)
+})
+test('completion flow stores structured case, risk, disposition, and referral fields', () => {
+  const routeSource = fs.readFileSync(path.join(__dirname, '..', 'src', 'routes', 'admin', 'appointments.js'), 'utf8')
+  const viewSource = fs.readFileSync(path.join(__dirname, '..', 'views', 'admin', 'appointments.ejs'), 'utf8')
+  const completeRoute = routeSource.slice(routeSource.indexOf("router.post('/:id/complete'"))
+
+  ;['symptoms', 'riskLevel', 'riskDetail', 'caseDisposition', 'closedReason', 'referralRequired', 'referralDestination', 'referralReason'].forEach(field => {
+    assert.ok(viewSource.includes(`name="${field}"`))
+  })
+  assert.ok(completeRoute.includes('normalizeRiskLevel(req.body.riskLevel)'))
+  assert.ok(completeRoute.includes('normalizeDisposition(req.body.caseDisposition)'))
+  assert.ok(completeRoute.includes('closeCase(cases, appt.caseId'))
+  assert.ok(completeRoute.includes('futureAppointments.forEach(item => { item.caseId = nextCase.id })'))
+})

@@ -109,7 +109,7 @@ function writeJSON(filePath, data) {
 // exists (every real deployment so far) is left untouched.
 const SEEDABLE_DATA_FILES = [
   'admins.json', 'appointments.json', 'audit-log.json', 'clients.json',
-  'contacts.json', 'counselors.json', 'surveys.json',
+  'contacts.json', 'counselors.json', 'surveys.json', 'cases.json',
 ]
 
 // `seeds` optionally maps a subset of SEEDABLE_DATA_FILES to non-empty

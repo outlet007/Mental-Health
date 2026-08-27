@@ -36,6 +36,7 @@ function validateContact(body, allowedSessionTypes = enabledSessionTypes(), facu
   const contact = {
     audience,
     name: clean(body.name),
+    nickname: clean(body.nickname),
     studentId: fields.studentId ? clean(body.studentId) : '',
     facultyIndex: selectedFaculty ? selectedFaculty.facultyIndex : '',
     faculty: selectedFaculty ? selectedFaculty.faculty : '',
@@ -50,6 +51,7 @@ function validateContact(body, allowedSessionTypes = enabledSessionTypes(), facu
   const allowedConcerns = new Set(concernOptions)
 
   if (contact.name.length < 2 || contact.name.length > 100) return null
+  if (contact.nickname.length > 100) return null
   if (fields.studentId && !/^[\p{L}\p{N}._/-]{3,30}$/u.test(contact.studentId)) return null
   if (fields.faculty && !selectedFaculty) return null
   if (fields.phone && (phoneDigits.length < 9 || phoneDigits.length > 15)) return null
@@ -113,6 +115,7 @@ router.post('/', contactLimiter, async (req, res) => {
     id: 'req' + now.getTime().toString().slice(-8),
     audience: contact.audience,
     name: contact.name,
+    nickname: contact.nickname,
     studentId: contact.studentId,
     facultyIndex: contact.facultyIndex,
     faculty: contact.faculty,

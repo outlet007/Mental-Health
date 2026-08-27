@@ -4,8 +4,10 @@ const { ensureToken, verifyToken } = require('../../middleware/csrf')
 router.use(ensureToken)
 router.use(verifyToken)
 const path    = require('path')
+const crypto  = require('crypto')
 const { logDeletion } = require('../../utils/audit-log')
 const { readJSON, writeJSON } = require('../../utils/json-store')
+const { validateScheduleBatch } = require('../../utils/availability')
 
 const scheduleFile  = path.join(__dirname, '../../../data/schedules.json')
 const counselorFile = path.join(__dirname, '../../../data/counselors.json')
@@ -44,11 +46,8 @@ router.get('/', (req, res) => {
   const selected = filterCId || counselors[0]?.id
   const mySchedules = allSched
     .filter(s => s.counselorId === selected)
-    .sort((a, b) => a.dayOfWeek - b.dayOfWeek)
-  const usedDays = mySchedules.map(s => s.dayOfWeek)
-  const availableDays = DAY_NAMES
-    .map((name, i) => ({ dayOfWeek: i, dayName: name }))
-    .filter(d => !usedDays.includes(d.dayOfWeek))
+    .sort((a, b) => a.dayOfWeek - b.dayOfWeek || (a.startTime || '').localeCompare(b.startTime || ''))
+  const availableDays = DAY_NAMES.map((name, i) => ({ dayOfWeek: i, dayName: name }))
 
   // Counselor color map
   const counselorColors = {}
@@ -123,60 +122,90 @@ router.get('/', (req, res) => {
 
 // ── CREATE / UPDATE ───────────────────────────────────────────────────────────
 router.post('/save', (req, res) => {
-  const { counselorId, dayOfWeek, startTime, endTime, isActive } = req.body
-  if (!canUseCounselor(req, counselorId)) return forbidden(res)
-
-  const cId      = isCounselor(req) ? req.session.counselorId : counselorId
+  const { id, counselorId, dayOfWeek, dayOfWeeks, startTime, endTime, isActive, timeRanges } = req.body
   const schedules = readSchedules()
-  const idx = schedules.findIndex(s => s.counselorId === cId && s.dayOfWeek == dayOfWeek)
-  const entry = {
-    counselorId: cId,
-    dayOfWeek:   parseInt(dayOfWeek),
-    dayName:     DAY_NAMES[parseInt(dayOfWeek)],
-    startTime, endTime,
-    isActive:    isActive === 'true',
+  const existingIndex = id ? schedules.findIndex(slot => slot.id === id) : -1
+  const existing = existingIndex === -1 ? null : schedules[existingIndex]
+
+  if (id && !existing) return res.redirect('/admin/schedules?error=invalid_slot')
+  if (existing && !canUseCounselor(req, existing.counselorId)) return forbidden(res)
+
+  const cId = isCounselor(req) ? req.session.counselorId : counselorId
+  if (!canUseCounselor(req, cId)) return forbidden(res)
+  if (!readCounselors().some(counselor => counselor.id === cId)) {
+    return res.redirect('/admin/schedules?error=invalid')
   }
-  if (idx !== -1) schedules[idx] = entry
-  else            schedules.push(entry)
+
+  let ranges = [{ startTime, endTime }]
+  if (timeRanges) {
+    try {
+      ranges = JSON.parse(timeRanges)
+    } catch {
+      ranges = []
+    }
+  }
+  if (!Array.isArray(ranges) || ranges.length === 0 || ranges.length > 20 || (existing && ranges.length !== 1)) {
+    return res.redirect('/admin/schedules?error=invalid')
+  }
+
+  let days = [parseInt(dayOfWeek)]
+  if (dayOfWeeks) {
+    try {
+      days = JSON.parse(dayOfWeeks)
+    } catch {
+      days = []
+    }
+  }
+  days = [...new Set(Array.isArray(days) ? days.map(Number) : [])]
+    .filter(day => Number.isInteger(day) && day >= 0 && day <= 6)
+  if (days.length === 0 || (existing && days.length !== 1) || days.length * ranges.length > 140) {
+    return res.redirect('/admin/schedules?error=invalid')
+  }
+
+  const entries = days.flatMap(day => ranges.map(range => ({
+    id: existing?.id || 'slot-' + crypto.randomUUID(),
+    counselorId: cId,
+    dayOfWeek: day,
+    dayName: DAY_NAMES[day],
+    startTime: String(range?.startTime || ''),
+    endTime: String(range?.endTime || ''),
+    isActive: isActive === 'true',
+  })))
+
+  // Validate against saved slots and earlier rows in this same request.
+  // Nothing is persisted until the whole batch passes.
+  const validation = validateScheduleBatch(schedules, entries, existing?.id)
+  if (!validation.ok) {
+    const back = new URLSearchParams(req.body.returnQuery || '').toString()
+    return res.redirect('/admin/schedules?' + (back ? back + '&' : '') + 'error=' + validation.error)
+  }
+
+  if (existingIndex === -1) schedules.push(...entries)
+  else schedules[existingIndex] = entries[0]
   writeSchedules(schedules)
 
   const back = new URLSearchParams(req.body.returnQuery || '').toString()
-  res.redirect(`/admin/schedules?${back}&saved=1`)
+  res.redirect('/admin/schedules?' + (back ? back + '&' : '') + 'saved=' + entries.length)
 })
 
 // ── DELETE ────────────────────────────────────────────────────────────────────
 router.post('/delete', (req, res) => {
-  const { counselorId, dayOfWeek } = req.body
-  if (!canUseCounselor(req, counselorId)) return forbidden(res)
+  const schedules = readSchedules()
+  const slot = schedules.find(entry => entry.id === req.body.id)
+  if (!slot) return res.redirect('/admin/schedules?error=invalid_slot')
+  if (!canUseCounselor(req, slot.counselorId)) return forbidden(res)
 
-  const cId       = isCounselor(req) ? req.session.counselorId : counselorId
-  const counselor = readCounselors().find(c => c.id === cId)
-  writeSchedules(readSchedules().filter(
-    s => !(s.counselorId === cId && s.dayOfWeek == dayOfWeek)
-  ))
+  const counselor = readCounselors().find(c => c.id === slot.counselorId)
+  writeSchedules(schedules.filter(entry => entry.id !== slot.id))
   logDeletion({
     entityType: 'schedule',
-    entityId:   `${cId}-${dayOfWeek}`,
-    entityName: `${DAY_NAMES[dayOfWeek]}${counselor ? ' ของ ' + counselor.name : ''}`,
-    reason:     req.body.reason,
+    entityId: slot.id,
+    entityName: slot.dayName + ' ' + slot.startTime + '–' + slot.endTime + (counselor ? ' ของ ' + counselor.name : ''),
+    reason: req.body.reason,
     req,
   })
   const back = new URLSearchParams(req.body.returnQuery || '').toString()
-  res.redirect(`/admin/schedules?${back}&deleted=1`)
-})
-
-// ── LEGACY ────────────────────────────────────────────────────────────────────
-router.post('/update', (req, res) => {
-  const { counselorId, dayOfWeek, startTime, endTime, isActive } = req.body
-  if (!canUseCounselor(req, counselorId)) return forbidden(res)
-  const cId = isCounselor(req) ? req.session.counselorId : counselorId
-  const schedules = readSchedules()
-  const idx = schedules.findIndex(s => s.counselorId === cId && s.dayOfWeek == dayOfWeek)
-  const entry = { counselorId: cId, dayOfWeek: parseInt(dayOfWeek), dayName: DAY_NAMES[parseInt(dayOfWeek)], startTime, endTime, isActive: isActive === 'true' }
-  if (idx !== -1) schedules[idx] = entry
-  else schedules.push(entry)
-  writeSchedules(schedules)
-  res.redirect(`/admin/schedules?counselorId=${cId}`)
+  res.redirect('/admin/schedules?' + back + '&deleted=1')
 })
 
 module.exports = router

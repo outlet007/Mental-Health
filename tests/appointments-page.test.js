@@ -29,7 +29,7 @@ function renderAppointments(locals = {}) {
         userType: 'admin',
         query: {},
         counselors: [
-          { id: 'coun-1', name: 'Counselor One', title: 'Psychologist', avatar: 'CO', isApproved: true, sessionDuration: 60, specialties: ['Stress', 'Anxiety'] },
+          { id: 'coun-1', name: 'Counselor One', title: 'Psychologist', avatar: 'CO', isApproved: true, specialties: ['Stress', 'Anxiety'] },
         ],
         counselorColors: { 'coun-1': '#6366f1' },
         clients: [
@@ -225,6 +225,35 @@ test('counselor completion button is in the status management column', async () 
   assert.doesNotMatch(statusManagementCell, /\/admin\/appointments\/app-test-confirmed\/cancel/)
 })
 
+test('admin completion button opens the consultation completion modal for confirmed appointments', async () => {
+  const html = await renderAppointments({
+    appointments: [
+      {
+        id: 'app-admin-confirmed',
+        clientId: 'client-1',
+        clientName: 'Client One',
+        counselorId: 'coun-1',
+        counselorName: 'Counselor One',
+        date: '2026-06-29',
+        time: '10:00',
+        duration: 60,
+        type: 'onsite',
+        status: 'confirmed',
+        note: '',
+      },
+    ],
+  })
+
+  const row = html.match(/<tr>[\s\S]*?app-admin-confirmed[\s\S]*?<\/tr>/)?.[0] || ''
+  const cells = [...row.matchAll(/<td[\s\S]*?<\/td>/g)].map(match => match[0])
+  assert.equal(cells.length, 9)
+
+  const statusManagementCell = cells[8]
+  assert.match(statusManagementCell, /openCompletePanel\('app-admin-confirmed'\)/)
+  assert.match(statusManagementCell, /data-lucide="check-check"/)
+  assert.match(statusManagementCell, new RegExp(COMPLETE_BUTTON_LABEL))
+  assert.match(html, /id="completeForm"[^>]+enctype="multipart\/form-data"/)
+})
 test('appointments table uses appointment-specific cancelled status label', async () => {
   const html = await renderAppointments({
     appointments: [
@@ -256,6 +285,6 @@ test('edit appointment modal status dropdown uses appointment-specific labels', 
 
   assert.match(selectHtml, new RegExp(`<option value="pending">${PENDING_TABLE_LABEL}<\/option>`))
   assert.match(selectHtml, new RegExp(`<option value="confirmed">${CONFIRM_BUTTON_LABEL}<\/option>`))
-  assert.match(selectHtml, new RegExp(`<option value="completed">${COMPLETE_BUTTON_LABEL}<\/option>`))
+  assert.doesNotMatch(selectHtml, /<option value="completed">/)
   assert.match(selectHtml, new RegExp(`<option value="cancelled">${CANCELLED_TABLE_LABEL}<\/option>`))
 })

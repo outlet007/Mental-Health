@@ -77,7 +77,7 @@ router.get('/', requireCounselor, (req, res) => {
 })
 
 router.post('/', requireCounselor, upload.single('photo'), verifyToken, async (req, res) => {
-  const { name, title, email, phone, bio, specialties, languages, sessionDuration, password } = req.body
+  const { name, title, email, phone, bio, specialties, languages, password } = req.body
   // Hash before reading the file: bcrypt.hash awaits (yields to the event
   // loop), so a read-then-await-then-write here could interleave with another
   // concurrent request's write and silently lose one of the two updates.
@@ -105,7 +105,6 @@ router.post('/', requireCounselor, upload.single('photo'), verifyToken, async (r
     bio: str(bio).trim(),
     specialties: parseArr(specialties),
     languages: parseArr(languages),
-    sessionDuration: parseInt(str(sessionDuration), 10) || data[idx].sessionDuration,
     avatar: initials(name),
     photo,
   }

@@ -90,7 +90,7 @@ router.get('/', (req, res) => {
 
 // ── CREATE ────────────────────────────────────────────────────────────────────
 router.post('/create', upload.single('photo'), verifyParsedToken, async (req, res) => {
-  const { username, password, name, title, email, phone, bio, specialties, languages, sessionDuration } = req.body
+  const { username, password, name, title, email, phone, bio, specialties, languages } = req.body
   // Hash before reading the file: bcrypt.hash awaits (yields to the event
   // loop), so a read-then-await-then-write here could interleave with another
   // concurrent request's write and silently lose one of the two updates.
@@ -127,7 +127,6 @@ router.post('/create', upload.single('photo'), verifyParsedToken, async (req, re
     bio:             str(bio).trim(),
     specialties:     parseArr(specialties),
     languages:       parseArr(languages),
-    sessionDuration: parseInt(str(sessionDuration)) || 60,
     rating:          0,
     reviewCount:     0,
     status:          'active',
@@ -147,7 +146,7 @@ router.post('/create', upload.single('photo'), verifyParsedToken, async (req, re
 
 // ── EDIT ──────────────────────────────────────────────────────────────────────
 router.post('/:id/edit', upload.single('photo'), verifyParsedToken, async (req, res) => {
-  const { username, password, name, title, email, phone, bio, specialties, languages, sessionDuration } = req.body
+  const { username, password, name, title, email, phone, bio, specialties, languages } = req.body
   // Hash before reading the file — see the /create route above for why.
   const pass = str(password).trim()
   const hashedPassword = pass ? await bcrypt.hash(pass, 10) : null
@@ -170,7 +169,6 @@ router.post('/:id/edit', upload.single('photo'), verifyParsedToken, async (req, 
     bio:             str(bio).trim(),
     specialties:     parseArr(specialties),
     languages:       parseArr(languages),
-    sessionDuration: parseInt(str(sessionDuration)) || data[idx].sessionDuration,
     avatar:          initials(name),
     photo:           photo,
   }

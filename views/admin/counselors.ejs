@@ -130,7 +130,6 @@
               <th>นักจิตวิทยาให้คำปรึกษา</th>
               <th>ชื่อผู้ใช้</th>
               <th>ความเชี่ยวชาญ</th>
-              <th>เวลา/ครั้ง</th>
               <th>จำนวนผู้รับบริการ</th>
               <th>ความพึงพอใจ</th>
               <th>สถานะ</th>
@@ -174,7 +173,6 @@
                 </div>
                 <div style="font-size:12px; color:#94a3b8; margin-top:3px;"><%= (c.languages||[]).join(', ') %></div>
               </td>
-              <td style="color:#64748b;"><%= c.sessionDuration %> นาที</td>
               <td style="color:#64748b;font-weight:500;"><%= clientCounts[c.id] || 0 %> คน</td>
               <td>
                 <% const _ss = surveyStats[c.id] %>
@@ -236,7 +234,7 @@
             </tr>
             <% }) %>
             <% if (counselors.length===0) { %>
-            <tr><td colspan="8" style="text-align:center; padding:48px; color:#94a3b8;">
+            <tr><td colspan="7" style="text-align:center; padding:48px; color:#94a3b8;">
               <i data-lucide="user-x" style="width:36px;height:36px;display:block;margin:0 auto 8px;opacity:.4;"></i>
               ไม่พบข้อมูลนักจิตวิทยาให้คำปรึกษา
             </td></tr>
@@ -300,7 +298,7 @@
               <select name="title" id="f_title" class="inp" required>
                 <option value="">เลือกตำแหน่ง / คุณวุฒิ</option>
                 <option value="จิตแพทย์">จิตแพทย์</option>
-                <option value="นักจิตวิทยาคลินิก">นักจิตวิทยาคลินิก</option>
+                <option value="นักจิตวิทยาให้คำปรึกษา">นักจิตวิทยาให้คำปรึกษา</option>
               </select>
             </div>
             <div>
@@ -354,18 +352,6 @@
         </div>
       </div>
 
-      <div style="padding:20px; border-bottom:1px solid #f8fafc;">
-        <div style="font-size:12px; font-weight:600; color:#94a3b8; text-transform:uppercase; letter-spacing:.05em; margin-bottom:14px;">ระยะเวลาต่อครั้ง</div>
-        <div>
-          <label class="lbl">ระยะเวลา</label>
-          <select name="sessionDuration" id="f_sessionDuration" class="inp">
-            <option value="30">30 นาที</option>
-            <option value="45">45 นาที</option>
-            <option value="60" selected>60 นาที</option>
-            <option value="90">90 นาที</option>
-          </select>
-        </div>
-      </div>
 
       <!-- Login credentials -->
       <div style="padding:20px; border-bottom:1px solid #f8fafc;">
@@ -377,7 +363,12 @@
           </div>
           <div>
             <label class="lbl" id="pwdLabel">รหัสผ่าน *</label>
-            <input type="password" name="password" id="f_password" class="inp" placeholder="กรอกรหัสผ่าน" autocomplete="new-password" minlength="8" required>
+            <div style="position:relative;">
+              <input type="password" name="password" id="f_password" class="inp" style="padding-right:44px;" placeholder="กรอกรหัสผ่าน" autocomplete="new-password" minlength="8" required>
+              <button type="button" id="passwordToggle" data-password-toggle="true" aria-label="แสดงรหัสผ่าน" aria-pressed="false" title="แสดงรหัสผ่าน" onclick="togglePasswordVisibility()" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);width:30px;height:30px;border:0;background:transparent;color:#94a3b8;border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;">
+                <i data-lucide="eye" style="width:16px;height:16px;" aria-hidden="true"></i>
+              </button>
+            </div>
           </div>
         </div>
         <p style="font-size:12px; color:#94a3b8; margin:10px 0 0;">บัญชีจะเปิดใช้งานทันทีหลังบันทึก รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร</p>
@@ -503,8 +494,23 @@
     })
   }
 
+  function setPasswordVisibility(visible) {
+    const input = document.getElementById('f_password')
+    const button = document.getElementById('passwordToggle')
+    input.type = visible ? 'text' : 'password'
+    button.setAttribute('aria-pressed', String(visible))
+    button.setAttribute('aria-label', visible ? 'ซ่อนรหัสผ่าน' : 'แสดงรหัสผ่าน')
+    button.setAttribute('title', visible ? 'ซ่อนรหัสผ่าน' : 'แสดงรหัสผ่าน')
+    button.innerHTML = '<i data-lucide="' + (visible ? 'eye-off' : 'eye') + '" style="width:16px;height:16px;" aria-hidden="true"></i>'
+    lucide.createIcons()
+  }
+
+  function togglePasswordVisibility() {
+    setPasswordVisibility(document.getElementById('f_password').type === 'password')
+  }
   function openPanel(mode, data) {
     document.getElementById('panelForm').reset()
+    setPasswordVisibility(false)
     document.getElementById('approveSection').style.display = mode==='create' ? '' : 'none'
     if (mode==='create') {
       document.getElementById('panelTitle').textContent = 'เพิ่มนักจิตวิทยาให้คำปรึกษา'
@@ -531,7 +537,6 @@
       document.getElementById('f_bio').value             = data.bio||''
       document.getElementById('f_specialties').value     = (data.specialties||[]).join(', ')
       setLanguageChecks(data.languages||[])
-      document.getElementById('f_sessionDuration').value = String(data.sessionDuration||60)
       document.getElementById('f_username').value        = data.username||''
       document.getElementById('f_password').value        = ''
       document.getElementById('f_password').placeholder  = 'ปล่อยว่างถ้าไม่ต้องการเปลี่ยน'

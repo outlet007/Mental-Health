@@ -9,12 +9,19 @@ const path    = require('path')
 const crypto = require('crypto')
 const { sendAppointmentEmails, sendSurveyEmail, sendCounselorReassignedEmail } = require('../../utils/mailer')
 const { resolveAppointmentEmailOptions, resolveReassignedEmailOptions, resolveSurveyEmailOptions } = require('../../utils/survey-email-settings')
-const { toMin, timesOverlap } = require('../../utils/appointment-scheduling')
+const { findAvailableSlot, listAvailableSlots } = require('../../utils/availability')
 const { filterAppointmentsByStatus, resolveAppointmentStatusFilter } = require('../../utils/appointment-status-filter')
 const { recordSurveyEmailSent } = require('../../utils/survey-delivery')
 const { logDeletion } = require('../../utils/audit-log')
 const { getConcernOptions } = require('../../utils/concern-options')
 const { readJSON, writeJSON } = require('../../utils/json-store')
+const {
+  ensureActiveCase,
+  createCase,
+  closeCase,
+  normalizeRiskLevel,
+  normalizeDisposition,
+} = require('../../utils/case-management')
 const {
   MAX_ATTACHMENT_SIZE,
   deleteConsultationAttachment,
@@ -61,6 +68,7 @@ const COUNSELOR_COLORS = ['#6366f1','#05967e','#f59e0b','#ef4444','#06b6d4','#8b
 
 function read(file) { return readJSON(path.join(dataDir, file)) }
 function write(file, d) { writeJSON(path.join(dataDir, file), d) }
+function readCases() { return readJSON(path.join(dataDir, 'cases.json'), []) }
 
 function readAppointmentSessionTypes() {
   try {
@@ -112,37 +120,6 @@ function canUseClient(req, clientId) {
 
 function forbidden(res) {
   return res.status(403).send('Forbidden')
-}
-
-// Generate time slots from counselor schedule for a given date,
-// excluding already-booked slots.
-function getAvailableSlots(counselorId, dateStr, excludeId) {
-  const schedules    = read('schedules.json')
-  const appointments = read('appointments.json')
-
-  const date     = new Date(dateStr)
-  const dow      = date.getDay()
-  const schedule = schedules.find(s => s.counselorId === counselorId && s.dayOfWeek === dow && s.isActive)
-  if (!schedule) return []
-
-  const counselor = read('counselors.json').find(c => c.id === counselorId)
-  const duration  = counselor?.sessionDuration || 60
-
-  const toStr = m => `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`
-
-  const start = toMin(schedule.startTime)
-  const end   = toMin(schedule.endTime)
-
-  const booked = appointments
-    .filter(a => a.counselorId === counselorId && a.date === dateStr && a.status !== 'cancelled' && a.id !== excludeId)
-    .map(a => ({ start: toMin(a.time), duration: a.duration || duration }))
-
-  const slots = []
-  for (let t = start; t + duration <= end; t += duration) {
-    const conflict = booked.some(b => timesOverlap(t, duration, b.start, b.duration))
-    slots.push({ time: toStr(t), available: !conflict })
-  }
-  return slots
 }
 
 // ── LIST ──────────────────────────────────────────────────────────────────────
@@ -222,7 +199,13 @@ router.get('/slots', (req, res) => {
   const { counselorId, date, excludeId } = req.query
   if (!counselorId || !date) return res.json({ slots: [], error: 'missing params' })
   if (!canUseCounselor(req, counselorId)) return res.status(403).json({ slots: [], error: 'forbidden' })
-  const slots = getAvailableSlots(counselorId, date, excludeId)
+  const slots = listAvailableSlots({
+    schedules: read('schedules.json'),
+    appointments: read('appointments.json'),
+    counselorId,
+    date,
+    excludeAppointmentId: excludeId,
+  })
   res.json({ slots })
 })
 
@@ -242,22 +225,31 @@ router.post('/create', async (req, res) => {
   if (!counselor || !client) return res.redirect('/admin/appointments?error=invalid')
 
   const appointments = read('appointments.json')
-  const duration = counselor.sessionDuration || 60
-  const conflict = appointments.some(a =>
-    a.counselorId === counselorId &&
-    a.date === date &&
-    a.status !== 'cancelled' &&
-    timesOverlap(toMin(a.time), a.duration || duration, toMin(time), duration)
-  )
-  if (conflict) return res.redirect('/admin/appointments?error=conflict')
+  const selectedSlot = findAvailableSlot({
+    schedules: read('schedules.json'),
+    appointments,
+    counselorId,
+    date,
+  }, time)
+  if (!selectedSlot) return res.redirect('/admin/appointments?error=conflict')
+  const duration = selectedSlot.duration
 
   const maxNum = appointments.reduce((max, a) => {
     const m = String(a.id).match(/^app-(\d+)$/)
     return m ? Math.max(max, parseInt(m[1])) : max
   }, 0)
 
+  const cases = readCases()
+  const caseCountBefore = cases.length
+  const activeCase = ensureActiveCase(cases, {
+    clientId,
+    openedAt: date,
+    concern: (concern || '').trim(),
+  })
+
   const newAppt = {
     id:            'app-' + String(maxNum + 1).padStart(5, '0'),
+    caseId:        activeCase.id,
     clientId,
     clientName:    client.name,
     counselorId,
@@ -275,6 +267,7 @@ router.post('/create', async (req, res) => {
 
   appointments.push(newAppt)
   write('appointments.json', appointments)
+  if (cases.length !== caseCountBefore) write('cases.json', cases)
 
   const emailOptions = resolveAppointmentEmailOptions(
     { name: client.name, email: client.email || '', phone: client.phone || '' },
@@ -312,23 +305,22 @@ router.post('/:id/edit', (req, res) => {
   const counselorChanged = requestedCounselorId !== current.counselorId
   const newDate = date || current.date
   const newTime = time || current.time
-  const duration = newCounselor.sessionDuration || current.duration || 60
+  const scheduleChanged = newDate !== current.date || newTime !== current.time || counselorChanged
+  let duration = current.duration || 60
 
-  if (date || time || counselorChanged) {
-    const newMin = toMin(newTime)
-
-    const conflict = data.some((a, i) =>
-      i !== idx &&
-      a.counselorId === requestedCounselorId &&
-      a.date === newDate &&
-      a.status !== 'cancelled' &&
-      timesOverlap(toMin(a.time), a.duration || duration, newMin, duration)
-    )
-    if (conflict) return res.redirect('/admin/appointments?error=conflict')
+  if (scheduleChanged) {
+    const selectedSlot = findAvailableSlot({
+      schedules: read('schedules.json'),
+      appointments: data,
+      counselorId: requestedCounselorId,
+      date: newDate,
+      excludeAppointmentId: current.id,
+    }, newTime)
+    if (!selectedSlot) return res.redirect('/admin/appointments?error=conflict')
+    duration = selectedSlot.duration
   }
 
-  const oldCounselor    = counselors.find(c => c.id === current.counselorId)
-  const scheduleChanged = newDate !== current.date || newTime !== current.time || counselorChanged
+  const oldCounselor = counselors.find(c => c.id === current.counselorId)
 
   data[idx].counselorId   = requestedCounselorId
   data[idx].counselorName = newCounselor.name
@@ -341,7 +333,7 @@ router.post('/:id/edit', (req, res) => {
       data[idx].type = normalizeAppointmentType(type, sessionTypes)
       data[idx].meetingLink = cleanMeetingLink(data[idx].type, meetingLink)
     }
-    if (status) data[idx].status = status
+    if (status && status !== 'completed') data[idx].status = status
     if (note !== undefined) data[idx].note = note.trim()
     if (concern !== undefined) data[idx].concern = concern.trim()
   }
@@ -465,6 +457,16 @@ router.post('/:id/complete', parseConsultationAttachment, verifyParsedToken, (re
   if (idx !== -1) {
     if (!canUseAppointment(req, data[idx])) return forbidden(res)
     const appt = data[idx]
+    const cases = readCases()
+    const caseCountBefore = cases.length
+    if (!appt.caseId) {
+      appt.caseId = ensureActiveCase(cases, {
+        clientId: appt.clientId,
+        openedAt: appt.date,
+        concern: appt.concern || '',
+      }).id
+    }
+    let casesChanged = cases.length !== caseCountBefore
     let attachmentUpdate
     try {
       attachmentUpdate = applyAttachmentUpdate(appt, req.file, false)
@@ -475,11 +477,43 @@ router.post('/:id/complete', parseConsultationAttachment, verifyParsedToken, (re
     if (req.body.counselorNote !== undefined) {
       appt.counselorNote = req.body.counselorNote.trim()
     }
+    appt.symptoms = String(req.body.symptoms || '').trim()
+    appt.riskLevel = normalizeRiskLevel(req.body.riskLevel)
+    appt.riskDetail = String(req.body.riskDetail || '').trim()
+    appt.caseDisposition = normalizeDisposition(req.body.caseDisposition)
+    appt.closedReason = appt.caseDisposition === 'closed' ? String(req.body.closedReason || '').trim() : ''
+    appt.referralRequired = req.body.referralRequired === 'on' || req.body.referralRequired === 'true'
+    appt.referralDestination = appt.referralRequired ? String(req.body.referralDestination || '').trim() : ''
+    appt.referralReason = appt.referralRequired ? String(req.body.referralReason || '').trim() : ''
+    appt.completedAt = new Date().toISOString()
+
+    if (appt.caseDisposition === 'closed') {
+      closeCase(cases, appt.caseId, {
+        closedAt: appt.date,
+        reason: req.body.closedReason,
+      })
+      casesChanged = true
+
+      const currentKey = `${appt.date || ''}T${appt.time || ''}`
+      const futureAppointments = data
+        .filter(item => item.id !== appt.id && item.caseId === appt.caseId && item.status !== 'cancelled')
+        .filter(item => `${item.date || ''}T${item.time || ''}` > currentKey)
+        .sort((a, b) => `${a.date}T${a.time}`.localeCompare(`${b.date}T${b.time}`))
+      if (futureAppointments.length) {
+        const nextCase = createCase(cases, {
+          clientId: appt.clientId,
+          openedAt: futureAppointments[0].date,
+          concern: futureAppointments[0].concern || appt.concern || '',
+        })
+        futureAppointments.forEach(item => { item.caseId = nextCase.id })
+      }
+    }
     if (!appt.surveyToken) {
       appt.surveyToken = crypto.randomBytes(16).toString('hex')
     }
     try {
       write('appointments.json', data)
+      if (casesChanged) write('cases.json', cases)
     } catch (error) {
       if (attachmentUpdate.replacement) deleteConsultationAttachment(attachmentUpdate.replacement)
       throw error

@@ -22,9 +22,9 @@ function daysFromNow(offset) {
 function getSeedData() {
   const counselors = [
     {
-      id: 'c001', name: 'ดร.สุภาพร เมธาวี', title: 'นักจิตวิทยาคลินิก',
+      id: 'c001', name: 'ดร.สุภาพร เมธาวี', title: 'นักจิตวิทยาให้คำปรึกษา',
       specialties: ['ความวิตกกังวล', 'ภาวะซึมเศร้า', 'ความสัมพันธ์'],
-      languages: ['ไทย', 'อังกฤษ'], sessionDuration: 60, rating: 4.9, reviewCount: 87,
+      languages: ['ไทย', 'อังกฤษ'], rating: 4.9, reviewCount: 87,
       status: 'active', isApproved: true, avatar: 'SP', photo: null,
       email: 'supaporn@example.com', phone: '081-234-5678',
       bio: 'ผู้เชี่ยวชาญด้านจิตวิทยาคลินิกกว่า 12 ปี เน้นการบำบัดแบบ CBT และ Mindfulness',
@@ -33,7 +33,7 @@ function getSeedData() {
     {
       id: 'c002', name: 'อาจารย์ธีรพงษ์ สันติสุข', title: 'นักบำบัดจิตใจ',
       specialties: ['ความเครียดจากงาน', 'การเปลี่ยนผ่านชีวิต', 'การสูญเสีย'],
-      languages: ['ไทย'], sessionDuration: 60, rating: 4.7, reviewCount: 54,
+      languages: ['ไทย'], rating: 4.7, reviewCount: 54,
       status: 'active', isApproved: true, avatar: 'TP', photo: null,
       email: 'theerapong@example.com', phone: '082-345-6789',
       bio: 'ประสบการณ์ 8 ปีในการช่วยเหลือผู้ที่ผ่านการสูญเสียและการเปลี่ยนผ่านชีวิต',
@@ -42,7 +42,7 @@ function getSeedData() {
     {
       id: 'c003', name: 'ดร.พิมพ์ใจ รัตนกุล', title: 'จิตแพทย์',
       specialties: ['โรคไบโพลาร์', 'โรควิตกกังวล', 'ADHD'],
-      languages: ['ไทย', 'อังกฤษ', 'จีน'], sessionDuration: 45, rating: 4.8, reviewCount: 112,
+      languages: ['ไทย', 'อังกฤษ', 'จีน'], rating: 4.8, reviewCount: 112,
       status: 'active', isApproved: true, avatar: 'PR', photo: null,
       email: 'pimjai@example.com', phone: '083-456-7890',
       bio: 'จิตแพทย์ที่มีประสบการณ์ด้านโรคอารมณ์และการพัฒนาเด็กวัยรุ่น',
@@ -51,7 +51,7 @@ function getSeedData() {
     {
       id: 'c004', name: 'คุณวรรณา เจริญสุข', title: 'นักให้คำปรึกษา',
       specialties: ['ปัญหาครอบครัว', 'การเลี้ยงดูบุตร', 'การสื่อสารในคู่รัก'],
-      languages: ['ไทย'], sessionDuration: 60, rating: 4.6, reviewCount: 38,
+      languages: ['ไทย'], rating: 4.6, reviewCount: 38,
       status: 'pending', isApproved: false, avatar: 'WJ', photo: null,
       email: 'wanna@example.com', phone: '084-567-8901',
       bio: 'เชี่ยวชาญด้านการให้คำปรึกษาครอบครัวและคู่รัก ด้วยประสบการณ์ 5 ปี',

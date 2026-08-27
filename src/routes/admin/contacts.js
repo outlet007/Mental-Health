@@ -11,6 +11,8 @@ const { logDeletion } = require('../../utils/audit-log')
 const { getConcernOptions } = require('../../utils/concern-options')
 const { getFacultyOptions, resolveFaculty } = require('../../utils/faculty-options')
 const { readJSON, writeJSON } = require('../../utils/json-store')
+const { findAvailableSlot } = require('../../utils/availability')
+const { ensureActiveCase } = require('../../utils/case-management')
 
 const dataDir  = path.join(__dirname, '../../../data')
 const dataFile = path.join(dataDir, 'contacts.json')
@@ -108,13 +110,14 @@ router.post('/:id/status', (req, res) => {
 })
 
 router.post('/:id/edit', (req, res) => {
-  const { name, studentId, facultyIndex, phone, email, concern, sessionType } = req.body
+  const { name, nickname, studentId, facultyIndex, phone, email, concern, sessionType } = req.body
   const facultySelection = resolveFaculty(facultyIndex)
   const sessionTypes = readAppointmentSessionTypes()
   const data = readData()
   const idx  = data.findIndex(c => c.id === req.params.id)
   if (idx !== -1) {
     data[idx].name        = (name || '').trim()
+    data[idx].nickname    = (nickname || '').trim()
     data[idx].studentId    = (studentId || '').trim()
     if (facultySelection) {
       data[idx].facultyIndex = facultySelection.facultyIndex
@@ -143,12 +146,14 @@ router.post('/:id/book', async (req, res) => {
   const counselor  = counselors.find(c => c.id === counselorId)
   if (!counselor) return res.redirect('/admin/contacts?error=invalid')
 
-  // Double-booking guard
   const appointments = readFile('appointments.json')
-  const conflict = appointments.some(a =>
-    a.counselorId === counselorId && a.date === date && a.time === time && a.status !== 'cancelled'
-  )
-  if (conflict) return res.redirect('/admin/contacts?error=conflict')
+  const selectedSlot = findAvailableSlot({
+    schedules: readFile('schedules.json'),
+    appointments,
+    counselorId,
+    date,
+  }, time)
+  if (!selectedSlot) return res.redirect('/admin/contacts?error=conflict')
 
   // ผู้รับบริการ: ใช้ตัวที่ admin ยืนยันเลือกไว้ (existingClientId) เท่านั้น
   // ไม่ auto-match ด้วยเบอร์โทร/อีเมลอีกต่อไป — ป้องกันการ merge ข้อมูลผิดคนโดยไม่ได้ตั้งใจ
@@ -159,6 +164,7 @@ router.post('/:id/book', async (req, res) => {
     client = {
       id: 'cl' + Date.now().toString().slice(-6),
       name: contact.name,
+      nickname: contact.nickname || '',
       phone: contact.phone,
       email: contact.email || '',
       studentId: contact.studentId || '',
@@ -180,14 +186,24 @@ router.post('/:id/book', async (req, res) => {
     return m ? Math.max(max, parseInt(m[1])) : max
   }, 0)
 
+  const casesFile = path.join(dataDir, 'cases.json')
+  const cases = readJSON(casesFile, [])
+  const caseCountBefore = cases.length
+  const activeCase = ensureActiveCase(cases, {
+    clientId: client.id,
+    openedAt: date,
+    concern: contact.concern || '',
+  })
+
   const newAppt  = {
     id:            'app-' + String(maxNum + 1).padStart(5, '0'),
+    caseId:        activeCase.id,
     clientId:      client.id,
     clientName:    client.name,
     counselorId,
     counselorName: counselor.name,
     date, time,
-    duration:      counselor.sessionDuration || 60,
+    duration:      selectedSlot.duration,
     type:          normalizeAppointmentType(type || contact.sessionType || appointmentType, sessionTypes),
     meetingLink:   cleanMeetingLink(normalizeAppointmentType(type || contact.sessionType || appointmentType, sessionTypes), meetingLink),
     status:        'confirmed',
@@ -197,6 +213,7 @@ router.post('/:id/book', async (req, res) => {
   }
   appts.push(newAppt)
   writeJSON(apptFile, appts)
+  if (cases.length !== caseCountBefore) writeJSON(casesFile, cases)
 
   contacts[idx].status = 'converted'
   contacts[idx].appointmentId = newAppt.id

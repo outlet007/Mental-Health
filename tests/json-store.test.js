@@ -116,7 +116,7 @@ test('ensureDataFiles seeds every missing data file as an empty array', () => {
   const dir = tempDir()
   try {
     ensureDataFiles(dir)
-    for (const file of ['admins.json', 'appointments.json', 'audit-log.json', 'clients.json', 'contacts.json', 'counselors.json', 'surveys.json']) {
+    for (const file of ['admins.json', 'appointments.json', 'audit-log.json', 'clients.json', 'contacts.json', 'counselors.json', 'surveys.json', 'cases.json']) {
       assert.deepEqual(readJSON(path.join(dir, file)), [], `${file} should be seeded as []`)
     }
   } finally {

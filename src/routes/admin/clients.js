@@ -10,6 +10,7 @@ const { resolveAppointmentEmailOptions, resolveReassignedEmailOptions } = requir
 const { reassignAppointmentCounselor } = require('../../utils/appointment-scheduling')
 const { logDeletion } = require('../../utils/audit-log')
 const { getConcernOptions } = require('../../utils/concern-options')
+const { getFacultyOptions, resolveFaculty } = require('../../utils/faculty-options')
 const { readJSON, writeJSON } = require('../../utils/json-store')
 const { logInfo } = require('../../utils/logger')
 
@@ -93,6 +94,8 @@ router.get('/', (req, res) => {
     c.email,
     c.phone,
     c.studentId,
+    c.nickname,
+    c.faculty,
   ], search))
 
   const counselorActiveCounts = {}
@@ -108,6 +111,7 @@ router.get('/', (req, res) => {
     appointments, counselors, schedules, counselorActiveCounts, clientStats, counselorColors,
     pendingTransferClientIds: [...pendingTransferClientIds],
     concernOptions: getConcernOptions(),
+    facultyOptions: getFacultyOptions(),
   })
 })
 
@@ -160,7 +164,8 @@ router.get('/:id/export', (req, res) => {
 router.post('/create', (req, res) => {
   if (isCounselor(req)) return forbidden(res)
 
-  const { name, email, phone, age, gender, status, studentId } = req.body
+  const { name, nickname, email, phone, age, gender, status, studentId, facultyIndex } = req.body
+  const facultySelection = resolveFaculty(facultyIndex)
   const clients = readClients()
 
   if (clients.some(c => c.email === email.trim().toLowerCase())) {
@@ -171,7 +176,11 @@ router.post('/create', (req, res) => {
   clients.push({
     id:            newId,
     name:          name.trim(),
+    nickname:      (nickname || '').trim(),
     studentId:     (studentId || '').trim(),
+    facultyIndex:  facultySelection?.facultyIndex || '',
+    faculty:       facultySelection?.faculty || '',
+    facultyEn:     facultySelection?.facultyEn || '',
     email:         email.trim().toLowerCase(),
     phone:         phone.trim(),
     age:           parseInt(age) || 0,
@@ -187,7 +196,8 @@ router.post('/create', (req, res) => {
 
 // ── EDIT ──────────────────────────────────────────────────────────────────────
 router.post('/:id/edit', (req, res) => {
-  const { name, email, phone, age, gender, status, studentId } = req.body
+  const { name, nickname, email, phone, age, gender, status, studentId, facultyIndex } = req.body
+  const facultySelection = resolveFaculty(facultyIndex)
   const clients = readClients()
   const idx     = clients.findIndex(c => c.id === req.params.id)
   if (idx === -1) return res.redirect('/admin/clients')
@@ -196,7 +206,11 @@ router.post('/:id/edit', (req, res) => {
   clients[idx] = {
     ...clients[idx],
     name:      name.trim(),
+    nickname:  (nickname || '').trim(),
     studentId: (studentId || '').trim(),
+    facultyIndex: facultySelection?.facultyIndex || '',
+    faculty:      facultySelection?.faculty || '',
+    facultyEn:    facultySelection?.facultyEn || '',
     email:     email.trim().toLowerCase(),
     phone:     phone.trim(),
     age:       parseInt(age) || clients[idx].age,
@@ -232,6 +246,7 @@ router.post('/:id/transfer', (req, res) => {
 
   const data       = read('appointments.json')
   const counselors = read('counselors.json')
+  const schedules  = read('schedules.json')
 
   let movedCount    = 0
   let conflictCount = 0
@@ -246,10 +261,10 @@ router.post('/:id/transfer', (req, res) => {
     if (!['pending', 'confirmed'].includes(data[idx].status)) return
 
     const beforeSnapshot = { ...data[idx] }
-    const result = reassignAppointmentCounselor(data, idx, newCounselorId, counselors)
+    const result = reassignAppointmentCounselor(data, idx, newCounselorId, counselors, schedules)
 
     if (!result.ok) {
-      if (result.error === 'conflict') conflictCount++
+      if (result.error === 'conflict' || result.error === 'slot') conflictCount++
       return
     }
     if (!result.changed) return

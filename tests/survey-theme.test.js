@@ -95,7 +95,6 @@ test('admin counselors page uses lucide satisfaction icons instead of emoji', as
       avatar: 'C',
       specialties: ['Stress'],
       languages: ['Thai'],
-      sessionDuration: 50,
       isApproved: true,
       status: 'active',
       role: 'counselor',

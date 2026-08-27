@@ -1,10 +1,11 @@
-﻿const express = require('express')
+const express = require('express')
 const router = express.Router()
 const { ensureToken, verifyToken } = require('../../middleware/csrf')
 router.use(ensureToken)
 router.use(verifyToken)
 const path = require('path')
 const { readJSON } = require('../../utils/json-store')
+const { visitTypeByAppointment, findNextAppointment } = require('../../utils/case-management')
 
 const dataDir = path.join(__dirname, '../../../data')
 const REPORT_PAGE_SIZE_OPTIONS = [20, 40, 60]
@@ -13,6 +14,7 @@ const DEFAULT_REPORT_PAGE_SIZE = 20
 const REPORT_TYPES = {
   all: 'ทั้งหมด',
   appointments: 'นัดหมาย',
+  consultations: 'รายงานการให้คำปรึกษา',
   clients: 'ผู้รับบริการ',
   contacts: 'คำขอฝากข้อมูล',
   surveys: 'แบบประเมินความพึงพอใจ',
@@ -186,7 +188,63 @@ function buildMonthDateBuckets(month) {
   return days
 }
 
+const RISK_LABELS = {
+  none: 'ไม่พบความเสี่ยง',
+  low: 'ต่ำ',
+  moderate: 'ปานกลาง',
+  high: 'สูง',
+  critical: 'วิกฤต',
+}
+
+function buildConsultationRows(data, filters) {
+  const clientsById = new Map(data.clients.map(client => [client.id, client]))
+  const visitTypes = visitTypeByAppointment(data.appointments)
+
+  return data.appointments
+    .filter(appointment => appointment.status === 'completed')
+    .filter(appointment => inRange(appointment.date || appointment.completedAt, filters))
+    .sort((a, b) => `${b.date || ''}T${b.time || ''}`.localeCompare(`${a.date || ''}T${a.time || ''}`))
+    .map(appointment => {
+      const client = clientsById.get(appointment.clientId) || {}
+      const nextAppointment = findNextAppointment(data.appointments, appointment)
+      let followUp = 'ไม่ระบุ'
+      if (appointment.caseDisposition === 'closed') {
+        followUp = appointment.closedReason ? `ปิดเคส: ${appointment.closedReason}` : 'ปิดเคส'
+      } else if (nextAppointment) {
+        followUp = `นัดครั้งถัดไป ${nextAppointment.date} ${nextAppointment.time} น.`
+      } else if (appointment.caseDisposition === 'follow_up') {
+        followUp = 'ติดตามต่อ'
+      }
+
+      let referral = 'ไม่มี'
+      if (appointment.referralRequired) {
+        referral = [appointment.referralDestination || 'มีการส่งต่อ', appointment.referralReason]
+          .filter(Boolean)
+          .join(': ')
+      }
+
+      return {
+        caseType: visitTypes.get(appointment.id) === 'continuing' ? 'ต่อเนื่อง' : 'เคสใหม่',
+        date: normalizeDate(appointment.date),
+        time: appointment.time || '',
+        name: client.name || appointment.clientName || '-',
+        nickname: client.nickname || '',
+        studentId: client.studentId || '',
+        phone: client.phone || '',
+        faculty: client.faculty || '',
+        symptoms: appointment.symptoms || appointment.concern || '',
+        risk: [
+          RISK_LABELS[appointment.riskLevel] || 'ไม่ระบุ',
+          appointment.riskDetail,
+        ].filter(Boolean).join(': '),
+        followUp,
+        referral,
+      }
+    })
+}
 function buildReportRows(data, filters) {
+  if (filters.type === 'consultations') return buildConsultationRows(data, filters)
+
   const rowsByType = {
     appointments: data.appointments.map(item => ({
       type: 'นัดหมาย',
@@ -363,15 +421,39 @@ function loadReportData() {
     contacts: readData('contacts.json'),
     surveys: readData('surveys.json'),
     counselors: readData('counselors.json'),
+    cases: readData('cases.json'),
   }
 }
 
 
 function csvEscape(value) {
-  return `"${String(value ?? '').replace(/"/g, '""')}"`
+  let safe = String(value ?? '')
+  if (/^[=+@-]/.test(safe)) safe = `'${safe}`
+  return `"${safe.replace(/"/g, '""')}"`
 }
 
-function rowsToCSV(rows) {
+const CONSULTATION_CSV_COLUMNS = [
+  ['caseType', 'เคสใหม่/ต่อเนื่อง'],
+  ['date', 'วันที่'],
+  ['time', 'เวลา'],
+  ['name', 'ชื่อ-นามสกุล'],
+  ['nickname', 'ชื่อเล่น'],
+  ['studentId', 'รหัสนักศึกษา'],
+  ['phone', 'เบอร์โทรศัพท์'],
+  ['faculty', 'คณะ'],
+  ['symptoms', 'อาการ'],
+  ['risk', 'ความเสี่ยง'],
+  ['followUp', 'ติดตาม/ปิดเคส/นัดครั้งถัดไป'],
+  ['referral', 'ส่งต่อ'],
+]
+
+function rowsToCSV(rows, type) {
+  if (type === 'consultations') {
+    const headers = CONSULTATION_CSV_COLUMNS.map(([, label]) => label)
+    const lines = rows.map(row => CONSULTATION_CSV_COLUMNS.map(([key]) => csvEscape(row[key])).join(','))
+    return `﻿${headers.map(csvEscape).join(',')}\r\n${lines.join('\r\n')}`
+  }
+
   const headers = ['ประเภท', 'วันที่', 'รหัส', 'ชื่อ', 'รายละเอียด', 'สถานะ', 'คะแนน']
   const lines = rows.map(row => [
     row.type,
@@ -382,9 +464,8 @@ function rowsToCSV(rows) {
     row.status,
     row.score,
   ].map(csvEscape).join(','))
-  return `\uFEFF${headers.map(csvEscape).join(',')}\r\n${lines.join('\r\n')}`
+  return `﻿${headers.map(csvEscape).join(',')}\r\n${lines.join('\r\n')}`
 }
-
 router.get('/', (req, res) => {
   const filters = getFilters(req.query)
   const data = loadReportData()
@@ -413,7 +494,7 @@ router.get('/export.csv', (req, res) => {
 
   res.setHeader('Content-Type', 'text/csv; charset=utf-8')
   res.setHeader('Content-Disposition', `attachment; filename="${filename}"`)
-  res.send(rowsToCSV(rows))
+  res.send(rowsToCSV(rows, filters.type))
 })
 
 module.exports = router

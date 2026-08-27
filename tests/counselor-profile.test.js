@@ -1,4 +1,4 @@
-﻿const assert = require('node:assert/strict')
+const assert = require('node:assert/strict')
 const http = require('node:http')
 const path = require('node:path')
 const test = require('node:test')
@@ -6,6 +6,7 @@ const express = require('express')
 const ejs = require('ejs')
 const fs = require('node:fs')
 const bcrypt = require('bcryptjs')
+const { readJSON, writeJSON } = require('../src/utils/json-store')
 
 const dataFile = path.join(__dirname, '..', 'data', 'counselors.json')
 
@@ -88,7 +89,7 @@ test('counselor profile page renders editable profile fields with readonly usern
   assert.match(body, /class="check-flag"/)
   assert.match(body, /viewBox="0 0 24 18"/)
   assert.match(body, /viewBox="0 0 60 36"/)
-  assert.match(body, /name="sessionDuration"/)
+  assert.doesNotMatch(body, /name="sessionDuration"/)
   assert.match(body, /data-readonly-username="true"/)
   assert.doesNotMatch(body, /name="username"/)
   assert.match(body, /name="password"/)
@@ -102,8 +103,8 @@ test('counselor profile page renders editable profile fields with readonly usern
 })
 
 test('counselor profile update keeps username readonly and updates password only when provided', async () => {
-  const original = fs.readFileSync(dataFile, 'utf8')
-  const before = JSON.parse(original).find(c => c.id === 'c001')
+  const original = readJSON(dataFile)
+  const before = original.find(c => c.id === 'c001')
 
   try {
     const payload = new URLSearchParams({
@@ -114,7 +115,6 @@ test('counselor profile update keeps username readonly and updates password only
       bio: 'Updated bio',
       specialties: 'Stress, Sleep',
       languages: 'Thai',
-      sessionDuration: '45',
       username: 'evil-change',
       password: 'NewSecurePass123',
       _csrf: 'test-csrf-token',
@@ -124,17 +124,17 @@ test('counselor profile update keeps username readonly and updates password only
     assert.equal(res.statusCode, 302)
     assert.equal(res.headers.location, '/admin/profile?updated=1')
 
-    const after = JSON.parse(fs.readFileSync(dataFile, 'utf8')).find(c => c.id === 'c001')
+    const after = readJSON(dataFile).find(c => c.id === 'c001')
     assert.equal(after.name, 'Profile Test Name')
     assert.equal(after.title, 'Profile Test Title')
     assert.equal(after.email, 'profile-test@example.com')
-    assert.equal(after.sessionDuration, 45)
+    assert.equal(after.sessionDuration, undefined)
     assert.deepEqual(after.specialties, ['Stress', 'Sleep'])
     assert.equal(after.username, before.username)
     assert.notEqual(after.password, before.password)
     assert.equal(await bcrypt.compare('NewSecurePass123', after.password), true)
   } finally {
-    fs.writeFileSync(dataFile, original, 'utf8')
+    writeJSON(dataFile, original)
   }
 })
 

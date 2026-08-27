@@ -127,7 +127,9 @@ test('registration form admin separates public section and form card fields into
   assert.match(body, /data-layout-frame="registration-form-heading-th"/)
   assert.match(body, /data-layout-frame="registration-concern-options-th"/)
   assert.match(body, /data-layout-frame="registration-form-fields-th"/)
+  assert.match(body, /data-layout-frame="registration-success-message-th"/)
   assert.match(body, /data-layout-frame="registration-section-copy-en"/)
+  assert.match(body, /data-layout-frame="registration-success-message-en"/)
   assert.match(body, /data-layout-frame="registration-public-form-en"/)
   assert.match(body, /class="public-form-shape"/)
 
@@ -138,6 +140,10 @@ test('registration form admin separates public section and form card fields into
   const concernLabelIndex = body.indexOf('name="formText_concernLabel"')
   const concernIndex = body.indexOf('data-layout-frame="registration-concern-options-th"')
   const typeLabelIndex = body.indexOf('name="formText_typeLabel"')
+  const sessionTypesIndex = body.indexOf('data-layout-frame="registration-session-types-th"')
+  const successMessageIndex = body.indexOf('data-layout-frame="registration-success-message-th"')
+  const enSessionTypesIndex = body.indexOf('data-layout-frame="registration-session-types-en"')
+  const enSuccessMessageIndex = body.indexOf('data-layout-frame="registration-success-message-en"')
 
   assert.ok(sectionIndex < publicFormIndex)
   assert.ok(publicFormIndex < headingIndex)
@@ -145,6 +151,8 @@ test('registration form admin separates public section and form card fields into
   assert.ok(fieldsIndex < concernLabelIndex)
   assert.ok(concernLabelIndex < concernIndex)
   assert.ok(concernIndex < typeLabelIndex)
+  assert.ok(sessionTypesIndex < successMessageIndex)
+  assert.ok(enSessionTypesIndex < enSuccessMessageIndex)
 
   const fieldWrapperStyle = fieldName => {
     const match = body.match(new RegExp('<div style="([^\"]*)">\\s*<label class="lbl">[^<]*<\/label>\\s*(?:<%[\\s\\S]*?%>\\s*)?<input type="text" name="' + fieldName + '"'))

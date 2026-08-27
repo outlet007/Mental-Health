@@ -333,8 +333,8 @@
                   </form>
                   <% } %>
 
-                  <%/* เสร็จสิ้น — เฉพาะ confirmed + counselor */%>
-                  <% if (a.status === 'confirmed' && userType === 'counselor') { %>
+                  <%/* เสร็จสิ้น — นัด confirmed สำหรับ admin และ counselor */%>
+                  <% if (a.status === 'confirmed') { %>
                   <button onclick="openCompletePanel('<%= a.id %>')" class="act-btn ab-secondary">
                     <i data-lucide="check-check" style="width:12px;height:12px;"></i> ให้คำปรึกษาเสร็จสิ้น
                   </button>
@@ -398,8 +398,7 @@
         <div style="display:grid; gap:8px;" id="counselorList">
           <% counselors.forEach(c => { %>
           <label class="counselor-card" id="card_<%= c.id %>">
-            <input type="radio" name="counselorId" value="<%= c.id %>"
-                   data-duration="<%= c.sessionDuration %>" data-name="<%= c.name %>"
+            <input type="radio" name="counselorId" value="<%= c.id %>" data-name="<%= c.name %>"
                    style="accent-color:#3874FF;" onchange="onCounselorChange(this)" required>
             <div style="width:38px; height:38px; border-radius:10px; overflow:hidden; background:#3874FF; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:700; font-size:13px; flex-shrink:0;">
               <% if (c.photo) { %>
@@ -426,7 +425,6 @@
             </div>
             <div style="text-align:right; flex-shrink:0;">
               <div style="font-size:12px; font-weight:700; color:#3874FF;">นัดหมายรวม <%= counselorActiveCounts[c.id] || 0 %> นัด</div>
-              <div style="font-size:12px; color:#94a3b8;"><%= c.sessionDuration %> นาที/ครั้ง</div>
             </div>
           </label>
           <% }) %>
@@ -696,8 +694,7 @@
         <div style="display:grid; gap:8px;" id="e_counselorList">
           <% counselors.forEach(c => { %>
           <label class="counselor-card" id="ecard_<%= c.id %>">
-            <input type="radio" name="counselorId" value="<%= c.id %>"
-                   data-duration="<%= c.sessionDuration %>" data-name="<%= c.name %>"
+            <input type="radio" name="counselorId" value="<%= c.id %>" data-name="<%= c.name %>"
                    style="accent-color:#3874FF;" onchange="eOnCounselorChange(this)" required>
             <div style="width:38px; height:38px; border-radius:10px; overflow:hidden; background:#3874FF; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:700; font-size:13px; flex-shrink:0;">
               <% if (c.photo) { %>
@@ -724,7 +721,6 @@
             </div>
             <div style="text-align:right; flex-shrink:0;">
               <div style="font-size:12px; font-weight:700; color:#3874FF;">นัดหมายรวม <%= counselorActiveCounts[c.id] || 0 %> นัด</div>
-              <div style="font-size:12px; color:#94a3b8;"><%= c.sessionDuration %> นาที/ครั้ง</div>
             </div>
           </label>
           <% }) %>
@@ -764,7 +760,6 @@
           </div>
           <div style="text-align:right; flex-shrink:0;">
             <div style="font-size:12px; font-weight:700; color:#3874FF;">นัดหมายรวม <%= counselorActiveCounts[myCounselor.id] || 0 %> นัด</div>
-            <div style="font-size:12px; color:#94a3b8;"><%= myCounselor.sessionDuration %> นาที/ครั้ง</div>
           </div>
         </div>
         <% } %>
@@ -859,7 +854,6 @@
             <select name="status" id="e_status" class="inp">
               <option value="pending">รอยืนยันนัด</option>
               <option value="confirmed">ยืนยันนัด</option>
-              <option value="completed">ให้คำปรึกษาเสร็จสิ้น</option>
               <option value="cancelled">ยกเลิกนัด</option>
             </select>
           </div>
@@ -927,6 +921,53 @@
           <label class="lbl">หมายเหตุการให้คำปรึกษา <span style="color:#ef4444;">*</span></label>
           <textarea name="counselorNote" id="counselorNoteInput" rows="5" class="inp" style="resize:vertical; min-height:120px;"
                     placeholder="สรุปผลการให้คำปรึกษา ประเด็นที่พูดคุย แนวทางการรักษาต่อไป ฯลฯ" required></textarea>
+        </div>
+        <div>
+          <label class="lbl">อาการ/ข้อมูลปัญหาที่พบ <span style="color:#ef4444;">*</span></label>
+          <textarea name="symptoms" id="completionSymptoms" rows="3" class="inp" style="resize:vertical;" placeholder="บันทึกอาการสำคัญที่พบในการให้คำปรึกษาครั้งนี้" required></textarea>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div>
+            <label class="lbl">ระดับความเสี่ยง</label>
+            <select name="riskLevel" id="completionRiskLevel" class="inp">
+              <option value="none">ไม่พบความเสี่ยง</option>
+              <option value="low">ต่ำ</option>
+              <option value="moderate">ปานกลาง</option>
+              <option value="high">สูง</option>
+              <option value="critical">วิกฤต</option>
+            </select>
+          </div>
+          <div>
+            <label class="lbl">ผลการดูแลเคส</label>
+            <select name="caseDisposition" id="completionDisposition" class="inp" onchange="toggleCompletionFields()">
+              <option value="follow_up">ติดตามต่อ</option>
+              <option value="closed">ปิดเคส</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label class="lbl">รายละเอียดความเสี่ยง <span style="font-weight:400;color:#94a3b8;">(ถ้ามี)</span></label>
+          <textarea name="riskDetail" id="completionRiskDetail" rows="2" class="inp" style="resize:vertical;" placeholder="ปัจจัยเสี่ยง การประเมิน และแนวทางเฝ้าระวัง"></textarea>
+        </div>
+        <div id="completionClosedReasonWrap" style="display:none;">
+          <label class="lbl">เหตุผลการปิดเคส <span style="color:#ef4444;">*</span></label>
+          <textarea name="closedReason" id="completionClosedReason" rows="2" class="inp" style="resize:vertical;" placeholder="ระบุเหตุผลที่สามารถปิดเคสได้"></textarea>
+        </div>
+        <div style="padding:12px;border:1.5px solid #e2e8f0;border-radius:12px;">
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:#334155;cursor:pointer;">
+            <input type="checkbox" name="referralRequired" id="completionReferralRequired" onchange="toggleCompletionFields()" style="accent-color:#05967e;">
+            มีการส่งต่อไปยังหน่วยงานหรือผู้เชี่ยวชาญอื่น
+          </label>
+          <div id="completionReferralFields" style="display:none;gap:10px;margin-top:12px;">
+            <div>
+              <label class="lbl">หน่วยงาน/ผู้เชี่ยวชาญปลายทาง <span style="color:#ef4444;">*</span></label>
+              <input type="text" name="referralDestination" id="completionReferralDestination" class="inp" maxlength="200">
+            </div>
+            <div>
+              <label class="lbl">เหตุผลการส่งต่อ</label>
+              <textarea name="referralReason" id="completionReferralReason" rows="2" class="inp" style="resize:vertical;"></textarea>
+            </div>
+          </div>
         </div>
         <div>
           <label class="lbl">เอกสารแนบ <span style="font-weight:400;color:#94a3b8;">(ถ้ามี)</span></label>
@@ -1197,6 +1238,12 @@
   })
 
   const SCHEDULES = <%- JSON.stringify(schedules) %>
+  function renderAvailableDayBadges(schedules) {
+    const dayNames = [...new Map(schedules.map(schedule => [String(schedule.dayOfWeek), schedule.dayName])).values()].filter(Boolean)
+    return dayNames.map(dayName =>
+      `<span style="padding:3px 10px; background:#dbeafe; color:#1e40af; border-radius:99px; font-size:12px;">${dayName}</span>`
+    ).join('')
+  }
   const CLIENTS   = <%- JSON.stringify(clients) %>
   const CLIENT_APPOINTMENTS = <%- JSON.stringify(clientAppointments) %>
   const COUNSELOR_COLORS = <%- JSON.stringify(counselorColors) %>
@@ -1240,7 +1287,7 @@
   document.addEventListener('keydown', e => { if(e.key==='Escape') { closePanel(); closeViewPanel(); closeEditPanel(); closeCompletePanel(); closeEditNotePanel() } })
 
   function onCounselorChange(radio) {
-    selectedCounselor = { id:radio.value, duration:parseInt(radio.dataset.duration), name:radio.dataset.name }
+    selectedCounselor = { id:radio.value,  name:radio.dataset.name }
     document.querySelectorAll('.counselor-card').forEach(el => {
       const r = el.querySelector('input')
       el.classList.toggle('selected', r && r.value===radio.value)
@@ -1250,9 +1297,7 @@
     di.value = ''
     document.getElementById('dateHint').style.display = 'none'
     const mySched = SCHEDULES.filter(s => s.counselorId===radio.value && s.isActive)
-    document.getElementById('dayBadges').innerHTML = mySched.map(s =>
-      `<span style="padding:3px 10px; background:#dbeafe; color:#1e40af; border-radius:99px; font-size:12px;">${s.dayName} ${s.startTime}–${s.endTime}</span>`
-    ).join('')
+    document.getElementById('dayBadges').innerHTML = renderAvailableDayBadges(mySched)
     document.getElementById('availableDays').style.display = 'block'
     resetSlots()
     document.getElementById('apptSummary').style.display = 'none'
@@ -1277,7 +1322,7 @@
     }
     grid.innerHTML = available.map(s => `
       <button type="button" class="slot-btn" onclick="selectSlot(this,'${s.time}')">
-        ${s.time}
+        ${s.time}–${s.endTime} · ${s.duration} นาที
       </button>`
     ).join('')
   }
@@ -1412,7 +1457,7 @@
     eOriginalCounselorId = a.counselorId
     eOriginalDate         = a.date
     eOriginalTime         = a.time
-    eSelectedCounselor    = { id: a.counselorId, duration: a.duration, name: a.counselorName }
+    eSelectedCounselor    = { id: a.counselorId, name: a.counselorName }
     eSelectedTime         = a.time
 
     document.getElementById('editPanelSub').textContent = `${a.clientName} — ${a.date}`
@@ -1428,9 +1473,7 @@
 
     document.getElementById('e_dateInput').value = a.date || ''
     const mySched = SCHEDULES.filter(s => s.counselorId === a.counselorId && s.isActive)
-    document.getElementById('e_dayBadges').innerHTML = mySched.map(s =>
-      `<span style="padding:3px 10px; background:#dbeafe; color:#1e40af; border-radius:99px; font-size:12px;">${s.dayName} ${s.startTime}–${s.endTime}</span>`
-    ).join('')
+    document.getElementById('e_dayBadges').innerHTML = renderAvailableDayBadges(mySched)
     document.getElementById('e_availableDays').style.display = 'block'
 
     const statusEl  = document.getElementById('e_status')
@@ -1468,15 +1511,13 @@
   }
 
   function eOnCounselorChange(radio) {
-    eSelectedCounselor = { id: radio.value, duration: parseInt(radio.dataset.duration), name: radio.dataset.name }
+    eSelectedCounselor = { id: radio.value, name: radio.dataset.name }
     document.querySelectorAll('#e_counselorList .counselor-card').forEach(el => {
       const r = el.querySelector('input')
       el.classList.toggle('selected', r && r.value === radio.value)
     })
     const mySched = SCHEDULES.filter(s => s.counselorId === radio.value && s.isActive)
-    document.getElementById('e_dayBadges').innerHTML = mySched.map(s =>
-      `<span style="padding:3px 10px; background:#dbeafe; color:#1e40af; border-radius:99px; font-size:12px;">${s.dayName} ${s.startTime}–${s.endTime}</span>`
-    ).join('')
+    document.getElementById('e_dayBadges').innerHTML = renderAvailableDayBadges(mySched)
     document.getElementById('e_availableDays').style.display = 'block'
     eLoadSlots()
     const summaryEl = document.getElementById('e_apptSummary')
@@ -1508,7 +1549,7 @@
     }
     grid.innerHTML = available.map(s => `
       <button type="button" class="slot-btn${isOriginalSlot && s.time===eOriginalTime ? ' selected' : ''}" onclick="eSelectSlot(this,'${s.time}')">
-        ${s.time}
+        ${s.time}–${s.endTime} · ${s.duration} นาที
       </button>`
     ).join('')
     if (isOriginalSlot) {
@@ -1587,9 +1628,30 @@
   }
 
   // ── Complete Panel ────────────────────────────────────────────────
+  function toggleCompletionFields() {
+    const isClosed = document.getElementById('completionDisposition').value === 'closed'
+    const closedReason = document.getElementById('completionClosedReason')
+    document.getElementById('completionClosedReasonWrap').style.display = isClosed ? 'block' : 'none'
+    closedReason.required = isClosed
+
+    const hasReferral = document.getElementById('completionReferralRequired').checked
+    const destination = document.getElementById('completionReferralDestination')
+    document.getElementById('completionReferralFields').style.display = hasReferral ? 'grid' : 'none'
+    destination.required = hasReferral
+  }
+
   function openCompletePanel(id) {
     document.getElementById('completeForm').action = '/admin/appointments/' + id + '/complete'
     document.getElementById('counselorNoteInput').value = ''
+    document.getElementById('completionSymptoms').value = ''
+    document.getElementById('completionRiskLevel').value = 'none'
+    document.getElementById('completionRiskDetail').value = ''
+    document.getElementById('completionDisposition').value = 'follow_up'
+    document.getElementById('completionClosedReason').value = ''
+    document.getElementById('completionReferralRequired').checked = false
+    document.getElementById('completionReferralDestination').value = ''
+    document.getElementById('completionReferralReason').value = ''
+    toggleCompletionFields()
     document.getElementById('counselorAttachmentInput').value = ''
     document.getElementById('counselorAttachmentFileName').textContent = 'ยังไม่ได้เลือกไฟล์'
     const ov = document.getElementById('completeOverlay')
@@ -1608,9 +1670,9 @@
     setTimeout(() => { ov.style.display = 'none' }, 200)
   }
   function submitCompletePanel() {
-    const ta = document.getElementById('counselorNoteInput')
-    if (!ta.value.trim()) { ta.focus(); return }
-    document.getElementById('completeForm').submit()
+    const form = document.getElementById('completeForm')
+    if (!form.reportValidity()) return
+    form.submit()
   }
 
   lucide.createIcons()

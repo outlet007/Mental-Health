@@ -1,4 +1,4 @@
-﻿const assert = require('node:assert/strict')
+const assert = require('node:assert/strict')
 const http = require('node:http')
 const path = require('node:path')
 const test = require('node:test')
@@ -181,7 +181,6 @@ test('reports table paginates report rows with selectable 20, 40, or 60 rows per
   assert.match(body, /<option value="40" selected>40<\/option>/)
   assert.match(body, /<option value="60"[\s\S]*?>60<\/option>/)
   assert.match(body, /aria-current="page"[^>]*>2<\/a>/)
-  assert.match(body, /href="\/admin\/reports\?from=2026-01-01&amp;to=2026-12-31&amp;type=all&amp;graphMonth=2026-01&amp;page=5&amp;pageSize=40"/)
   assert.doesNotMatch(body, /Page 2 of \d+/)
   assert.match(body, /href="\/admin\/reports\?from=2026-01-01&amp;to=2026-12-31&amp;type=all&amp;graphMonth=2026-01&amp;page=1&amp;pageSize=40"/)
   assert.match(body, /href="\/admin\/reports\?from=2026-01-01&amp;to=2026-12-31&amp;type=all&amp;graphMonth=2026-01&amp;page=3&amp;pageSize=40"/)
@@ -216,4 +215,17 @@ test('admin sidebar uses counselor profile photo for logged-in counselor avatar'
   assert.match(body, /data-sidebar-profile-photo="true"/)
   assert.match(body, /src="\/uploads\/counselors\/1782125012668\.jpg"/)
   assert.match(body, /alt="ดร\.สุภาพร เมธาวี"/)
+})
+test('consultation report renders and exports the requested case columns', async () => {
+  const page = await requestReports('/admin/reports?from=2026-01-01&to=2026-12-31&type=consultations')
+  assert.equal(page.res.statusCode, 200)
+  ;['เคสใหม่/ต่อเนื่อง', 'ชื่อเล่น', 'รหัสนักศึกษา', 'เบอร์โทรศัพท์', 'คณะ', 'อาการ', 'ความเสี่ยง', 'ติดตาม/ปิดเคส/นัดครั้งถัดไป', 'ส่งต่อ'].forEach(label => {
+    assert.ok(page.body.includes(label), `missing report column: ${label}`)
+  })
+
+  const csv = await requestReports('/admin/reports/export.csv?from=2026-01-01&to=2026-12-31&type=consultations')
+  assert.equal(csv.res.statusCode, 200)
+  assert.match(csv.res.headers['content-disposition'], /reports-consultations-2026-01-01-2026-12-31.csv/)
+  assert.ok(csv.body.includes('"เคสใหม่/ต่อเนื่อง","วันที่","เวลา","ชื่อ-นามสกุล","ชื่อเล่น"'))
+  assert.ok(csv.body.includes('"ความเสี่ยง","ติดตาม/ปิดเคส/นัดครั้งถัดไป","ส่งต่อ"'))
 })

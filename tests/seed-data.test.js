@@ -25,6 +25,7 @@ test('seed data does not include admin credentials', () => {
   assert.ok(!('admins.json' in seed), 'seed-data.js must never seed admins.json')
   for (const counselor of seed['counselors.json']) {
     assert.equal(counselor.password, undefined, `${counselor.id} must not ship a default password`)
+    assert.equal(counselor.sessionDuration, undefined, `${counselor.id} must define duration through schedule slots`)
   }
 })
 

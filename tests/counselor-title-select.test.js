@@ -11,7 +11,7 @@ test('admin counselor form restricts title to the supported dropdown options', (
 
   assert.match(source, /<select name="title" id="f_title" class="inp" required>/)
   assert.match(source, /<option value="จิตแพทย์">จิตแพทย์<\/option>/)
-  assert.match(source, /<option value="นักจิตวิทยาคลินิก">นักจิตวิทยาคลินิก<\/option>/)
+  assert.match(source, /<option value="นักจิตวิทยาให้คำปรึกษา">นักจิตวิทยาให้คำปรึกษา<\/option>/)
   assert.doesNotMatch(source, /<input[^>]+name="title"[^>]*>/)
 })
 
@@ -27,8 +27,14 @@ test('new counselor accounts require login credentials and are activated immedia
 
   assert.match(viewSource, /name="username" id="f_username"[^>]+required/)
   assert.match(viewSource, /name="password" id="f_password"[^>]+minlength="8" required/)
+  assert.match(viewSource, /id="passwordToggle" data-password-toggle="true" aria-label="แสดงรหัสผ่าน"/)
+  assert.match(viewSource, /function togglePasswordVisibility\(\)/)
+  assert.match(viewSource, /setPasswordVisibility\(false\)/)
+  assert.match(viewSource, /visible \? 'eye-off' : 'eye'/)
   assert.match(viewSource, /อนุมัติและเปิดใช้งานทันที/)
   assert.doesNotMatch(viewSource, /name="isApproved"/)
+  assert.doesNotMatch(viewSource, /sessionDuration/)
+  assert.doesNotMatch(routeSource, /sessionDuration/)
 
   assert.match(routeSource, /if \(!uname \|\| pass\.length < 8\)/)
   assert.match(routeSource, /status:\s+'active'/)

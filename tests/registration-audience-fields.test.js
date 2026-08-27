@@ -90,6 +90,7 @@ test('server validation does not require fields hidden for the selected audience
   assert.deepEqual(contact, {
     audience: 'staff',
     name: 'Staff User',
+    nickname: '',
     studentId: '',
     facultyIndex: '',
     faculty: '',

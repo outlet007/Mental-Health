@@ -28,7 +28,6 @@
     .inp { width:100%; padding:9px 12px; border:1.5px solid #e2e8f0; border-radius:10px; font-size:13px; color:#334155; outline:none; font-family:inherit; box-sizing:border-box; }
     .inp:focus { border-color:#2dd4b4; box-shadow:0 0 0 3px rgba(45,212,180,.15); }
     .lbl { display:block; font-size:12px; font-weight:500; color:#64748b; margin-bottom:5px; }
-    input[type="time"]::-webkit-datetime-edit-ampm-field { display:none; }
     .view-btn { display:inline-flex; align-items:center; gap:5px; padding:6px 14px; border-radius:8px; font-size:12px; font-weight:500; cursor:pointer; border:1.5px solid #e2e8f0; background:#fff; color:#64748b; text-decoration:none; transition:all .15s; }
     .view-btn:hover { border-color:#2dd4b4; color:#05967e; }
     .view-btn.active { border-color:#05967e; background:#ecfdf9; color:#05967e; }
@@ -155,24 +154,17 @@
         <span style="font-size:13px; font-weight:600; color:#1e293b;"><%= currentCounselor.name %></span>
         <span style="font-size:12px; color:#94a3b8;">— <%= currentCounselor.title %></span>
       </div>
-      <% if (availableDays.length > 0) { %>
       <button onclick="openPanel('create')" class="act-btn ab-secondary">
         <i data-lucide="plus" style="width:13px;height:13px;"></i>
-        เพิ่มวัน (<%= availableDays.length %> วันที่ยังไม่ได้เพิ่ม)
+        เพิ่มตารางเวลา
       </button>
-      <% } else { %>
-      <span style="font-size:12px; color:#94a3b8; display:flex; align-items:center; gap:4px;">
-        <i data-lucide="check-circle" style="width:13px;height:13px;color:#05967e;"></i>
-        กำหนดตารางครบทั้ง 7 วันแล้ว
-      </span>
-      <% } %>
     </div>
     <% } %>
 
     <div style="background:#fff; border:1px solid #f1f5f9; border-radius:16px; overflow:hidden;">
       <div style="padding:14px 16px; border-bottom:1px solid #f1f5f9; display:flex; align-items:center; justify-content:space-between;">
         <span style="font-size:13px; font-weight:600; color:#334155;">ตารางเวลารับนัดรายสัปดาห์</span>
-        <span style="font-size:12px; color:#94a3b8;"><%= mySchedules.length %> / 7 วัน</span>
+        <span style="font-size:12px; color:#94a3b8;"><%= mySchedules.length %> slot</span>
       </div>
       <div style="overflow-x:auto;">
         <table class="tbl">
@@ -224,9 +216,9 @@
                   </button>
                   <button type="button" class="act-btn ab-danger delete-btn"
                           data-action="/admin/schedules/delete"
-                          data-name="ตารางเวลา<%= s.dayName %>"
-                          data-warning="ตารางเวลาวันนี้จะถูกลบถาวร ผู้รับบริการจะไม่สามารถจองคิววันนี้ได้อีก"
-                          data-extra='<%- JSON.stringify({counselorId: s.counselorId, dayOfWeek: s.dayOfWeek, returnQuery: returnQuery}) %>'>
+                          data-name="slot <%= s.dayName %> <%= s.startTime %>–<%= s.endTime %>"
+                          data-warning="slot นี้จะถูกลบถาวร ผู้รับบริการจะไม่สามารถจองช่วงเวลานี้ได้อีก"
+                          data-extra='<%- JSON.stringify({id: s.id, returnQuery: returnQuery}) %>'>
                     <i data-lucide="trash-2" style="width:13px;height:13px;"></i>
                   </button>
                 </div>
@@ -247,9 +239,9 @@
       </div>
     </div>
 
-    <% if (availableDays.length > 0 && mySchedules.length > 0) { %>
+    <% if (mySchedules.length > 0) { %>
     <div style="margin-top:16px;background:#fff;border:1px solid #f1f5f9;border-radius:16px;padding:16px;">
-      <div style="font-size:12px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">วันที่ยังไม่ได้กำหนด</div>
+      <div style="font-size:12px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">เพิ่มตารางเวลาในวัน</div>
       <div style="display:flex;flex-wrap:wrap;gap:8px;">
         <% availableDays.forEach(day => { %>
         <button onclick="openPanel('create',{dayOfWeek:<%= day.dayOfWeek %>,dayName:'<%= day.dayName %>'})"
@@ -403,9 +395,9 @@
                   </button>
                   <button type="button" class="act-btn ab-danger delete-btn"
                           data-action="/admin/schedules/delete"
-                          data-name="ตาราง<%= s.dayName %>ของ<%= s.counselor ? s.counselor.name : '' %>"
+                          data-name="slot <%= s.dayName %> <%= s.startTime %>–<%= s.endTime %> ของ <%= s.counselor ? s.counselor.name : '' %>"
                           data-warning="ตารางเวลานี้จะถูกลบถาวร ผู้รับบริการจะไม่สามารถจองคิวช่วงเวลานี้ได้อีก"
-                          data-extra='<%- JSON.stringify({counselorId: s.counselorId, dayOfWeek: s.dayOfWeek, returnQuery: returnQuery}) %>'>
+                          data-extra='<%- JSON.stringify({id: s.id, returnQuery: returnQuery}) %>'>
                     <i data-lucide="trash-2" style="width:13px;height:13px;"></i>
                   </button>
                 </div>
@@ -528,6 +520,7 @@
 
   <div style="flex:1; overflow-y:auto; padding:24px;">
     <form id="panelForm" method="POST" action="/admin/schedules/save"><input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+      <input type="hidden" name="id" id="f_scheduleId">
       <input type="hidden" name="returnQuery" value="<%= returnQuery %>">
       <div style="display:grid; gap:18px;">
 
@@ -540,39 +533,42 @@
           </select>
         </div>
 
-        <div>
+        <input type="hidden" name="dayOfWeek" id="f_dayOfWeek" value="">
+        <input type="hidden" name="dayOfWeeks" id="f_dayOfWeeks" value="[]">
+        <div id="createDayPicker">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px;">
+            <label class="lbl" style="margin:0;">วันที่ต้องการเพิ่ม *</label>
+            <span style="font-size:11px;color:#94a3b8;">เลือกได้หลายวัน</span>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;">
+            <% ['อาทิตย์','จันทร์','อังคาร','พุธ','พฤหัสบดี','ศุกร์','เสาร์'].forEach((name,i) => { %>
+            <label style="display:flex;align-items:center;gap:7px;padding:9px 10px;border:1.5px solid #e2e8f0;border-radius:10px;cursor:pointer;font-size:12px;color:#475569;background:#fff;">
+              <input type="checkbox" class="schedule-day-checkbox" value="<%= i %>" style="accent-color:#05967e;">
+              <span><%= name %></span>
+            </label>
+            <% }) %>
+          </div>
+        </div>
+        <div id="editDayPicker" style="display:none;">
           <label class="lbl">วัน *</label>
-          <select name="dayOfWeek" id="f_dayOfWeek" class="inp" required>
-            <option value="">— เลือกวัน —</option>
+          <select id="f_editDayOfWeek" class="inp">
             <% ['อาทิตย์','จันทร์','อังคาร','พุธ','พฤหัสบดี','ศุกร์','เสาร์'].forEach((name,i) => { %>
             <option value="<%= i %>"><%= name %></option>
             <% }) %>
           </select>
-          <div id="dayWarning" style="display:none; margin-top:6px; padding:8px 12px; background:#fef3c7; border:1px solid #fde68a; border-radius:8px; font-size:12px; color:#92400e;">
-            <i data-lucide="alert-triangle" style="width:12px;height:12px;display:inline;margin-right:4px;"></i>
-            วันนี้มีตารางอยู่แล้ว — การบันทึกจะ<strong>แทนที่ข้อมูลเดิม</strong>
-          </div>
         </div>
-
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
-          <div>
-            <label class="lbl">เวลาเริ่ม *</label>
-            <input type="time" name="startTime" id="f_startTime" class="inp" value="09:00" required>
-          </div>
-          <div>
-            <label class="lbl">เวลาสิ้นสุด *</label>
-            <input type="time" name="endTime" id="f_endTime" class="inp" value="17:00" required>
-          </div>
+        <div id="dayWarning" style="display:none; padding:8px 12px; background:#fef2f2; border:1px solid #fca5a5; border-radius:8px; font-size:12px; color:#991b1b;">
+          <i data-lucide="alert-triangle" style="width:12px;height:12px;display:inline;margin-right:4px;"></i>
+          <span id="dayWarningText">กรุณาเลือกอย่างน้อย 1 วัน</span>
         </div>
-
-        <div id="durationPreview" style="padding:12px 16px; background:#f8fafc; border-radius:10px; border:1px solid #f1f5f9; display:flex; align-items:center; gap:10px;">
-          <i data-lucide="clock" style="width:16px;height:16px;color:#2dd4b4;flex-shrink:0;"></i>
-          <div>
-            <div style="font-size:12px; color:#94a3b8; margin-bottom:2px;">ระยะเวลาทำงานรวม</div>
-            <div id="durationText" style="font-size:14px; font-weight:600; color:#1e293b;">8 ชั่วโมง</div>
-          </div>
+        <input type="hidden" name="timeRanges" id="f_timeRanges" value="[]">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
+          <label class="lbl" style="margin:0;">ช่วงเวลา *</label>
+          <button type="button" id="addTimeRangeButton" onclick="addTimeRange()" class="act-btn ab-secondary">
+            <i data-lucide="plus" style="width:13px;height:13px;"></i> เพิ่มช่วงเวลา
+          </button>
         </div>
-
+        <div id="timeRangesContainer" style="display:grid;gap:12px;"></div>
         <div>
           <label class="lbl">สถานะการรับนัด</label>
           <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
@@ -688,43 +684,208 @@
     location.href = url
   }
 
-  function openPanel(mode, data) {
-    document.getElementById('panelForm').reset()
-    document.getElementById('dayWarning').style.display = 'none'
-    document.getElementById('f_startTime').value = '09:00'
-    document.getElementById('f_endTime').value   = '17:00'
-    document.getElementById('r_open').checked    = true
-    updateDuration()
+  let schedulePanelMode = 'create'
+  const SCHEDULE_DAY_NAMES = ['อาทิตย์','จันทร์','อังคาร','พุธ','พฤหัสบดี','ศุกร์','เสาร์']
 
-    if (mode === 'create') {
-      document.getElementById('panelTitle').textContent   = 'เพิ่มตารางเวลา'
-      document.getElementById('panelSub').textContent     = 'กำหนดวันและเวลารับนัด'
-      document.getElementById('panelIcon').setAttribute('data-lucide','calendar-plus')
-      document.getElementById('submitLabel').textContent  = 'บันทึกตารางเวลา'
-      document.getElementById('f_counselorId').value      = SELECTED_ID
-      if (data && data.dayOfWeek !== undefined) {
-        document.getElementById('f_dayOfWeek').value = data.dayOfWeek
-        checkDayConflict()
+  function toMinutes(value) {
+    const parts = String(value || '').split(':').map(Number)
+    return parts.length === 2 ? parts[0] * 60 + parts[1] : NaN
+  }
+
+  function formatMinutes(total) {
+    if (!Number.isFinite(total) || total <= 0) return '⚠ เวลาสิ้นสุดต้องมากกว่าเวลาเริ่ม'
+    const hours = Math.floor(total / 60)
+    const minutes = total % 60
+    return hours ? `${hours} ชั่วโมง${minutes ? ' ' + minutes + ' นาที' : ''}` : `${minutes} นาที`
+  }
+
+  function splitTime(value) {
+    const [hour = '00', minute = '00'] = String(value || '00:00').split(':')
+    return { hour: hour.padStart(2, '0'), minute: minute.padStart(2, '0') }
+  }
+
+  function timeOptions(size, selected) {
+    return Array.from({ length: size }, (_, index) => {
+      const value = String(index).padStart(2, '0')
+      return `<option value="${value}"${value === selected ? ' selected' : ''}>${value}</option>`
+    }).join('')
+  }
+
+  function combineTime(row, prefix) {
+    const hour = row.querySelector(`[data-field="${prefix}Hour"]`).value
+    const minute = row.querySelector(`[data-field="${prefix}Minute"]`).value
+    return `${hour}:${minute}`
+  }
+
+  function readTimeRanges() {
+    return [...document.querySelectorAll('.time-range-row')].map(row => ({
+      startTime: combineTime(row, 'start'),
+      endTime: combineTime(row, 'end'),
+    }))
+  }
+  function readSelectedDays() {
+    if (schedulePanelMode === 'edit') {
+      const day = parseInt(document.getElementById('f_editDayOfWeek').value)
+      return Number.isInteger(day) ? [day] : []
+    }
+    return [...document.querySelectorAll('.schedule-day-checkbox:checked')]
+      .map(input => parseInt(input.value))
+      .filter(Number.isInteger)
+  }
+  function renderTimeRanges(ranges) {
+    const container = document.getElementById('timeRangesContainer')
+    container.innerHTML = ranges.map((range, index) => {
+      const start = splitTime(range.startTime)
+      const end = splitTime(range.endTime)
+      return `
+      <div class="time-range-row" style="padding:14px;border:1.5px solid #e2e8f0;border-radius:12px;background:#fff;">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;">
+          <span style="font-size:12px;font-weight:700;color:#475569;">ช่วงเวลาที่ ${index + 1}</span>
+          ${schedulePanelMode === 'create' && ranges.length > 1 ? `<button type="button" onclick="removeTimeRange(${index})" class="act-btn ab-ghost" style="color:#ef4444;padding:4px 8px;"><i data-lucide="trash-2" style="width:13px;height:13px;"></i> ลบ</button>` : ''}
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div>
+            <label class="lbl">เวลาเริ่ม (24 ชั่วโมง) *</label>
+            <div style="display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;">
+              <select data-field="startHour" class="inp" aria-label="ชั่วโมงเริ่ม">${timeOptions(24, start.hour)}</select>
+              <span aria-hidden="true" style="font-weight:700;color:#64748b;">:</span>
+              <select data-field="startMinute" class="inp" aria-label="นาทีเริ่ม">${timeOptions(60, start.minute)}</select>
+            </div>
+          </div>
+          <div>
+            <label class="lbl">เวลาสิ้นสุด (24 ชั่วโมง) *</label>
+            <div style="display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;">
+              <select data-field="endHour" class="inp" aria-label="ชั่วโมงสิ้นสุด">${timeOptions(24, end.hour)}</select>
+              <span aria-hidden="true" style="font-weight:700;color:#64748b;">:</span>
+              <select data-field="endMinute" class="inp" aria-label="นาทีสิ้นสุด">${timeOptions(60, end.minute)}</select>
+            </div>
+          </div>
+        </div>
+        <div data-duration style="font-size:12px;color:#05967e;font-weight:600;margin-top:8px;"></div>
+      </div>`
+    }).join('')
+    container.querySelectorAll('select[data-field]').forEach(select => {
+      select.addEventListener('change', updateTimeRanges)
+    })
+    updateTimeRanges()
+    lucide.createIcons()
+  }
+  function addTimeRange() {
+    const ranges = readTimeRanges()
+    const previousEnd = ranges.at(-1)?.endTime || '09:00'
+    const nextStartMinutes = toMinutes(previousEnd)
+    const nextEndMinutes = Number.isFinite(nextStartMinutes) ? Math.min(nextStartMinutes + 60, 1439) : 600
+    const nextEnd = `${String(Math.floor(nextEndMinutes / 60)).padStart(2, '0')}:${String(nextEndMinutes % 60).padStart(2, '0')}`
+    ranges.push({ startTime: previousEnd, endTime: nextEnd })
+    renderTimeRanges(ranges)
+  }
+
+  function removeTimeRange(index) {
+    const ranges = readTimeRanges()
+    ranges.splice(index, 1)
+    renderTimeRanges(ranges.length ? ranges : [{ startTime: '09:00', endTime: '10:00' }])
+  }
+
+  function setTimeRangeWarning(message) {
+    const warning = document.getElementById('dayWarning')
+    document.getElementById('dayWarningText').textContent = message || ''
+    warning.style.display = message ? 'block' : 'none'
+    if (message) lucide.createIcons()
+  }
+
+  function updateTimeRanges() {
+    const counselorId = document.getElementById('f_counselorId').value
+    const days = readSelectedDays()
+    const currentId = document.getElementById('f_scheduleId').value
+    const ranges = readTimeRanges()
+    let warning = ''
+
+    document.querySelectorAll('.time-range-row').forEach((row, index) => {
+      const start = toMinutes(ranges[index].startTime)
+      const end = toMinutes(ranges[index].endTime)
+      row.querySelector('[data-duration]').textContent = formatMinutes(end - start)
+    })
+
+    if (!days.length) warning = 'กรุณาเลือกอย่างน้อย 1 วัน'
+
+    for (let index = 0; index < ranges.length && !warning; index++) {
+      const start = toMinutes(ranges[index].startTime)
+      const end = toMinutes(ranges[index].endTime)
+      if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start) {
+        warning = `ช่วงเวลาที่ ${index + 1}: เวลาสิ้นสุดต้องมากกว่าเวลาเริ่ม`
+        break
       }
-    } else {
-      document.getElementById('panelTitle').textContent   = 'แก้ไขตารางเวลา'
-      document.getElementById('panelSub').textContent     = data.dayName
-      document.getElementById('panelIcon').setAttribute('data-lucide','pencil')
-      document.getElementById('submitLabel').textContent  = 'บันทึกการแก้ไข'
-      document.getElementById('f_counselorId').value      = data.counselorId
-      document.getElementById('f_dayOfWeek').value        = data.dayOfWeek
-      document.getElementById('f_startTime').value = data.startTime
-      document.getElementById('f_endTime').value   = data.endTime
-      document.getElementById(data.isActive ? 'r_open' : 'r_close').checked = true
-      updateDuration()
+      for (let other = 0; other < index; other++) {
+        const otherStart = toMinutes(ranges[other].startTime)
+        const otherEnd = toMinutes(ranges[other].endTime)
+        if (start < otherEnd && otherStart < end) {
+          warning = `ช่วงเวลาที่ ${index + 1} ทับซ้อนกับช่วงเวลาที่ ${other + 1}`
+          break
+        }
+      }
     }
 
-    lucide.createIcons()
+    for (const day of days) {
+      for (let index = 0; index < ranges.length && !warning; index++) {
+        const start = toMinutes(ranges[index].startTime)
+        const end = toMinutes(ranges[index].endTime)
+        const savedConflict = ALL_SCHEDULES.some(slot =>
+          slot.id !== currentId &&
+          slot.counselorId === counselorId &&
+          Number(slot.dayOfWeek) === day &&
+          start < toMinutes(slot.endTime) &&
+          toMinutes(slot.startTime) < end
+        )
+        if (savedConflict) warning = `${SCHEDULE_DAY_NAMES[day]} ช่วงเวลาที่ ${index + 1} ทับซ้อนกับตารางเวลาที่มีอยู่แล้ว`
+      }
+      if (warning) break
+    }
+
+    document.getElementById('f_dayOfWeeks').value = JSON.stringify(days)
+    document.getElementById('f_dayOfWeek').value = days[0] ?? ''
+    document.getElementById('f_timeRanges').value = JSON.stringify(ranges)
+    setTimeRangeWarning(warning)
+    return !warning && days.length > 0 && ranges.length > 0
+  }
+  function openPanel(mode, data) {
+    schedulePanelMode = mode
+    document.getElementById('panelForm').reset()
+    document.getElementById('f_scheduleId').value = ''
+    document.getElementById('r_open').checked = true
+    document.getElementById('addTimeRangeButton').style.display = mode === 'create' ? 'inline-flex' : 'none'
+    document.getElementById('createDayPicker').style.display = mode === 'create' ? '' : 'none'
+    document.getElementById('editDayPicker').style.display = mode === 'edit' ? '' : 'none'
+    document.querySelectorAll('.schedule-day-checkbox').forEach(input => { input.checked = false })
+
+    if (mode === 'create') {
+      document.getElementById('panelTitle').textContent = 'เพิ่มตารางเวลา'
+      document.getElementById('panelSub').textContent = 'เลือกหลายวันและเพิ่มช่วงเวลาเดียวกันได้ในครั้งเดียว'
+      document.getElementById('panelIcon').setAttribute('data-lucide', 'calendar-plus')
+      document.getElementById('submitLabel').textContent = 'บันทึกตารางเวลา'
+      document.getElementById('f_counselorId').value = SELECTED_ID
+      if (data && data.dayOfWeek !== undefined) {
+        const selectedDay = document.querySelector('.schedule-day-checkbox[value="' + data.dayOfWeek + '"]')
+        if (selectedDay) selectedDay.checked = true
+      }
+      renderTimeRanges([{ startTime: '09:00', endTime: '10:00' }])
+    } else {
+      document.getElementById('panelTitle').textContent = 'แก้ไขตารางเวลา'
+      document.getElementById('panelSub').textContent = data.dayName
+      document.getElementById('panelIcon').setAttribute('data-lucide', 'pencil')
+      document.getElementById('submitLabel').textContent = 'บันทึกการแก้ไข'
+      document.getElementById('f_scheduleId').value = data.id
+      document.getElementById('f_counselorId').value = data.counselorId
+      document.getElementById('f_editDayOfWeek').value = data.dayOfWeek
+      document.getElementById(data.isActive ? 'r_open' : 'r_close').checked = true
+      renderTimeRanges([{ startTime: data.startTime, endTime: data.endTime }])
+    }
+
     const ov = document.getElementById('overlay')
     ov.style.display = 'block'
-    requestAnimationFrame(() => { ov.classList.add('open') })
+    requestAnimationFrame(() => ov.classList.add('open'))
     document.getElementById('panel').classList.add('open')
     document.body.style.overflow = 'hidden'
+    lucide.createIcons()
   }
 
   function closePanel() {
@@ -736,37 +897,14 @@
   }
 
   function submitPanel() {
-    const f = document.getElementById('panelForm')
-    if (f.reportValidity()) f.submit()
+    const form = document.getElementById('panelForm')
+    if (!updateTimeRanges()) return
+    if (form.reportValidity()) form.submit()
   }
 
-  function checkDayConflict() {
-    const counselorId = document.getElementById('f_counselorId').value
-    const dayOfWeek   = parseInt(document.getElementById('f_dayOfWeek').value)
-    const conflict    = MY_SCHEDULES.some(s => s.counselorId === counselorId && s.dayOfWeek === dayOfWeek)
-    document.getElementById('dayWarning').style.display = conflict ? 'block' : 'none'
-    if (conflict) lucide.createIcons()
-  }
-
-  function updateDuration() {
-    const start = document.getElementById('f_startTime').value
-    const end   = document.getElementById('f_endTime').value
-    if (!start || !end) return
-    const [sh,sm] = start.split(':').map(Number)
-    const [eh,em] = end.split(':').map(Number)
-    const total = (eh*60+em) - (sh*60+sm)
-    let text = ''
-    if (total <= 0) text = '⚠ เวลาสิ้นสุดต้องมากกว่าเวลาเริ่ม'
-    else {
-      const h = Math.floor(total/60), m = total%60
-      text = h ? `${h} ชั่วโมง${m ? ' '+m+' นาที' : ''}` : `${m} นาที`
-    }
-    document.getElementById('durationText').textContent = text
-  }
-
-  document.getElementById('f_startTime').addEventListener('change', updateDuration)
-  document.getElementById('f_endTime').addEventListener('change', updateDuration)
-  document.getElementById('f_dayOfWeek').addEventListener('change', checkDayConflict)
+  document.querySelectorAll('.schedule-day-checkbox').forEach(input => input.addEventListener('change', updateTimeRanges))
+  document.getElementById('f_editDayOfWeek').addEventListener('change', updateTimeRanges)
+  document.getElementById('f_counselorId').addEventListener('change', updateTimeRanges)
   document.querySelectorAll('.edit-btn').forEach(btn => {
     btn.addEventListener('click', () => openPanel('edit', JSON.parse(btn.dataset.rec)))
   })

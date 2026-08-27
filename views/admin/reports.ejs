@@ -1,4 +1,4 @@
-﻿﻿<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="th">
 <head>
   <meta charset="UTF-8">
@@ -359,6 +359,11 @@
         <table data-table-pagination="server" style="width:100%;border-collapse:collapse;min-width:900px;">
           <thead>
             <tr style="background:#f8fafc;">
+              <% if (filters.type === 'consultations') { %>
+              <% ['เคสใหม่/ต่อเนื่อง','วันที่','เวลา','ชื่อ-นามสกุล','ชื่อเล่น','รหัสนักศึกษา','เบอร์โทรศัพท์','คณะ','อาการ','ความเสี่ยง','ติดตาม/ปิดเคส/นัดครั้งถัดไป','ส่งต่อ'].forEach(label => { %>
+              <th class="table-cell" style="text-align:left;color:#64748b;font-size:12px;font-weight:800;white-space:nowrap;"><%= label %></th>
+              <% }) %>
+              <% } else { %>
               <th class="table-cell" style="text-align:left;color:#64748b;font-size:12px;font-weight:800;">ประเภท</th>
               <th class="table-cell" style="text-align:left;color:#64748b;font-size:12px;font-weight:800;">วันที่</th>
               <th class="table-cell" style="text-align:left;color:#64748b;font-size:12px;font-weight:800;">รหัส</th>
@@ -366,12 +371,27 @@
               <th class="table-cell" style="text-align:left;color:#64748b;font-size:12px;font-weight:800;">รายละเอียด</th>
               <th class="table-cell" style="text-align:left;color:#64748b;font-size:12px;font-weight:800;">สถานะ</th>
               <th class="table-cell" style="text-align:left;color:#64748b;font-size:12px;font-weight:800;">คะแนน</th>
+              <% } %>
             </tr>
           </thead>
           <tbody>
             <% if (reportRows.length) { %>
               <% reportRows.forEach(row => { %>
                 <tr>
+                  <% if (filters.type === 'consultations') { %>
+                  <td class="table-cell"><%= row.caseType || '-' %></td>
+                  <td class="table-cell"><%= row.date || '-' %></td>
+                  <td class="table-cell"><%= row.time || '-' %></td>
+                  <td class="table-cell" style="font-weight:700;color:#1e293b;"><%= row.name || '-' %></td>
+                  <td class="table-cell"><%= row.nickname || '-' %></td>
+                  <td class="table-cell"><%= row.studentId || '-' %></td>
+                  <td class="table-cell"><%= row.phone || '-' %></td>
+                  <td class="table-cell"><%= row.faculty || '-' %></td>
+                  <td class="table-cell" style="min-width:220px;white-space:normal;"><%= row.symptoms || '-' %></td>
+                  <td class="table-cell" style="min-width:180px;white-space:normal;"><%= row.risk || '-' %></td>
+                  <td class="table-cell" style="min-width:220px;white-space:normal;"><%= row.followUp || '-' %></td>
+                  <td class="table-cell" style="min-width:180px;white-space:normal;"><%= row.referral || '-' %></td>
+                  <% } else { %>
                   <td class="table-cell"><%= row.type %></td>
                   <td class="table-cell"><%= row.date || '-' %></td>
                   <td class="table-cell"><%= row.id || '-' %></td>
@@ -379,11 +399,12 @@
                   <td class="table-cell"><%= row.detail || '-' %></td>
                   <td class="table-cell"><span class="status-pill"><%= row.status || '-' %></span></td>
                   <td class="table-cell"><%= row.score || '-' %></td>
+                  <% } %>
                 </tr>
               <% }) %>
             <% } else { %>
               <tr>
-                <td class="table-cell" colspan="7" style="text-align:center;color:#94a3b8;padding:32px;">ไม่มีรายงานในเงื่อนไขที่เลือก</td>
+                <td class="table-cell" colspan="<%= filters.type === 'consultations' ? 12 : 7 %>" style="text-align:center;color:#94a3b8;padding:32px;">ไม่มีรายงานในเงื่อนไขที่เลือก</td>
               </tr>
             <% } %>
           </tbody>

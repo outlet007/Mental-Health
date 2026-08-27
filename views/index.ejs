@@ -597,6 +597,10 @@ function _photoMotion(obj, prefix, uid) {
               <label class="form-label"><span data-i18n="form-label-name"><%= bookText(bookFormTexts, 'nameLabel', 'ชื่อ-นามสกุล') %></span> <span class="text-red-400">*</span></label>
               <input type="text" name="name" class="form-input" placeholder="<%= bookText(bookFormTexts, 'namePlaceholder', 'กรอกชื่อ-นามสกุลของคุณ') %>" data-i18n-ph="form-ph-name" required>
             </div>
+            <div>
+              <label class="form-label">ชื่อเล่น / Nickname</label>
+              <input type="text" name="nickname" class="form-input" maxlength="100" placeholder="ชื่อที่ต้องการให้เรียก">
+            </div>
             <div data-registration-field="studentId">
               <label class="form-label"><span data-i18n="form-label-studentid"><%= bookText(bookFormTexts, 'studentIdLabel', 'รหัสนักศึกษา') %></span> <span class="text-red-400">*</span></label>
               <input type="text" name="studentId" class="form-input" placeholder="<%= bookText(bookFormTexts, 'studentIdPlaceholder', 'เช่น 1680123456') %>" data-i18n-ph="form-ph-studentid" required>

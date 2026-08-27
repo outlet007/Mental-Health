@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="th">
 <head>
   <meta charset="UTF-8">
@@ -342,6 +342,10 @@
           <input type="text" name="name" id="er_name" class="inp" required>
         </div>
         <div>
+          <label class="lbl">ชื่อเล่น</label>
+          <input type="text" name="nickname" id="er_nickname" class="inp" maxlength="100">
+        </div>
+        <div>
           <label class="lbl">รหัสนักศึกษา</label>
           <input type="text" name="studentId" id="er_studentId" class="inp">
         </div>
@@ -439,7 +443,7 @@
           %>
           <% counselors.forEach(c => { %>
           <label class="counselor-card" id="bcard_<%= c.id %>">
-            <input type="radio" name="counselorId" value="<%= c.id %>" data-duration="<%= c.sessionDuration %>" data-name="<%= c.name %>" style="accent-color:#3874FF;" onchange="onBookCounselorChange(this)" required>
+            <input type="radio" name="counselorId" value="<%= c.id %>" data-name="<%= c.name %>" style="accent-color:#3874FF;" onchange="onBookCounselorChange(this)" required>
             <div style="width:36px;height:36px;border-radius:10px;overflow:hidden;background:#3874FF;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:13px;flex-shrink:0;">
               <% if (c.photo) { %>
                 <img data-counselor-profile-photo="<%= c.id %>" src="<%= c.photo %>" alt="<%= c.name %>" style="width:100%;height:100%;object-fit:cover;">
@@ -460,7 +464,6 @@
             </div>
             <div style="text-align:right;flex-shrink:0;">
               <div style="font-size:12px;font-weight:700;color:#3874FF;">นัดหมายรวม <%= counselorActiveCounts[c.id] || 0 %> นัด</div>
-              <div style="font-size:12px;color:#94a3b8;"><%= c.sessionDuration %> นาที</div>
             </div>
           </label>
           <% }) %>
@@ -594,6 +597,12 @@
   })
 
   const SCHEDULES = <%- JSON.stringify(schedules) %>
+  function renderAvailableDayBadges(schedules) {
+    const dayNames = [...new Map(schedules.map(schedule => [String(schedule.dayOfWeek), schedule.dayName])).values()].filter(Boolean)
+    return dayNames.map(dayName =>
+      `<span style="padding:3px 10px; background:#dbeafe; color:#1e40af; border-radius:99px; font-size:12px;">${dayName}</span>`
+    ).join('')
+  }
   const CLIENTS = <%- JSON.stringify(clients) %>
   const COUNSELOR_COLORS = <%- JSON.stringify(counselorColors) %>
   const APPOINTMENTS = <%- JSON.stringify(appointments) %>
@@ -693,6 +702,7 @@
       document.getElementById('editRequestPanelSub').textContent = c.name
       document.getElementById('editRequestForm').action = '/admin/contacts/' + c.id + '/edit'
       document.getElementById('er_name').value      = c.name || ''
+      document.getElementById('er_nickname').value  = c.nickname || ''
       document.getElementById('er_studentId').value = c.studentId || ''
       document.getElementById('er_facultyIndex').value = c.facultyIndex || ''
       document.getElementById('er_phone').value     = c.phone || ''
@@ -812,7 +822,7 @@
 
   // ── Booking form logic ────────────────────────────────────────────────────────
   function onBookCounselorChange(radio) {
-    bCounselor={id:radio.value,duration:parseInt(radio.dataset.duration),name:radio.dataset.name}
+    bCounselor={id:radio.value,name:radio.dataset.name}
     document.querySelectorAll('.counselor-card').forEach(el=>{
       const r=el.querySelector('input[name="counselorId"]')
       el.classList.toggle('selected',r&&r.value===radio.value)
@@ -820,9 +830,7 @@
     document.getElementById('bDateInput').disabled=false; document.getElementById('bDateInput').value=''
     document.getElementById('bDateHint').style.display='none'
     const mySched = SCHEDULES.filter(s => s.counselorId===radio.value && s.isActive)
-    document.getElementById('bDayBadges').innerHTML = mySched.map(s =>
-      `<span style="padding:3px 10px; background:#dbeafe; color:#1e40af; border-radius:99px; font-size:12px;">${s.dayName} ${s.startTime}–${s.endTime}</span>`
-    ).join('')
+    document.getElementById('bDayBadges').innerHTML = renderAvailableDayBadges(mySched)
     document.getElementById('bAvailableDays').style.display='block'
     document.getElementById('bSlotSection').style.display='none'
     document.getElementById('bApptSummary').style.display='none'
@@ -840,7 +848,7 @@
     const grid=document.getElementById('bSlotGrid')
     const available=slots.filter(s=>s.available)
     if (!available.length){grid.innerHTML=`<div style="font-size:12px;color:#94a3b8;grid-column:1/-1;">${slots.length?'เวลาทั้งหมดถูกจองแล้วในวันนี้':'ไม่มีตารางเวลาในวันนี้'}</div>`;return}
-    grid.innerHTML=available.map(s=>`<button type="button" class="slot-btn" onclick="bSelectSlot(this,'${s.time}')">${s.time}</button>`).join('')
+    grid.innerHTML=available.map(s=>`<button type="button" class="slot-btn" onclick="bSelectSlot(this,'${s.time}')">${s.time}–${s.endTime} · ${s.duration} นาที</button>`).join('')
   }
   function bSelectSlot(btn,time) {
     bTime=time; document.getElementById('bTimeInput').value=time

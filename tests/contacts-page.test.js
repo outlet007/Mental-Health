@@ -30,7 +30,7 @@ function renderContacts(locals = {}) {
         concernOptions: ['Stress'],
         counselorColors: { 'coun-1': '#6366f1' },
         counselors: [
-          { id: 'coun-1', name: 'Counselor One', title: 'Psychologist', avatar: 'CO', isApproved: true, sessionDuration: 60 },
+          { id: 'coun-1', name: 'Counselor One', title: 'Psychologist', avatar: 'CO', isApproved: true },
         ],
         schedules: [],
         clients: [],

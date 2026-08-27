@@ -32,9 +32,11 @@
     return settings[key] !== false
   }
   function isWideField(key) { return ['successText', 'typeLabel', 'pdpaHeading', 'pdpaText'].includes(key) }
-  const thFields = [
+  const thSuccessFields = [
     ['successHeading', 'หัวข้อเมื่อส่งคำขอสำเร็จ', 'ส่งคำขอสำเร็จแล้ว!'],
     ['successText', 'ข้อความเมื่อส่งคำขอสำเร็จ', 'ทีมงานจะติดต่อกลับหาคุณภายใน 1 วันทำการ<br>ขอบคุณที่ไว้วางใจ MindCare'],
+  ]
+  const thFields = [
     ['nameLabel', 'Label: ชื่อ-นามสกุล', 'ชื่อ-นามสกุล'],
     ['namePlaceholder', 'Placeholder: ชื่อ-นามสกุล', 'กรอกชื่อ-นามสกุลของคุณ'],
     ['studentIdLabel', 'Label: รหัสนักศึกษา', 'รหัสนักศึกษา'],
@@ -55,9 +57,11 @@
     ['pdpaCheckbox', 'ข้อความ checkbox PDPA', 'ข้าพเจ้าได้อ่านและยอมรับการยินยอมเปิดเผยข้อมูลแล้ว'],
     ['submitLabel', 'ข้อความปุ่มส่งฟอร์ม', 'ส่งคำขอจองนัดหมาย'],
   ]
-  const enFields = [
+  const enSuccessFields = [
     ['successHeading', 'Success heading', 'Request Sent Successfully!'],
     ['successText', 'Success text', 'Our team will contact you within 1 business day.<br>Thank you for trusting MindCare.'],
+  ]
+  const enFields = [
     ['nameLabel', 'Label: Full name', 'Full Name'],
     ['namePlaceholder', 'Placeholder: Full name', 'Enter your name'],
     ['studentIdLabel', 'Label: Student ID', 'Student ID'],
@@ -240,6 +244,27 @@
               <label class="inp" style="display:flex;align-items:center;gap:8px;"><input type="checkbox" name="sessionTypeEnabled_onsite" <%= sessionTypeEnabled(book, 'onsite') ? 'checked' : '' %>> เข้ารับบริการด้วยตนเอง</label>
             </div>
           </div>
+          <div class="form-frame" data-layout-frame="registration-success-message-th">
+            <div class="form-frame-header">
+              <div class="form-frame-icon"><i data-lucide="badge-check" style="width:15px;height:15px;"></i></div>
+              <div>
+                <p class="form-frame-title">&#3586;&#3657;&#3629;&#3588;&#3623;&#3634;&#3617;&#3649;&#3626;&#3604;&#3591;&#3627;&#3621;&#3633;&#3591;&#3585;&#3619;&#3629;&#3585;&#3615;&#3629;&#3619;&#3660;&#3617;&#3648;&#3619;&#3637;&#3618;&#3610;&#3619;&#3657;&#3629;&#3618;</p>
+                <p class="form-frame-note">&#3585;&#3635;&#3627;&#3609;&#3604;&#3627;&#3633;&#3623;&#3586;&#3657;&#3629;&#3649;&#3621;&#3632;&#3586;&#3657;&#3629;&#3588;&#3623;&#3634;&#3617;&#3607;&#3637;&#3656;&#3649;&#3626;&#3604;&#3591;&#3648;&#3617;&#3639;&#3656;&#3629;&#3612;&#3641;&#3657;&#3619;&#3633;&#3610;&#3610;&#3619;&#3636;&#3585;&#3634;&#3619;&#3626;&#3656;&#3591;&#3588;&#3635;&#3586;&#3629;&#3626;&#3635;&#3648;&#3619;&#3655;&#3592;</p>
+              </div>
+            </div>
+            <div class="field-grid">
+              <% thSuccessFields.forEach(([key, label, fallback]) => { %>
+                <div style="<%= key === 'successText' ? 'grid-column:1/-1;' : '' %>">
+                  <label class="lbl"><%= label %></label>
+                  <% if (key === 'successText') { %>
+                    <textarea name="formText_<%= key %>" class="inp" rows="3" style="resize:vertical;"><%= val(formTexts, key, fallback) %></textarea>
+                  <% } else { %>
+                    <input type="text" name="formText_<%= key %>" class="inp" value="<%= val(formTexts, key, fallback) %>">
+                  <% } %>
+                </div>
+              <% }) %>
+            </div>
+          </div>
           <div style="display:flex;justify-content:flex-end;"><button type="submit" class="act-btn ab-primary"><i data-lucide="save" style="width:14px;height:14px;"></i> บันทึกฟอร์ม (TH)</button></div>
         </form>
       </div>
@@ -347,6 +372,27 @@
               <label class="inp" style="display:flex;align-items:center;gap:8px;"><input type="checkbox" name="sessionTypeEnabled_online" <%= sessionTypeEnabled(enBook, 'online') ? 'checked' : '' %>> Online</label>
               <label class="inp" style="display:flex;align-items:center;gap:8px;"><input type="checkbox" name="sessionTypeEnabled_phone" <%= sessionTypeEnabled(enBook, 'phone') ? 'checked' : '' %>> Phone call</label>
               <label class="inp" style="display:flex;align-items:center;gap:8px;"><input type="checkbox" name="sessionTypeEnabled_onsite" <%= sessionTypeEnabled(enBook, 'onsite') ? 'checked' : '' %>> In-person</label>
+            </div>
+          </div>
+          <div class="form-frame" data-layout-frame="registration-success-message-en">
+            <div class="form-frame-header">
+              <div class="form-frame-icon"><i data-lucide="badge-check" style="width:15px;height:15px;"></i></div>
+              <div>
+                <p class="form-frame-title">Message shown after form submission</p>
+                <p class="form-frame-note">Set the heading and message shown after a service user submits the form successfully.</p>
+              </div>
+            </div>
+            <div class="field-grid">
+              <% enSuccessFields.forEach(([key, label, fallback]) => { %>
+                <div style="<%= key === 'successText' ? 'grid-column:1/-1;' : '' %>">
+                  <label class="lbl"><%= label %></label>
+                  <% if (key === 'successText') { %>
+                    <textarea name="formText_<%= key %>" class="inp" rows="3" style="resize:vertical;"><%= val(enFormTexts, key, fallback) %></textarea>
+                  <% } else { %>
+                    <input type="text" name="formText_<%= key %>" class="inp" value="<%= val(enFormTexts, key, fallback) %>">
+                  <% } %>
+                </div>
+              <% }) %>
             </div>
           </div>
           <div style="display:flex;justify-content:flex-end;"><button type="submit" class="act-btn ab-primary"><i data-lucide="save" style="width:14px;height:14px;"></i> Save form (EN)</button></div>
