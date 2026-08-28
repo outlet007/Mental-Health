@@ -249,7 +249,7 @@ function buildReportRows(data, filters) {
     appointments: data.appointments.map(item => ({
       type: 'นัดหมาย',
       date: normalizeDate(item.date || item.createdAt),
-      id: item.id,
+      id: item.appointmentNumber || item.id,
       name: item.clientName || '-',
       detail: [item.counselorName, serviceTypeLabel(item.type), item.time].filter(Boolean).join(' | '),
       status: statusLabel(item.status),
@@ -269,7 +269,7 @@ function buildReportRows(data, filters) {
       date: normalizeDate(item.createdAt),
       id: item.id,
       name: item.name || '-',
-      detail: [item.concern, serviceTypeLabel(item.sessionType), item.email].filter(Boolean).join(' | '),
+      detail: [item.studentId, item.faculty, item.concern, serviceTypeLabel(item.sessionType), item.phone, item.email].filter(Boolean).join(' | '),
       status: statusLabel(item.status),
       score: '',
     })),
@@ -498,7 +498,5 @@ router.get('/export.csv', (req, res) => {
 })
 
 module.exports = router
-
-
-
+module.exports.buildReportRows = buildReportRows
 

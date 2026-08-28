@@ -142,122 +142,13 @@
     <!-- ════════════════════════════════════════════════════════════════ -->
     <% if (view === 'week') { %>
 
-    <% if (filterCId) { %>
-    <!-- Single counselor week view (original table) -->
     <%
-      const currentCounselor = counselors.find(c => c.id === filterCId)
+      const weeklyCounselor = filterCId ? counselorMap[filterCId] : null
     %>
-    <% if (currentCounselor) { %>
-    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
-      <div style="display:flex; align-items:center; gap:8px;">
-        <i data-lucide="user-check" style="width:15px;height:15px;color:#05967e;"></i>
-        <span style="font-size:13px; font-weight:600; color:#1e293b;"><%= currentCounselor.name %></span>
-        <span style="font-size:12px; color:#94a3b8;">— <%= currentCounselor.title %></span>
-      </div>
-      <button onclick="openPanel('create')" class="act-btn ab-secondary">
-        <i data-lucide="plus" style="width:13px;height:13px;"></i>
-        เพิ่มตารางเวลา
-      </button>
-    </div>
-    <% } %>
-
-    <div style="background:#fff; border:1px solid #f1f5f9; border-radius:16px; overflow:hidden;">
-      <div style="padding:14px 16px; border-bottom:1px solid #f1f5f9; display:flex; align-items:center; justify-content:space-between;">
-        <span style="font-size:13px; font-weight:600; color:#334155;">ตารางเวลารับนัดรายสัปดาห์</span>
-        <span style="font-size:12px; color:#94a3b8;"><%= mySchedules.length %> slot</span>
-      </div>
-      <div style="overflow-x:auto;">
-        <table class="tbl">
-          <thead>
-            <tr>
-              <th>วัน</th><th>เวลาเริ่ม</th><th>เวลาสิ้นสุด</th><th>ช่วงเวลา</th><th>สถานะ</th><th>การจัดการ</th>
-            </tr>
-          </thead>
-          <tbody>
-            <% mySchedules.forEach(s => { %>
-            <% const [sh,sm]=s.startTime.split(':').map(Number); const [eh,em]=s.endTime.split(':').map(Number); const totalMin=(eh*60+em)-(sh*60+sm) %>
-            <tr>
-              <td>
-                <div style="display:flex;align-items:center;gap:8px;">
-                  <div style="width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,#ecfdf9,#ecfeff);border:1px solid #a0f3e1;display:flex;align-items:center;justify-content:center;">
-                    <i data-lucide="calendar-days" style="width:14px;height:14px;color:#05967e;"></i>
-                  </div>
-                  <span style="font-weight:600;color:#1e293b;font-size:14px;"><%= s.dayName %></span>
-                </div>
-              </td>
-              <td>
-                <div style="display:flex;align-items:center;gap:6px;">
-                  <i data-lucide="clock" style="width:13px;height:13px;color:#2dd4b4;"></i>
-                  <span style="font-weight:500;font-size:14px;color:#1e293b;"><%= s.startTime %></span>
-                </div>
-              </td>
-              <td>
-                <div style="display:flex;align-items:center;gap:6px;">
-                  <i data-lucide="clock" style="width:13px;height:13px;color:#64748b;"></i>
-                  <span style="font-weight:500;font-size:14px;color:#1e293b;"><%= s.endTime %></span>
-                </div>
-              </td>
-              <td><span style="font-size:12px;color:#64748b;"><% if(totalMin>=60){%><%= Math.floor(totalMin/60) %> ชม.<% if(totalMin%60){%> <%= totalMin%60 %> นาที<% } %><% }else{%><%= totalMin %> นาที<% } %></span></td>
-              <td>
-                <% if (s.isActive) { %>
-                <span style="display:inline-flex;align-items:center;gap:4px;padding:3px 10px;background:#d1fae5;color:#065f46;border-radius:99px;font-size:12px;font-weight:500;">
-                  <span style="width:6px;height:6px;border-radius:50%;background:#10b981;display:inline-block;"></span> เปิดรับนัด
-                </span>
-                <% } else { %>
-                <span style="display:inline-flex;align-items:center;gap:4px;padding:3px 10px;background:#f1f5f9;color:#64748b;border-radius:99px;font-size:12px;font-weight:500;">
-                  <span style="width:6px;height:6px;border-radius:50%;background:#94a3b8;display:inline-block;"></span> ปิดพักตัว
-                </span>
-                <% } %>
-              </td>
-              <td>
-                <div style="display:flex;align-items:center;gap:6px;">
-                  <button class="act-btn ab-secondary edit-btn" data-rec="<%= JSON.stringify(s) %>">
-                    <i data-lucide="pencil" style="width:13px;height:13px;"></i> แก้ไข
-                  </button>
-                  <button type="button" class="act-btn ab-danger delete-btn"
-                          data-action="/admin/schedules/delete"
-                          data-name="slot <%= s.dayName %> <%= s.startTime %>–<%= s.endTime %>"
-                          data-warning="slot นี้จะถูกลบถาวร ผู้รับบริการจะไม่สามารถจองช่วงเวลานี้ได้อีก"
-                          data-extra='<%- JSON.stringify({id: s.id, returnQuery: returnQuery}) %>'>
-                    <i data-lucide="trash-2" style="width:13px;height:13px;"></i>
-                  </button>
-                </div>
-              </td>
-            </tr>
-            <% }) %>
-            <% if (mySchedules.length === 0) { %>
-            <tr><td colspan="6" style="text-align:center;padding:48px 16px;color:#94a3b8;">
-              <i data-lucide="calendar-x" style="width:36px;height:36px;display:block;margin:0 auto 10px;opacity:.3;"></i>
-              <div style="margin-bottom:12px;">ยังไม่มีตารางเวลาสำหรับนักจิตวิทยาให้คำปรึกษาท่านนี้</div>
-              <button onclick="openPanel('create')" class="act-btn ab-primary" style="margin:0 auto;">
-                <i data-lucide="plus" style="width:14px;height:14px;"></i> เพิ่มตารางเวลาแรก
-              </button>
-            </td></tr>
-            <% } %>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <% if (mySchedules.length > 0) { %>
-    <div style="margin-top:16px;background:#fff;border:1px solid #f1f5f9;border-radius:16px;padding:16px;">
-      <div style="font-size:12px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">เพิ่มตารางเวลาในวัน</div>
-      <div style="display:flex;flex-wrap:wrap;gap:8px;">
-        <% availableDays.forEach(day => { %>
-        <button onclick="openPanel('create',{dayOfWeek:<%= day.dayOfWeek %>,dayName:'<%= day.dayName %>'})"
-                class="act-btn ab-ghost" style="border:1.5px dashed #cbd5e1;padding:7px 14px;">
-          <i data-lucide="plus" style="width:12px;height:12px;"></i> <%= day.dayName %>
-        </button>
-        <% }) %>
-      </div>
-    </div>
-    <% } %>
-
-    <% } else { %>
-    <!-- All counselors week grid -->
-    <div style="background:#fff; border:1px solid #f1f5f9; border-radius:16px; overflow:hidden;">
+    <!-- The same grouped-by-day grid is used for all and individual filters. -->
+    <div data-weekly-schedule-grid="true" style="background:#fff; border:1px solid #f1f5f9; border-radius:16px; overflow:hidden;">
       <div style="padding:14px 16px; border-bottom:1px solid #f1f5f9;">
-        <span style="font-size:13px; font-weight:600; color:#334155;">ตารางเวลารายสัปดาห์ — นักจิตวิทยาให้คำปรึกษาทั้งหมด</span>
+        <span style="font-size:13px; font-weight:600; color:#334155;">ตารางเวลารายสัปดาห์ — <%= weeklyCounselor ? weeklyCounselor.name : 'นักจิตวิทยาให้คำปรึกษาทั้งหมด' %></span>
       </div>
       <div style="overflow-x:auto;">
         <table class="tbl">
@@ -313,8 +204,6 @@
         </table>
       </div>
     </div>
-    <% } %> <!-- end week filterCId branch -->
-
     <!-- ════════════════════════════════════════════════════════════════ -->
     <!-- VIEW: รายวัน (day)                                             -->
     <!-- ════════════════════════════════════════════════════════════════ -->
@@ -666,7 +555,6 @@
     })
   })
 
-  const MY_SCHEDULES   = <%- JSON.stringify(mySchedules) %>
   const ALL_SCHEDULES  = <%- JSON.stringify(weekGrid.flatMap(r => r.entries)) %>
   const SELECTED_ID    = '<%- selected %>'
   const IS_COUNSELOR   = <%- isCounselorUser ? 'true' : 'false' %>

@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="th">
 <head>
   <meta charset="UTF-8">
@@ -23,6 +23,9 @@
     .appt-row{padding:10px 12px;border:1px solid #f1f5f9;border-radius:10px;margin-bottom:6px;cursor:pointer;transition:background .15s}.appt-row:hover{background:#f8fafc}
     .appt-detail{display:none;padding:10px 12px;background:#f8fafc;border-radius:8px;margin-top:6px;font-size:12px;color:#64748b;line-height:1.8}
     .appt-row.expanded .appt-detail{display:block}
+    .sort-link{display:inline-flex;align-items:center;gap:5px;color:inherit;text-decoration:none}
+    .sort-link:hover{color:#05967e}
+    .sort-link:focus-visible{outline:2px solid #2dd4b4;outline-offset:3px;border-radius:4px}
   </style>
 </head>
 <body style="background:#f8fafc;margin:0;">
@@ -32,6 +35,20 @@
 <% const GENDER_LABELS = { male: 'ชาย', female: 'หญิง', unspecified: 'ไม่ระบุเพศ' } %>
 <% const genderLabel = g => GENDER_LABELS[g] || g || 'ไม่ระบุเพศ' %>
 <% const CLIENT_FACULTY_OPTIONS = typeof facultyOptions !== 'undefined' && Array.isArray(facultyOptions) ? facultyOptions : [] %>
+<%
+  function clientSortUrl(key) {
+    const params = new URLSearchParams()
+    if (query.search) params.set('search', query.search)
+    if (query.status) params.set('status', query.status)
+    params.set('sort', key)
+    params.set('order', query.sort === key && query.order !== 'desc' ? 'desc' : 'asc')
+    return '/admin/clients?' + params.toString()
+  }
+  function clientSortIcon(key) {
+    if (query.sort !== key) return 'arrow-up-down'
+    return query.order === 'desc' ? 'arrow-down' : 'arrow-up'
+  }
+%>
 
   <div style="height:56px;background:#fff;border-bottom:1px solid #f1f5f9;padding:0 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:20;">
     <h1 style="font-size:15px;font-weight:600;color:#1e293b;margin:0;"><%= title %></h1>
@@ -120,6 +137,8 @@
 
     <!-- Filter -->
     <form method="GET" style="background:#fff;border:1px solid #f1f5f9;border-radius:16px;padding:16px;margin-bottom:16px;display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;">
+      <% if (query.sort) { %><input type="hidden" name="sort" value="<%= query.sort %>"><% } %>
+      <% if (query.order) { %><input type="hidden" name="order" value="<%= query.order %>"><% } %>
       <div style="flex:1;min-width:200px;">
         <label class="lbl">ค้นหา</label>
         <div style="position:relative;"><i data-lucide="search" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);width:14px;height:14px;color:#94a3b8;"></i>
@@ -149,13 +168,13 @@
         <table class="tbl">
           <thead>
             <tr>
-              <th>ผู้รับบริการ</th>
-              <th>รหัสนักศึกษา</th>
-              <th>ข้อมูลติดต่อ</th>
-              <th>อายุ / เพศ</th>
-              <th>นัดหมาย</th>
-              <th>รับบริการล่าสุด</th>
-              <th>สถานะ</th>
+              <th><a href="<%= clientSortUrl('name') %>" class="sort-link" data-client-sort="name" aria-label="เรียงตามชื่อผู้รับบริการ">ผู้รับบริการ <i data-lucide="<%= clientSortIcon('name') %>" style="width:13px;height:13px;"></i></a></th>
+              <th><a href="<%= clientSortUrl('studentId') %>" class="sort-link" data-client-sort="studentId" aria-label="เรียงตามรหัสนักศึกษา">รหัสนักศึกษา <i data-lucide="<%= clientSortIcon('studentId') %>" style="width:13px;height:13px;"></i></a></th>
+              <th><a href="<%= clientSortUrl('email') %>" class="sort-link" data-client-sort="email" aria-label="เรียงตามข้อมูลติดต่อ">ข้อมูลติดต่อ <i data-lucide="<%= clientSortIcon('email') %>" style="width:13px;height:13px;"></i></a></th>
+              <th><a href="<%= clientSortUrl('age') %>" class="sort-link" data-client-sort="age" aria-label="เรียงตามอายุ">อายุ / เพศ <i data-lucide="<%= clientSortIcon('age') %>" style="width:13px;height:13px;"></i></a></th>
+              <th><a href="<%= clientSortUrl('appointmentCount') %>" class="sort-link" data-client-sort="appointmentCount" aria-label="เรียงตามจำนวนนัดหมาย">นัดหมาย <i data-lucide="<%= clientSortIcon('appointmentCount') %>" style="width:13px;height:13px;"></i></a></th>
+              <th><a href="<%= clientSortUrl('lastAppointment') %>" class="sort-link" data-client-sort="lastAppointment" aria-label="เรียงตามวันที่รับบริการล่าสุด">รับบริการล่าสุด <i data-lucide="<%= clientSortIcon('lastAppointment') %>" style="width:13px;height:13px;"></i></a></th>
+              <th><a href="<%= clientSortUrl('status') %>" class="sort-link" data-client-sort="status" aria-label="เรียงตามสถานะ">สถานะ <i data-lucide="<%= clientSortIcon('status') %>" style="width:13px;height:13px;"></i></a></th>
               <th>การจัดการ</th>
             </tr>
           </thead>
@@ -680,7 +699,7 @@
           <div class="appt-row" onclick="toggleAppt(this)">
             <div style="display:flex;align-items:center;justify-content:space-between;">
               <div style="display:flex;align-items:center;gap:8px;">
-                <span style="font-size:12px;font-weight:600;color:#94a3b8;">#${appts.length - i}</span>
+
                 <span style="font-size:13px;font-weight:600;color:#1e293b;">${a.date}</span>
                 <span style="font-size:12px;color:#64748b;">${a.time} น.</span>
                 ${a.concern ? `<span style="font-size:12px;color:#64748b;">เรื่อง</span>${concernBadge(a.concern)}` : ''}
@@ -693,6 +712,7 @@
               </div>
             </div>
             <div class="appt-detail">
+              <div><strong>หมายเลขนัดหมาย:</strong> ${escapeClientHistoryText(a.appointmentNumber || a.id || '—')}</div>
               <div><strong>นักจิตวิทยา:</strong> ${a.counselorName || '—'}</div>
               <div><strong>รูปแบบ:</strong> ${typeLabel}</div>
               <div><strong>ระยะเวลา:</strong> ${a.duration || 60} นาที</div>

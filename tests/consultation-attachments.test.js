@@ -86,5 +86,7 @@ test('completion flow stores structured case, risk, disposition, and referral fi
   assert.ok(completeRoute.includes('normalizeRiskLevel(req.body.riskLevel)'))
   assert.ok(completeRoute.includes('normalizeDisposition(req.body.caseDisposition)'))
   assert.ok(completeRoute.includes('closeCase(cases, appt.caseId'))
-  assert.ok(completeRoute.includes('futureAppointments.forEach(item => { item.caseId = nextCase.id })'))
+  assert.match(completeRoute, /futureAppointments\.forEach\(\(item, index\) => \{[\s\S]*?item\.caseId = nextCase\.id/)
+  assert.ok(completeRoute.includes('delete item.appointmentNumber'))
+  assert.ok(completeRoute.includes('ensureCaseAndAppointmentNumbers(cases, data)'))
 })

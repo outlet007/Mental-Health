@@ -6,6 +6,7 @@ const { readJSON, writeJSON } = require('../utils/json-store')
 const { getConcernOptions } = require('../utils/concern-options')
 const { getFacultyOptions, resolveFaculty } = require('../utils/faculty-options')
 const { getAudienceFields, normalizeAudience } = require('../utils/registration-audience-fields')
+const { ONLINE_REGISTRATION } = require('../utils/request-channel')
 const {
   verifyFormToken,
   isHoneypotClear,
@@ -124,6 +125,7 @@ router.post('/', contactLimiter, async (req, res) => {
     email: contact.email,
     concern: contact.concern,
     sessionType: contact.sessionType,
+    requestChannel: ONLINE_REGISTRATION,
     status: 'new',
     note: '',
     createdAt: now.toISOString().split('T')[0],

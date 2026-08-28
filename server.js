@@ -9,10 +9,17 @@ const { sendDueAppointmentReminders } = require('./src/utils/appointment-reminde
 const { readJSON, ensureDataFiles } = require('./src/utils/json-store')
 const { getSeedData } = require('./src/utils/seed-data')
 const { runBackup } = require('./src/utils/backup')
+const { migrateCaseNumbering } = require('./src/utils/case-numbering-migration')
 const { logError } = require('./src/utils/logger')
 const { createFormToken, getTurnstileConfig } = require('./src/utils/public-form-protection')
 
 ensureDataFiles(path.join(__dirname, 'data'), getSeedData())
+const caseNumberingMigration = migrateCaseNumbering(path.join(__dirname, 'data'), {
+  beforeWrite: () => runBackup(),
+})
+if (caseNumberingMigration.changed) {
+  console.log(`[Migration] Assigned case and appointment numbers to ${caseNumberingMigration.caseCount} cases and ${caseNumberingMigration.appointmentCount} appointments`)
+}
 
 const app = express()
 

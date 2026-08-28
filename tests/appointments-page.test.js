@@ -110,6 +110,21 @@ test('counselor view does not show the confirm button for pending appointments',
   assert.doesNotMatch(statusManagementCell, new RegExp(CONFIRM_BUTTON_LABEL))
 })
 
+test('counselor appointment filters hide the redundant counselor selector while admin keeps it', async () => {
+  const adminHtml = await renderAppointments()
+  const counselorHtml = await renderAppointments({
+    userType: 'counselor',
+    session: { adminName: 'Counselor', adminEmail: 'counselor@example.com', userType: 'counselor' },
+  })
+  const adminFilters = adminHtml.match(/<!-- Filter -->[\s\S]*?<!-- Table -->/)?.[0] || ''
+  const counselorFilters = counselorHtml.match(/<!-- Filter -->[\s\S]*?<!-- Table -->/)?.[0] || ''
+
+  assert.match(adminFilters, /select name="counselorId"/)
+  assert.match(adminFilters, /นักจิตวิทยาให้คำปรึกษา/)
+  assert.doesNotMatch(counselorFilters, /select name="counselorId"/)
+  assert.doesNotMatch(counselorFilters, /นักจิตวิทยาให้คำปรึกษา/)
+})
+
 
 test('appointment create and edit panels support phone type and online meeting link field', async () => {
   const html = await renderAppointments()
@@ -147,6 +162,7 @@ test('client history shows consultation notes and attachments from the shared ca
     session: { adminName: 'Counselor', adminEmail: 'counselor@example.com', userType: 'counselor' },
     clientAppointments: [{
       id: 'other-counselor-appointment', clientId: 'client-1', counselorId: 'coun-2',
+      appointmentNumber: 'CASE-0001-02',
       counselorName: 'Counselor Two', date: '2026-06-20', time: '10:00', duration: 60,
       status: 'completed', counselorNote: 'Shared treatment note',
       counselorAttachment: { originalName: 'shared-treatment.pdf' },
@@ -157,6 +173,9 @@ test('client history shows consultation notes and attachments from the shared ca
   assert.match(html, /escapeClientHistoryText\(a\.counselorNote\)/)
   assert.match(html, /a\.counselorAttachment\?\.originalName/)
   assert.match(html, /\/admin\/appointments\/\$\{encodeURIComponent\(a\.id\)\}\/consultation-attachment/)
+  assert.match(html, /escapeClientHistoryText\(a\.appointmentNumber \|\| a\.id \|\|/)
+  assert.doesNotMatch(html, /#\$\{appts\.length - i\}/)
+  assert.match(html, /CASE-0001-02/)
   assert.match(html, /Shared treatment note/)
   assert.match(html, /shared-treatment\.pdf/)
 })

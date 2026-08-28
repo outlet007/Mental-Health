@@ -12,7 +12,8 @@ const { getConcernOptions } = require('../../utils/concern-options')
 const { getFacultyOptions, resolveFaculty } = require('../../utils/faculty-options')
 const { readJSON, writeJSON } = require('../../utils/json-store')
 const { findAvailableSlot } = require('../../utils/availability')
-const { ensureActiveCase } = require('../../utils/case-management')
+const { ensureActiveCase, ensureCaseAndAppointmentNumbers } = require('../../utils/case-management')
+const { ONLINE_REGISTRATION, WALK_IN, normalizeRequestChannel } = require('../../utils/request-channel')
 
 const dataDir  = path.join(__dirname, '../../../data')
 const dataFile = path.join(dataDir, 'contacts.json')
@@ -46,24 +47,41 @@ function cleanMeetingLink(type, meetingLink) {
   return type === 'online' ? (meetingLink || '').trim() : ''
 }
 
+function withFacultyDisplay(record, facultyOptions) {
+  const selected = resolveFaculty(record.facultyIndex, facultyOptions)
+  return {
+    ...record,
+    faculty: record.faculty || selected?.faculty || '',
+    facultyEn: record.facultyEn || selected?.facultyEn || '',
+    requestChannel: normalizeRequestChannel(record.requestChannel),
+  }
+}
+
+function filterContactsByRequestChannel(contacts, requestChannel) {
+  if (requestChannel !== ONLINE_REGISTRATION && requestChannel !== WALK_IN) return contacts
+  return contacts.filter(contact => normalizeRequestChannel(contact.requestChannel) === requestChannel)
+}
+
 router.get('/', (req, res) => {
-  const contacts     = readData()
+  const facultyOptions = getFacultyOptions()
+  const contacts     = readData().map(item => withFacultyDisplay(item, facultyOptions))
   const counselors   = readFile('counselors.json').filter(c => c.isApproved)
   const schedules    = readFile('schedules.json')
 
   // สีต่อนักจิตวิทยา อ้างอิงลำดับเดียวกับตารางเวลา (มุมมอง admin) เพื่อให้สีตรงกันทั้งระบบ
   const counselorColors = {}
   counselors.forEach((c, i) => { counselorColors[c.id] = COUNSELOR_COLORS[i % COUNSELOR_COLORS.length] })
-  const clients      = readFile('clients.json')
+  const clients      = readFile('clients.json').map(item => withFacultyDisplay(item, facultyOptions))
   const appointments = readFile('appointments.json')
 
   const concernOptions = getConcernOptions()
   const appointmentSessionTypes = readAppointmentSessionTypes()
 
-  const { search, status, concern } = req.query
+  const { search, status, concern, requestChannel } = req.query
   let filtered = contacts
   if (status)  filtered = filtered.filter(c => c.status === status)
   if (concern) filtered = filtered.filter(c => c.concern === concern)
+  filtered = filterContactsByRequestChannel(filtered, requestChannel)
   if (search) filtered = filtered.filter(c => matchesSearch([
     c.name,
     c.phone,
@@ -93,7 +111,7 @@ router.get('/', (req, res) => {
     contacts: filtered, query: req.query,
     total: contacts.length, statusCounts, concernOptions, counselorColors,
     counselors, schedules, clients, appointments, counselorActiveCounts, appointmentSessionTypes,
-    facultyOptions: getFacultyOptions(),
+    facultyOptions,
   })
 })
 
@@ -110,7 +128,7 @@ router.post('/:id/status', (req, res) => {
 })
 
 router.post('/:id/edit', (req, res) => {
-  const { name, nickname, studentId, facultyIndex, phone, email, concern, sessionType } = req.body
+  const { name, nickname, studentId, facultyIndex, phone, email, concern, sessionType, requestChannel } = req.body
   const facultySelection = resolveFaculty(facultyIndex)
   const sessionTypes = readAppointmentSessionTypes()
   const data = readData()
@@ -128,6 +146,7 @@ router.post('/:id/edit', (req, res) => {
     data[idx].email        = (email || '').trim()
     data[idx].concern      = concern || ''
     data[idx].sessionType  = normalizeAppointmentType(sessionType || data[idx].sessionType || 'online', sessionTypes)
+    data[idx].requestChannel = normalizeRequestChannel(requestChannel)
     writeData(data)
   }
   res.redirect('/admin/contacts?updated=1')
@@ -182,7 +201,7 @@ router.post('/:id/book', async (req, res) => {
   const apptFile = path.join(dataDir, 'appointments.json')
   const appts    = readJSON(apptFile)
   const maxNum = appts.reduce((max, a) => {
-    const m = String(a.id).match(/^app-(\d+)$/)
+    const m = String(a.id).match(/^app-(\d+)(?:-\d+)?$/)
     return m ? Math.max(max, parseInt(m[1])) : max
   }, 0)
 
@@ -212,8 +231,9 @@ router.post('/:id/book', async (req, res) => {
     createdAt:     new Date().toISOString().split('T')[0],
   }
   appts.push(newAppt)
+  const numbering = ensureCaseAndAppointmentNumbers(cases, appts)
   writeJSON(apptFile, appts)
-  if (cases.length !== caseCountBefore) writeJSON(casesFile, cases)
+  if (cases.length !== caseCountBefore || numbering.casesChanged) writeJSON(casesFile, cases)
 
   contacts[idx].status = 'converted'
   contacts[idx].appointmentId = newAppt.id
@@ -244,3 +264,5 @@ router.post('/:id/delete', (req, res) => {
 })
 
 module.exports = router
+module.exports.withFacultyDisplay = withFacultyDisplay
+module.exports.filterContactsByRequestChannel = filterContactsByRequestChannel

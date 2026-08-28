@@ -70,6 +70,7 @@ test('mailer supports local SMTP servers without authentication', async () => {
     const result = await harness.mailer.sendAppointmentEmails({
       appointment: {
         id: 'app-test',
+        appointmentNumber: 'CASE-0001-02',
         date: '2026-07-01',
         time: '10:00',
         duration: 60,
@@ -87,6 +88,7 @@ test('mailer supports local SMTP servers without authentication', async () => {
     assert.equal(harness.getCapturedOptions().secure, false)
     assert.equal(Object.hasOwn(harness.getCapturedOptions(), 'auth'), false)
     assert.equal(harness.sentMessages.length, 2)
+    assert.ok(harness.sentMessages.every(message => message.html.includes('CASE-0001-02')))
   } finally {
     harness.restore()
   }

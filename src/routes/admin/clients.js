@@ -21,6 +21,8 @@ const surveysFile = path.join(dataDir, 'surveys.json')
 
 // สีอ้างอิงต่อนักจิตวิทยา — ต้องตรงกับ COLORS ใน src/routes/admin/schedules.js
 const COUNSELOR_COLORS = ['#6366f1','#05967e','#f59e0b','#ef4444','#06b6d4','#8b5cf6','#10b981','#f43f5e']
+const CLIENT_SORT_KEYS = new Set(['name', 'studentId', 'email', 'age', 'appointmentCount', 'lastAppointment', 'status'])
+const THAI_COLLATOR = new Intl.Collator('th', { numeric: true, sensitivity: 'base' })
 
 function read(file)    { return readJSON(path.join(dataDir, file)) }
 function write(file, d) { writeJSON(path.join(dataDir, file), d) }
@@ -40,6 +42,42 @@ function canUseClient(req, clientId) {
 
 function forbidden(res) {
   return res.status(403).send('Forbidden')
+}
+
+function sortClients(clients, appointments, sortKey, sortOrder = 'asc') {
+  if (!CLIENT_SORT_KEYS.has(sortKey)) return clients
+
+  const appointmentSummary = new Map()
+  appointments.forEach(appointment => {
+    const summary = appointmentSummary.get(appointment.clientId) || { count: 0, latest: '' }
+    summary.count += 1
+    const appointmentKey = `${appointment.date || ''}T${appointment.time || ''}`
+    if (appointmentKey > summary.latest) summary.latest = appointmentKey
+    appointmentSummary.set(appointment.clientId, summary)
+  })
+
+  const valueFor = client => {
+    const summary = appointmentSummary.get(client.id) || { count: 0, latest: '' }
+    if (sortKey === 'appointmentCount') return summary.count
+    if (sortKey === 'lastAppointment') return summary.latest
+    if (sortKey === 'age') return Number(client.age) || 0
+    return String(client[sortKey] || '')
+  }
+
+  const direction = sortOrder === 'desc' ? -1 : 1
+  return [...clients].sort((leftClient, rightClient) => {
+    const left = valueFor(leftClient)
+    const right = valueFor(rightClient)
+    const leftMissing = left === '' || left == null
+    const rightMissing = right === '' || right == null
+    if (leftMissing !== rightMissing) return leftMissing ? 1 : -1
+
+    const comparison = typeof left === 'number' && typeof right === 'number'
+      ? left - right
+      : THAI_COLLATOR.compare(String(left), String(right))
+    if (comparison !== 0) return comparison * direction
+    return THAI_COLLATOR.compare(String(leftClient.name || ''), String(rightClient.name || ''))
+  })
 }
 
 // ── LIST ──────────────────────────────────────────────────────────────────────
@@ -64,6 +102,8 @@ router.get('/', (req, res) => {
   )
 
   const { status, search } = req.query
+  const sortKey = CLIENT_SORT_KEYS.has(req.query.sort) ? req.query.sort : ''
+  const sortOrder = req.query.order === 'desc' ? 'desc' : 'asc'
   let filtered = clients
 
   // Counselors only see clients who have appointments with them
@@ -97,6 +137,7 @@ router.get('/', (req, res) => {
     c.nickname,
     c.faculty,
   ], search))
+  filtered = sortClients(filtered, appointments, sortKey, sortOrder)
 
   const counselorActiveCounts = {}
   appointments.forEach(a => {
@@ -308,3 +349,4 @@ router.post('/:id/transfer', (req, res) => {
 })
 
 module.exports = router
+module.exports.sortClients = sortClients

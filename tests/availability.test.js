@@ -2,6 +2,7 @@ const assert = require('node:assert/strict')
 const fs = require('node:fs')
 const path = require('node:path')
 const test = require('node:test')
+const ejs = require('ejs')
 
 const {
   findAvailableSlot,
@@ -128,6 +129,17 @@ test('schedule modal supports multiple days and ranges with the requested button
   assert.match(routeSource, /validateScheduleBatch\(schedules, entries, existing\?\.id\)/)
   assert.match(routeSource, /schedules\.push\(\.\.\.entries\)/)
 })
+
+test('weekly schedule keeps the same grouped-by-day layout when filtering by counselor', () => {
+  const viewSource = fs.readFileSync(path.join(__dirname, '..', 'views', 'admin', 'schedules.ejs'), 'utf8')
+  const weeklyGridMarkers = viewSource.match(/data-weekly-schedule-grid=.true./g) || []
+
+  assert.equal(weeklyGridMarkers.length, 1, 'weekly view should have one shared grid')
+  assert.match(viewSource, /weeklyCounselor \? weeklyCounselor\.name/)
+  assert.doesNotMatch(viewSource, /Single counselor week view|mySchedules/)
+  assert.doesNotThrow(() => ejs.compile(viewSource))
+})
+
 test('booking availability summaries show each active day once without time ranges', () => {
   const viewFiles = [
     'views/admin/appointments.ejs',

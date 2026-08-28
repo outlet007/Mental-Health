@@ -44,10 +44,6 @@ router.get('/', (req, res) => {
 
   // Keep "selected" for modal (add/edit panel still needs a single counselor)
   const selected = filterCId || counselors[0]?.id
-  const mySchedules = allSched
-    .filter(s => s.counselorId === selected)
-    .sort((a, b) => a.dayOfWeek - b.dayOfWeek || (a.startTime || '').localeCompare(b.startTime || ''))
-  const availableDays = DAY_NAMES.map((name, i) => ({ dayOfWeek: i, dayName: name }))
 
   // Counselor color map
   const counselorColors = {}
@@ -112,7 +108,6 @@ router.get('/', (req, res) => {
     page: 'schedules', title: 'จัดการตารางเวลา',
     counselors, counselorMap, counselorColors,
     selected, filterCId,
-    mySchedules, availableDays,
     view, selectedDay,
     weekGrid, daySchedules, monthData,
     isCounselorUser: isCounselor(req),

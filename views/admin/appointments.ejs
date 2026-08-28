@@ -156,9 +156,10 @@
         <label class="lbl">ค้นหา</label>
         <div style="position:relative;">
           <i data-lucide="search" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);width:14px;height:14px;color:#94a3b8;"></i>
-          <input name="search" value="<%= query.search||'' %>" class="inp" style="padding-left:32px;" placeholder="ชื่อผู้รับบริการ หรือนักจิตวิทยาให้คำปรึกษา">
+          <input name="search" value="<%= query.search||'' %>" class="inp" style="padding-left:32px;" placeholder="ค้นหาจากรหัสนัดหมาย ผู้รับบริการ นักจิตวิทยา วันที่ เวลา หรือข้อมูลในตาราง">
         </div>
       </div>
+      <% if (!isCounselorView) { %>
       <div>
         <label class="lbl">นักจิตวิทยาให้คำปรึกษา</label>
         <select name="counselorId" class="inp" style="width:180px;">
@@ -166,6 +167,7 @@
           <% counselors.forEach(c => { %><option value="<%= c.id %>" <%=query.counselorId===c.id?'selected':''%>><%= c.name %></option><% }) %>
         </select>
       </div>
+      <% } %>
       <div>
         <label class="lbl">สถานะ</label>
         <select name="status" class="inp" style="width:140px;">
@@ -226,7 +228,7 @@
             %>
             <tr>
               <td>
-                <div style="font-size:12px; color:#64748b; font-family:monospace; font-weight:600;"><%= a.id %></div>
+                <div style="font-size:12px; color:#64748b; font-family:monospace; font-weight:600;"><%= a.appointmentNumber || a.id %></div>
               </td>
               <td>
                 <div style="font-weight:500; color:#1e293b; font-size:14px;"><%= a.clientName %></div>
@@ -1159,7 +1161,7 @@
           <div class="appt-row" onclick="toggleCdAppt(this)">
             <div style="display:flex;align-items:center;justify-content:space-between;">
               <div style="display:flex;align-items:center;gap:8px;">
-                <span style="font-size:12px;font-weight:600;color:#94a3b8;">#${appts.length - i}</span>
+
                 <span style="font-size:13px;font-weight:600;color:#1e293b;">${a.date}</span>
                 <span style="font-size:12px;color:#64748b;">${a.time} น.</span>
                 ${a.concern ? `<span style="font-size:12px;color:#64748b;">เรื่อง</span>${concernBadge(a.concern)}` : ''}
@@ -1172,6 +1174,7 @@
               </div>
             </div>
             <div class="appt-detail">
+              <div><strong>หมายเลขนัดหมาย:</strong> ${escapeClientHistoryText(a.appointmentNumber || a.id || '—')}</div>
               <div><strong>นักจิตวิทยา:</strong> ${a.counselorName || '—'}</div>
               <div><strong>รูปแบบ:</strong> ${typeLabel}</div>
               <div><strong>ระยะเวลา:</strong> ${a.duration || 60} นาที</div>
@@ -1386,7 +1389,7 @@
 
   function openViewPanel(a) {
     const client = CLIENTS.find(c => c.id === a.clientId) || {}
-    document.getElementById('viewPanelSub').textContent = `#${a.id}`
+    document.getElementById('viewPanelSub').textContent = a.appointmentNumber || a.id
     document.getElementById('v_clientName').textContent      = a.clientName
     document.getElementById('v_clientStudentId').textContent = client.studentId || '-'
     document.getElementById('v_clientPhone').textContent     = client.phone     || '-'

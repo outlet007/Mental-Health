@@ -106,7 +106,7 @@
     </div>
 
     <!-- Search -->
-    <form method="GET" style="background:#fff;border:1px solid #f1f5f9;border-radius:16px;padding:14px 16px;margin-bottom:16px;display:flex;gap:10px;align-items:flex-end;">
+    <form method="GET" style="background:#fff;border:1px solid #f1f5f9;border-radius:16px;padding:14px 16px;margin-bottom:16px;display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;">
       <div style="flex:1;">
         <label class="lbl">ค้นหา</label>
         <div style="position:relative;">
@@ -133,8 +133,16 @@
           <option value="closed" <%=query.status==='closed'?'selected':''%>>ปิดแล้ว</option>
         </select>
       </div>
+      <div>
+        <label class="lbl">ช่องทางติดต่อขอรับบริการ</label>
+        <select name="requestChannel" class="inp" style="width:190px;">
+          <option value="">ทั้งหมด</option>
+          <option value="online_registration" <%=query.requestChannel==='online_registration'?'selected':''%>>ลงทะเบียนออนไลน์</option>
+          <option value="walk_in" <%=query.requestChannel==='walk_in'?'selected':''%>>Walk in</option>
+        </select>
+      </div>
       <button type="submit" class="act-btn ab-primary"><i data-lucide="search" style="width:13px;height:13px;"></i> ค้นหา</button>
-      <% if (query.search || query.status || query.concern) { %><a href="/admin/contacts" class="act-btn ab-ghost" style="text-decoration:none;">ล้าง</a><% } %>
+      <% if (query.search || query.status || query.concern || query.requestChannel) { %><a href="/admin/contacts" class="act-btn ab-ghost" style="text-decoration:none;">ล้าง</a><% } %>
     </form>
 
     <!-- Tab + Table card -->
@@ -178,6 +186,7 @@
               <th>ข้อมูลติดต่อ</th>
               <th>เรื่องที่ต้องการความช่วยเหลือ</th>
               <th>รูปแบบ</th>
+              <th>ช่องทาง</th>
               <th>วันที่</th>
               <th>สถานะ</th>
               <th>การจัดการ</th>
@@ -215,7 +224,7 @@
                   <div>
                     <div style="font-weight:600;color:#1e293b;font-size:13px;"><%= c.name %></div>
                     <% if (c.studentId) { %><div style="font-size:12px;color:#64748b;font-weight:500;">รหัส: <%= c.studentId %></div><% } %>
-                    <% if (c.faculty) { %><div style="font-size:12px;color:#64748b;max-width:220px;white-space:normal;">คณะ: <%= c.faculty %></div><% } %>
+                    <div style="font-size:12px;color:#64748b;max-width:220px;white-space:normal;">คณะ: <%= c.faculty || '—' %></div>
                     <% if (c.note) { %><div style="font-size:12px;color:#94a3b8;font-style:italic;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="<%= c.note %>"><%= c.note %></div><% } %>
                   </div>
                 </div>
@@ -240,6 +249,13 @@
                 <div style="display:flex;align-items:center;gap:4px;"><i data-lucide="phone" style="width:13px;height:13px;color:#05967e;"></i><span style="font-size:12px;color:#05967e;">โทรศัพท์</span></div>
                 <% } else { %>
                 <div style="display:flex;align-items:center;gap:4px;"><i data-lucide="map-pin" style="width:13px;height:13px;color:#3874FF;"></i><span style="font-size:12px;color:#3874FF;">เข้ารับบริการด้วยตนเอง</span></div>
+                <% } %>
+              </td>
+              <td>
+                <% if (c.requestChannel === 'walk_in') { %>
+                <span style="display:inline-flex;align-items:center;gap:4px;padding:3px 9px;background:#fff7ed;color:#c2410c;border-radius:99px;font-size:12px;font-weight:500;white-space:nowrap;"><i data-lucide="person-standing" style="width:12px;height:12px;"></i>Walk in</span>
+                <% } else { %>
+                <span style="display:inline-flex;align-items:center;gap:4px;padding:3px 9px;background:#ecfeff;color:#0e7490;border-radius:99px;font-size:12px;font-weight:500;white-space:nowrap;"><i data-lucide="globe" style="width:12px;height:12px;"></i>ลงทะเบียนออนไลน์</span>
                 <% } %>
               </td>
               <td style="font-size:12px;color:#64748b;white-space:nowrap;"><%= c.createdAt %></td>
@@ -269,7 +285,7 @@
             </tr>
             <% }) %>
             <tr id="emptyState" style="display:none;">
-              <td colspan="8" style="text-align:center;padding:48px 16px;color:#94a3b8;">
+              <td colspan="9" style="text-align:center;padding:48px 16px;color:#94a3b8;">
                 <i data-lucide="inbox" style="width:36px;height:36px;display:block;margin:0 auto 10px;opacity:.3;"></i>
                 ไม่มีคำขอในหมวดนี้
               </td>
@@ -371,6 +387,13 @@
           <select name="concern" id="er_concern" class="inp">
             <option value="">-- ไม่ระบุ --</option>
             <% concernOptions.forEach(opt => { %><option value="<%= opt %>"><%= opt %></option><% }) %>
+          </select>
+        </div>
+        <div>
+          <label class="lbl">ช่องทางติดต่อขอรับบริการ</label>
+          <select name="requestChannel" id="er_requestChannel" class="inp" required>
+            <option value="online_registration">ลงทะเบียนออนไลน์</option>
+            <option value="walk_in">Walk in</option>
           </select>
         </div>
         <div>
@@ -679,7 +702,7 @@
         <div style="font-size:14px;font-weight:600;color:#3874FF;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">ข้อมูลคำขอเพื่อทำนัดหมาย</div>
         <div style="display:flex;gap:8px;"><span style="color:#94a3b8;min-width:80px;">ชื่อ</span><strong>${esc(c.name)}</strong></div>
         ${c.studentId?`<div style="display:flex;gap:8px;"><span style="color:#94a3b8;min-width:80px;">รหัสนักศึกษา</span><span>${esc(c.studentId)}</span></div>`:''}
-        ${c.faculty?`<div style="display:flex;gap:8px;"><span style="color:#94a3b8;min-width:80px;">คณะ</span><span>${esc(c.faculty)}</span></div>`:''}
+        <div style="display:flex;gap:8px;"><span style="color:#94a3b8;min-width:80px;">คณะ</span><span>${esc(c.faculty || '—')}</span></div>
         <div style="display:flex;gap:8px;"><span style="color:#94a3b8;min-width:80px;">โทร</span><span>${esc(c.phone)}</span></div>
         ${c.email?`<div style="display:flex;gap:8px;"><span style="color:#94a3b8;min-width:80px;">อีเมล</span><span>${esc(c.email)}</span></div>`:''}
         ${c.concern?`<div style="display:flex;gap:8px;align-items:center;"><span style="color:#94a3b8;min-width:80px;">เรื่อง</span>${concernBadge(c.concern)}</div>`:''}
@@ -687,6 +710,7 @@
         ${linkedAppt ? `
         <div style="margin-top:6px;padding-top:10px;border-top:1px solid #e2e8f0;">
           <div style="font-size:14px;font-weight:600;color:#05967e;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">ข้อมูลนัดหมายที่สร้างแล้ว</div>
+          <div style="display:flex;gap:8px;"><span style="color:#94a3b8;min-width:80px;">หมายเลขนัดหมาย</span><span>${esc(linkedAppt.appointmentNumber || linkedAppt.id)}</span></div>
           <div style="display:flex;gap:8px;"><span style="color:#94a3b8;min-width:80px;">นักจิตวิทยา</span><span>${esc(linkedAppt.counselorName)}</span></div>
           <div style="display:flex;gap:8px;"><span style="color:#94a3b8;min-width:80px;">วันที่และเวลา</span><span>${esc(linkedAppt.date)} เวลา ${esc(linkedAppt.time)} น.</span></div>
         </div>` : ''}
@@ -708,6 +732,7 @@
       document.getElementById('er_phone').value     = c.phone || ''
       document.getElementById('er_email').value      = c.email || ''
       document.getElementById('er_concern').value    = c.concern || ''
+      document.getElementById('er_requestChannel').value = c.requestChannel === 'walk_in' ? 'walk_in' : 'online_registration'
       const editTypeInput = document.getElementById(c.sessionType === 'phone' ? 'er_typePhone' : (c.sessionType === 'onsite' ? 'er_typeOnsite' : 'er_typeOnline'))
       const editTypeFallback = document.querySelector('#editRequestForm input[name="sessionType"]')
       if (editTypeInput) editTypeInput.checked = true
@@ -773,6 +798,7 @@
             <div style="flex:1;min-width:0;display:grid;gap:2px;">
               <div style="font-size:13px;font-weight:600;color:#1e293b;">${esc(client.name)}</div>
               <div style="font-size:12px;color:#64748b;">รหัสนักศึกษา: ${esc(client.studentId || '—')}</div>
+              <div style="font-size:12px;color:#64748b;">คณะ: ${esc(client.faculty || '—')}</div>
               <div style="font-size:12px;color:#64748b;">เบอร์โทรศัพท์: ${esc(client.phone || '—')}</div>
               <div style="font-size:12px;color:#64748b;">อีเมล: ${esc(client.email || '—')}</div>
               ${latestAppt ? `<div style="font-size:12px;color:#64748b;display:flex;align-items:center;gap:6px;margin-top:2px;">รับคำปรึกษาล่าสุด <span style="padding:2px 8px;background:${cCol}18;color:${cCol};border-radius:99px;font-size:11px;font-weight:600;">${esc(latestAppt.counselorName || '—')}</span></div>` : ''}

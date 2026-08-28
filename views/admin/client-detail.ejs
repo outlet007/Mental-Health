@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="th">
 <head>
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -89,6 +89,7 @@
               </div>
               <div class="flex-1 min-w-0">
                 <p class="font-medium text-slate-800 text-sm"><%= a.counselorName %></p>
+                <p class="text-xs font-mono text-slate-500"><%= a.appointmentNumber || a.id %></p>
                 <p class="text-xs text-slate-400"><%= a.date %> เวลา <%= a.time %> · <%= a.duration %> นาที</p>
               </div>
               <span class="<%= statusBadge[a.status] %>"><%= statusLabel[a.status] %></span>

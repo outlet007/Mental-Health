@@ -1,6 +1,7 @@
 require('dotenv').config()
 const nodemailer = require('nodemailer')
 const { renderTemplateFields, hasClosingVariants } = require('./email-templates')
+const { displayAppointmentNumber } = require('./case-management')
 
 function isPlaceholder(value, placeholders = []) {
   return !value || placeholders.includes(String(value).trim())
@@ -36,7 +37,7 @@ function buildVars({ appointment, client, counselor }) {
     date: formatDate(appointment.date),
     time: appointment.time,
     duration: appointment.duration,
-    appointmentId: appointment.id,
+    appointmentId: displayAppointmentNumber(appointment),
   }
 }
 
@@ -141,11 +142,11 @@ function appointmentDetails({ appointment, client, counselor, concern }, lang = 
   const dateStr = formatDate(appointment.date)
   if (lang === 'en') {
     return card(`${icon('calendar')}Appointment details`, [
-      row('Appointment ID', appointment.id), row('Date', dateStr), row('Time', `${appointment.time}`), row('Duration', `${appointment.duration} minutes`), row('Type', typeLabel(appointment.type, 'en')), row('Topic', concern || '-')
+      row('Appointment ID', displayAppointmentNumber(appointment)), row('Date', dateStr), row('Time', `${appointment.time}`), row('Duration', `${appointment.duration} minutes`), row('Type', typeLabel(appointment.type, 'en')), row('Topic', concern || '-')
     ]) + appointmentAccessDetails({ appointment, client }, 'en', audience, accessDetails) + card(`${icon('user')}Counselor`, [row('Name', counselor.name), row('Email', counselor.email || '-'), row('Phone', counselor.phone || '-')])
   }
   return card(`${icon('calendar')}รายละเอียดการนัดหมาย`, [
-    row('รหัสการนัด', appointment.id), row('วันที่', dateStr), row('เวลา', `${appointment.time} น.`), row('ระยะเวลา', `${appointment.duration} นาที`), row('รูปแบบ', typeLabel(appointment.type)), row('เรื่องที่ปรึกษา', concern || '-')
+    row('รหัสการนัด', displayAppointmentNumber(appointment)), row('วันที่', dateStr), row('เวลา', `${appointment.time} น.`), row('ระยะเวลา', `${appointment.duration} นาที`), row('รูปแบบ', typeLabel(appointment.type)), row('เรื่องที่ปรึกษา', concern || '-')
   ]) + appointmentAccessDetails({ appointment, client }, 'th', audience, accessDetails) + card(`${icon('user')}นักจิตวิทยา`, [row('ชื่อ', counselor.name), row('อีเมล', counselor.email || '-'), row('โทรศัพท์', counselor.phone || '-')])
 }
 
@@ -208,10 +209,10 @@ function counselorReassignedEmailHtml({ appointment, client, counselor }, templa
   const en = renderTemplateFields('counselorReassigned', 'en', vars, templateOverride)
   const dateStr = formatDate(appointment.date)
   const detailTh = card(`${icon('calendar')}รายละเอียดนัดหมายที่ถูกนำออกจากคิว`, [
-    row('รหัสการนัด', appointment.id), row('ผู้รับบริการ', client.name), row('วันที่เดิม', dateStr), row('เวลาเดิม', `${appointment.time} น.`)
+    row('รหัสการนัด', displayAppointmentNumber(appointment)), row('ผู้รับบริการ', client.name), row('วันที่เดิม', dateStr), row('เวลาเดิม', `${appointment.time} น.`)
   ], '#ef4444')
   const detailEn = card(`${icon('calendar')}Appointment removed from your schedule`, [
-    row('Appointment ID', appointment.id), row('Client', client.name), row('Original date', dateStr), row('Original time', appointment.time)
+    row('Appointment ID', displayAppointmentNumber(appointment)), row('Client', client.name), row('Original date', dateStr), row('Original time', appointment.time)
   ], '#ef4444')
   const thHtml = paragraph('circle-alert', '#ef4444', th.greeting) + detailTh + (th.closing ? paragraph('video', '#05967e', th.closing) : '')
   const enHtml = paragraph('circle-alert', '#ef4444', en.greeting) + detailEn + (en.closing ? paragraph('video', '#05967e', en.closing) : '')

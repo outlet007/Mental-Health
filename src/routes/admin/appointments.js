@@ -21,6 +21,7 @@ const {
   closeCase,
   normalizeRiskLevel,
   normalizeDisposition,
+  ensureCaseAndAppointmentNumbers,
 } = require('../../utils/case-management')
 const {
   MAX_ATTACHMENT_SIZE,
@@ -32,6 +33,17 @@ const {
 
 const dataDir = path.join(__dirname, '../../../data')
 const DEFAULT_SESSION_TYPES = { online: true, phone: false, onsite: true }
+const APPOINTMENT_TYPE_SEARCH_LABELS = {
+  online: '\u0e2d\u0e2d\u0e19\u0e44\u0e25\u0e19\u0e4c',
+  phone: '\u0e42\u0e17\u0e23\u0e28\u0e31\u0e1e\u0e17\u0e4c',
+  onsite: '\u0e40\u0e02\u0e49\u0e32\u0e23\u0e31\u0e1a\u0e1a\u0e23\u0e34\u0e01\u0e32\u0e23\u0e14\u0e49\u0e27\u0e22\u0e15\u0e19\u0e40\u0e2d\u0e07',
+}
+const APPOINTMENT_STATUS_SEARCH_LABELS = {
+  pending: '\u0e23\u0e2d\u0e22\u0e37\u0e19\u0e22\u0e31\u0e19\u0e19\u0e31\u0e14',
+  confirmed: '\u0e22\u0e37\u0e19\u0e22\u0e31\u0e19\u0e41\u0e25\u0e49\u0e27',
+  completed: '\u0e40\u0e2a\u0e23\u0e47\u0e08\u0e2a\u0e34\u0e49\u0e19',
+  cancelled: '\u0e22\u0e01\u0e40\u0e25\u0e34\u0e01\u0e19\u0e31\u0e14',
+}
 const consultationUpload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: MAX_ATTACHMENT_SIZE, files: 1 },
@@ -89,6 +101,35 @@ function normalizeAppointmentType(type, sessionTypes) {
 
 function cleanMeetingLink(type, meetingLink) {
   return type === 'online' ? (meetingLink || '').trim() : ''
+}
+
+function appointmentSearchValues(appointment) {
+  const durationLabel = appointment.duration == null
+    ? ''
+    : `${appointment.duration} \u0e19\u0e32\u0e17\u0e35`
+
+  return [
+    appointment.appointmentNumber,
+    appointment.caseCode,
+    appointment.id,
+    appointment.clientName,
+    appointment.counselorName,
+    appointment.date,
+    appointment.time,
+    `${appointment.date || ''} ${appointment.time || ''}`,
+    appointment.type,
+    APPOINTMENT_TYPE_SEARCH_LABELS[appointment.type],
+    appointment.duration,
+    durationLabel,
+    appointment.status,
+    APPOINTMENT_STATUS_SEARCH_LABELS[appointment.status],
+    appointment.note,
+  ]
+}
+
+function filterAppointmentsBySearch(appointments, search) {
+  if (!search) return appointments
+  return appointments.filter(appointment => matchesSearch(appointmentSearchValues(appointment), search))
 }
 
 function isCounselor(req) {
@@ -158,10 +199,7 @@ router.get('/', (req, res) => {
 
   filtered = filterAppointmentsByStatus(filtered, status, isCounselor(req))
   if (type)   filtered = filtered.filter(a => a.type === type)
-  if (search) filtered = filtered.filter(a => matchesSearch([
-    a.clientName,
-    a.counselorName,
-  ], search))
+  filtered = filterAppointmentsBySearch(filtered, search)
   filtered = filtered.sort((a, b) => new Date(b.date) - new Date(a.date))
 
   const schedules = isCounselor(req)
@@ -235,7 +273,7 @@ router.post('/create', async (req, res) => {
   const duration = selectedSlot.duration
 
   const maxNum = appointments.reduce((max, a) => {
-    const m = String(a.id).match(/^app-(\d+)$/)
+    const m = String(a.id).match(/^app-(\d+)(?:-\d+)?$/)
     return m ? Math.max(max, parseInt(m[1])) : max
   }, 0)
 
@@ -266,8 +304,9 @@ router.post('/create', async (req, res) => {
   }
 
   appointments.push(newAppt)
+  const numbering = ensureCaseAndAppointmentNumbers(cases, appointments)
   write('appointments.json', appointments)
-  if (cases.length !== caseCountBefore) write('cases.json', cases)
+  if (cases.length !== caseCountBefore || numbering.casesChanged) write('cases.json', cases)
 
   const emailOptions = resolveAppointmentEmailOptions(
     { name: client.name, email: client.email || '', phone: client.phone || '' },
@@ -505,12 +544,19 @@ router.post('/:id/complete', parseConsultationAttachment, verifyParsedToken, (re
           openedAt: futureAppointments[0].date,
           concern: futureAppointments[0].concern || appt.concern || '',
         })
-        futureAppointments.forEach(item => { item.caseId = nextCase.id })
+        futureAppointments.forEach((item, index) => {
+          item.caseId = nextCase.id
+          delete item.caseCode
+          item.visitNumber = index + 1
+          delete item.appointmentNumber
+        })
       }
     }
     if (!appt.surveyToken) {
       appt.surveyToken = crypto.randomBytes(16).toString('hex')
     }
+    const numbering = ensureCaseAndAppointmentNumbers(cases, data)
+    casesChanged = casesChanged || numbering.casesChanged
     try {
       write('appointments.json', data)
       if (casesChanged) write('cases.json', cases)
@@ -554,3 +600,4 @@ router.post('/:id/cancel', (req, res) => {
 })
 
 module.exports = router
+module.exports.filterAppointmentsBySearch = filterAppointmentsBySearch

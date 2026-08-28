@@ -6,6 +6,7 @@ const multer  = require('multer')
 const os      = require('os')
 const { ensureToken, verifyToken } = require('../../middleware/csrf')
 const { readJSON, writeJSON } = require('../../utils/json-store')
+const { ensureCaseAndAppointmentNumbers } = require('../../utils/case-management')
 router.use(ensureToken)
 router.use(verifyToken)
 
@@ -318,6 +319,11 @@ router.post('/import', upload.single('file'), verifyToken, (req, res) => {
       imported++
     })
 
+    if (schema.file === 'appointments.json') {
+      const cases = readData('cases.json')
+      const numbering = ensureCaseAndAppointmentNumbers(cases, data)
+      if (numbering.casesChanged) writeData('cases.json', cases)
+    }
     writeData(schema.file, data)
     res.redirect(back + `&result=success&count=${imported}`)
   } catch (e) {
